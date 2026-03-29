@@ -5,6 +5,11 @@ on:
     branches: [main]
     paths:
       - 'packages/*/package.json'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 0.1.2) — leave blank to use packages/core/package.json'
+        required: false
 
 jobs:
   publish:
@@ -18,17 +23,22 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Check for version changes
+      - name: Resolve version
         id: version
         run: |
-          CHANGED=$(git diff HEAD~1 HEAD --name-only -- 'packages/*/package.json' | head -1)
-          if [ -z "$CHANGED" ]; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            exit 0
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            CHANGED=$(git diff HEAD~1 HEAD --name-only -- 'packages/*/package.json' | head -1)
+            if [ -z "$CHANGED" ]; then
+              echo "changed=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            VERSION=$(node -p "require('./packages/core/package.json').version")
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "changed=true" >> $GITHUB_OUTPUT
           fi
-          VERSION=$(node -p "require('./packages/core/package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "changed=true" >> $GITHUB_OUTPUT
 
       - uses: actions/setup-node@v4
         if: steps.version.outputs.changed == 'true'
@@ -47,14 +57,17 @@ jobs:
       - name: Publish packages
         if: steps.version.outputs.changed == 'true'
         run: npm publish --workspaces --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create git tag
         if: steps.version.outputs.changed == 'true'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag "v${{ steps.version.outputs.version }}"
-          git push origin "v${{ steps.version.outputs.version }}"
+          TAG="v${{ steps.version.outputs.version }}"
+          git tag "$TAG" || echo "Tag already exists, skipping"
+          git push origin "$TAG" || echo "Tag already pushed, skipping"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -63,6 +76,7 @@ jobs:
         run: |
           gh release create "v${{ steps.version.outputs.version }}" \
             --title "v${{ steps.version.outputs.version }}" \
-            --generate-notes
+            --generate-notes \
+            || echo "Release already exists"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
