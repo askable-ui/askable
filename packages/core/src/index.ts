@@ -1,6 +1,7 @@
 export { AskableContextImpl } from './context.js';
 export type {
   AskableContext,
+  AskableEvent,
   AskableEventHandler,
   AskableEventMap,
   AskableEventName,

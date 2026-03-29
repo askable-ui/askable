@@ -1,7 +1,7 @@
 export interface AskableFocus {
   /** Parsed data-askable attribute (JSON object or raw string) */
   meta: Record<string, unknown> | string;
-  /** Trimmed textContent of the element, truncated to 200 chars */
+  /** Trimmed textContent of the element */
   text: string;
   /** The DOM element itself */
   element: HTMLElement;
@@ -37,6 +37,8 @@ export interface AskableContext {
   on<K extends AskableEventName>(event: K, handler: AskableEventHandler<K>): void;
   /** Unsubscribe from an event */
   off<K extends AskableEventName>(event: K, handler: AskableEventHandler<K>): void;
+  /** Programmatically select an element — use for explicit "Ask AI" buttons */
+  select(element: HTMLElement): void;
   /** Serialize current focus to a natural language prompt string */
   toPromptContext(): string;
   /** Clean up all listeners and observers */

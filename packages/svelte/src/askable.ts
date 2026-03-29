@@ -1,6 +1,6 @@
 import { writable, derived, readonly } from 'svelte/store';
 import { createAskableContext } from '@askable-ui/core';
-import type { AskableFocus, AskableContext } from '@askable-ui/core';
+import type { AskableEvent, AskableFocus, AskableContext } from '@askable-ui/core';
 
 export interface AskableStore {
   focus: ReturnType<typeof readonly>;
@@ -9,9 +9,9 @@ export interface AskableStore {
   destroy: () => void;
 }
 
-export function createAskableStore() {
+export function createAskableStore(options?: { events?: AskableEvent[] }) {
   const ctx = createAskableContext();
-  ctx.observe(document);
+  ctx.observe(document, { events: options?.events });
 
   const _focus = writable<AskableFocus | null>(null);
   ctx.on('focus', (f) => _focus.set(f));

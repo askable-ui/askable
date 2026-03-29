@@ -20,7 +20,7 @@ function extractText(el: HTMLElement): string {
   return (el.textContent ?? '').trim();
 }
 
-function buildFocus(el: HTMLElement): AskableFocus | null {
+export function buildFocus(el: HTMLElement): AskableFocus | null {
   const raw = el.getAttribute('data-askable');
   if (raw === null) return null;
   return {
