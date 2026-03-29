@@ -47,7 +47,7 @@ jobs:
 
       - name: Publish packages
         if: steps.version.outputs.changed == 'true'
-        run: npm publish --workspaces --access public
+        run: npm publish --workspaces --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
