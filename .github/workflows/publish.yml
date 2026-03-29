@@ -44,6 +44,11 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Upgrade npm for OIDC trusted publishing
+        if: steps.version.outputs.changed == 'true'
+        run: npm i -g npm@^11.5.1
 
       - name: Install dependencies
         if: steps.version.outputs.changed == 'true'
@@ -56,6 +61,8 @@ jobs:
       - name: Publish packages
         if: steps.version.outputs.changed == 'true'
         run: npm publish --workspaces --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ""
 
       - name: Create git tag
         if: steps.version.outputs.changed == 'true'
