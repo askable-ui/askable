@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/react",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React bindings for askable — LLM-aware UI context",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,7 +11,10 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/askable-ui/askable.git",
@@ -22,7 +25,14 @@
     "dev": "tsc --watch",
     "test": "vitest run"
   },
-  "keywords": ["llm", "context", "react", "ui", "accessibility", "focus"],
+  "keywords": [
+    "llm",
+    "context",
+    "react",
+    "ui",
+    "accessibility",
+    "focus"
+  ],
   "license": "MIT",
   "peerDependencies": {
     "react": ">=17.0.0",
