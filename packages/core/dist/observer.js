@@ -12,8 +12,7 @@ function parseMeta(raw) {
     }
 }
 function extractText(el) {
-    const text = (el.textContent ?? '').trim();
-    return text.length > 200 ? text.slice(0, 200) : text;
+    return (el.textContent ?? '').trim();
 }
 function buildFocus(el) {
     const raw = el.getAttribute('data-askable');

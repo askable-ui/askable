@@ -17,8 +17,7 @@ function parseMeta(raw: string): Record<string, unknown> | string {
 }
 
 function extractText(el: HTMLElement): string {
-  const text = (el.textContent ?? '').trim();
-  return text.length > 200 ? text.slice(0, 200) : text;
+  return (el.textContent ?? '').trim();
 }
 
 function buildFocus(el: HTMLElement): AskableFocus | null {

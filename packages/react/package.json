@@ -14,7 +14,7 @@
   "files": ["dist", "README.md"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/vamgan/askable.git",
+    "url": "https://github.com/askable-ui/askable.git",
     "directory": "packages/react"
   },
   "scripts": {
