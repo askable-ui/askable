@@ -19,9 +19,16 @@ export type AskableEventHandler<K extends AskableEventName> = (
   payload: AskableEventMap[K]
 ) => void;
 
+export type AskableEvent = 'click' | 'hover' | 'focus';
+
+export interface AskableObserveOptions {
+  /** Which interaction types trigger context updates. Defaults to all: ['click', 'hover', 'focus'] */
+  events?: AskableEvent[];
+}
+
 export interface AskableContext {
   /** Observe a DOM subtree for [data-askable] elements */
-  observe(root: HTMLElement | Document): void;
+  observe(root: HTMLElement | Document, options?: AskableObserveOptions): void;
   /** Stop observing and detach all listeners */
   unobserve(): void;
   /** Get the current focus context */

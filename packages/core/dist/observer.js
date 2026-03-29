@@ -1,3 +1,8 @@
+const EVENT_MAP = {
+    click: 'click',
+    hover: 'mouseenter',
+    focus: 'focus',
+};
 function parseMeta(raw) {
     try {
         return JSON.parse(raw);
@@ -21,11 +26,13 @@ function buildFocus(el) {
         timestamp: Date.now(),
     };
 }
+const ALL_EVENTS = ['click', 'hover', 'focus'];
 export class Observer {
     constructor(onFocus) {
         this.root = null;
         this.mutationObserver = null;
         this.boundElements = new Set();
+        this.activeEvents = ALL_EVENTS;
         this.handleInteraction = (event) => {
             const el = event.currentTarget;
             const focus = buildFocus(el);
@@ -34,14 +41,13 @@ export class Observer {
         };
         this.onFocus = onFocus;
     }
-    observe(root) {
+    observe(root, events = ALL_EVENTS) {
         if (this.root)
             this.unobserve();
         this.root = root;
-        // Attach to existing elements
+        this.activeEvents = events;
         const rootEl = root instanceof Document ? root.documentElement : root;
         rootEl.querySelectorAll('[data-askable]').forEach((el) => this.attach(el));
-        // Watch for new elements
         this.mutationObserver = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 mutation.addedNodes.forEach((node) => {
@@ -69,15 +75,11 @@ export class Observer {
     attach(el) {
         if (this.boundElements.has(el))
             return;
-        el.addEventListener('focus', this.handleInteraction);
-        el.addEventListener('click', this.handleInteraction);
-        el.addEventListener('mouseenter', this.handleInteraction);
+        this.activeEvents.forEach((e) => el.addEventListener(EVENT_MAP[e], this.handleInteraction));
         this.boundElements.add(el);
     }
     detach(el) {
-        el.removeEventListener('focus', this.handleInteraction);
-        el.removeEventListener('click', this.handleInteraction);
-        el.removeEventListener('mouseenter', this.handleInteraction);
+        this.activeEvents.forEach((e) => el.removeEventListener(EVENT_MAP[e], this.handleInteraction));
         this.boundElements.delete(el);
     }
 }

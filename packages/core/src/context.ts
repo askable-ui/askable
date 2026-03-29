@@ -5,6 +5,7 @@ import type {
   AskableEventHandler,
   AskableEventName,
   AskableFocus,
+  AskableObserveOptions,
 } from './types.js';
 
 export class AskableContextImpl implements AskableContext {
@@ -19,8 +20,8 @@ export class AskableContextImpl implements AskableContext {
     });
   }
 
-  observe(root: HTMLElement | Document): void {
-    this.observer.observe(root);
+  observe(root: HTMLElement | Document, options?: AskableObserveOptions): void {
+    this.observer.observe(root, options?.events);
   }
 
   unobserve(): void {

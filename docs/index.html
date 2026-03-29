@@ -41,15 +41,8 @@
     }
 
     .nav-logo {
-      display: flex; align-items: center; gap: 0.5rem;
       font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em;
       color: var(--text); text-decoration: none;
-    }
-
-    .nav-icon {
-      width: 26px; height: 26px; border-radius: 6px;
-      background: var(--accent); display: flex; align-items: center; justify-content: center;
-      font-size: 0.75rem; font-weight: 800; color: #fff; flex-shrink: 0;
     }
 
     .nav-logo span { color: var(--accent); }
@@ -358,10 +351,7 @@
 <body>
 
 <nav>
-  <a href="#" class="nav-logo">
-    <div class="nav-icon">A</div>
-    askable-ui
-  </a>
+  <a href="#" class="nav-logo"><span>askable</span>-ui</a>
   <div class="nav-links">
     <a href="#demo" class="nav-link">Demo</a>
     <a href="#how" class="nav-link">How it works</a>
@@ -391,8 +381,8 @@
   <div class="demo-controls">
     <span class="toggle-label">Trigger on:</span>
     <div class="toggle-group">
-      <button class="toggle-btn active" data-mode="hover">Hover</button>
-      <button class="toggle-btn" data-mode="click">Click</button>
+      <button class="toggle-btn" data-mode="hover">Hover</button>
+      <button class="toggle-btn active" data-mode="click">Click</button>
     </div>
   </div>
 
@@ -556,76 +546,83 @@
 
 <script>
 (function() {
-  // --- Inline askable-ui/core ---
-  function parseMeta(raw) { try { return JSON.parse(raw); } catch { return raw; } }
-  function extractText(el) { var t = (el.textContent || '').trim(); return t.length > 200 ? t.slice(0,200) : t; }
+  // --- askable-ui/core (inlined) ---
+  var EVENT_MAP = { click: 'click', hover: 'mouseenter', focus: 'focus' };
+  var ALL_EVENTS = ['click', 'hover', 'focus'];
 
-  function AskableObserver(onFocus) {
-    this.boundElements = [];
-    this.onFocus = onFocus;
+  function parseMeta(raw) { try { return JSON.parse(raw); } catch(e) { return raw; } }
+  function extractText(el) { var t = (el.textContent||'').trim(); return t.length>200?t.slice(0,200):t; }
+
+  function Observer(onFocus) {
+    this.root = null; this.mo = null; this.els = []; this.evts = ALL_EVENTS;
     var self = this;
     this.handler = function(e) {
-      var el = e.currentTarget;
-      var raw = el.getAttribute('data-askable');
+      var raw = e.currentTarget.getAttribute('data-askable');
       if (!raw) return;
-      onFocus({ meta: parseMeta(raw), text: extractText(el), element: el, timestamp: Date.now() });
+      onFocus({ meta: parseMeta(raw), text: extractText(e.currentTarget), element: e.currentTarget, timestamp: Date.now() });
     };
   }
-  AskableObserver.prototype.observe = function(root) {
+  Observer.prototype.observe = function(root, evts) {
+    if (this.root) this.unobserve();
+    this.root = root; this.evts = evts || ALL_EVENTS;
     var self = this;
-    var els = (root === document ? document.documentElement : root).querySelectorAll('[data-askable]');
-    els.forEach(function(el) { self.attach(el); });
+    (root===document?document.documentElement:root).querySelectorAll('[data-askable]').forEach(function(el){self.attach(el);});
+    this.mo = new MutationObserver(function(ms){
+      ms.forEach(function(m){
+        m.addedNodes.forEach(function(n){
+          if(!(n instanceof HTMLElement))return;
+          if(n.hasAttribute('data-askable'))self.attach(n);
+          n.querySelectorAll('[data-askable]').forEach(function(el){self.attach(el);});
+        });
+      });
+    });
+    this.mo.observe(root,{childList:true,subtree:true});
   };
-  AskableObserver.prototype.attach = function(el) {
-    el.addEventListener('mouseenter', this.handler);
-    el.addEventListener('click', this.handler);
-    el.addEventListener('focus', this.handler);
-    this.boundElements.push(el);
+  Observer.prototype.unobserve = function() {
+    if(this.mo){this.mo.disconnect();this.mo=null;}
+    var self=this;
+    this.els.forEach(function(el){self.detach(el);});
+    this.els=[]; this.root=null;
+  };
+  Observer.prototype.attach = function(el) {
+    if(this.els.indexOf(el)!==-1)return;
+    var self=this;
+    this.evts.forEach(function(e){el.addEventListener(EVENT_MAP[e],self.handler);});
+    this.els.push(el);
+  };
+  Observer.prototype.detach = function(el) {
+    var self=this;
+    this.evts.forEach(function(e){el.removeEventListener(EVENT_MAP[e],self.handler);});
   };
 
-  function AskableCtx() {
-    var self = this;
-    this.currentFocus = null;
-    this.listeners = [];
-    this.observer = new AskableObserver(function(focus) {
-      self.currentFocus = focus;
-      self.listeners.forEach(function(fn) { fn(focus); });
-    });
+  function Ctx() {
+    var self=this; this.focus=null; this.cbs=[];
+    this.obs=new Observer(function(f){self.focus=f;self.cbs.forEach(function(fn){fn(f);});});
   }
-  AskableCtx.prototype.observe = function(root) { this.observer.observe(root); };
-  AskableCtx.prototype.on = function(ev, fn) { if (ev === 'focus') this.listeners.push(fn); };
-  AskableCtx.prototype.toPromptContext = function() {
-    var focus = this.currentFocus;
-    if (!focus) return 'No UI element is currently focused.';
-    var meta = focus.meta;
-    var metaStr = typeof meta === 'string' ? meta :
-      Object.keys(meta).map(function(k) { return k + ': ' + meta[k]; }).join(', ');
-    var parts = ['User is focused on:'];
-    if (metaStr) parts.push(metaStr);
-    if (focus.text) parts.push('value "' + focus.text + '"');
-    return parts.join(' — ');
+  Ctx.prototype.observe = function(root,opts){this.obs.observe(root,opts&&opts.events);};
+  Ctx.prototype.unobserve = function(){this.obs.unobserve();};
+  Ctx.prototype.on = function(ev,fn){if(ev==='focus')this.cbs.push(fn);};
+  Ctx.prototype.toPromptContext = function(){
+    var f=this.focus; if(!f)return'No UI element is currently focused.';
+    var m=f.meta, ms=typeof m==='string'?m:Object.keys(m).map(function(k){return k+': '+m[k];}).join(', ');
+    var p=['User is focused on:']; if(ms)p.push(ms); if(f.text)p.push('value "'+f.text+'"');
+    return p.join(' — ');
   };
 
   // --- Demo ---
-  var ctx = new AskableCtx();
+  var ctx = new Ctx();
   var messagesEl = document.getElementById('chat-messages');
   var chatInput  = document.getElementById('chat-input');
   var chatSend   = document.getElementById('chat-send');
   var codeAttr   = document.getElementById('code-attr');
   var codeCtx    = document.getElementById('code-ctx');
 
-  var activeEl      = null;
-  var typingTimer   = null;
-  var lastKey       = null;
-  var mode          = 'hover';
-  var lastEventType = null;
+  var activeEl    = null;
+  var typingTimer = null;
+  var lastKey     = null;
+  var mode        = 'click';
 
-  ctx.observe(document);
-
-  document.querySelectorAll('[data-askable]').forEach(function(el) {
-    el.addEventListener('mouseenter', function() { lastEventType = 'hover'; });
-    el.addEventListener('click',      function() { lastEventType = 'click'; });
-  });
+  ctx.observe(document, { events: ['click'] });
 
   document.querySelectorAll('.toggle-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
@@ -633,6 +630,8 @@
       btn.classList.add('active');
       mode = btn.getAttribute('data-mode');
       lastKey = null;
+      ctx.unobserve();
+      ctx.observe(document, { events: mode === 'hover' ? ['hover'] : ['click'] });
     });
   });
 
@@ -679,8 +678,6 @@
   function removeTyping() { var t = document.getElementById('typing'); if (t) t.remove(); }
 
   ctx.on('focus', function(focus) {
-    if (mode === 'click' && lastEventType !== 'click') return;
-
     var meta = focus.meta;
     var prompt = ctx.toPromptContext();
     var key = JSON.stringify(meta);

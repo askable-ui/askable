@@ -9,8 +9,8 @@ export class AskableContextImpl {
             this.emitter.emit('focus', focus);
         });
     }
-    observe(root) {
-        this.observer.observe(root);
+    observe(root, options) {
+        this.observer.observe(root, options?.events);
     }
     unobserve() {
         this.observer.unobserve();

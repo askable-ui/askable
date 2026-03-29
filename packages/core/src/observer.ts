@@ -1,6 +1,12 @@
-import type { AskableFocus } from './types.js';
+import type { AskableFocus, AskableEvent } from './types.js';
 
 type FocusCallback = (focus: AskableFocus) => void;
+
+const EVENT_MAP: Record<AskableEvent, string> = {
+  click: 'click',
+  hover: 'mouseenter',
+  focus: 'focus',
+};
 
 function parseMeta(raw: string): Record<string, unknown> | string {
   try {
@@ -26,25 +32,27 @@ function buildFocus(el: HTMLElement): AskableFocus | null {
   };
 }
 
+const ALL_EVENTS: AskableEvent[] = ['click', 'hover', 'focus'];
+
 export class Observer {
   private root: HTMLElement | Document | null = null;
   private mutationObserver: MutationObserver | null = null;
   private boundElements = new Set<HTMLElement>();
   private onFocus: FocusCallback;
+  private activeEvents: AskableEvent[] = ALL_EVENTS;
 
   constructor(onFocus: FocusCallback) {
     this.onFocus = onFocus;
   }
 
-  observe(root: HTMLElement | Document): void {
+  observe(root: HTMLElement | Document, events: AskableEvent[] = ALL_EVENTS): void {
     if (this.root) this.unobserve();
     this.root = root;
+    this.activeEvents = events;
 
-    // Attach to existing elements
     const rootEl = root instanceof Document ? root.documentElement : root;
     rootEl.querySelectorAll<HTMLElement>('[data-askable]').forEach((el) => this.attach(el));
 
-    // Watch for new elements
     this.mutationObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         mutation.addedNodes.forEach((node) => {
@@ -77,16 +85,12 @@ export class Observer {
 
   private attach(el: HTMLElement): void {
     if (this.boundElements.has(el)) return;
-    el.addEventListener('focus', this.handleInteraction);
-    el.addEventListener('click', this.handleInteraction);
-    el.addEventListener('mouseenter', this.handleInteraction);
+    this.activeEvents.forEach((e) => el.addEventListener(EVENT_MAP[e], this.handleInteraction));
     this.boundElements.add(el);
   }
 
   private detach(el: HTMLElement): void {
-    el.removeEventListener('focus', this.handleInteraction);
-    el.removeEventListener('click', this.handleInteraction);
-    el.removeEventListener('mouseenter', this.handleInteraction);
+    this.activeEvents.forEach((e) => el.removeEventListener(EVENT_MAP[e], this.handleInteraction));
     this.boundElements.delete(el);
   }
 }

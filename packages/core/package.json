@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Framework-agnostic context tracker for LLM-aware UIs",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,7 +11,10 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/vamgan/askable.git",
@@ -22,7 +25,13 @@
     "dev": "tsc --watch",
     "test": "vitest run"
   },
-  "keywords": ["llm", "context", "ui", "accessibility", "focus"],
+  "keywords": [
+    "llm",
+    "context",
+    "ui",
+    "accessibility",
+    "focus"
+  ],
   "license": "MIT",
   "devDependencies": {
     "typescript": "^5.4.5",

@@ -369,9 +369,25 @@ askable is the **universal contract** between your UI and your LLM. One attribut
 
 Factory. Returns a new context instance.
 
-### `ctx.observe(el: HTMLElement | Document)`
+### `ctx.observe(el: HTMLElement | Document, options?: AskableObserveOptions)`
 
-Start watching `el`. Attaches `click`, `focus`, and `mouseenter` to all `[data-askable]` elements, current and future (via `MutationObserver`).
+Start watching `el`. Attaches interaction listeners to all `[data-askable]` elements, current and future (via `MutationObserver`).
+
+```ts
+// Default — all three triggers
+ctx.observe(document)
+
+// Click only
+ctx.observe(document, { events: ['click'] })
+
+// Hover only
+ctx.observe(document, { events: ['hover'] })
+
+// Click + keyboard focus
+ctx.observe(document, { events: ['click', 'focus'] })
+```
+
+**`options.events`** — array of `'click' | 'hover' | 'focus'`. Defaults to all three.
 
 ### `ctx.getFocus() → AskableFocus | null`
 
