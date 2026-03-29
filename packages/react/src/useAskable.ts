@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { createAskableContext } from '@askable-ui/core';
-import type { AskableFocus, AskableContext } from '@askable-ui/core';
+import type { AskableEvent, AskableFocus, AskableContext } from '@askable-ui/core';
 
 let globalCtx: AskableContext | null = null;
 let refCount = 0;
 
-function getGlobalCtx(): AskableContext {
+function getGlobalCtx(events?: AskableEvent[]): AskableContext {
   if (!globalCtx) {
     globalCtx = createAskableContext();
-    globalCtx.observe(document);
+    globalCtx.observe(document, { events });
   }
   return globalCtx;
 }
@@ -19,8 +19,8 @@ export interface UseAskableResult {
   ctx: AskableContext;
 }
 
-export function useAskable(): UseAskableResult {
-  const ctx = useRef<AskableContext>(getGlobalCtx());
+export function useAskable(options?: { events?: AskableEvent[] }): UseAskableResult {
+  const ctx = useRef<AskableContext>(getGlobalCtx(options?.events));
   const [focus, setFocus] = useState<AskableFocus | null>(() => ctx.current.getFocus());
 
   useEffect(() => {

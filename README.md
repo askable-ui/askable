@@ -30,15 +30,13 @@ LLM answers:  "Revenue can decline due to many factors such as..."
 ```
 
 **With askable:**
-```html
-<!--
-  The div can contain anything — a chart, a table, plain text, an image.
-  data-askable holds metadata describing what it represents to the AI.
-  It has no effect on rendering or behaviour.
--->
-<div data-askable='{"metric":"revenue","period":"Q3","delta":"-12%","prev":"$2.6M","curr":"$2.3M"}'>
-  <RevenueChart />
-</div>
+```tsx
+// Same data from your API renders the UI AND feeds the AI
+const { data } = useFetch('/api/metrics/revenue');
+
+<Askable meta={data}>        {/* ← data-askable set from API response */}
+  <RevenueChart data={data} /> {/* ← same data renders the chart */}
+</Askable>
 ```
 ```
 User clicks that div. Types: "why is this dropping?"
@@ -51,33 +49,37 @@ LLM answers:  "Your Q3 revenue fell 12% from $2.6M to $2.3M. Looking at the
               data you're viewing, the most likely causes are..."
 ```
 
-One attribute. The difference between a generic chatbot and a contextual AI copilot.
+One attribute. The same data that renders your UI gives the AI context — no duplication, no hardcoding.
 
 ## Works anywhere there's UI
 
-askable isn't dashboard-specific. Any element that carries meaning for a user is a candidate:
+askable isn't dashboard-specific. Any element that carries meaning for a user is a candidate. The data you already have from your API is the metadata — no duplication needed:
 
-```html
-<!-- E-commerce: product card -->
-<div data-askable='{"type":"product","name":"Trail Runner X","price":129,"stock":"low","rating":4.6}'>
-  <ProductCard />
-</div>
+```tsx
+{/* E-commerce: product card — product data from your catalog API */}
+<Askable meta={product}>
+  <ProductCard product={product} />
+</Askable>
 
-<!-- Support: error log row -->
-<tr data-askable='{"type":"error","code":"ERR_TIMEOUT","service":"payments","count":142,"last_seen":"2m ago"}'>
-  <td>payments</td><td>ERR_TIMEOUT</td><td>142×</td>
-</tr>
+{/* Support: error log — each row from your logging API */}
+{errors.map(err => (
+  <Askable as="tr" key={err.id} meta={err}>
+    <td>{err.service}</td><td>{err.code}</td><td>{err.count}×</td>
+  </Askable>
+))}
 
-<!-- SaaS: pricing plan -->
-<div data-askable='{"type":"plan","name":"Business","price":79,"seats":20,"current":false,"recommended":true}'>
-  <PricingCard />
-</div>
+{/* SaaS: pricing plan — plan data from config */}
+<Askable meta={plan}>
+  <PricingCard plan={plan} />
+</Askable>
 
-<!-- Form: field with validation state -->
-<input data-askable='{"type":"field","name":"company_url","error":"domain not resolvable","attempts":3}' />
+{/* Form: field with validation state */}
+<Askable meta={{ field: 'company_url', error: validation.error, attempts }}>
+  <input value={url} />
+</Askable>
 ```
 
-The content inside the element is whatever your UI needs. The `data-askable` attribute is purely metadata for the AI — it describes what the element *means*, not what it looks like.
+The content inside the element is whatever your UI renders. The `data-askable` attribute is the same data that powers your component — it tells the AI what the element *means*, not what it looks like.
 
 ---
 
@@ -102,18 +104,22 @@ pip install askable-django     # Django 4+
 ## 30-second quickstart
 
 ```html
-<!--
-  Annotate any element with data-askable.
-  The attribute is metadata for your AI — the element's content is unaffected.
-  Use any JSON shape that makes sense for your use case.
--->
-<div data-askable='{"widget":"churn-rate","value":"4.2%","trend":"up"}'>
-  Churn Rate: 4.2%  <!-- could equally be a <Chart />, an image, a table — anything -->
-</div>
+<div id="metrics"></div>
 
-<!-- 2. One line to start observing -->
 <script type="module">
   import { createAskableContext } from 'https://esm.sh/@askable-ui/core';
+
+  // 1. Your API data drives both the UI and the AI context
+  const data = await fetch('/api/metrics').then(r => r.json());
+
+  data.forEach(metric => {
+    const el = document.createElement('div');
+    el.setAttribute('data-askable', JSON.stringify(metric)); // ← same data
+    el.innerHTML = `<h3>${metric.label}</h3><p>${metric.value}</p>`;  // ← renders UI
+    document.getElementById('metrics').appendChild(el);
+  });
+
+  // 2. One line to start observing
   const ctx = createAskableContext();
   ctx.observe(document);
 
@@ -143,15 +149,31 @@ pip install askable-django     # Django 4+
 import { Askable, useAskable } from '@askable-ui/react';
 
 function Dashboard() {
+  const { data } = useSWR('/api/metrics'); // your API data
+
   return (
-    <Askable meta={{ chart: 'revenue', period: 'Q3', delta: '-12%' }}>
-      <RevenueChart />
-    </Askable>
+    <>
+      {/* Same data renders the chart AND becomes AI context */}
+      <Askable meta={data.revenue}>
+        <RevenueChart data={data.revenue} />
+      </Askable>
+
+      {/* Works at any granularity — table, row, or cell */}
+      <table>
+        {data.accounts.map(account => (
+          <Askable as="tr" key={account.id} meta={account}>
+            <td>{account.company}</td>
+            <td>{account.mrr}</td>
+          </Askable>
+        ))}
+      </table>
+    </>
   );
 }
 
 function AICopilot() {
-  const { promptContext } = useAskable();
+  // Only respond to clicks (default: all three — click, hover, focus)
+  const { promptContext } = useAskable({ events: ['click'] });
 
   return (
     <input
@@ -169,7 +191,7 @@ function AICopilot() {
 ```vue
 <script setup lang="ts">
 import { Askable, useAskable } from '@askable-ui/vue';
-const { promptContext } = useAskable();
+const { promptContext } = useAskable({ events: ['click', 'focus'] });
 </script>
 
 <template>
@@ -187,7 +209,7 @@ const { promptContext } = useAskable();
   import { createAskableStore } from '@askable-ui/svelte';
   import Askable from '@askable-ui/svelte/Askable.svelte';
 
-  const { promptContext, destroy } = createAskableStore();
+  const { promptContext, destroy } = createAskableStore({ events: ['hover'] });
   onDestroy(destroy);
 </script>
 
@@ -388,6 +410,19 @@ ctx.observe(document, { events: ['click', 'focus'] })
 ```
 
 **`options.events`** — array of `'click' | 'hover' | 'focus'`. Defaults to all three.
+
+The framework hooks accept the same `events` option:
+
+```ts
+// React
+const { promptContext } = useAskable({ events: ['click'] });
+
+// Vue
+const { promptContext } = useAskable({ events: ['click', 'focus'] });
+
+// Svelte
+const { promptContext, destroy } = createAskableStore({ events: ['hover'] });
+```
 
 ### `ctx.getFocus() → AskableFocus | null`
 

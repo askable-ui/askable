@@ -1,5 +1,5 @@
 import { Emitter } from './emitter.js';
-import { Observer } from './observer.js';
+import { buildFocus, Observer } from './observer.js';
 import type {
   AskableContext,
   AskableEventHandler,
@@ -38,6 +38,14 @@ export class AskableContextImpl implements AskableContext {
 
   off<K extends AskableEventName>(event: K, handler: AskableEventHandler<K>): void {
     this.emitter.off(event, handler);
+  }
+
+  select(element: HTMLElement): void {
+    const focus = buildFocus(element);
+    if (focus) {
+      this.currentFocus = focus;
+      this.emitter.emit('focus', focus);
+    }
   }
 
   toPromptContext(): string {

@@ -29,7 +29,29 @@
     }
 
     html { scroll-behavior: smooth; }
-    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6;
+    }
+
+    /* INTERACTIVE DOT CANVAS */
+    #dot-canvas { position: fixed; inset: 0; z-index: -2; pointer-events: none; }
+
+    /* GLOW ORBS */
+    .glow-wrap { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: -1; }
+    .glow {
+      position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.1;
+      animation: drift 20s ease-in-out infinite alternate;
+    }
+    .glow-1 { width: 600px; height: 600px; background: var(--accent); top: -10%; left: -5%; }
+    .glow-2 { width: 500px; height: 500px; background: #6366f1; bottom: 10%; right: -8%; animation-delay: -7s; animation-duration: 25s; }
+    .glow-3 { width: 350px; height: 350px; background: #a78bfa; top: 40%; left: 50%; animation-delay: -14s; animation-duration: 30s; }
+
+    @keyframes drift {
+      0% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -20px) scale(1.05); }
+      66% { transform: translate(-20px, 15px) scale(0.95); }
+      100% { transform: translate(10px, -10px) scale(1.02); }
+    }
 
     /* NAV */
     nav {
@@ -72,19 +94,38 @@
     .btn-primary:hover { background: var(--accent-2); color: #fff; }
 
     /* HERO */
-    .hero { max-width: 800px; margin: 0 auto; padding: 7rem 2rem 5rem; text-align: center; }
+    .hero {
+      max-width: 800px; margin: 0 auto; padding: 7rem 2rem 5rem; text-align: center;
+      position: relative;
+    }
 
     .hero h1 {
       font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 800;
       line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 1.25rem;
+      animation: fadeUp 0.6s ease both;
     }
-    .hero h1 em { font-style: normal; color: var(--accent); }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent), #a78bfa, var(--accent-2));
+      background-size: 200% 200%;
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      animation: shimmer 6s ease-in-out infinite;
+    }
 
-    .hero p { font-size: 1.05rem; color: var(--text-2); max-width: 520px; margin: 0 auto 2.5rem; }
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .hero p {
+      font-size: 1.05rem; color: var(--text-2); max-width: 520px; margin: 0 auto 2.5rem;
+      animation: fadeUp 0.6s ease 0.15s both;
+    }
 
     .hero-actions {
       display: flex; align-items: center; justify-content: center;
       gap: 0.75rem; flex-wrap: wrap;
+      animation: fadeUp 0.6s ease 0.3s both;
     }
 
     .install-cmd {
@@ -140,16 +181,39 @@
     .kpi-card {
       background: var(--card); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 1.25rem;
-      cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; outline: none;
+      cursor: pointer; outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s, background 0.25s;
     }
     .kpi-card:hover, .kpi-card:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent), 0 0 20px rgba(129,140,248,0.08);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 24px rgba(129,140,248,0.1), 0 8px 32px rgba(0,0,0,0.2);
+      transform: translateY(-2px);
+      background: rgba(22,22,31,0.9);
     }
     .kpi-card.active {
       border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent), 0 0 24px rgba(129,140,248,0.12);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 30px rgba(129,140,248,0.15), 0 8px 32px rgba(0,0,0,0.2);
+      transform: translateY(-2px);
     }
+
+    .kpi-card { position: relative; }
+    .ask-btn {
+      position: absolute; top: 0.65rem; right: 0.65rem;
+      padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-3); font-size: 0.65rem; font-family: var(--font);
+      cursor: pointer; opacity: 0; transition: opacity 0.2s, color 0.15s, border-color 0.15s;
+    }
+    .kpi-card:hover .ask-btn, .kpi-card:focus .ask-btn { opacity: 1; }
+    .ask-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    tbody tr[data-askable] { position: relative; }
+    .ask-btn-row {
+      padding: 0.15rem 0.4rem; border-radius: 3px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-3); font-size: 0.6rem; font-family: var(--font);
+      cursor: pointer; opacity: 0; transition: opacity 0.2s, color 0.15s, border-color 0.15s;
+    }
+    tbody tr[data-askable]:hover .ask-btn-row { opacity: 1; }
+    .ask-btn-row:hover { color: var(--accent); border-color: var(--accent); }
 
     .kpi-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 0.5rem; }
     .kpi-value { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.3rem; }
@@ -163,11 +227,11 @@
     table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     th { padding: 0.6rem 1.25rem; text-align: left; font-size: 0.72rem; font-weight: 500; color: var(--text-3); border-bottom: 1px solid var(--border); }
     td { padding: 0.75rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
-    tbody tr[data-askable] { cursor: pointer; transition: background 0.1s; outline: none; }
-    tbody tr[data-askable]:hover, tbody tr[data-askable]:focus { background: rgba(129,140,248,0.05); }
+    tbody tr[data-askable] { cursor: pointer; transition: background 0.2s, box-shadow 0.2s; outline: none; }
+    tbody tr[data-askable]:hover, tbody tr[data-askable]:focus { background: rgba(129,140,248,0.06); }
     tbody tr[data-askable].active {
-      background: rgba(129,140,248,0.08);
-      outline: 1px solid rgba(129,140,248,0.25); outline-offset: -1px;
+      background: rgba(129,140,248,0.1);
+      box-shadow: inset 3px 0 0 var(--accent);
     }
 
     .badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.72rem; font-weight: 500; }
@@ -235,6 +299,21 @@
     .typing span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
 
+    .chat-context-bar {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.75rem; border-top: 1px solid var(--border);
+      background: rgba(129,140,248,0.04); animation: fadeUp 0.2s ease;
+    }
+    .context-chip {
+      flex: 1; font-size: 0.7rem; font-family: var(--mono); color: var(--accent-2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .context-dismiss {
+      background: none; border: none; color: var(--text-3); font-size: 0.9rem;
+      cursor: pointer; padding: 0 0.25rem; line-height: 1; transition: color 0.15s;
+    }
+    .context-dismiss:hover { color: var(--text); }
+
     .chat-input-row { display: flex; gap: 0.5rem; padding: 0.75rem; border-top: 1px solid var(--border); }
     .chat-input {
       flex: 1; background: var(--surface); border: 1px solid var(--border);
@@ -278,7 +357,14 @@
     .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 2.5rem; }
     @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
 
-    .step { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+    .step {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+    .step:hover {
+      border-color: var(--border-hover); transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    }
     .step-num {
       display: inline-flex; align-items: center; justify-content: center;
       width: 26px; height: 26px; border-radius: 6px;
@@ -303,12 +389,42 @@
     .pkg-card {
       background: var(--card); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 1.25rem;
-      text-decoration: none; display: block; transition: border-color 0.15s;
+      text-decoration: none; display: block;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
     }
-    .pkg-card:hover { border-color: var(--border-hover); }
+    .pkg-card:hover {
+      border-color: var(--border-hover); transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
     .pkg-name { font-family: var(--mono); font-size: 0.85rem; color: var(--accent-2); margin-bottom: 0.4rem; }
     .pkg-desc { font-size: 0.8rem; color: var(--text-2); line-height: 1.5; }
     .pkg-size { display: inline-block; margin-top: 0.75rem; font-size: 0.68rem; color: var(--text-3); border: 1px solid var(--border); padding: 0.15rem 0.45rem; border-radius: 4px; }
+
+    /* ASK-AI BUTTON (visible in button mode) */
+    .ask-btn, .ask-btn-row {
+      display: none; align-items: center; gap: 0.3rem;
+      padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid rgba(129,140,248,0.4);
+      background: linear-gradient(135deg, rgba(129,140,248,0.15), rgba(167,139,250,0.1));
+      color: var(--accent-2);
+      font-size: 0.65rem; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
+      backdrop-filter: blur(4px);
+    }
+    .ask-btn:hover, .ask-btn-row:hover {
+      background: linear-gradient(135deg, rgba(129,140,248,0.3), rgba(167,139,250,0.2));
+      border-color: var(--accent); transform: scale(1.06);
+      box-shadow: 0 0 12px rgba(129,140,248,0.25);
+    }
+    .ask-btn .sparkle, .ask-btn-row .sparkle {
+      display: inline-block; font-size: 0.7rem; animation: twinkle 2s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+      50% { opacity: 0.6; transform: scale(0.85) rotate(15deg); }
+    }
+    .ask-btn { position: absolute; top: 6px; right: 6px; z-index: 2; }
+    .kpi-card { position: relative; }
+    .button-mode .ask-btn, .button-mode .ask-btn-row { display: inline-flex; }
 
     /* FOOTER */
     footer {
@@ -350,6 +466,13 @@
 </head>
 <body>
 
+<canvas id="dot-canvas"></canvas>
+<div class="glow-wrap">
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+  <div class="glow glow-3"></div>
+</div>
+
 <nav>
   <a href="#" class="nav-logo"><span>askable</span>-ui</a>
   <div class="nav-links">
@@ -383,64 +506,22 @@
     <div class="toggle-group">
       <button class="toggle-btn" data-mode="hover">Hover</button>
       <button class="toggle-btn active" data-mode="click">Click</button>
+      <button class="toggle-btn" data-mode="button">Button</button>
     </div>
   </div>
 
   <div class="demo-layout">
 
-    <!-- Dashboard -->
+    <!-- Dashboard — rendered from data by JS below -->
     <div class="dashboard">
-      <div class="kpi-grid">
-        <div class="kpi-card" tabindex="0"
-          data-askable='{"widget":"revenue","metric":"Monthly Recurring Revenue","value":"$128,400","change":"+12.4%","period":"last 30 days"}'>
-          <div class="kpi-label">Monthly Revenue</div>
-          <div class="kpi-value">$128,400</div>
-          <div class="kpi-change up">+12.4% vs last month</div>
-        </div>
-        <div class="kpi-card" tabindex="0"
-          data-askable='{"widget":"churn","metric":"Churn Rate","value":"3.2%","change":"-0.8%","trend":"improving","period":"last 30 days"}'>
-          <div class="kpi-label">Churn Rate</div>
-          <div class="kpi-value">3.2%</div>
-          <div class="kpi-change up">-0.8% improvement</div>
-        </div>
-        <div class="kpi-card" tabindex="0"
-          data-askable='{"widget":"arpu","metric":"Average Revenue Per User","value":"$42.10","change":"-2.1%","period":"last 30 days"}'>
-          <div class="kpi-label">ARPU</div>
-          <div class="kpi-value">$42.10</div>
-          <div class="kpi-change down">-2.1% vs last month</div>
-        </div>
-        <div class="kpi-card" tabindex="0"
-          data-askable='{"widget":"nps","metric":"Net Promoter Score","value":"67","benchmark":"industry avg: 44","period":"Q3 2024"}'>
-          <div class="kpi-label">NPS Score</div>
-          <div class="kpi-value">67</div>
-          <div class="kpi-change up">+3 vs last quarter</div>
-        </div>
-      </div>
-
+      <div class="kpi-grid" id="kpi-grid"></div>
       <div class="panel">
         <div class="panel-header">Top Accounts</div>
         <table>
           <thead>
-            <tr><th>Company</th><th>MRR</th><th>Plan</th><th>Status</th></tr>
+            <tr><th>Company</th><th>MRR</th><th>Plan</th><th>Status</th><th></th></tr>
           </thead>
-          <tbody>
-            <tr tabindex="0" data-askable='{"widget":"account_row","company":"Acme Corp","mrr":"$8,400","plan":"Enterprise","status":"healthy"}'>
-              <td>Acme Corp</td><td>$8,400</td><td>Enterprise</td>
-              <td><span class="badge badge-green">Healthy</span></td>
-            </tr>
-            <tr tabindex="0" data-askable='{"widget":"account_row","company":"Globex Inc","mrr":"$5,200","plan":"Business","status":"at_risk","last_login":"14 days ago"}'>
-              <td>Globex Inc</td><td>$5,200</td><td>Business</td>
-              <td><span class="badge badge-yellow">At Risk</span></td>
-            </tr>
-            <tr tabindex="0" data-askable='{"widget":"account_row","company":"Initech","mrr":"$3,900","plan":"Business","status":"churned","churned_date":"2024-10-01"}'>
-              <td>Initech</td><td>$3,900</td><td>Business</td>
-              <td><span class="badge badge-red">Churned</span></td>
-            </tr>
-            <tr tabindex="0" data-askable='{"widget":"account_row","company":"Umbrella Ltd","mrr":"$2,100","plan":"Starter","status":"healthy","growth":"expanding"}'>
-              <td>Umbrella Ltd</td><td>$2,100</td><td>Starter</td>
-              <td><span class="badge badge-green">Healthy</span></td>
-            </tr>
-          </tbody>
+          <tbody id="accounts-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -458,6 +539,10 @@
           <span class="msg-label">Assistant</span>
         </div>
       </div>
+      <div class="chat-context-bar" id="chat-context-bar" style="display:none">
+        <span class="context-chip" id="context-chip"></span>
+        <button class="context-dismiss" id="context-dismiss">&times;</button>
+      </div>
       <div class="chat-input-row">
         <input class="chat-input" id="chat-input" type="text" placeholder="Ask about what you're seeing…" />
         <button class="chat-send" id="chat-send">↑</button>
@@ -470,8 +555,8 @@
   <div class="code-panel">
     <div class="code-block">
       <div class="code-block-header">
-        <span class="code-block-label">data-askable attribute</span>
-        <span>metadata on the element</span>
+        <span class="code-block-label">element in your UI</span>
+        <span>data-askable set from API response</span>
       </div>
       <pre id="code-attr" class="empty">hover or click an element above…</pre>
     </div>
@@ -551,7 +636,7 @@
   var ALL_EVENTS = ['click', 'hover', 'focus'];
 
   function parseMeta(raw) { try { return JSON.parse(raw); } catch(e) { return raw; } }
-  function extractText(el) { var t = (el.textContent||'').trim(); return t.length>200?t.slice(0,200):t; }
+  function extractText(el) { return (el.textContent||'').trim(); }
 
   function Observer(onFocus) {
     this.root = null; this.mo = null; this.els = []; this.evts = ALL_EVENTS;
@@ -602,12 +687,68 @@
   Ctx.prototype.observe = function(root,opts){this.obs.observe(root,opts&&opts.events);};
   Ctx.prototype.unobserve = function(){this.obs.unobserve();};
   Ctx.prototype.on = function(ev,fn){if(ev==='focus')this.cbs.push(fn);};
+  Ctx.prototype.select = function(el){
+    var raw = el.getAttribute('data-askable'); if(!raw) return;
+    var f = { meta: parseMeta(raw), text: extractText(el), element: el, timestamp: Date.now() };
+    this.focus = f; var cbs = this.cbs; cbs.forEach(function(fn){fn(f);});
+  };
   Ctx.prototype.toPromptContext = function(){
     var f=this.focus; if(!f)return'No UI element is currently focused.';
     var m=f.meta, ms=typeof m==='string'?m:Object.keys(m).map(function(k){return k+': '+m[k];}).join(', ');
     var p=['User is focused on:']; if(ms)p.push(ms); if(f.text)p.push('value "'+f.text+'"');
     return p.join(' — ');
   };
+
+  // --- Simulated API data (in a real app, this comes from fetch('/api/metrics')) ---
+  var kpiData = [
+    { widget: 'revenue', metric: 'Monthly Recurring Revenue', value: '$128,400', change: '+12.4%', period: 'last 30 days', label: 'Monthly Revenue', changeDir: 'up', changeText: '+12.4% vs last month' },
+    { widget: 'churn', metric: 'Churn Rate', value: '3.2%', change: '-0.8%', trend: 'improving', period: 'last 30 days', label: 'Churn Rate', changeDir: 'up', changeText: '-0.8% improvement' },
+    { widget: 'arpu', metric: 'Average Revenue Per User', value: '$42.10', change: '-2.1%', period: 'last 30 days', label: 'ARPU', changeDir: 'down', changeText: '-2.1% vs last month' },
+    { widget: 'nps', metric: 'Net Promoter Score', value: '67', benchmark: 'industry avg: 44', period: 'Q3 2024', label: 'NPS Score', changeDir: 'up', changeText: '+3 vs last quarter' }
+  ];
+
+  var accountData = [
+    { widget: 'account_row', company: 'Acme Corp', mrr: '$8,400', plan: 'Enterprise', status: 'healthy' },
+    { widget: 'account_row', company: 'Globex Inc', mrr: '$5,200', plan: 'Business', status: 'at_risk', last_login: '14 days ago' },
+    { widget: 'account_row', company: 'Initech', mrr: '$3,900', plan: 'Business', status: 'churned', churned_date: '2024-10-01' },
+    { widget: 'account_row', company: 'Umbrella Ltd', mrr: '$2,100', plan: 'Starter', status: 'healthy', growth: 'expanding' }
+  ];
+
+  var statusBadge = { healthy: 'badge-green', at_risk: 'badge-yellow', churned: 'badge-red' };
+  var statusLabel = { healthy: 'Healthy', at_risk: 'At Risk', churned: 'Churned' };
+
+  // Render KPI cards — same data drives UI + data-askable
+  var kpiGrid = document.getElementById('kpi-grid');
+  kpiData.forEach(function(d) {
+    var meta = { widget: d.widget, metric: d.metric, value: d.value, change: d.change, period: d.period };
+    if (d.benchmark) meta.benchmark = d.benchmark;
+    if (d.trend) meta.trend = d.trend;
+    var card = document.createElement('div');
+    card.className = 'kpi-card';
+    card.tabIndex = 0;
+    card.setAttribute('data-askable', JSON.stringify(meta));
+    card.innerHTML = '<button class="ask-btn"><span class="sparkle">✦</span> Ask AI</button>'
+      + '<div class="kpi-label">' + d.label + '</div>'
+      + '<div class="kpi-value">' + d.value + '</div>'
+      + '<div class="kpi-change ' + d.changeDir + '">' + d.changeText + '</div>';
+    kpiGrid.appendChild(card);
+  });
+
+  // Render account rows — same data drives UI + data-askable
+  var tbody = document.getElementById('accounts-tbody');
+  accountData.forEach(function(d) {
+    var meta = { widget: d.widget, company: d.company, mrr: d.mrr, plan: d.plan, status: d.status };
+    if (d.last_login) meta.last_login = d.last_login;
+    if (d.churned_date) meta.churned_date = d.churned_date;
+    if (d.growth) meta.growth = d.growth;
+    var tr = document.createElement('tr');
+    tr.tabIndex = 0;
+    tr.setAttribute('data-askable', JSON.stringify(meta));
+    tr.innerHTML = '<td>' + d.company + '</td><td>' + d.mrr + '</td><td>' + d.plan + '</td>'
+      + '<td><span class="badge ' + statusBadge[d.status] + '">' + statusLabel[d.status] + '</span></td>'
+      + '<td style="width:1px"><button class="ask-btn-row"><span class="sparkle">✦</span> Ask AI</button></td>';
+    tbody.appendChild(tr);
+  });
 
   // --- Demo ---
   var ctx = new Ctx();
@@ -624,14 +765,33 @@
 
   ctx.observe(document, { events: ['click'] });
 
+  // "Ask AI" buttons use ctx.select() for explicit selection
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.ask-btn, .ask-btn-row');
+    if (!btn) return;
+    e.stopPropagation();
+    var el = btn.closest('[data-askable]');
+    if (el) ctx.select(el);
+  });
+
+  var dashboard = document.querySelector('.dashboard');
+
   document.querySelectorAll('.toggle-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
       document.querySelectorAll('.toggle-btn').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
       mode = btn.getAttribute('data-mode');
       lastKey = null;
       ctx.unobserve();
-      ctx.observe(document, { events: mode === 'hover' ? ['hover'] : ['click'] });
+
+      if (mode === 'button') {
+        // Button mode: no hover/click triggers — only "Ask AI" buttons call ctx.select()
+        dashboard.classList.add('button-mode');
+      } else {
+        dashboard.classList.remove('button-mode');
+        ctx.observe(document, { events: mode === 'hover' ? ['hover'] : ['click'] });
+      }
     });
   });
 
@@ -684,7 +844,10 @@
     if (key === lastKey) return;
     lastKey = key;
 
-    codeAttr.textContent = "data-askable='" + JSON.stringify(meta, null, 2) + "'";
+    var tag = focus.element.tagName.toLowerCase();
+    var inner = focus.element.innerHTML.trim().split('\n').map(function(l){ return '  ' + l; }).join('\n');
+    if (inner.length > 300) inner = inner.slice(0, 300) + '\n  ...';
+    codeAttr.textContent = '<' + tag + ' data-askable=\'{"widget":"' + (meta.widget||'') + '", ...}\'>\n' + inner + '\n</' + tag + '>';
     codeAttr.classList.remove('empty');
     codeCtx.textContent = prompt;
     codeCtx.classList.remove('empty');
@@ -741,6 +904,75 @@
       setTimeout(function() { el.textContent = '⎘ copy'; }, 2000);
     });
   });
+})();
+</script>
+
+<script>
+// --- Interactive dot grid with cursor antigravity ---
+(function() {
+  var canvas = document.getElementById('dot-canvas');
+  var c = canvas.getContext('2d');
+  var dots = [];
+  var mouse = { x: -9999, y: -9999 };
+  var SPACING = 32;
+  var RADIUS = 1.5;
+  var PUSH = 100;      // repulsion radius
+  var STRENGTH = 45;   // push distance
+  var EASE = 0.06;     // return speed
+  var COLOR = 'rgba(129,140,248,0.18)';
+  var COLOR_NEAR = 'rgba(165,180,252,0.55)';
+
+  function init() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    dots = [];
+    for (var y = SPACING / 2; y < canvas.height; y += SPACING) {
+      for (var x = SPACING / 2; x < canvas.width; x += SPACING) {
+        dots.push({ ox: x, oy: y, x: x, y: y });
+      }
+    }
+  }
+
+  function draw() {
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = 0; i < dots.length; i++) {
+      var d = dots[i];
+      var dx = d.ox - mouse.x;
+      var dy = d.oy - mouse.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < PUSH) {
+        var angle = Math.atan2(dy, dx);
+        var force = (1 - dist / PUSH) * STRENGTH;
+        d.x = d.ox + Math.cos(angle) * force;
+        d.y = d.oy + Math.sin(angle) * force;
+      } else {
+        d.x += (d.ox - d.x) * EASE;
+        d.y += (d.oy - d.y) * EASE;
+      }
+
+      var nearCursor = dist < PUSH * 1.2;
+      c.fillStyle = nearCursor ? COLOR_NEAR : COLOR;
+      c.beginPath();
+      c.arc(d.x, d.y, nearCursor ? RADIUS * 2.2 : RADIUS, 0, Math.PI * 2);
+      c.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+
+  document.addEventListener('mousemove', function(e) {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+
+  document.addEventListener('mouseleave', function() {
+    mouse.x = -9999;
+    mouse.y = -9999;
+  });
+
+  window.addEventListener('resize', init);
+  init();
+  draw();
 })();
 </script>
 
