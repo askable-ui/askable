@@ -1,11 +1,11 @@
-# @askable/svelte
+# @askable-ui/svelte
 
 Svelte 4 bindings for [askable](../../README.md) — give your UI components LLM awareness in one line.
 
 ## Install
 
 ```bash
-npm install @askable/svelte @askable/core
+npm install @askable-ui/svelte @askable-ui/core
 ```
 
 ## Quick Start
@@ -13,8 +13,8 @@ npm install @askable/svelte @askable/core
 ```svelte
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { createAskableStore } from '@askable/svelte';
-  import Askable from '@askable/svelte/Askable.svelte';
+  import { createAskableStore } from '@askable-ui/svelte';
+  import Askable from '@askable-ui/svelte/Askable.svelte';
 
   const { focus, promptContext, destroy } = createAskableStore();
   onDestroy(destroy);
@@ -47,7 +47,7 @@ npm install @askable/svelte @askable/core
 
 Renders any element (default: `div`) with a `data-askable` attribute. Accepts a `<slot />`.
 
-### `createAskableStore()`
+### `createAskableStore(options?)`
 
 Returns Svelte stores backed by a core `AskableContext`.
 
@@ -55,6 +55,36 @@ Returns Svelte stores backed by a core `AskableContext`.
 const { focus, promptContext, ctx, destroy } = createAskableStore();
 // focus: Readable<AskableFocus | null>
 // promptContext: Readable<string>
+// ctx: AskableContext
+
+// Restrict which interactions trigger a context update
+const { focus, promptContext, ctx, destroy } = createAskableStore({ events: ['click'] });
+```
+
+**Options:**
+- `events?: AskableEvent[]` — trigger events: `'click'`, `'hover'`, `'focus'`. Defaults to all three.
+
+### "Ask AI" button pattern
+
+Use `ctx.select()` to set context explicitly when a user clicks a button:
+
+```svelte
+<script lang="ts">
+  import { createAskableStore } from '@askable-ui/svelte';
+  import Askable from '@askable-ui/svelte/Askable.svelte';
+
+  const { ctx, destroy } = createAskableStore();
+  onDestroy(destroy);
+
+  let cardEl: HTMLElement;
+</script>
+
+<Askable bind:el={cardEl} meta={data}>
+  <RevenueChart {data} />
+  <button on:click={() => { ctx.select(cardEl); openChat(); }}>
+    Ask AI ✦
+  </button>
+</Askable>
 ```
 
 ## License

@@ -1,17 +1,17 @@
-# @askable/react
+# @askable-ui/react
 
 React bindings for [askable](../../README.md) — give your UI components LLM awareness in one line.
 
 ## Install
 
 ```bash
-npm install @askable/react @askable/core
+npm install @askable-ui/react @askable-ui/core
 ```
 
 ## Quick Start
 
 ```tsx
-import { Askable, useAskable } from '@askable/react';
+import { Askable, useAskable } from '@askable-ui/react';
 
 // Wrap any element to make it LLM-aware
 function Dashboard() {
@@ -69,20 +69,47 @@ Renders any element (default: `div`) with a `data-askable` attribute. The `meta`
 - `as` — HTML tag to render (default: `"div"`)
 - All other props are forwarded to the underlying element
 
-### `useAskable()`
+### `useAskable(options?)`
 
 Returns reactive focus state from the shared global `AskableContext`.
 
 ```ts
 const { focus, promptContext, ctx } = useAskable();
+
+// Restrict which interactions trigger a context update
+const { focus, promptContext } = useAskable({ events: ['click'] });
+const { focus, promptContext } = useAskable({ events: ['click', 'focus'] });
 ```
 
+**Options:**
+- `events?: AskableEvent[]` — trigger events: `'click'`, `'hover'`, `'focus'`. Defaults to all three.
+
 **Returns:**
-- `focus: AskableFocus | null` — current focus state (updates on click, hover, or keyboard focus)
+- `focus: AskableFocus | null` — current focus state
 - `promptContext: string` — natural language string ready to inject into LLM prompts
-- `ctx: AskableContext` — the underlying context instance for advanced use
+- `ctx: AskableContext` — the underlying context instance (e.g. `ctx.select(el)`)
 
 The hook manages a shared singleton context, so multiple calls across your app share the same observer. The context is automatically destroyed when the last consumer unmounts.
+
+### "Ask AI" button pattern
+
+Use `ctx.select()` to set context explicitly when a user clicks a button, instead of relying on hover or focus:
+
+```tsx
+function RevenueCard({ data }) {
+  const { ctx } = useAskable();
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <Askable meta={data} ref={cardRef}>
+      <RevenueChart data={data} />
+      <button onClick={() => { ctx.select(cardRef.current!); openChat(); }}>
+        Ask AI ✦
+      </button>
+    </Askable>
+  );
+}
+```
 
 ## License
 

@@ -1,11 +1,11 @@
-# @askable/core
+# @askable-ui/core
 
 Framework-agnostic context tracker for LLM-aware UIs. Annotate DOM elements with `data-askable` attributes to expose structured context to language models, enabling AI assistants to understand what users are focused on and interacting with.
 
 ## Installation
 
 ```bash
-npm install @askable/core
+npm install @askable-ui/core
 ```
 
 ## Quick Start
@@ -20,7 +20,7 @@ npm install @askable/core
 ```
 
 ```ts
-import { createAskableContext } from '@askable/core';
+import { createAskableContext } from '@askable-ui/core';
 
 const ctx = createAskableContext();
 
@@ -48,7 +48,7 @@ ctx.destroy();
 Factory function that creates and returns a new `AskableContext` instance. This is the recommended way to instantiate the context.
 
 ```ts
-import { createAskableContext } from '@askable/core';
+import { createAskableContext } from '@askable-ui/core';
 const ctx = createAskableContext();
 ```
 
@@ -58,17 +58,23 @@ const ctx = createAskableContext();
 
 The main interface for interacting with Askable.
 
-#### `observe(root: HTMLElement | Document): void`
+#### `observe(root: HTMLElement | Document, options?: { events?: AskableEvent[] }): void`
 
-Start observing a DOM subtree for `[data-askable]` elements. Attaches focus, click, and mouseenter event listeners to all matching elements and watches for new elements added via MutationObserver.
+Start observing a DOM subtree for `[data-askable]` elements. By default listens for `click`, `focus`, and `hover` events. Pass `events` to restrict which interactions trigger a context update.
 
 ```ts
-// Observe the entire document
+// Observe the entire document (all trigger events)
 ctx.observe(document);
+
+// Only update context on click
+ctx.observe(document, { events: ['click'] });
+
+// Only update context on focus (keyboard navigation)
+ctx.observe(document, { events: ['focus'] });
 
 // Or observe a specific subtree
 const panel = document.getElementById('main-panel');
-ctx.observe(panel);
+ctx.observe(panel, { events: ['click', 'hover'] });
 ```
 
 #### `unobserve(): void`
@@ -134,6 +140,24 @@ ctx.toPromptContext();
 // → "User is focused on: — pricing page hero — value "Get started for free...""
 ```
 
+#### `select(element: HTMLElement): void`
+
+Programmatically set focus to any element, as if the user had interacted with it. Useful for "Ask AI" buttons that explicitly set context before opening a chat.
+
+```ts
+const el = document.querySelector('[data-askable]');
+ctx.select(el);
+
+// Common pattern: "Ask AI" button sets context, then opens chat
+document.querySelectorAll('.ask-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const target = btn.closest('[data-askable]');
+    ctx.select(target);
+    openChat();
+  });
+});
+```
+
 #### `destroy(): void`
 
 Tears down the entire context: stops observing, removes all event listeners, clears all event handlers, and resets focus state. Call this when the context is no longer needed (e.g., component unmount).
@@ -175,8 +199,8 @@ The `meta` field is parsed as JSON if possible; otherwise it is a raw string. Th
 
 ```tsx
 import { useEffect, useRef, useCallback } from 'react';
-import { createAskableContext } from '@askable/core';
-import type { AskableFocus } from '@askable/core';
+import { createAskableContext } from '@askable-ui/core';
+import type { AskableFocus } from '@askable-ui/core';
 
 function useAskable(onFocus?: (focus: AskableFocus) => void) {
   const ctxRef = useRef(createAskableContext());
@@ -232,8 +256,8 @@ export function App() {
 ```vue
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
-import { createAskableContext } from '@askable/core';
-import type { AskableFocus } from '@askable/core';
+import { createAskableContext } from '@askable-ui/core';
+import type { AskableFocus } from '@askable-ui/core';
 
 const ctx = createAskableContext();
 const currentFocus = ref<AskableFocus | null>(null);
@@ -272,8 +296,8 @@ function getPromptContext() {
 ```svelte
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { createAskableContext } from '@askable/core';
-  import type { AskableFocus } from '@askable/core';
+  import { createAskableContext } from '@askable-ui/core';
+  import type { AskableFocus } from '@askable-ui/core';
 
   const ctx = createAskableContext();
   let currentFocus: AskableFocus | null = null;
@@ -328,7 +352,7 @@ function getPromptContext() {
   </main>
 
   <script type="module">
-    import { createAskableContext } from 'https://esm.sh/@askable/core';
+    import { createAskableContext } from 'https://esm.sh/@askable-ui/core';
 
     const ctx = createAskableContext();
     ctx.observe(document);
@@ -348,7 +372,7 @@ function getPromptContext() {
 The primary use case is feeding UI context into LLM prompts so the AI assistant understands what the user is looking at.
 
 ```ts
-import { createAskableContext } from '@askable/core';
+import { createAskableContext } from '@askable-ui/core';
 
 const ctx = createAskableContext();
 ctx.observe(document);
@@ -397,10 +421,11 @@ async function askWithContext(userMessage: string) {
 import type {
   AskableContext,       // Main context interface
   AskableFocus,         // Focus state object
+  AskableEvent,         // Trigger event type: 'click' | 'hover' | 'focus'
   AskableEventMap,      // Map of event names to payload types
   AskableEventName,     // Union of valid event names: 'focus'
   AskableEventHandler,  // Generic handler type
-} from '@askable/core';
+} from '@askable-ui/core';
 ```
 
 ## License
