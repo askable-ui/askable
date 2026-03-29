@@ -13,6 +13,12 @@ Your LLM doesn't know what the user is looking at. They click a chart, hover an 
 
 ---
 
+## The problem
+
+Your LLM doesn't know what the user is looking at. They click a chart, focus an error row, hover a pricing plan — then ask *"what's wrong?"* or *"is this good?"*. Without context, your AI guesses.
+
+askable solves this by letting you attach metadata to any element. When the user interacts with it, that metadata becomes part of the prompt automatically.
+
 ## The magic moment
 
 **Without askable:**
@@ -25,15 +31,20 @@ LLM answers:  "Revenue can decline due to many factors such as..."
 
 **With askable:**
 ```html
+<!--
+  The div can contain anything — a chart, a table, plain text, an image.
+  data-askable holds metadata describing what it represents to the AI.
+  It has no effect on rendering or behaviour.
+-->
 <div data-askable='{"metric":"revenue","period":"Q3","delta":"-12%","prev":"$2.6M","curr":"$2.3M"}'>
-  Q3 Revenue: $2.3M ↓12%
+  <RevenueChart />
 </div>
 ```
 ```
 User clicks that div. Types: "why is this dropping?"
 
 LLM receives: "UI context: User is focused on: metric: revenue, period: Q3,
-              delta: -12%, prev: $2.6M, curr: $2.3M — value "Q3 Revenue: $2.3M ↓12%"
+              delta: -12%, prev: $2.6M, curr: $2.3M
               Question: why is this dropping?"
 
 LLM answers:  "Your Q3 revenue fell 12% from $2.6M to $2.3M. Looking at the
@@ -41,6 +52,32 @@ LLM answers:  "Your Q3 revenue fell 12% from $2.6M to $2.3M. Looking at the
 ```
 
 One attribute. The difference between a generic chatbot and a contextual AI copilot.
+
+## Works anywhere there's UI
+
+askable isn't dashboard-specific. Any element that carries meaning for a user is a candidate:
+
+```html
+<!-- E-commerce: product card -->
+<div data-askable='{"type":"product","name":"Trail Runner X","price":129,"stock":"low","rating":4.6}'>
+  <ProductCard />
+</div>
+
+<!-- Support: error log row -->
+<tr data-askable='{"type":"error","code":"ERR_TIMEOUT","service":"payments","count":142,"last_seen":"2m ago"}'>
+  <td>payments</td><td>ERR_TIMEOUT</td><td>142×</td>
+</tr>
+
+<!-- SaaS: pricing plan -->
+<div data-askable='{"type":"plan","name":"Business","price":79,"seats":20,"current":false,"recommended":true}'>
+  <PricingCard />
+</div>
+
+<!-- Form: field with validation state -->
+<input data-askable='{"type":"field","name":"company_url","error":"domain not resolvable","attempts":3}' />
+```
+
+The content inside the element is whatever your UI needs. The `data-askable` attribute is purely metadata for the AI — it describes what the element *means*, not what it looks like.
 
 ---
 
@@ -65,9 +102,13 @@ pip install askable-django     # Django 4+
 ## 30-second quickstart
 
 ```html
-<!-- 1. Annotate elements with data-askable -->
+<!--
+  Annotate any element with data-askable.
+  The attribute is metadata for your AI — the element's content is unaffected.
+  Use any JSON shape that makes sense for your use case.
+-->
 <div data-askable='{"widget":"churn-rate","value":"4.2%","trend":"up"}'>
-  Churn Rate: 4.2%
+  Churn Rate: 4.2%  <!-- could equally be a <Chart />, an image, a table — anything -->
 </div>
 
 <!-- 2. One line to start observing -->

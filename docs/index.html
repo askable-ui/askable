@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>askable — LLM-aware UI context</title>
+  <title>askable-ui — LLM-aware UI context</title>
   <meta name="description" content="One attribute. Any element. Instant LLM context. Works with React, Vue, Svelte, or plain HTML." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23818cf8'/><text x='16' y='22' font-family='system-ui,sans-serif' font-size='18' font-weight='800' fill='white' text-anchor='middle'>A</text></svg>" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -28,224 +29,127 @@
     }
 
     html { scroll-behavior: smooth; }
-
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
 
     /* NAV */
     nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-      height: 56px;
-      background: rgba(9,9,15,0.88);
-      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 56px;
+      background: rgba(9,9,15,0.88); backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
     }
 
     .nav-logo {
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--text);
-      text-decoration: none;
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em;
+      color: var(--text); text-decoration: none;
     }
+
+    .nav-icon {
+      width: 26px; height: 26px; border-radius: 6px;
+      background: var(--accent); display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+
     .nav-logo span { color: var(--accent); }
 
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
+    .nav-links { display: flex; align-items: center; gap: 1rem; }
 
-    .nav-link {
-      font-size: 0.875rem;
-      color: var(--text-2);
-      text-decoration: none;
-      transition: color 0.15s;
-    }
+    .nav-link { font-size: 0.875rem; color: var(--text-2); text-decoration: none; transition: color 0.15s; }
     .nav-link:hover { color: var(--text); }
 
+    .nav-repo {
+      font-size: 0.72rem; color: var(--text-3); font-family: var(--mono);
+      text-decoration: none; transition: color 0.15s;
+    }
+    .nav-repo:hover { color: var(--text-2); }
+
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.4rem 0.9rem;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-      text-decoration: none;
-      border: none;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.9rem; border-radius: 6px;
+      font-size: 0.8rem; font-weight: 500; cursor: pointer;
+      transition: all 0.15s; text-decoration: none; border: none;
     }
     .btn-outline {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-2);
+      background: transparent; border: 1px solid var(--border); color: var(--text-2);
     }
-    .btn-outline:hover {
-      border-color: var(--border-hover);
-      color: var(--text);
-      background: var(--card);
-    }
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
+    .btn-outline:hover { border-color: var(--border-hover); color: var(--text); background: var(--card); }
+    .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: var(--accent-2); color: #fff; }
 
     /* HERO */
-    .hero {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 7rem 2rem 5rem;
-      text-align: center;
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.3rem 0.75rem;
-      border-radius: 999px;
-      border: 1px solid rgba(129,140,248,0.3);
-      background: rgba(129,140,248,0.08);
-      color: var(--accent-2);
-      font-size: 0.75rem;
-      font-weight: 500;
-      margin-bottom: 1.5rem;
-    }
+    .hero { max-width: 800px; margin: 0 auto; padding: 7rem 2rem 5rem; text-align: center; }
 
     .hero h1 {
-      font-size: clamp(2.2rem, 5vw, 3.5rem);
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-      margin-bottom: 1.25rem;
+      font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 800;
+      line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 1.25rem;
     }
-    .hero h1 em {
-      font-style: normal;
-      color: var(--accent);
-    }
+    .hero h1 em { font-style: normal; color: var(--accent); }
 
-    .hero p {
-      font-size: 1.05rem;
-      color: var(--text-2);
-      max-width: 520px;
-      margin: 0 auto 2.5rem;
-    }
+    .hero p { font-size: 1.05rem; color: var(--text-2); max-width: 520px; margin: 0 auto 2.5rem; }
 
     .hero-actions {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.75rem; flex-wrap: wrap;
     }
 
     .install-cmd {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.6rem 1rem;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-family: var(--mono);
-      font-size: 0.85rem;
-      color: var(--accent-2);
-      cursor: pointer;
-      transition: border-color 0.15s;
-      user-select: none;
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.6rem 1rem; background: var(--card);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-family: var(--mono); font-size: 0.85rem; color: var(--accent-2);
+      cursor: pointer; transition: border-color 0.15s; user-select: none;
     }
     .install-cmd:hover { border-color: var(--border-hover); }
-
-    .copy-icon {
-      color: var(--text-3);
-      font-size: 0.75rem;
-      transition: color 0.15s;
-    }
+    .copy-icon { color: var(--text-3); font-size: 0.75rem; transition: color 0.15s; }
     .install-cmd:hover .copy-icon { color: var(--text-2); }
 
     /* DEMO */
-    #demo {
-      padding: 2rem;
-      max-width: 1300px;
-      margin: 0 auto;
-    }
+    #demo { padding: 2rem; max-width: 1300px; margin: 0 auto; }
 
     .section-label {
-      text-align: center;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--accent);
-      margin-bottom: 0.75rem;
+      text-align: center; font-size: 0.7rem; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--accent); margin-bottom: 0.75rem;
     }
-
     .section-title {
-      text-align: center;
-      font-size: 1.75rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.5rem;
+      text-align: center; font-size: 1.75rem; font-weight: 700;
+      letter-spacing: -0.02em; margin-bottom: 0.5rem;
     }
+    .section-sub { text-align: center; color: var(--text-2); font-size: 0.95rem; margin-bottom: 1.5rem; }
 
-    .section-sub {
-      text-align: center;
-      color: var(--text-2);
-      font-size: 0.95rem;
-      margin-bottom: 2.5rem;
+    /* TOGGLE */
+    .demo-controls {
+      display: flex; justify-content: center; align-items: center;
+      gap: 0.5rem; margin-bottom: 2rem;
     }
+    .toggle-label { font-size: 0.78rem; color: var(--text-3); margin-right: 0.25rem; }
+    .toggle-group {
+      display: flex; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 6px; padding: 3px; gap: 2px;
+    }
+    .toggle-btn {
+      padding: 0.3rem 0.85rem; border-radius: 4px; border: none;
+      font-size: 0.78rem; font-weight: 500; cursor: pointer;
+      background: transparent; color: var(--text-3); transition: all 0.15s;
+    }
+    .toggle-btn.active { background: var(--card); color: var(--text); border: 1px solid var(--border); }
 
-    .demo-layout {
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 1.5rem;
-      align-items: start;
-    }
-
-    @media (max-width: 900px) {
-      .demo-layout { grid-template-columns: 1fr; }
-    }
+    .demo-layout { display: grid; grid-template-columns: 1fr 360px; gap: 1.5rem; align-items: start; }
+    @media (max-width: 900px) { .demo-layout { grid-template-columns: 1fr; } }
 
     /* DASHBOARD */
-    .dashboard {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
+    .dashboard { display: flex; flex-direction: column; gap: 1rem; }
 
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.75rem;
-    }
-
-    @media (max-width: 600px) {
-      .kpi-grid { grid-template-columns: 1fr; }
-    }
+    .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr; } }
 
     .kpi-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      cursor: pointer;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      outline: none;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem;
+      cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; outline: none;
     }
-    .kpi-card:hover,
-    .kpi-card:focus {
+    .kpi-card:hover, .kpi-card:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 1px var(--accent), 0 0 20px rgba(129,140,248,0.08);
     }
@@ -254,420 +158,193 @@
       box-shadow: 0 0 0 1px var(--accent), 0 0 24px rgba(129,140,248,0.12);
     }
 
-    .kpi-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-3);
-      margin-bottom: 0.5rem;
-    }
-
-    .kpi-value {
-      font-size: 1.8rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.3rem;
-    }
-
+    .kpi-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 0.5rem; }
+    .kpi-value { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.3rem; }
     .kpi-change { font-size: 0.8rem; }
     .up { color: var(--green); }
     .down { color: var(--red); }
 
-    /* TABLE */
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .panel-header { padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; font-weight: 600; }
 
-    .panel-header {
-      padding: 0.9rem 1.25rem;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-    }
-
-    th {
-      padding: 0.6rem 1.25rem;
-      text-align: left;
-      font-size: 0.72rem;
-      font-weight: 500;
-      color: var(--text-3);
-      border-bottom: 1px solid var(--border);
-    }
-
-    td {
-      padding: 0.75rem 1.25rem;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-    }
-
-    tbody tr[data-askable] {
-      cursor: pointer;
-      transition: background 0.1s;
-      outline: none;
-    }
-    tbody tr[data-askable]:hover,
-    tbody tr[data-askable]:focus {
-      background: rgba(129,140,248,0.05);
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    th { padding: 0.6rem 1.25rem; text-align: left; font-size: 0.72rem; font-weight: 500; color: var(--text-3); border-bottom: 1px solid var(--border); }
+    td { padding: 0.75rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    tbody tr[data-askable] { cursor: pointer; transition: background 0.1s; outline: none; }
+    tbody tr[data-askable]:hover, tbody tr[data-askable]:focus { background: rgba(129,140,248,0.05); }
     tbody tr[data-askable].active {
       background: rgba(129,140,248,0.08);
-      outline: 1px solid rgba(129,140,248,0.25);
-      outline-offset: -1px;
+      outline: 1px solid rgba(129,140,248,0.25); outline-offset: -1px;
     }
 
-    .badge {
-      display: inline-block;
-      padding: 0.2rem 0.55rem;
-      border-radius: 4px;
-      font-size: 0.72rem;
-      font-weight: 500;
-    }
+    .badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.72rem; font-weight: 500; }
     .badge-green { background: rgba(52,211,153,0.1); color: var(--green); }
     .badge-yellow { background: rgba(251,191,36,0.1); color: var(--yellow); }
     .badge-red { background: rgba(248,113,113,0.1); color: var(--red); }
 
     /* CHAT SIDEBAR */
     .chat-sidebar {
-      position: sticky;
-      top: 72px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      display: flex;
-      flex-direction: column;
-      height: 540px;
+      position: sticky; top: 72px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); display: flex; flex-direction: column; height: 540px;
     }
-
     .chat-header {
-      padding: 0.9rem 1.25rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
+      padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.6rem;
     }
-
     .chat-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 6px var(--green);
-      animation: glow 2s infinite;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 6px var(--green); animation: glow 2s infinite;
     }
-
-    @keyframes glow {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    .chat-title {
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-
-    .chat-sub {
-      font-size: 0.7rem;
-      color: var(--text-3);
-      margin-left: auto;
-    }
+    @keyframes glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .chat-title { font-size: 0.875rem; font-weight: 600; }
+    .chat-sub { font-size: 0.7rem; color: var(--text-3); margin-left: auto; }
 
     .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      scroll-behavior: smooth;
+      flex: 1; overflow-y: auto; padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.6rem; scroll-behavior: smooth;
     }
-
     .chat-messages::-webkit-scrollbar { width: 4px; }
     .chat-messages::-webkit-scrollbar-track { background: transparent; }
     .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-    .msg {
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-      animation: fadeUp 0.2s ease;
-    }
+    .msg { display: flex; flex-direction: column; gap: 0.2rem; animation: fadeUp 0.2s ease; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(5px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .msg-bubble {
-      padding: 0.6rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.82rem;
-      line-height: 1.55;
-    }
+    .msg-bubble { padding: 0.55rem 0.8rem; border-radius: 8px; font-size: 0.82rem; line-height: 1.5; }
 
     .msg.user .msg-bubble {
-      background: rgba(129,140,248,0.12);
-      border: 1px solid rgba(129,140,248,0.2);
-      color: var(--accent-2);
-      align-self: flex-end;
-      border-bottom-right-radius: 3px;
+      background: rgba(129,140,248,0.12); border: 1px solid rgba(129,140,248,0.2);
+      color: var(--accent-2); align-self: flex-end; border-bottom-right-radius: 3px;
     }
-
     .msg.ai .msg-bubble {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      align-self: flex-start;
-      border-bottom-left-radius: 3px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); align-self: flex-start; border-bottom-left-radius: 3px;
     }
-
     .msg.ctx .msg-bubble {
-      background: rgba(129,140,248,0.04);
-      border: 1px dashed rgba(129,140,248,0.2);
-      color: var(--text-3);
-      font-family: var(--mono);
-      font-size: 0.7rem;
-      word-break: break-all;
+      background: transparent; border: none;
+      padding: 0.25rem 0; font-family: var(--mono); font-size: 0.7rem; color: var(--text-3);
     }
-
-    .msg-label {
-      font-size: 0.67rem;
-      color: var(--text-3);
-      padding: 0 0.25rem;
-    }
+    .msg-label { font-size: 0.67rem; color: var(--text-3); padding: 0 0.25rem; }
     .msg.user .msg-label { align-self: flex-end; }
 
     .typing {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 0.65rem 0.85rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      border-bottom-left-radius: 3px;
-      align-self: flex-start;
-      width: fit-content;
+      display: flex; align-items: center; gap: 4px;
+      padding: 0.65rem 0.85rem; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 8px; border-bottom-left-radius: 3px;
+      align-self: flex-start; width: fit-content;
     }
-
     .typing span {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--text-3);
-      animation: bounce 1.2s infinite;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--text-3); animation: bounce 1.2s infinite;
     }
     .typing span:nth-child(2) { animation-delay: 0.2s; }
     .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
 
-    @keyframes bounce {
-      0%, 80%, 100% { transform: translateY(0); }
-      40% { transform: translateY(-4px); }
-    }
-
-    .context-bar {
-      padding: 0.5rem 1rem;
-      border-top: 1px solid var(--border);
-      background: var(--surface);
-      font-family: var(--mono);
-      font-size: 0.68rem;
-      color: var(--text-3);
-      min-height: 30px;
-      transition: color 0.2s;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .context-bar.live { color: var(--accent); }
-
-    .chat-input-row {
-      display: flex;
-      gap: 0.5rem;
-      padding: 0.75rem;
-      border-top: 1px solid var(--border);
-    }
-
+    .chat-input-row { display: flex; gap: 0.5rem; padding: 0.75rem; border-top: 1px solid var(--border); }
     .chat-input {
-      flex: 1;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.5rem 0.75rem;
-      font-size: 0.82rem;
-      color: var(--text);
-      font-family: var(--font);
-      outline: none;
-      transition: border-color 0.15s;
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 0.5rem 0.75rem;
+      font-size: 0.82rem; color: var(--text); font-family: var(--font); outline: none; transition: border-color 0.15s;
     }
     .chat-input::placeholder { color: var(--text-3); }
     .chat-input:focus { border-color: var(--accent); }
-
     .chat-send {
-      padding: 0.5rem 0.8rem;
-      background: var(--accent);
-      border: none;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: background 0.15s;
+      padding: 0.5rem 0.8rem; background: var(--accent); border: none;
+      border-radius: 6px; color: #fff; font-size: 0.875rem; cursor: pointer; transition: background 0.15s;
     }
     .chat-send:hover { background: var(--accent-2); }
 
+    /* CODE PANEL */
+    .code-panel {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;
+    }
+    @media (max-width: 700px) { .code-panel { grid-template-columns: 1fr; } }
+
+    .code-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .code-block-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.5rem 1rem; border-bottom: 1px solid var(--border);
+      font-size: 0.7rem; color: var(--text-3);
+    }
+    .code-block-label { font-family: var(--mono); color: var(--accent); font-weight: 500; }
+    .code-block pre {
+      padding: 0.85rem 1rem; font-family: var(--mono); font-size: 0.75rem;
+      color: var(--text-2); white-space: pre-wrap; word-break: break-all;
+      min-height: 64px; line-height: 1.6;
+    }
+    .code-block pre.empty { color: var(--text-3); font-style: italic; }
+
     /* HOW IT WORKS */
-    #how {
-      max-width: 900px;
-      margin: 6rem auto 0;
-      padding: 0 2rem;
-    }
+    #how { max-width: 900px; margin: 6rem auto 0; padding: 0 2rem; }
 
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.25rem;
-      margin-top: 2.5rem;
-    }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 2.5rem; }
+    @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
 
-    @media (max-width: 700px) {
-      .steps { grid-template-columns: 1fr; }
-    }
-
-    .step {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-    }
-
+    .step { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
     .step-num {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
-      background: rgba(129,140,248,0.1);
-      color: var(--accent);
-      font-size: 0.78rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 6px;
+      background: rgba(129,140,248,0.1); color: var(--accent);
+      font-size: 0.78rem; font-weight: 700; margin-bottom: 1rem;
     }
-
-    .step h3 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-
-    .step p {
-      font-size: 0.82rem;
-      color: var(--text-2);
-      line-height: 1.6;
-    }
+    .step h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .step p { font-size: 0.82rem; color: var(--text-2); line-height: 1.6; }
 
     code {
-      font-family: var(--mono);
-      font-size: 0.85em;
-      background: rgba(129,140,248,0.08);
-      color: var(--accent-2);
-      padding: 0.1em 0.35em;
-      border-radius: 3px;
+      font-family: var(--mono); font-size: 0.85em;
+      background: rgba(129,140,248,0.08); color: var(--accent-2);
+      padding: 0.1em 0.35em; border-radius: 3px;
     }
 
     /* PACKAGES */
-    #packages {
-      max-width: 900px;
-      margin: 5rem auto 0;
-      padding: 0 2rem;
-    }
+    #packages { max-width: 900px; margin: 5rem auto 0; padding: 0 2rem; }
 
-    .pkg-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin-top: 2.5rem;
-    }
-
-    @media (max-width: 600px) {
-      .pkg-grid { grid-template-columns: 1fr; }
-    }
+    .pkg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 2.5rem; }
+    @media (max-width: 600px) { .pkg-grid { grid-template-columns: 1fr; } }
 
     .pkg-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      text-decoration: none;
-      display: block;
-      transition: border-color 0.15s;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem;
+      text-decoration: none; display: block; transition: border-color 0.15s;
     }
     .pkg-card:hover { border-color: var(--border-hover); }
-
-    .pkg-name {
-      font-family: var(--mono);
-      font-size: 0.85rem;
-      color: var(--accent-2);
-      margin-bottom: 0.4rem;
-    }
-
-    .pkg-desc {
-      font-size: 0.8rem;
-      color: var(--text-2);
-      line-height: 1.5;
-    }
-
-    .pkg-size {
-      display: inline-block;
-      margin-top: 0.75rem;
-      font-size: 0.68rem;
-      color: var(--text-3);
-      border: 1px solid var(--border);
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-    }
+    .pkg-name { font-family: var(--mono); font-size: 0.85rem; color: var(--accent-2); margin-bottom: 0.4rem; }
+    .pkg-desc { font-size: 0.8rem; color: var(--text-2); line-height: 1.5; }
+    .pkg-size { display: inline-block; margin-top: 0.75rem; font-size: 0.68rem; color: var(--text-3); border: 1px solid var(--border); padding: 0.15rem 0.45rem; border-radius: 4px; }
 
     /* FOOTER */
     footer {
-      max-width: 900px;
-      margin: 5rem auto 0;
-      padding: 2rem;
+      max-width: 900px; margin: 5rem auto 0; padding: 2rem;
       border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.8rem;
-      color: var(--text-3);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.8rem; color: var(--text-3);
     }
-
-    footer a {
-      color: var(--text-3);
-      text-decoration: none;
-      transition: color 0.15s;
-    }
+    footer a { color: var(--text-3); text-decoration: none; transition: color 0.15s; }
     footer a:hover { color: var(--text-2); }
   </style>
 </head>
 <body>
 
 <nav>
-  <a href="#" class="nav-logo">ask<span>able</span></a>
+  <a href="#" class="nav-logo">
+    <div class="nav-icon">A</div>
+    askable<span>-ui</span>
+  </a>
   <div class="nav-links">
     <a href="#demo" class="nav-link">Demo</a>
     <a href="#how" class="nav-link">How it works</a>
     <a href="#packages" class="nav-link">Packages</a>
+    <a href="https://github.com/askable-ui/askable" class="nav-repo" target="_blank">github.com/askable-ui/askable</a>
     <a href="https://github.com/askable-ui/askable" class="btn btn-outline" target="_blank">★ GitHub</a>
   </div>
 </nav>
 
 <section class="hero">
-  <div class="hero-badge">⚡ LLM-aware UI context</div>
   <h1>Your UI knows<br>what the user <em>sees.</em></h1>
   <p>Add <code>data-askable</code> to any element. Call <code>ctx.toPromptContext()</code> at your AI boundary. One attribute. Zero boilerplate.</p>
   <div class="hero-actions">
@@ -682,7 +359,15 @@
 <section id="demo">
   <p class="section-label">Live demo</p>
   <h2 class="section-title">Click anything. Watch the AI know.</h2>
-  <p class="section-sub">The assistant on the right sees exactly what you're focused on — powered by <code>@askable-ui/core</code>.</p>
+  <p class="section-sub">The assistant sees exactly what you're focused on — powered by <code>@askable-ui/core</code>.</p>
+
+  <div class="demo-controls">
+    <span class="toggle-label">Trigger on:</span>
+    <div class="toggle-group">
+      <button class="toggle-btn active" data-mode="hover">Hover</button>
+      <button class="toggle-btn" data-mode="click">Click</button>
+    </div>
+  </div>
 
   <div class="demo-layout">
 
@@ -719,28 +404,22 @@
         <div class="panel-header">Top Accounts</div>
         <table>
           <thead>
-            <tr>
-              <th>Company</th><th>MRR</th><th>Plan</th><th>Status</th>
-            </tr>
+            <tr><th>Company</th><th>MRR</th><th>Plan</th><th>Status</th></tr>
           </thead>
           <tbody>
-            <tr tabindex="0"
-              data-askable='{"widget":"account_row","company":"Acme Corp","mrr":"$8,400","plan":"Enterprise","status":"healthy"}'>
+            <tr tabindex="0" data-askable='{"widget":"account_row","company":"Acme Corp","mrr":"$8,400","plan":"Enterprise","status":"healthy"}'>
               <td>Acme Corp</td><td>$8,400</td><td>Enterprise</td>
               <td><span class="badge badge-green">Healthy</span></td>
             </tr>
-            <tr tabindex="0"
-              data-askable='{"widget":"account_row","company":"Globex Inc","mrr":"$5,200","plan":"Business","status":"at_risk","last_login":"14 days ago"}'>
+            <tr tabindex="0" data-askable='{"widget":"account_row","company":"Globex Inc","mrr":"$5,200","plan":"Business","status":"at_risk","last_login":"14 days ago"}'>
               <td>Globex Inc</td><td>$5,200</td><td>Business</td>
               <td><span class="badge badge-yellow">At Risk</span></td>
             </tr>
-            <tr tabindex="0"
-              data-askable='{"widget":"account_row","company":"Initech","mrr":"$3,900","plan":"Business","status":"churned","churned_date":"2024-10-01"}'>
+            <tr tabindex="0" data-askable='{"widget":"account_row","company":"Initech","mrr":"$3,900","plan":"Business","status":"churned","churned_date":"2024-10-01"}'>
               <td>Initech</td><td>$3,900</td><td>Business</td>
               <td><span class="badge badge-red">Churned</span></td>
             </tr>
-            <tr tabindex="0"
-              data-askable='{"widget":"account_row","company":"Umbrella Ltd","mrr":"$2,100","plan":"Starter","status":"healthy","growth":"expanding"}'>
+            <tr tabindex="0" data-askable='{"widget":"account_row","company":"Umbrella Ltd","mrr":"$2,100","plan":"Starter","status":"healthy","growth":"expanding"}'>
               <td>Umbrella Ltd</td><td>$2,100</td><td>Starter</td>
               <td><span class="badge badge-green">Healthy</span></td>
             </tr>
@@ -758,11 +437,10 @@
       </div>
       <div class="chat-messages" id="chat-messages">
         <div class="msg ai">
-          <div class="msg-bubble">Hi! Click or hover any card or row on the dashboard — I'll instantly see what you're looking at.</div>
+          <div class="msg-bubble">Hover or click any element — I'll see exactly what you're looking at.</div>
           <span class="msg-label">Assistant</span>
         </div>
       </div>
-      <div class="context-bar" id="context-bar">ctx: waiting for focus…</div>
       <div class="chat-input-row">
         <input class="chat-input" id="chat-input" type="text" placeholder="Ask about what you're seeing…" />
         <button class="chat-send" id="chat-send">↑</button>
@@ -770,6 +448,25 @@
     </div>
 
   </div>
+
+  <!-- Code panel -->
+  <div class="code-panel">
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-block-label">data-askable attribute</span>
+        <span>metadata on the element</span>
+      </div>
+      <pre id="code-attr" class="empty">hover or click an element above…</pre>
+    </div>
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-block-label">ctx.toPromptContext()</span>
+        <span>injected into your system prompt</span>
+      </div>
+      <pre id="code-ctx" class="empty">waiting for focus…</pre>
+    </div>
+  </div>
+
 </section>
 
 <section id="how">
@@ -779,17 +476,17 @@
     <div class="step">
       <div class="step-num">1</div>
       <h3>Annotate</h3>
-      <p>Add <code>data-askable</code> to any element with a JSON payload — metric name, value, whatever context your AI needs.</p>
+      <p>Add <code>data-askable</code> to any element. The attribute holds metadata for your AI — the div itself can contain any content: charts, tables, text, images, whatever.</p>
     </div>
     <div class="step">
       <div class="step-num">2</div>
       <h3>Observe</h3>
-      <p>Call <code>ctx.observe(document)</code> once. askable attaches listeners to every annotated element — click, focus, hover.</p>
+      <p>Call <code>ctx.observe(document)</code> once. askable attaches listeners to every annotated element — click, focus, hover. MutationObserver handles dynamic content.</p>
     </div>
     <div class="step">
       <div class="step-num">3</div>
       <h3>Inject</h3>
-      <p>At your AI boundary, call <code>ctx.toPromptContext()</code>. Drop it into your system prompt. The model knows exactly what the user sees.</p>
+      <p>At your AI boundary, call <code>ctx.toPromptContext()</code>. Drop the string into your system prompt. The model knows exactly what the user is looking at.</p>
     </div>
   </div>
 </section>
@@ -831,36 +528,55 @@
 </footer>
 
 <script type="module">
-  import { createAskableContext } from 'https://esm.sh/@askable-ui/core@0.1.0';
+  import { createAskableContext } from './lib/index.js';
 
   const ctx = createAskableContext();
-  ctx.observe(document);
-
-  const messagesEl = document.getElementById('chat-messages');
-  const contextBar  = document.getElementById('context-bar');
+  const messagesEl  = document.getElementById('chat-messages');
   const chatInput   = document.getElementById('chat-input');
   const chatSend    = document.getElementById('chat-send');
+  const codeAttr    = document.getElementById('code-attr');
+  const codeCtx     = document.getElementById('code-ctx');
 
-  let activeEl = null;
-  let typingTimer = null;
-  let lastKey = null;
+  let activeEl     = null;
+  let typingTimer  = null;
+  let lastKey      = null;
+  let mode         = 'hover'; // 'hover' | 'click'
+  let lastEventType = null;
 
+  // Observe once — library fires on hover + click + focus
+  ctx.observe(document);
+
+  // Track last interaction type so the toggle can filter
+  document.querySelectorAll('[data-askable]').forEach(el => {
+    el.addEventListener('mouseenter', () => { lastEventType = 'hover'; });
+    el.addEventListener('click',      () => { lastEventType = 'click'; });
+  });
+
+  // Toggle just switches the filter mode
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      lastKey = null; // reset so next interaction fires fresh
+    });
+  });
+
+  // --- Responses ---
   const responses = {
-    revenue:     "MRR is up 12.4% to $128,400 — solid month. You're outpacing churn right now. On track for a strong quarter if this holds.",
-    churn:       "Churn improved to 3.2%, down 0.8pp. That's below the typical SaaS SMB benchmark of ~5%. Trend is heading the right direction.",
-    arpu:        "ARPU dipped to $42.10 (-2.1%). Worth checking if recent signups are skewing toward lower tiers — could dilute revenue quality even as MRR grows.",
-    nps:         "NPS of 67 is excellent — well above the 44 industry average. Strong promoter base. Good time to lean into referral programs.",
-    account_row: (meta) => {
-      if (meta.status === 'at_risk')  return `Globex hasn't logged in for ${meta.last_login}. At $5,200 MRR that's worth a proactive outreach this week.`;
-      if (meta.status === 'churned')  return `Initech churned Oct 1st — $3,900 MRR lost. Worth a win-back sequence if the relationship ended well.`;
-      if (meta.growth === 'expanding') return `Umbrella is on Starter and showing expansion signals. Moving to Business could add ~$3k MRR.`;
-      return `Acme Corp is healthy at $8,400 MRR on Enterprise. Good candidate to feature as a success story in your next QBR.`;
+    revenue:     "Up 12.4% — $128,400 MRR. On track.",
+    churn:       "3.2% churn, down 0.8pp. Below the ~5% benchmark.",
+    arpu:        "ARPU slipped to $42.10 (-2.1%). Check plan mix.",
+    nps:         "NPS 67, well above the 44 industry avg.",
+    account_row: (m) => {
+      if (m.status === 'at_risk')   return `${m.company}: no login for ${m.last_login}. Reach out this week.`;
+      if (m.status === 'churned')   return `${m.company} churned Oct 1. Win-back candidate.`;
+      if (m.growth === 'expanding') return `${m.company}: expansion signal. Upsell to Business adds ~$3k MRR.`;
+      return `${m.company}: healthy at ${m.mrr} MRR. Good QBR story.`;
     },
   };
 
-  function scrollBottom() {
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }
+  function scrollBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
 
   function addMsg(type, text) {
     const wrap   = document.createElement('div');
@@ -868,60 +584,67 @@
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble';
     bubble.textContent = text;
-    const label  = document.createElement('span');
-    label.className = 'msg-label';
-    label.textContent = type === 'ai' ? 'Assistant' : type === 'user' ? 'You' : 'askable ctx';
-    wrap.append(bubble, label);
+    wrap.appendChild(bubble);
+    if (type !== 'ctx') {
+      const label = document.createElement('span');
+      label.className = 'msg-label';
+      label.textContent = type === 'ai' ? 'Assistant' : 'You';
+      wrap.appendChild(label);
+    }
     messagesEl.appendChild(wrap);
     scrollBottom();
   }
 
   function showTyping() {
     const el = document.createElement('div');
-    el.className = 'typing';
-    el.id = 'typing';
+    el.className = 'typing'; el.id = 'typing';
     el.innerHTML = '<span></span><span></span><span></span>';
     messagesEl.appendChild(el);
     scrollBottom();
   }
 
-  function removeTyping() {
-    document.getElementById('typing')?.remove();
-  }
+  function removeTyping() { document.getElementById('typing')?.remove(); }
 
+  // --- askable focus handler ---
   ctx.on('focus', (focus) => {
-    const prompt = ctx.toPromptContext();
-    contextBar.textContent = prompt.length > 72 ? prompt.slice(0, 72) + '…' : prompt;
-    contextBar.classList.add('live');
+    if (mode === 'click' && lastEventType !== 'click') return;
 
+    const meta   = typeof focus.meta === 'string' ? JSON.parse(focus.meta) : focus.meta;
+    const prompt = ctx.toPromptContext();
+    const key    = JSON.stringify(meta);
+    if (key === lastKey) return;
+    lastKey = key;
+
+    // Update code panel
+    codeAttr.textContent = `data-askable='${JSON.stringify(meta, null, 2)}'`;
+    codeAttr.classList.remove('empty');
+    codeCtx.textContent  = prompt;
+    codeCtx.classList.remove('empty');
+
+    // Highlight element
     if (activeEl) activeEl.classList.remove('active');
     activeEl = focus.element;
     activeEl.classList.add('active');
 
-    const meta = typeof focus.meta === 'string' ? JSON.parse(focus.meta) : focus.meta;
-    const key  = JSON.stringify(meta);
-    if (key === lastKey) return;
-    lastKey = key;
-
+    // Show context + respond
     clearTimeout(typingTimer);
     removeTyping();
-
-    addMsg('ctx', prompt);
+    addMsg('ctx', `→ ${prompt}`);
     showTyping();
 
     typingTimer = setTimeout(() => {
       removeTyping();
       const r = responses[meta.widget];
-      addMsg('ai', typeof r === 'function' ? r(meta) : (r ?? `You're focused on ${meta.widget}.`));
-    }, 900);
+      addMsg('ai', typeof r === 'function' ? r(meta) : (r ?? `Focused on ${meta.widget}.`));
+    }, 750);
   });
 
+  // --- Chat input ---
   function send() {
     const text = chatInput.value.trim();
     if (!text) return;
     chatInput.value = '';
     addMsg('user', text);
-
     clearTimeout(typingTimer);
     removeTyping();
     showTyping();
@@ -930,25 +653,20 @@
       removeTyping();
       const lower = text.toLowerCase();
       let reply;
-      if (lower.includes('risk') || lower.includes('churn')) {
-        reply = "Globex Inc hasn't logged in for 14 days and is flagged at-risk. Recommend outreach this week.";
-      } else if (lower.includes('summar') || lower.includes('overview')) {
-        reply = "MRR $128,400 (+12.4%). Churn improving at 3.2%. One at-risk account (Globex). NPS 67 — above industry avg. ARPU slightly down, worth monitoring.";
-      } else if (lower.includes('upsell') || lower.includes('expand')) {
-        reply = "Umbrella Ltd is on Starter with expansion signals — best upsell candidate. Moving to Business adds ~$3k MRR.";
-      } else {
-        const prompt = ctx.toPromptContext();
-        reply = prompt
-          ? `I can see you're focused on the dashboard. What specifically would you like to know?`
-          : "Click on a dashboard element first and I'll give you context-aware insights.";
-      }
+      if (lower.includes('risk'))                       reply = "Globex Inc — no login for 14 days. Reach out.";
+      else if (lower.includes('summar') || lower.includes('overview')) reply = "MRR $128,400 (+12.4%). Churn 3.2% (improving). NPS 67. One at-risk account (Globex). ARPU slightly down.";
+      else if (lower.includes('upsell'))                reply = "Umbrella Ltd on Starter — expansion signals. Best upsell candidate.";
+      else reply = ctx.toPromptContext()
+        ? "I can see your current context. What specifically do you want to know?"
+        : "Hover or click a dashboard element first.";
       addMsg('ai', reply);
-    }, 1000);
+    }, 900);
   }
 
   chatSend.addEventListener('click', send);
   chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
+  // --- Copy install cmd ---
   document.getElementById('install-copy').addEventListener('click', () => {
     navigator.clipboard.writeText('npm install @askable-ui/core').then(() => {
       const el = document.getElementById('copy-icon');
