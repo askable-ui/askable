@@ -1,105 +1,117 @@
 # askable
 
-> Give any UI element LLM awareness with one attribute.
+> Make your UI understandable to an LLM — with one attribute.
 
 [![npm](https://img.shields.io/npm/v/@askable-ui/core?color=6366f1&label=npm)](https://www.npmjs.com/package/@askable-ui/core)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@askable-ui/core?color=6366f1&label=~1kb)](https://bundlephobia.com/package/@askable-ui/core)
 [![license](https://img.shields.io/npm/l/@askable-ui/core?color=6366f1)](./LICENSE)
 [![tests](https://img.shields.io/badge/tests-50%20passing-22c55e)](./packages)
 
-Your LLM doesn't know what the user is looking at. They click a chart, hover an error row, focus a form field — then ask *"what's wrong?"* Your AI answers with a guess.
+LLMs can only answer well if they know what the user is pointing at.
 
-**askable** fixes this in one attribute. Works with React, Vue, Svelte, Streamlit, Django, or plain HTML.
+In most apps, they don't. The user clicks a chart, hovers an error row, or focuses a field and asks *"what's wrong?"* — but the model only sees the text of the question. So it guesses.
+
+**askable** gives the model the missing UI context. Attach the same structured data that already powers your interface, and askable turns the user's current focus into prompt-ready context automatically.
+
+**Why askable exists:** app UIs are rich with meaning, but LLM calls usually throw that meaning away. askable closes that gap without forcing you to rebuild your app around a custom AI layer.
+
+Works with React, Vue, Svelte, Streamlit, Django, or plain HTML.
 
 ---
 
-## The problem
+## Why it matters
 
-Your LLM doesn't know what the user is looking at. They click a chart, focus an error row, hover a pricing plan — then ask *"what's wrong?"* or *"is this good?"*. Without context, your AI guesses.
+- **Stop generic answers.** Give the model the exact chart, row, card, or field the user is interacting with.
+- **Reuse the data you already have.** The same API payload that renders the UI becomes AI context.
+- **Add it incrementally.** Start with a single component, route, or workflow.
+- **Keep the integration tiny.** One attribute on the UI, one line to observe, one string into your LLM call.
 
-askable solves this by letting you attach metadata to any element. When the user interacts with it, that metadata becomes part of the prompt automatically.
+## The payoff in one example
 
-## The magic moment
+**Without askable**
 
-**Without askable:**
-```
-User clicks a revenue chart. Types: "why is this dropping?"
+```text
+User clicks a revenue chart and asks: "why is this dropping?"
 
 LLM receives: "why is this dropping?"
-LLM answers:  "Revenue can decline due to many factors such as..."
+LLM answers:  "Revenue can decline for many reasons..."
 ```
 
-**With askable:**
+**With askable**
+
 ```tsx
-// Same data from your API renders the UI AND feeds the AI
 const { data } = useFetch('/api/metrics/revenue');
 
-<Askable meta={data}>        {/* ← data-askable set from API response */}
-  <RevenueChart data={data} /> {/* ← same data renders the chart */}
+<Askable meta={data}>
+  <RevenueChart data={data} />
 </Askable>
 ```
+
+```text
+User clicks the chart and asks: "why is this dropping?"
+
+LLM receives:
+UI context: metric=revenue, period=Q3, delta=-12%, prev=$2.6M, curr=$2.3M
+Question: why is this dropping?
+
+LLM answers:
+"Your Q3 revenue is down 12% from $2.6M to $2.3M. Based on the chart you're
+looking at, the likely causes are..."
 ```
-User clicks that div. Types: "why is this dropping?"
 
-LLM receives: "UI context: User is focused on: metric: revenue, period: Q3,
-              delta: -12%, prev: $2.6M, curr: $2.3M
-              Question: why is this dropping?"
+Same UI. Same data. Much better prompt.
 
-LLM answers:  "Your Q3 revenue fell 12% from $2.6M to $2.3M. Looking at the
-              data you're viewing, the most likely causes are..."
-```
+## How it works
 
-One attribute. The same data that renders your UI gives the AI context — no duplication, no hardcoding.
+1. Add metadata to any meaningful element with `data-askable` (or a framework wrapper).
+2. Observe user interactions like click, hover, or focus.
+3. Inject the current context into your LLM call.
 
-## Works anywhere there's UI
+That’s it.
 
-askable isn't dashboard-specific. Any element that carries meaning for a user is a candidate. The data you already have from your API is the metadata — no duplication needed:
+## Works anywhere there’s UI
+
+askable is not dashboard-specific. Any element with user meaning can become AI-readable:
 
 ```tsx
-{/* E-commerce: product card — product data from your catalog API */}
+{/* E-commerce */}
 <Askable meta={product}>
   <ProductCard product={product} />
 </Askable>
 
-{/* Support: error log — each row from your logging API */}
+{/* Support / ops */}
 {errors.map(err => (
   <Askable as="tr" key={err.id} meta={err}>
     <td>{err.service}</td><td>{err.code}</td><td>{err.count}×</td>
   </Askable>
 ))}
 
-{/* SaaS: pricing plan — plan data from config */}
+{/* Pricing */}
 <Askable meta={plan}>
   <PricingCard plan={plan} />
 </Askable>
 
-{/* Form: field with validation state */}
+{/* Forms */}
 <Askable meta={{ field: 'company_url', error: validation.error, attempts }}>
   <input value={url} />
 </Askable>
 ```
 
-The content inside the element is whatever your UI renders. The `data-askable` attribute is the same data that powers your component — it tells the AI what the element *means*, not what it looks like.
-
----
-
 ## Install
 
 ```bash
-# Zero-dependency core — works anywhere
+# Core package
 npm install @askable-ui/core
 
 # Framework bindings
-npm install @askable-ui/react    # React 17+
-npm install @askable-ui/vue      # Vue 3
-npm install @askable-ui/svelte   # Svelte 4
+npm install @askable-ui/react
+npm install @askable-ui/vue
+npm install @askable-ui/svelte
 
 # Python
-pip install askable-streamlit  # Streamlit
-pip install askable-django     # Django 4+
+pip install askable-streamlit
+pip install askable-django
 ```
-
----
 
 ## 30-second quickstart
 
@@ -109,28 +121,29 @@ pip install askable-django     # Django 4+
 <script type="module">
   import { createAskableContext } from 'https://esm.sh/@askable-ui/core';
 
-  // 1. Your API data drives both the UI and the AI context
-  const data = await fetch('/api/metrics').then(r => r.json());
+  // 1) Fetch the same data you already use to render the UI
+  const metrics = await fetch('/api/metrics').then(r => r.json());
 
-  data.forEach(metric => {
+  // 2) Attach that data to the elements the user can ask about
+  for (const metric of metrics) {
     const el = document.createElement('div');
-    el.setAttribute('data-askable', JSON.stringify(metric)); // ← same data
-    el.innerHTML = `<h3>${metric.label}</h3><p>${metric.value}</p>`;  // ← renders UI
+    el.setAttribute('data-askable', JSON.stringify(metric));
+    el.innerHTML = `<h3>${metric.label}</h3><p>${metric.value}</p>`;
     document.getElementById('metrics').appendChild(el);
-  });
+  }
 
-  // 2. One line to start observing
-  const ctx = createAskableContext();
-  ctx.observe(document);
+  // 3) Observe the page and turn the current UI focus into prompt context
+  const askable = createAskableContext();
+  askable.observe(document);
 
-  // 3. Inject into any LLM call
+  // 4) Send that context along with the user question
   async function ask(question) {
     const res = await fetch('/api/chat', {
       method: 'POST',
       body: JSON.stringify({
         messages: [
-          { role: 'system', content: `UI context: ${ctx.toPromptContext()}` },
-          { role: 'user',   content: question },
+          { role: 'system', content: `UI context: ${askable.toPromptContext()}` },
+          { role: 'user', content: question },
         ],
       }),
     });
