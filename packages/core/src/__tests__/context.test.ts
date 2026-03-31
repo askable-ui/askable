@@ -21,6 +21,7 @@ describe('createAskableContext', () => {
     expect(typeof ctx.on).toBe('function');
     expect(typeof ctx.off).toBe('function');
     expect(typeof ctx.toPromptContext).toBe('function');
+    expect(typeof (ctx as any).serializeFocus).toBe('function');
     expect(typeof ctx.destroy).toBe('function');
     ctx.destroy();
   });
@@ -46,6 +47,72 @@ describe('createAskableContext', () => {
     expect(focus!.text).toBe('Revenue Chart');
     expect(typeof focus!.timestamp).toBe('number');
     expect(focus!.element).toBe(el);
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('serializeFocus() returns null when nothing is focused', () => {
+    const ctx = createAskableContext();
+    ctx.observe(document);
+    expect((ctx as any).serializeFocus()).toBeNull();
+    ctx.destroy();
+  });
+
+  it('serializeFocus() returns structured focused data', () => {
+    const el = makeEl({ metric: 'churn', value: '4.2%' }, 'Churn Rate');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    expect((ctx as any).serializeFocus()).toEqual({
+      meta: { metric: 'churn', value: '4.2%' },
+      text: 'Churn Rate',
+      timestamp: expect.any(Number),
+    });
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('serializeFocus() respects includeText and maxTextLength', () => {
+    const el = makeEl({ metric: 'churn' }, 'ABCDEFGHIJ');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    expect((ctx as any).serializeFocus({ includeText: false })).toEqual({
+      meta: { metric: 'churn' },
+      timestamp: expect.any(Number),
+    });
+
+    expect((ctx as any).serializeFocus({ maxTextLength: 5 })).toEqual({
+      meta: { metric: 'churn' },
+      text: 'ABCDE',
+      timestamp: expect.any(Number),
+    });
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('serializeFocus() respects excludeKeys and keyOrder', () => {
+    const el = makeEl({ z: 1, metric: 'churn', secret: 'x', value: '4.2%' }, 'Churn Rate');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    expect((ctx as any).serializeFocus({
+      excludeKeys: ['secret'],
+      keyOrder: ['metric', 'value'],
+      includeText: false,
+    })).toEqual({
+      meta: { metric: 'churn', value: '4.2%', z: 1 },
+      timestamp: expect.any(Number),
+    });
 
     ctx.destroy();
     cleanup(el);
