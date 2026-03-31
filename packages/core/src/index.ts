@@ -8,6 +8,7 @@ export type {
   AskableFocus,
   AskablePromptContextOptions,
   AskablePromptFormat,
+  AskableSerializedFocus,
 } from './types.js';
 
 import { AskableContextImpl } from './context.js';

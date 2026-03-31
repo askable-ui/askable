@@ -45,6 +45,12 @@ export interface AskablePromptContextOptions {
   textLabel?: string;
 }
 
+export interface AskableSerializedFocus {
+  meta: Record<string, unknown> | string;
+  text?: string;
+  timestamp: number;
+}
+
 export interface AskableContext {
   /** Observe a DOM subtree for [data-askable] elements */
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void;
@@ -58,6 +64,8 @@ export interface AskableContext {
   off<K extends AskableEventName>(event: K, handler: AskableEventHandler<K>): void;
   /** Programmatically select an element — use for explicit "Ask AI" buttons */
   select(element: HTMLElement): void;
+  /** Serialize current focus to structured prompt-ready data */
+  serializeFocus(options?: AskablePromptContextOptions): AskableSerializedFocus | null;
   /** Serialize current focus to a prompt-ready string */
   toPromptContext(options?: AskablePromptContextOptions): string;
   /** Clean up all listeners and observers */

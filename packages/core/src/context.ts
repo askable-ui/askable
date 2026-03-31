@@ -7,6 +7,7 @@ import type {
   AskableFocus,
   AskableObserveOptions,
   AskablePromptContextOptions,
+  AskableSerializedFocus,
 } from './types.js';
 
 export class AskableContextImpl implements AskableContext {
@@ -49,16 +50,12 @@ export class AskableContextImpl implements AskableContext {
     }
   }
 
-  toPromptContext(options?: AskablePromptContextOptions): string {
+  serializeFocus(options?: AskablePromptContextOptions): AskableSerializedFocus | null {
     const focus = this.currentFocus;
-    const format = options?.format ?? 'natural';
-
-    if (!focus) return format === 'json' ? 'null' : 'No UI element is currently focused.';
+    if (!focus) return null;
 
     const includeText = options?.includeText ?? true;
     const maxTextLength = options?.maxTextLength;
-    const textLabel = options?.textLabel ?? 'value';
-    const prefix = options?.prefix ?? 'User is focused on:';
 
     const meta = typeof focus.meta === 'string'
       ? focus.meta
@@ -66,21 +63,33 @@ export class AskableContextImpl implements AskableContext {
 
     const text = includeText ? this.normalizeText(focus.text, maxTextLength) : '';
 
+    return {
+      meta,
+      ...(text ? { text } : {}),
+      timestamp: focus.timestamp,
+    };
+  }
+
+  toPromptContext(options?: AskablePromptContextOptions): string {
+    const format = options?.format ?? 'natural';
+    const serialized = this.serializeFocus(options);
+
+    if (!serialized) return format === 'json' ? 'null' : 'No UI element is currently focused.';
+
     if (format === 'json') {
-      return JSON.stringify({
-        meta,
-        text: text || undefined,
-        timestamp: focus.timestamp,
-      });
+      return JSON.stringify(serialized);
     }
 
-    const metaStr = typeof meta === 'string'
-      ? meta
-      : Object.entries(meta).map(([k, v]) => `${k}: ${String(v)}`).join(', ');
+    const textLabel = options?.textLabel ?? 'value';
+    const prefix = options?.prefix ?? 'User is focused on:';
+
+    const metaStr = typeof serialized.meta === 'string'
+      ? serialized.meta
+      : Object.entries(serialized.meta).map(([k, v]) => `${k}: ${String(v)}`).join(', ');
 
     const parts: string[] = [prefix];
     if (metaStr) parts.push(metaStr);
-    if (text) parts.push(`${textLabel} "${text}"`);
+    if (serialized.text) parts.push(`${textLabel} "${serialized.text}"`);
 
     return parts.join(' — ');
   }
