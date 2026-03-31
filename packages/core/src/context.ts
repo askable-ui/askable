@@ -6,6 +6,7 @@ import type {
   AskableEventName,
   AskableFocus,
   AskableObserveOptions,
+  AskablePromptContextOptions,
 } from './types.js';
 
 export class AskableContextImpl implements AskableContext {
@@ -48,23 +49,38 @@ export class AskableContextImpl implements AskableContext {
     }
   }
 
-  toPromptContext(): string {
+  toPromptContext(options?: AskablePromptContextOptions): string {
     const focus = this.currentFocus;
-    if (!focus) return 'No UI element is currently focused.';
+    const format = options?.format ?? 'natural';
 
-    const meta = focus.meta;
-    let metaStr = '';
+    if (!focus) return format === 'json' ? 'null' : 'No UI element is currently focused.';
 
-    if (typeof meta === 'string') {
-      metaStr = meta;
-    } else {
-      const parts = Object.entries(meta).map(([k, v]) => `${k}: ${String(v)}`);
-      metaStr = parts.join(', ');
+    const includeText = options?.includeText ?? true;
+    const maxTextLength = options?.maxTextLength;
+    const textLabel = options?.textLabel ?? 'value';
+    const prefix = options?.prefix ?? 'User is focused on:';
+
+    const meta = typeof focus.meta === 'string'
+      ? focus.meta
+      : this.normalizeMeta(focus.meta, options);
+
+    const text = includeText ? this.normalizeText(focus.text, maxTextLength) : '';
+
+    if (format === 'json') {
+      return JSON.stringify({
+        meta,
+        text: text || undefined,
+        timestamp: focus.timestamp,
+      });
     }
 
-    const parts: string[] = ['User is focused on:'];
+    const metaStr = typeof meta === 'string'
+      ? meta
+      : Object.entries(meta).map(([k, v]) => `${k}: ${String(v)}`).join(', ');
+
+    const parts: string[] = [prefix];
     if (metaStr) parts.push(metaStr);
-    if (focus.text) parts.push(`value "${focus.text}"`);
+    if (text) parts.push(`${textLabel} "${text}"`);
 
     return parts.join(' — ');
   }
@@ -73,5 +89,32 @@ export class AskableContextImpl implements AskableContext {
     this.observer.unobserve();
     this.emitter.clear();
     this.currentFocus = null;
+  }
+
+  private normalizeMeta(
+    meta: Record<string, unknown>,
+    options?: AskablePromptContextOptions
+  ): Record<string, unknown> {
+    const exclude = new Set(options?.excludeKeys ?? []);
+    const entries = Object.entries(meta).filter(([key]) => !exclude.has(key));
+    const keyOrder = options?.keyOrder ?? [];
+
+    if (keyOrder.length === 0) return Object.fromEntries(entries);
+
+    const ordered = [...entries].sort(([a], [b]) => {
+      const ai = keyOrder.indexOf(a);
+      const bi = keyOrder.indexOf(b);
+      const aRank = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
+      const bRank = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
+      if (aRank !== bRank) return aRank - bRank;
+      return 0;
+    });
+
+    return Object.fromEntries(ordered);
+  }
+
+  private normalizeText(text: string, maxTextLength?: number): string {
+    if (maxTextLength === undefined) return text;
+    return text.slice(0, Math.max(0, maxTextLength));
   }
 }

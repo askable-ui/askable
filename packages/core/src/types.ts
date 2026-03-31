@@ -26,6 +26,25 @@ export interface AskableObserveOptions {
   events?: AskableEvent[];
 }
 
+export type AskablePromptFormat = 'natural' | 'json';
+
+export interface AskablePromptContextOptions {
+  /** Output format. Defaults to natural language. */
+  format?: AskablePromptFormat;
+  /** Include extracted text in serialized output. Defaults to true. */
+  includeText?: boolean;
+  /** Optional text truncation length. No limit by default. */
+  maxTextLength?: number;
+  /** Exclude specific meta keys when meta is an object. */
+  excludeKeys?: string[];
+  /** Promote keys to the front in this order when meta is an object. */
+  keyOrder?: string[];
+  /** Prefix used in natural format. Defaults to "User is focused on:" */
+  prefix?: string;
+  /** Label used for text in natural format. Defaults to "value" */
+  textLabel?: string;
+}
+
 export interface AskableContext {
   /** Observe a DOM subtree for [data-askable] elements */
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void;
@@ -39,8 +58,8 @@ export interface AskableContext {
   off<K extends AskableEventName>(event: K, handler: AskableEventHandler<K>): void;
   /** Programmatically select an element — use for explicit "Ask AI" buttons */
   select(element: HTMLElement): void;
-  /** Serialize current focus to a natural language prompt string */
-  toPromptContext(): string;
+  /** Serialize current focus to a prompt-ready string */
+  toPromptContext(options?: AskablePromptContextOptions): string;
   /** Clean up all listeners and observers */
   destroy(): void;
 }

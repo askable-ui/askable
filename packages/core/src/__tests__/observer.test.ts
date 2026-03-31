@@ -41,7 +41,6 @@ describe('Observer', () => {
     obs.observe(document);
 
     const el = attach(makeEl({ id: 'dynamic' }, 'Dynamic'));
-    // Flush MutationObserver microtask
     await new Promise((r) => setTimeout(r, 0));
 
     el.click();
@@ -52,7 +51,7 @@ describe('Observer', () => {
   });
 
   it('parses JSON meta correctly', () => {
-    const meta = { metric: 'revenue', period: 'Q3', value: 2300000 };
+    const meta = { metric: 'revenue', period: 'Q3', value: 2300000 }; 
     const el = attach(makeEl(meta, 'Revenue'));
     const onFocus = vi.fn();
     const obs = new Observer(onFocus);
@@ -88,7 +87,7 @@ describe('Observer', () => {
     obs.unobserve();
   });
 
-  it('truncates textContent at 200 characters', () => {
+  it('does not truncate textContent by default', () => {
     const longText = 'A'.repeat(300);
     const el = attach(makeEl({ id: 'truncate' }, longText));
     const onFocus = vi.fn();
@@ -96,8 +95,8 @@ describe('Observer', () => {
     obs.observe(document);
 
     el.click();
-    expect(onFocus.mock.calls[0][0].text).toHaveLength(200);
-    expect(onFocus.mock.calls[0][0].text).toBe('A'.repeat(200));
+    expect(onFocus.mock.calls[0][0].text).toHaveLength(300);
+    expect(onFocus.mock.calls[0][0].text).toBe('A'.repeat(300));
 
     obs.unobserve();
   });
@@ -113,6 +112,6 @@ describe('Observer', () => {
 
     obs.unobserve();
     el.click();
-    expect(onFocus).toHaveBeenCalledOnce(); // no additional calls
+    expect(onFocus).toHaveBeenCalledOnce();
   });
 });

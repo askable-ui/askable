@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createAskableContext } from '../index.js';
 
 function makeEl(meta: object | string, text = 'Hello'): HTMLElement {
@@ -74,6 +74,79 @@ describe('createAskableContext', () => {
     cleanup(el);
   });
 
+  it('toPromptContext() supports JSON output', () => {
+    const el = makeEl({ metric: 'churn', value: '4.2%' }, 'Churn Rate');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    const prompt = ctx.toPromptContext({ format: 'json' });
+    expect(JSON.parse(prompt)).toEqual({
+      meta: { metric: 'churn', value: '4.2%' },
+      text: 'Churn Rate',
+      timestamp: expect.any(Number),
+    });
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('toPromptContext() can omit text', () => {
+    const el = makeEl({ metric: 'churn', value: '4.2%' }, 'Churn Rate');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    const prompt = ctx.toPromptContext({ includeText: false });
+    expect(prompt).toContain('metric: churn');
+    expect(prompt).not.toContain('value "Churn Rate"');
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('toPromptContext() can truncate text when requested', () => {
+    const el = makeEl({ metric: 'churn' }, 'ABCDEFGHIJ');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    const prompt = ctx.toPromptContext({ maxTextLength: 5 });
+    expect(prompt).toContain('value "ABCDE"');
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('toPromptContext() can exclude keys and order keys', () => {
+    const el = makeEl({ z: 1, metric: 'churn', secret: 'x', value: '4.2%' }, 'Churn Rate');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    const prompt = ctx.toPromptContext({
+      excludeKeys: ['secret'],
+      keyOrder: ['metric', 'value'],
+      includeText: false,
+    });
+    expect(prompt).toContain('metric: churn, value: 4.2%, z: 1');
+    expect(prompt).not.toContain('secret');
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('toPromptContext() returns null in JSON mode when nothing is focused', () => {
+    const ctx = createAskableContext();
+    ctx.observe(document);
+    expect(ctx.toPromptContext({ format: 'json' })).toBe('null');
+    ctx.destroy();
+  });
+
   it('on("focus") calls the handler when focus changes', () => {
     const el = makeEl({ action: 'delete' }, 'Delete');
     const ctx = createAskableContext();
@@ -102,7 +175,7 @@ describe('createAskableContext', () => {
 
     ctx.off('focus', handler);
     el.click();
-    expect(handler).toHaveBeenCalledOnce(); // still just once
+    expect(handler).toHaveBeenCalledOnce();
 
     ctx.destroy();
     cleanup(el);

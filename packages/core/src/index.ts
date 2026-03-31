@@ -6,6 +6,8 @@ export type {
   AskableEventMap,
   AskableEventName,
   AskableFocus,
+  AskablePromptContextOptions,
+  AskablePromptFormat,
 } from './types.js';
 
 import { AskableContextImpl } from './context.js';
