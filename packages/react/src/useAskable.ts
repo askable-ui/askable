@@ -19,26 +19,35 @@ export interface UseAskableResult {
   ctx: AskableContext;
 }
 
-export function useAskable(options?: { events?: AskableEvent[] }): UseAskableResult {
-  const ctx = useRef<AskableContext>(getGlobalCtx(options?.events));
+export function useAskable(options?: {
+  events?: AskableEvent[];
+  ctx?: AskableContext;
+}): UseAskableResult {
+  const usesProvidedCtx = Boolean(options?.ctx);
+  const ctx = useRef<AskableContext>(options?.ctx ?? getGlobalCtx(options?.events));
   const [focus, setFocus] = useState<AskableFocus | null>(() => ctx.current.getFocus());
 
   useEffect(() => {
-    refCount++;
     const current = ctx.current;
+
+    if (!usesProvidedCtx) {
+      refCount++;
+    }
 
     const handler = (f: AskableFocus) => setFocus(f);
     current.on('focus', handler);
 
     return () => {
       current.off('focus', handler);
-      refCount--;
-      if (refCount === 0) {
-        globalCtx?.destroy();
-        globalCtx = null;
+      if (!usesProvidedCtx) {
+        refCount--;
+        if (refCount === 0) {
+          globalCtx?.destroy();
+          globalCtx = null;
+        }
       }
     };
-  }, []);
+  }, [usesProvidedCtx]);
 
   return {
     focus,

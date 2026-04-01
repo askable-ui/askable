@@ -1,8 +1,15 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { createAskableContext } from '@askable-ui/core';
 import { useAskable } from '../useAskable';
 
-function Consumer({ targetId }: { targetId?: string }) {
-  const { focus, promptContext } = useAskable();
+function Consumer({
+  targetId,
+  ctx,
+}: {
+  targetId?: string;
+  ctx?: ReturnType<typeof createAskableContext>;
+}) {
+  const { focus, promptContext } = useAskable(ctx ? { ctx } : undefined);
   return (
     <div>
       {targetId && (
@@ -23,7 +30,6 @@ function Consumer({ targetId }: { targetId?: string }) {
   );
 }
 
-/** Flush pending microtasks (including MutationObserver callbacks). */
 async function flushMicrotasks() {
   await act(async () => {
     await Promise.resolve();
@@ -45,8 +51,6 @@ describe('useAskable', () => {
 
   it('updates focus after a click on a [data-askable] element', async () => {
     render(<Consumer targetId="revenue-chart" />);
-
-    // Let MutationObserver fire so the element's click listener is attached
     await flushMicrotasks();
 
     expect(screen.getByTestId('focus-meta').textContent).toBe('null');
@@ -96,4 +100,80 @@ describe('useAskable', () => {
     expect(prompt).toContain('User is focused on');
     expect(prompt).toContain('revenue');
   });
+
+  it('can use an explicitly provided scoped context', async () => {
+    const ctx = createAskableContext();
+    ctx.observe(document, { events: ['click'] });
+
+    render(<Consumer targetId="scoped-test" ctx={ctx} />);
+    await flushMicrotasks();
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('askable-target'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('focus-meta').textContent).not.toBe('null');
+    });
+
+    const meta = JSON.parse(screen.getByTestId('focus-meta').textContent!);
+    expect(meta).toEqual({ metric: 'revenue', period: 'Q3', value: '$2.3M' });
+
+    ctx.destroy();
+  });
+
+  it('keeps separate scoped contexts isolated', async () => {
+    const ctxA = createAskableContext();
+    const ctxB = createAskableContext();
+    ctxA.observe(document, { events: ['click'] });
+    ctxB.observe(document, { events: ['click'] });
+
+    render(
+      <>
+        <div data-testid="target-a" data-askable='{"scope":"a"}'>A</div>
+        <div data-testid="target-b" data-askable='{"scope":"b"}'>B</div>
+        <ScopedView label="a" ctx={ctxA} />
+        <ScopedView label="b" ctx={ctxB} />
+      </>
+    );
+
+    await flushMicrotasks();
+
+    act(() => {
+      ctxA.select(screen.getByTestId('target-a'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scoped-a').textContent).toContain('scope');
+    });
+
+    expect(screen.getByTestId('scoped-a').textContent).toContain('"a"');
+    expect(screen.getByTestId('scoped-b').textContent).toBe('null');
+
+    act(() => {
+      ctxB.select(screen.getByTestId('target-b'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scoped-b').textContent).toContain('"b"');
+    });
+
+    ctxA.destroy();
+    ctxB.destroy();
+  });
 });
+
+function ScopedView({
+  ctx,
+  label,
+}: {
+  ctx: ReturnType<typeof createAskableContext>;
+  label: string;
+}) {
+  const { focus } = useAskable({ ctx });
+  return (
+    <span data-testid={`scoped-${label}`}>
+      {focus ? JSON.stringify(focus.meta) : 'null'}
+    </span>
+  );
+}
