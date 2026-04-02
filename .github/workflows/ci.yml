@@ -23,8 +23,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test -- --runInBand
-
       - name: Build packages
         run: npm run build --workspaces --if-present
+
+      - name: Run tests
+        run: npm test -- --runInBand
