@@ -47,16 +47,19 @@ export class Observer {
   private boundElements = new Set<HTMLElement>();
   private onFocus: FocusCallback;
   private activeEvents: AskableEvent[] = ALL_EVENTS;
+  private hoverDebounce = 0;
+  private hoverTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(onFocus: FocusCallback) {
     this.onFocus = onFocus;
   }
 
-  observe(root: HTMLElement | Document, events: AskableEvent[] = ALL_EVENTS): void {
+  observe(root: HTMLElement | Document, events: AskableEvent[] = ALL_EVENTS, hoverDebounce = 0): void {
     if (!isBrowser()) return;
     if (this.root) this.unobserve();
     this.root = root;
     this.activeEvents = events;
+    this.hoverDebounce = hoverDebounce;
 
     const rootEl = root instanceof Document ? root.documentElement : root;
     rootEl.querySelectorAll<HTMLElement>('[data-askable]').forEach((el) => this.attach(el));
@@ -83,6 +86,10 @@ export class Observer {
     this.boundElements.forEach((el) => this.detach(el));
     this.boundElements.clear();
     this.root = null;
+    if (this.hoverTimer !== null) {
+      clearTimeout(this.hoverTimer);
+      this.hoverTimer = null;
+    }
   }
 
   private handleInteraction = (event: Event): void => {
@@ -95,6 +102,18 @@ export class Observer {
     if (target !== el) {
       const closer = target.closest('[data-askable]');
       if (closer && closer !== el && el.contains(closer)) return;
+    }
+
+    const isHover = event.type === 'mouseenter';
+
+    if (isHover && this.hoverDebounce > 0) {
+      if (this.hoverTimer !== null) clearTimeout(this.hoverTimer);
+      this.hoverTimer = setTimeout(() => {
+        this.hoverTimer = null;
+        const focus = buildFocus(el);
+        if (focus) this.onFocus(focus);
+      }, this.hoverDebounce);
+      return;
     }
 
     const focus = buildFocus(el);

@@ -24,6 +24,12 @@ export type AskableEvent = 'click' | 'hover' | 'focus';
 export interface AskableObserveOptions {
   /** Which interaction types trigger context updates. Defaults to all: ['click', 'hover', 'focus'] */
   events?: AskableEvent[];
+  /**
+   * Debounce delay in ms applied to hover (mouseenter) events.
+   * Prevents rapid context switches when the user moves the cursor across many elements.
+   * Defaults to 0 (no debounce).
+   */
+  hoverDebounce?: number;
 }
 
 export type AskablePromptFormat = 'natural' | 'json';
