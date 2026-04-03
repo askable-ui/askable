@@ -66,6 +66,8 @@ export interface AskableContext {
   unobserve(): void;
   /** Get the current focus context */
   getFocus(): AskableFocus | null;
+  /** Return the focus history, newest first. Optional limit caps the result. */
+  getHistory(limit?: number): AskableFocus[];
   /** Subscribe to an event */
   on<K extends AskableEventName>(event: K, handler: AskableEventHandler<K>): void;
   /** Unsubscribe from an event */
