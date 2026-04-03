@@ -8,6 +8,14 @@ const EVENT_MAP: Record<AskableEvent, string> = {
   focus: 'focus',
 };
 
+function isBrowser(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof document !== 'undefined' &&
+    typeof MutationObserver !== 'undefined'
+  );
+}
+
 function parseMeta(raw: string): Record<string, unknown> | string {
   try {
     return JSON.parse(raw) as Record<string, unknown>;
@@ -45,6 +53,7 @@ export class Observer {
   }
 
   observe(root: HTMLElement | Document, events: AskableEvent[] = ALL_EVENTS): void {
+    if (!isBrowser()) return;
     if (this.root) this.unobserve();
     this.root = root;
     this.activeEvents = events;

@@ -266,4 +266,16 @@ describe('createAskableContext', () => {
 
     cleanup(el);
   });
+
+  it('observe() is a no-op when called outside a browser environment', () => {
+    const win = globalThis.window;
+    Object.defineProperty(globalThis, 'window', { value: undefined, configurable: true });
+
+    const ctx = createAskableContext();
+    expect(() => ctx.observe(document)).not.toThrow();
+    expect(ctx.getFocus()).toBeNull();
+
+    Object.defineProperty(globalThis, 'window', { value: win, configurable: true });
+    ctx.destroy();
+  });
 });
