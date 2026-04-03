@@ -6,6 +6,7 @@ export type {
   AskableEventMap,
   AskableEventName,
   AskableFocus,
+  AskableObserveOptions,
   AskablePromptContextOptions,
   AskablePromptFormat,
   AskableSerializedFocus,
