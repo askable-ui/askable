@@ -87,6 +87,16 @@ export class Observer {
 
   private handleInteraction = (event: Event): void => {
     const el = event.currentTarget as HTMLElement;
+
+    // Nested element priority: when a click/hover reaches a parent [data-askable],
+    // check if the actual target is inside a closer (nested) askable descendant that
+    // is also bound. If so, skip — the inner element takes precedence.
+    const target = event.target as HTMLElement;
+    if (target !== el) {
+      const closer = target.closest('[data-askable]');
+      if (closer && closer !== el && el.contains(closer)) return;
+    }
+
     const focus = buildFocus(el);
     if (focus) this.onFocus(focus);
   };

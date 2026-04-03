@@ -114,4 +114,22 @@ describe('Observer', () => {
     el.click();
     expect(onFocus).toHaveBeenCalledOnce();
   });
+
+  it('nested elements: innermost [data-askable] wins on click', () => {
+    const outer = attach(makeEl({ level: 'outer' }, ''));
+    const inner = makeEl({ level: 'inner' }, 'Inner text');
+    outer.appendChild(inner);
+    elements.push(inner);
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    inner.click();
+
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect((onFocus.mock.calls[0][0].meta as Record<string, unknown>).level).toBe('inner');
+
+    obs.unobserve();
+  });
 });
