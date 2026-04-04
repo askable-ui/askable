@@ -28,7 +28,12 @@ export class AskableContextImpl implements AskableContext {
   }
 
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void {
-    this.observer.observe(root, options?.events, options?.hoverDebounce ?? 0);
+    this.observer.observe(
+      root,
+      options?.events,
+      options?.hoverDebounce ?? 0,
+      options?.hoverThrottle ?? 0
+    );
   }
 
   unobserve(): void {

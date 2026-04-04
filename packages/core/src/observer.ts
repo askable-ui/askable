@@ -48,18 +48,27 @@ export class Observer {
   private onFocus: FocusCallback;
   private activeEvents: AskableEvent[] = ALL_EVENTS;
   private hoverDebounce = 0;
+  private hoverThrottle = 0;
   private hoverTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastHoverTimestamp = 0;
 
   constructor(onFocus: FocusCallback) {
     this.onFocus = onFocus;
   }
 
-  observe(root: HTMLElement | Document, events: AskableEvent[] = ALL_EVENTS, hoverDebounce = 0): void {
+  observe(
+    root: HTMLElement | Document,
+    events: AskableEvent[] = ALL_EVENTS,
+    hoverDebounce = 0,
+    hoverThrottle = 0
+  ): void {
     if (!isBrowser()) return;
     if (this.root) this.unobserve();
     this.root = root;
     this.activeEvents = events;
     this.hoverDebounce = hoverDebounce;
+    this.hoverThrottle = hoverThrottle;
+    this.lastHoverTimestamp = 0;
 
     const rootEl = root instanceof Document ? root.documentElement : root;
     rootEl.querySelectorAll<HTMLElement>('[data-askable]').forEach((el) => this.attach(el));
@@ -114,6 +123,12 @@ export class Observer {
         if (focus) this.onFocus(focus);
       }, this.hoverDebounce);
       return;
+    }
+
+    if (isHover && this.hoverThrottle > 0) {
+      const now = Date.now();
+      if (now - this.lastHoverTimestamp < this.hoverThrottle) return;
+      this.lastHoverTimestamp = now;
     }
 
     const focus = buildFocus(el);

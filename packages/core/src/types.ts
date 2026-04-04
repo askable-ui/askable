@@ -30,8 +30,15 @@ export interface AskableObserveOptions {
    * Debounce delay in ms applied to hover (mouseenter) events.
    * Prevents rapid context switches when the user moves the cursor across many elements.
    * Defaults to 0 (no debounce).
+   * When both hoverDebounce and hoverThrottle are provided, debounce takes precedence.
    */
   hoverDebounce?: number;
+  /**
+   * Throttle window in ms applied to hover (mouseenter) events.
+   * Emits at most one hover focus update per window, which can be useful for large dashboards.
+   * Defaults to 0 (no throttle).
+   */
+  hoverThrottle?: number;
 }
 
 export type AskablePromptFormat = 'natural' | 'json';
