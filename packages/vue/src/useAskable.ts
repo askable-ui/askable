@@ -5,10 +5,9 @@ import type { AskableEvent, AskableFocus, AskableContext } from '@askable-ui/cor
 let globalCtx: AskableContext | null = null;
 let refCount = 0;
 
-function getGlobalCtx(events?: AskableEvent[]): AskableContext {
+function getGlobalCtx(): AskableContext {
   if (!globalCtx) {
     globalCtx = createAskableContext();
-    globalCtx.observe(document, { events });
   }
   return globalCtx;
 }
@@ -20,7 +19,7 @@ export interface UseAskableResult {
 }
 
 export function useAskable(options?: { events?: AskableEvent[] }) {
-  const ctx = getGlobalCtx(options?.events);
+  const ctx = getGlobalCtx();
   const focus = ref<AskableFocus | null>(ctx.getFocus());
   // Reference focus.value so Vue tracks it as a reactive dependency;
   // ctx.toPromptContext() is a plain method and not itself reactive.
@@ -38,6 +37,9 @@ export function useAskable(options?: { events?: AskableEvent[] }) {
 
   onMounted(() => {
     refCount++;
+    if (typeof document !== 'undefined') {
+      ctx.observe(document, { events: options?.events });
+    }
     ctx.on('focus', handler);
     ctx.on('clear', clearHandler);
   });

@@ -5,10 +5,9 @@ import type { AskableEvent, AskableFocus, AskableContext } from '@askable-ui/cor
 let globalCtx: AskableContext | null = null;
 let refCount = 0;
 
-function getGlobalCtx(events?: AskableEvent[]): AskableContext {
+function getGlobalCtx(): AskableContext {
   if (!globalCtx) {
     globalCtx = createAskableContext();
-    globalCtx.observe(document, { events });
   }
   return globalCtx;
 }
@@ -24,7 +23,7 @@ export function useAskable(options?: {
   ctx?: AskableContext;
 }): UseAskableResult {
   const usesProvidedCtx = Boolean(options?.ctx);
-  const ctx = useRef<AskableContext>(options?.ctx ?? getGlobalCtx(options?.events));
+  const ctx = useRef<AskableContext>(options?.ctx ?? getGlobalCtx());
   const [focus, setFocus] = useState<AskableFocus | null>(() => ctx.current.getFocus());
 
   useEffect(() => {
@@ -32,6 +31,9 @@ export function useAskable(options?: {
 
     if (!usesProvidedCtx) {
       refCount++;
+      if (typeof document !== 'undefined') {
+        current.observe(document, { events: options?.events });
+      }
     }
 
     const handler = (f: AskableFocus) => setFocus(f);
@@ -50,7 +52,7 @@ export function useAskable(options?: {
         }
       }
     };
-  }, [usesProvidedCtx]);
+  }, [options?.events, usesProvidedCtx]);
 
   return {
     focus,
