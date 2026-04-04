@@ -1,3 +1,6 @@
 node_modules/
 dist/
 .DS_Store
+
+# Generated package build output
+packages/*/dist/
