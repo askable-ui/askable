@@ -58,7 +58,7 @@ const ctx = createAskableContext();
 
 The main interface for interacting with Askable.
 
-#### `observe(root: HTMLElement | Document, options?: { events?: AskableEvent[] }): void`
+#### `observe(root: HTMLElement | Document, options?: { events?: AskableEvent[]; hoverDebounce?: number; hoverThrottle?: number }): void`
 
 Start observing a DOM subtree for `[data-askable]` elements. By default listens for `click`, `focus`, and `hover` events. Pass `events` to restrict which interactions trigger a context update.
 
@@ -75,6 +75,12 @@ ctx.observe(document, { events: ['focus'] });
 // Or observe a specific subtree
 const panel = document.getElementById('main-panel');
 ctx.observe(panel, { events: ['click', 'hover'] });
+
+// Debounce hover updates until the pointer settles
+ctx.observe(document, { events: ['hover'], hoverDebounce: 75 });
+
+// Or throttle hover updates for dense UIs
+ctx.observe(document, { events: ['hover'], hoverThrottle: 100 });
 ```
 
 #### `unobserve(): void`

@@ -164,4 +164,39 @@ describe('Observer', () => {
 
     obs.unobserve();
   });
+
+  it('hover throttle: fires immediately, then suppresses rapid repeats inside the window', async () => {
+    const el = attach(makeEl({ id: 'throttle-hover' }, 'Throttle'));
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document, ['hover'], 0, 50);
+
+    el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    expect(onFocus).toHaveBeenCalledOnce();
+
+    el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    expect(onFocus).toHaveBeenCalledOnce();
+
+    await new Promise((r) => setTimeout(r, 60));
+    el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    expect(onFocus).toHaveBeenCalledTimes(2);
+
+    obs.unobserve();
+  });
+
+  it('hover debounce takes precedence when debounce and throttle are both provided', async () => {
+    const el = attach(makeEl({ id: 'hover-precedence' }, 'Priority'));
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document, ['hover'], 40, 5);
+
+    el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    expect(onFocus).not.toHaveBeenCalled();
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(onFocus).toHaveBeenCalledOnce();
+
+    obs.unobserve();
+  });
 });
