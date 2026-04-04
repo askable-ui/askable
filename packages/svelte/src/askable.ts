@@ -11,7 +11,9 @@ export interface AskableStore {
 
 export function createAskableStore(options?: { events?: AskableEvent[] }) {
   const ctx = createAskableContext();
-  ctx.observe(document, { events: options?.events });
+  if (typeof document !== 'undefined') {
+    ctx.observe(document, { events: options?.events });
+  }
 
   const _focus = writable<AskableFocus | null>(null);
   ctx.on('focus', (f) => _focus.set(f));
