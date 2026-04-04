@@ -115,6 +115,33 @@ describe('Observer', () => {
     expect(onFocus).toHaveBeenCalledOnce();
   });
 
+  it('detaches nested [data-askable] descendants when a subtree is removed', async () => {
+    const parent = attach(makeEl({ id: 'parent' }, 'Parent'));
+    const child = makeEl({ id: 'child' }, 'Child');
+    const grandchild = makeEl({ id: 'grandchild' }, 'Grandchild');
+    child.appendChild(grandchild);
+    parent.appendChild(child);
+    elements.push(child, grandchild);
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    await new Promise((r) => setTimeout(r, 0));
+    expect((obs as { boundElements: Set<HTMLElement> }).boundElements.size).toBe(3);
+
+    parent.remove();
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect((obs as { boundElements: Set<HTMLElement> }).boundElements.size).toBe(0);
+
+    child.click();
+    grandchild.click();
+    expect(onFocus).not.toHaveBeenCalled();
+
+    obs.unobserve();
+  });
+
   it('nested elements: innermost [data-askable] wins on click', () => {
     const outer = attach(makeEl({ level: 'outer' }, ''));
     const inner = makeEl({ level: 'inner' }, 'Inner text');
