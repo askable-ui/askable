@@ -81,7 +81,7 @@ export class Observer {
           node.querySelectorAll<HTMLElement>('[data-askable]').forEach((el) => this.attach(el));
         });
         mutation.removedNodes.forEach((node) => {
-          if (node instanceof HTMLElement) this.detach(node);
+          if (node instanceof HTMLElement) this.detachTree(node);
         });
       }
     });
@@ -139,6 +139,11 @@ export class Observer {
     if (this.boundElements.has(el)) return;
     this.activeEvents.forEach((e) => el.addEventListener(EVENT_MAP[e], this.handleInteraction));
     this.boundElements.add(el);
+  }
+
+  private detachTree(root: HTMLElement): void {
+    this.detach(root);
+    root.querySelectorAll<HTMLElement>('[data-askable]').forEach((el) => this.detach(el));
   }
 
   private detach(el: HTMLElement): void {
