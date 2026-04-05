@@ -9,9 +9,11 @@ export interface AskableStore {
   destroy: () => void;
 }
 
-export function createAskableStore(options?: { events?: AskableEvent[] }) {
-  const ctx = createAskableContext();
-  if (typeof document !== 'undefined') {
+export function createAskableStore(options?: { events?: AskableEvent[]; ctx?: AskableContext }) {
+  const usesProvidedCtx = Boolean(options?.ctx);
+  const ctx = options?.ctx ?? createAskableContext();
+
+  if (!usesProvidedCtx && typeof document !== 'undefined') {
     ctx.observe(document, { events: options?.events });
   }
 
@@ -23,7 +25,9 @@ export function createAskableStore(options?: { events?: AskableEvent[] }) {
   const promptContext = derived(_focus, () => ctx.toPromptContext());
 
   function destroy() {
-    ctx.destroy();
+    if (!usesProvidedCtx) {
+      ctx.destroy();
+    }
   }
 
   return { focus, promptContext, ctx, destroy };

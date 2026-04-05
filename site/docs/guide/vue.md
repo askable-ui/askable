@@ -74,6 +74,25 @@ const { focus } = useAskable({ events: ['click'] });
 | Option | Type | Description |
 |---|---|---|
 | `events` | `AskableEvent[]` | Which events trigger updates. Defaults to `['click', 'hover', 'focus']`. |
+| `ctx` | `AskableContext` | Provide a scoped context instead of the global singleton. See below. |
+
+## Scoped contexts
+
+By default, `useAskable()` shares a single global `AskableContext` across all composable instances on the page. For surfaces that need independent tracking (different event policies, prompt shaping, or redaction rules), pass a pre-created `ctx`:
+
+```ts
+import { createAskableContext } from '@askable-ui/core';
+import { useAskable } from '@askable-ui/vue';
+
+// Create once, e.g. at the module level or in a parent component
+const adminCtx = createAskableContext();
+adminCtx.observe(document.getElementById('admin-panel')!);
+
+// In a component that should only track the admin panel
+const { focus, promptContext } = useAskable({ ctx: adminCtx });
+```
+
+When a scoped `ctx` is provided, `useAskable` does not call `observe()` automatically — you control when and what the context observes. The lifecycle (destroy) is also your responsibility.
 
 **Returns:**
 | Value | Type | Description |

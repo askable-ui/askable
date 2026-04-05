@@ -28,12 +28,12 @@ function extractText(el: HTMLElement): string {
   return (el.textContent ?? '').trim();
 }
 
-export function buildFocus(el: HTMLElement): AskableFocus | null {
+export function buildFocus(el: HTMLElement, textExtractor?: (el: HTMLElement) => string): AskableFocus | null {
   const raw = el.getAttribute('data-askable');
   if (raw === null) return null;
   return {
     meta: parseMeta(raw),
-    text: extractText(el),
+    text: textExtractor ? textExtractor(el) : extractText(el),
     element: el,
     timestamp: Date.now(),
   };
@@ -46,14 +46,16 @@ export class Observer {
   private mutationObserver: MutationObserver | null = null;
   private boundElements = new Set<HTMLElement>();
   private onFocus: FocusCallback;
+  private textExtractor: ((el: HTMLElement) => string) | undefined;
   private activeEvents: AskableEvent[] = ALL_EVENTS;
   private hoverDebounce = 0;
   private hoverThrottle = 0;
   private hoverTimer: ReturnType<typeof setTimeout> | null = null;
   private lastHoverTimestamp = 0;
 
-  constructor(onFocus: FocusCallback) {
+  constructor(onFocus: FocusCallback, textExtractor?: (el: HTMLElement) => string) {
     this.onFocus = onFocus;
+    this.textExtractor = textExtractor;
   }
 
   observe(
@@ -135,7 +137,7 @@ export class Observer {
       if (this.hoverTimer !== null) clearTimeout(this.hoverTimer);
       this.hoverTimer = setTimeout(() => {
         this.hoverTimer = null;
-        const focus = buildFocus(el);
+        const focus = buildFocus(el, this.textExtractor);
         if (focus) this.onFocus(focus);
       }, this.hoverDebounce);
       return;
@@ -147,7 +149,7 @@ export class Observer {
       this.lastHoverTimestamp = now;
     }
 
-    const focus = buildFocus(el);
+    const focus = buildFocus(el, this.textExtractor);
     if (focus) this.onFocus(focus);
   };
 

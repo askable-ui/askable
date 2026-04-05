@@ -18,8 +18,9 @@ export interface UseAskableResult {
   ctx: AskableContext;
 }
 
-export function useAskable(options?: { events?: AskableEvent[] }) {
-  const ctx = getGlobalCtx();
+export function useAskable(options?: { events?: AskableEvent[]; ctx?: AskableContext }) {
+  const usesProvidedCtx = Boolean(options?.ctx);
+  const ctx = options?.ctx ?? getGlobalCtx();
   const focus = ref<AskableFocus | null>(ctx.getFocus());
   // Reference focus.value so Vue tracks it as a reactive dependency;
   // ctx.toPromptContext() is a plain method and not itself reactive.
@@ -31,14 +32,16 @@ export function useAskable(options?: { events?: AskableEvent[] }) {
   function handler(f: AskableFocus) {
     focus.value = f;
   }
-  function clearHandler() {
+  function clearHandler(_: null) {
     focus.value = null;
   }
 
   onMounted(() => {
-    refCount++;
-    if (typeof document !== 'undefined') {
-      ctx.observe(document, { events: options?.events });
+    if (!usesProvidedCtx) {
+      refCount++;
+      if (typeof document !== 'undefined') {
+        ctx.observe(document, { events: options?.events });
+      }
     }
     ctx.on('focus', handler);
     ctx.on('clear', clearHandler);
@@ -47,10 +50,12 @@ export function useAskable(options?: { events?: AskableEvent[] }) {
   onUnmounted(() => {
     ctx.off('focus', handler);
     ctx.off('clear', clearHandler);
-    refCount--;
-    if (refCount === 0) {
-      globalCtx?.destroy();
-      globalCtx = null;
+    if (!usesProvidedCtx) {
+      refCount--;
+      if (refCount === 0) {
+        globalCtx?.destroy();
+        globalCtx = null;
+      }
     }
   });
 

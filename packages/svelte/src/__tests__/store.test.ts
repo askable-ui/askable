@@ -74,4 +74,29 @@ describe('createAskableStore', () => {
     el.click();
     expect(get(store.focus)).toBeNull();
   });
+
+  it('accepts a scoped ctx and reflects events from it', async () => {
+    const { createAskableContext } = await import('@askable-ui/core');
+    const scopedCtx = createAskableContext();
+    const el = makeEl({ scope: 'provided' }, 'Scoped');
+
+    const store = createAskableStore({ ctx: scopedCtx });
+    scopedCtx.observe(document.body);
+
+    let latestFocus: unknown = null;
+    const unsub = store.focus.subscribe((f: unknown) => { latestFocus = f; });
+
+    el.click();
+
+    expect(latestFocus).not.toBeNull();
+    expect((latestFocus as any).meta).toEqual({ scope: 'provided' });
+
+    unsub();
+    // destroy() should not call ctx.destroy() when ctx is provided
+    store.destroy();
+    el.click(); // scopedCtx should still be alive
+    expect((latestFocus as any).meta).toEqual({ scope: 'provided' });
+
+    scopedCtx.destroy();
+  });
 });
