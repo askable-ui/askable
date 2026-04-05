@@ -125,8 +125,44 @@ Use this when:
 - Elements contain noisy child text (icons, timestamps, decorative strings) you want to exclude
 - You need a different representation per element type
 
+## Sanitization and redaction
+
+For production apps with sensitive data, configure context-level sanitizers when creating the context. These run at **capture time** — before the focus is stored or emitted — so sanitized values flow through all outputs: `getFocus()`, history, events, and `toPromptContext()`.
+
+### Redact metadata fields
+
+```ts
+const ctx = createAskableContext({
+  sanitizeMeta: ({ password, ssn, cardNumber, ...safe }) => safe,
+});
+```
+
+`sanitizeMeta` only applies when meta is a JSON object. Plain string meta is passed through unchanged.
+
+### Mask text content
+
+```ts
+const ctx = createAskableContext({
+  sanitizeText: (text) =>
+    text
+      .replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '[card]')
+      .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[email]'),
+});
+```
+
+### Combine both
+
+```ts
+const ctx = createAskableContext({
+  sanitizeMeta: ({ _internalId, ...safe }) => safe,
+  sanitizeText: (text) => text.replace(/\d{3}-\d{2}-\d{4}/g, '[ssn]'),
+});
+```
+
+For per-call field exclusion at serialization time, use `excludeKeys` in `toPromptContext({ excludeKeys: ['debug'] })` instead.
+
 ## What not to annotate
 
 - Generic layout wrappers with no semantic meaning (`<div class="flex">`)
 - Elements whose content is already entirely captured by a parent annotation
-- Sensitive data (passwords, payment card numbers, PII) — `excludeKeys` is available if you need to strip fields at serialization time
+- Sensitive data (passwords, payment card numbers, PII) — use `sanitizeMeta`/`sanitizeText` at context creation or `excludeKeys` at serialization time

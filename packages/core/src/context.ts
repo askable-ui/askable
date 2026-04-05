@@ -26,15 +26,29 @@ export class AskableContextImpl implements AskableContext {
   private currentFocus: AskableFocus | null = null;
   private history: AskableFocus[] = [];
   private textExtractor: ((el: HTMLElement) => string) | undefined;
+  private sanitizeMetaFn: ((meta: Record<string, unknown>) => Record<string, unknown>) | undefined;
+  private sanitizeTextFn: ((text: string) => string) | undefined;
 
   constructor(options?: AskableContextOptions) {
     this.textExtractor = options?.textExtractor;
-    this.observer = new Observer((focus) => {
+    this.sanitizeMetaFn = options?.sanitizeMeta;
+    this.sanitizeTextFn = options?.sanitizeText;
+    this.observer = new Observer((rawFocus) => {
+      const focus = this.applySanitizers(rawFocus);
       this.currentFocus = focus;
       this.history.push(focus);
       if (this.history.length > MAX_HISTORY) this.history.shift();
       this.emitter.emit('focus', focus);
     }, this.textExtractor);
+  }
+
+  private applySanitizers(focus: AskableFocus): AskableFocus {
+    if (!this.sanitizeMetaFn && !this.sanitizeTextFn) return focus;
+    const meta = this.sanitizeMetaFn && typeof focus.meta !== 'string'
+      ? this.sanitizeMetaFn(focus.meta)
+      : focus.meta;
+    const text = this.sanitizeTextFn ? this.sanitizeTextFn(focus.text) : focus.text;
+    return { ...focus, meta, text };
   }
 
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void {
@@ -68,7 +82,8 @@ export class AskableContextImpl implements AskableContext {
   }
 
   select(element: HTMLElement): void {
-    const focus = buildFocus(element, this.textExtractor);
+    const rawFocus = buildFocus(element, this.textExtractor);
+    const focus = rawFocus ? this.applySanitizers(rawFocus) : null;
     if (focus) {
       this.currentFocus = focus;
       this.history.push(focus);

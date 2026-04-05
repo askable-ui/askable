@@ -85,6 +85,40 @@ export interface AskablePromptContextOptions {
   maxTokens?: number;
 }
 
+/**
+ * Options for creating an AskableContext.
+ */
+export interface AskableContextOptions {
+  /**
+   * Custom text extractor called for each focused element.
+   * Receives the DOM element, returns the text to use as `AskableFocus.text`.
+   * Defaults to `el.textContent?.trim() ?? ''`.
+   * Applied at capture time — affects `getFocus()`, history, events, and all serialization.
+   */
+  textExtractor?: (el: HTMLElement) => string;
+  /**
+   * Sanitize or redact metadata before it is stored and emitted.
+   * Only invoked when meta is a JSON object (not a plain string).
+   * Applied at capture time — affects `getFocus()`, history, events, and all serialization.
+   *
+   * @example
+   * createAskableContext({
+   *   sanitizeMeta: ({ password, ssn, ...safe }) => safe
+   * })
+   */
+  sanitizeMeta?: (meta: Record<string, unknown>) => Record<string, unknown>;
+  /**
+   * Sanitize or redact text content before it is stored and emitted.
+   * Applied at capture time — affects `getFocus()`, history, events, and all serialization.
+   *
+   * @example
+   * createAskableContext({
+   *   sanitizeText: (text) => text.replace(/\b\d{16}\b/g, '[card]')
+   * })
+   */
+  sanitizeText?: (text: string) => string;
+}
+
 export interface AskableSerializedFocus {
   meta: Record<string, unknown> | string;
   text?: string;
