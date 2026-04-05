@@ -96,7 +96,7 @@ export default defineConfig({
     },
 
     editLink: {
-      pattern: 'https://github.com/askable-ui/askable/edit/main/site/:path',
+      pattern: 'https://github.com/askable-ui/askable/edit/main/site/docs/:path',
       text: 'Edit this page on GitHub',
     },
   },
