@@ -285,4 +285,127 @@ describe('Observer', () => {
 
     obs.unobserve();
   });
+
+  describe('targetStrategy option', () => {
+    it("'deepest' (default) — innermost element wins when clicking nested", () => {
+      const outer = attach(makeEl({ level: 'outer' }, 'Outer'));
+      const inner = makeEl({ level: 'inner' }, 'Inner');
+      outer.appendChild(inner);
+      elements.push(inner);
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document, undefined, 0, 0, 'deepest');
+
+      inner.click();
+
+      expect(onFocus).toHaveBeenCalledOnce();
+      expect((onFocus.mock.calls[0][0].meta as Record<string, unknown>).level).toBe('inner');
+
+      obs.unobserve();
+    });
+
+    it("'shallowest' — outermost element wins when clicking nested", () => {
+      const outer = attach(makeEl({ level: 'outer' }, 'Outer'));
+      const inner = makeEl({ level: 'inner' }, 'Inner');
+      outer.appendChild(inner);
+      elements.push(inner);
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document, undefined, 0, 0, 'shallowest');
+
+      inner.click();
+
+      expect(onFocus).toHaveBeenCalledOnce();
+      expect((onFocus.mock.calls[0][0].meta as Record<string, unknown>).level).toBe('outer');
+
+      obs.unobserve();
+    });
+
+    it("'shallowest' — outer directly clicked fires outer (not suppressed)", () => {
+      const outer = attach(makeEl({ level: 'outer' }, 'Outer'));
+      const inner = makeEl({ level: 'inner' }, 'Inner');
+      outer.appendChild(inner);
+      elements.push(inner);
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document, undefined, 0, 0, 'shallowest');
+
+      outer.click();
+
+      expect(onFocus).toHaveBeenCalledOnce();
+      expect((onFocus.mock.calls[0][0].meta as Record<string, unknown>).level).toBe('outer');
+
+      obs.unobserve();
+    });
+
+    it("'shallowest' — standalone element (no ancestor) still fires", () => {
+      const solo = attach(makeEl({ level: 'solo' }, 'Solo'));
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document, undefined, 0, 0, 'shallowest');
+
+      solo.click();
+
+      expect(onFocus).toHaveBeenCalledOnce();
+      expect((onFocus.mock.calls[0][0].meta as Record<string, unknown>).level).toBe('solo');
+
+      obs.unobserve();
+    });
+
+    it("'exact' — fires when event target itself has [data-askable]", () => {
+      const el = attach(makeEl({ id: 'exact-target' }, 'Exact'));
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document, undefined, 0, 0, 'exact');
+
+      el.click();
+
+      expect(onFocus).toHaveBeenCalledOnce();
+
+      obs.unobserve();
+    });
+
+    it("'exact' — does NOT fire when event bubbles up from a child without [data-askable]", () => {
+      const outer = attach(makeEl({ level: 'outer' }, ''));
+      const child = document.createElement('span');
+      child.textContent = 'child';
+      outer.appendChild(child);
+      elements.push(child);
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document, undefined, 0, 0, 'exact');
+
+      // clicking the non-annotated child bubbles to outer, should NOT trigger
+      child.click();
+
+      expect(onFocus).not.toHaveBeenCalled();
+
+      obs.unobserve();
+    });
+
+    it("'exact' — does NOT fire when event bubbles up from a nested [data-askable] child", () => {
+      const outer = attach(makeEl({ level: 'outer' }, ''));
+      const inner = makeEl({ level: 'inner' }, 'Inner');
+      outer.appendChild(inner);
+      elements.push(inner);
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document, undefined, 0, 0, 'exact');
+
+      // inner fires (it is the direct target), outer must NOT also fire
+      inner.click();
+
+      expect(onFocus).toHaveBeenCalledOnce();
+      expect((onFocus.mock.calls[0][0].meta as Record<string, unknown>).level).toBe('inner');
+
+      obs.unobserve();
+    });
+  });
 });

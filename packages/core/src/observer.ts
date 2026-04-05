@@ -1,4 +1,4 @@
-import type { AskableFocus, AskableEvent } from './types.js';
+import type { AskableFocus, AskableEvent, AskableTargetStrategy } from './types.js';
 
 type FocusCallback = (focus: AskableFocus) => void;
 
@@ -48,6 +48,7 @@ export class Observer {
   private onFocus: FocusCallback;
   private textExtractor: ((el: HTMLElement) => string) | undefined;
   private activeEvents: AskableEvent[] = ALL_EVENTS;
+  private targetStrategy: AskableTargetStrategy = 'deepest';
   private hoverDebounce = 0;
   private hoverThrottle = 0;
   private hoverTimer: ReturnType<typeof setTimeout> | null = null;
@@ -62,12 +63,14 @@ export class Observer {
     root: HTMLElement | Document,
     events: AskableEvent[] = ALL_EVENTS,
     hoverDebounce = 0,
-    hoverThrottle = 0
+    hoverThrottle = 0,
+    targetStrategy: AskableTargetStrategy = 'deepest'
   ): void {
     if (!isBrowser()) return;
     if (this.root) this.unobserve();
     this.root = root;
     this.activeEvents = events;
+    this.targetStrategy = targetStrategy;
     this.hoverDebounce = hoverDebounce;
     this.hoverThrottle = hoverThrottle;
     this.lastHoverTimestamp = 0;
@@ -105,29 +108,40 @@ export class Observer {
 
   private handleInteraction = (event: Event): void => {
     const el = event.currentTarget as HTMLElement;
-
-    // Nested element priority: resolve which [data-askable] element should
-    // handle the event when nested elements are involved.
-    // data-askable-priority (numeric, higher wins) overrides the default innermost-wins rule.
     const target = event.target as HTMLElement;
-    if (target !== el) {
-      // Event bubbled from a deeper target — check if a closer descendant should win.
-      const closer = target.closest('[data-askable]');
-      if (closer && closer !== el && el.contains(closer)) {
-        const elPriority = parseInt(el.getAttribute('data-askable-priority') ?? '0', 10);
-        const closerPriority = parseInt((closer as HTMLElement).getAttribute('data-askable-priority') ?? '0', 10);
-        if (elPriority <= closerPriority) return;
-      }
-    } else {
-      // Direct target — check if any [data-askable] ancestor has higher priority.
-      const elPriority = parseInt(el.getAttribute('data-askable-priority') ?? '0', 10);
+
+    // Apply targetStrategy to decide which [data-askable] element handles the event.
+    if (this.targetStrategy === 'exact') {
+      // Only fire if the event target itself has [data-askable] — no bubbled triggers.
+      if (!target.hasAttribute('data-askable') || target !== el) return;
+    } else if (this.targetStrategy === 'shallowest') {
+      // Outermost [data-askable] ancestor wins — skip if a bound ancestor exists.
       let ancestor = el.parentElement;
       while (ancestor) {
-        if (ancestor.hasAttribute('data-askable')) {
-          const ancestorPriority = parseInt(ancestor.getAttribute('data-askable-priority') ?? '0', 10);
-          if (ancestorPriority > elPriority) return;
-        }
+        if (this.boundElements.has(ancestor as HTMLElement)) return;
         ancestor = ancestor.parentElement;
+      }
+    } else {
+      // 'deepest' (default): innermost wins. data-askable-priority overrides.
+      if (target !== el) {
+        // Event bubbled — check if a closer descendant should win.
+        const closer = target.closest('[data-askable]');
+        if (closer && closer !== el && el.contains(closer)) {
+          const elPriority = parseInt(el.getAttribute('data-askable-priority') ?? '0', 10);
+          const closerPriority = parseInt((closer as HTMLElement).getAttribute('data-askable-priority') ?? '0', 10);
+          if (elPriority <= closerPriority) return;
+        }
+      } else {
+        // Direct target — check if any ancestor has higher priority.
+        const elPriority = parseInt(el.getAttribute('data-askable-priority') ?? '0', 10);
+        let ancestor = el.parentElement;
+        while (ancestor) {
+          if (ancestor.hasAttribute('data-askable')) {
+            const ancestorPriority = parseInt(ancestor.getAttribute('data-askable-priority') ?? '0', 10);
+            if (ancestorPriority > elPriority) return;
+          }
+          ancestor = ancestor.parentElement;
+        }
       }
     }
 

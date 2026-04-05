@@ -60,9 +60,45 @@ You can nest `[data-askable]` elements. When a user interacts with a nested elem
 </section>
 ```
 
+### Target strategy
+
+The `targetStrategy` option passed to `observe()` controls how the winning element is chosen when nested `[data-askable]` elements are involved:
+
+```ts
+ctx.observe(document, { targetStrategy: 'deepest' });   // default
+ctx.observe(document, { targetStrategy: 'shallowest' });
+ctx.observe(document, { targetStrategy: 'exact' });
+```
+
+| Strategy | Behaviour |
+|---|---|
+| `'deepest'` | Innermost element wins. Use `data-askable-priority` to override. |
+| `'shallowest'` | Outermost `[data-askable]` ancestor wins; inner elements are suppressed. |
+| `'exact'` | Only fires when the event target itself has `[data-askable]`. No bubbled triggers. |
+
+**`'shallowest'`** is useful for dashboards where a page-level context should always take precedence:
+
+```html
+<!-- With 'shallowest': clicking the chart fires the section, not the widget -->
+<section data-askable='{"page":"analytics"}'>
+  <div data-askable='{"widget":"revenue-chart"}'>
+    <canvas></canvas>
+  </div>
+</section>
+```
+
+**`'exact'`** prevents any bubbling — the element that was directly clicked must carry the attribute:
+
+```html
+<!-- With 'exact': clicking the <canvas> inside the div does NOT fire the div -->
+<div data-askable='{"widget":"revenue-chart"}'>
+  <canvas></canvas>
+</div>
+```
+
 ### Priority targeting
 
-Use `data-askable-priority` (numeric) to override the default innermost-wins rule. Higher values win.
+Use `data-askable-priority` (numeric) to override the default innermost-wins rule within `'deepest'` strategy. Higher values win.
 
 ```html
 <!-- Outer has higher priority — clicking the inner card still focuses the section -->

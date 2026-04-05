@@ -23,9 +23,26 @@ export type AskableEventHandler<K extends AskableEventName> = (
 
 export type AskableEvent = 'click' | 'hover' | 'focus';
 
+/**
+ * Controls which [data-askable] element handles an interaction when multiple
+ * elements are nested.
+ *
+ * - `'deepest'`  (default) — innermost element wins. Override with `data-askable-priority`.
+ * - `'shallowest'` — outermost element wins.
+ * - `'exact'`    — only fires when the event target itself has `[data-askable]`.
+ *                  Parent elements are never triggered via bubbling.
+ */
+export type AskableTargetStrategy = 'deepest' | 'shallowest' | 'exact';
+
 export interface AskableObserveOptions {
   /** Which interaction types trigger context updates. Defaults to all: ['click', 'hover', 'focus'] */
   events?: AskableEvent[];
+  /**
+   * How to resolve the winning element when nested [data-askable] elements are involved.
+   * See `AskableTargetStrategy` for details.
+   * @default 'deepest'
+   */
+  targetStrategy?: AskableTargetStrategy;
   /**
    * Debounce delay in ms applied to hover (mouseenter) events.
    * Prevents rapid context switches when the user moves the cursor across many elements.
