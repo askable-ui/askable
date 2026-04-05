@@ -1,4 +1,8 @@
-name: Publish to npm
+name: Tag on version change
+
+# Detects a version bump in packages/core/package.json and pushes a git tag.
+# The tag triggers release.yml which handles building, testing, publishing to
+# npm, and creating the GitHub Release.
 
 on:
   push:
@@ -8,15 +12,14 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g. 0.1.2) — leave blank to use packages/core/package.json'
+        description: 'Version to tag (e.g. 0.2.0) — leave blank to read from packages/core/package.json'
         required: false
 
 jobs:
-  publish:
+  tag:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -27,50 +30,20 @@ jobs:
         id: version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
-            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
-            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             CHANGED=$(git diff HEAD~1 HEAD --name-only -- 'packages/*/package.json' | head -1)
             if [ -z "$CHANGED" ]; then
-              echo "changed=false" >> $GITHUB_OUTPUT
+              echo "changed=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
             VERSION=$(node -p "require('./packages/core/package.json').version")
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/setup-node@v4
-        if: steps.version.outputs.changed == 'true'
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Upgrade npm for OIDC trusted publishing
-        if: steps.version.outputs.changed == 'true'
-        run: npm i -g npm@^11.5.1
-
-      - name: Install dependencies
-        if: steps.version.outputs.changed == 'true'
-        run: npm ci
-
-      - name: Build all packages
-        if: steps.version.outputs.changed == 'true'
-        run: npm run build --workspaces --if-present
-
-      - name: Pack packages
-        if: steps.version.outputs.changed == 'true'
-        run: |
-          mkdir -p release-assets
-          npm pack --workspaces --pack-destination release-assets
-
-      - name: Publish packages
-        if: steps.version.outputs.changed == 'true'
-        run: npm publish --workspaces --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ""
-
-      - name: Create git tag
+      - name: Push git tag
         if: steps.version.outputs.changed == 'true'
         run: |
           git config user.name "github-actions"
@@ -78,34 +51,5 @@ jobs:
           TAG="v${{ steps.version.outputs.version }}"
           git tag "$TAG" || echo "Tag already exists, skipping"
           git push origin "$TAG" || echo "Tag already pushed, skipping"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create GitHub Release
-        if: steps.version.outputs.changed == 'true'
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          TAG="v$VERSION"
-
-          # Build packages table for release notes header
-          PACKAGES_TABLE="## Packages\n\n"
-          PACKAGES_TABLE+="| Package | Version |\n|---|---|\n"
-          for pkg in core react vue svelte; do
-            PACKAGES_TABLE+="| [\`@askable-ui/$pkg\`](https://www.npmjs.com/package/@askable-ui/$pkg/v/$VERSION) | \`$VERSION\` |\n"
-          done
-
-          # Fetch GitHub's auto-generated changelog
-          CHANGELOG=$(gh api repos/${{ github.repository }}/releases/generate-notes \
-            -f tag_name="$TAG" \
-            --jq '.body' 2>/dev/null || echo "")
-
-          # Combine into final notes
-          NOTES=$(printf "%b\n%s" "$PACKAGES_TABLE" "$CHANGELOG")
-
-          gh release create "$TAG" \
-            --title "$TAG" \
-            --notes "$NOTES" \
-            release-assets/*.tgz \
-            || echo "Release already exists"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
