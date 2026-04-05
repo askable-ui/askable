@@ -91,6 +91,26 @@ export interface AskableSerializedFocus {
   timestamp: number;
 }
 
+/**
+ * Options for creating an AskableContext.
+ */
+export interface AskableContextOptions {
+  /**
+   * Custom text extractor called for each focused element.
+   * Receives the DOM element, returns the text to use as `AskableFocus.text`.
+   * Defaults to `el.textContent?.trim() ?? ''`.
+   *
+   * Use this to prefer accessible names, ARIA labels, or a subset of visible content.
+   *
+   * @example
+   * createAskableContext({
+   *   textExtractor: (el) =>
+   *     el.getAttribute('aria-label') ?? el.textContent?.trim() ?? ''
+   * })
+   */
+  textExtractor?: (el: HTMLElement) => string;
+}
+
 export interface AskableContext {
   /** Observe a DOM subtree for [data-askable] elements */
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void;

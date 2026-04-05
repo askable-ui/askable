@@ -87,6 +87,25 @@ onDestroy(destroy);
 | Option | Type | Description |
 |---|---|---|
 | `events` | `AskableEvent[]` | Which events trigger updates. Defaults to `['click', 'hover', 'focus']`. |
+| `ctx` | `AskableContext` | Provide a scoped context instead of creating a new one. See below. |
+
+## Scoped contexts
+
+By default, `createAskableStore()` creates its own `AskableContext`. For surfaces that need to share a context (or require independent event policies, prompt shaping, or redaction rules), pass a pre-created `ctx`:
+
+```ts
+import { createAskableContext } from '@askable-ui/core';
+import { createAskableStore } from '@askable-ui/svelte';
+
+const sharedCtx = createAskableContext();
+sharedCtx.observe(document.getElementById('dashboard')!);
+
+// Two stores backed by the same context
+const storeA = createAskableStore({ ctx: sharedCtx });
+const storeB = createAskableStore({ ctx: sharedCtx });
+```
+
+When a scoped `ctx` is provided, `destroy()` on the store does **not** call `ctx.destroy()` — you manage the context lifecycle separately.
 
 **Returns:**
 | Value | Type | Description |

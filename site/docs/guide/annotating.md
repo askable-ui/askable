@@ -102,6 +102,29 @@ Good candidates:
 | Dashboard KPI | `{"metric":"churn","value":"4.2%","trend":"up"}` |
 | Page section | `"analytics overview"` |
 
+## Custom text extraction
+
+By default, Askable uses `element.textContent.trim()` to derive the text for each focused element. You can override this globally when creating the context:
+
+```ts
+import { createAskableContext } from '@askable-ui/core';
+
+const ctx = createAskableContext({
+  textExtractor: (el) =>
+    el.getAttribute('aria-label') ??
+    el.getAttribute('title') ??
+    el.textContent?.trim() ??
+    '',
+});
+```
+
+The extractor receives the DOM element and returns a string. It applies to all focus events — clicks, hovers, and explicit `select()` calls.
+
+Use this when:
+- Accessible names (ARIA labels) are more meaningful to the LLM than raw text content
+- Elements contain noisy child text (icons, timestamps, decorative strings) you want to exclude
+- You need a different representation per element type
+
 ## What not to annotate
 
 - Generic layout wrappers with no semantic meaning (`<div class="flex">`)

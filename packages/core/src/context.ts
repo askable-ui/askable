@@ -2,6 +2,7 @@ import { Emitter } from './emitter.js';
 import { buildFocus, Observer } from './observer.js';
 import type {
   AskableContext,
+  AskableContextOptions,
   AskableEventHandler,
   AskableEventName,
   AskableFocus,
@@ -24,14 +25,16 @@ export class AskableContextImpl implements AskableContext {
   private observer: Observer;
   private currentFocus: AskableFocus | null = null;
   private history: AskableFocus[] = [];
+  private textExtractor: ((el: HTMLElement) => string) | undefined;
 
-  constructor() {
+  constructor(options?: AskableContextOptions) {
+    this.textExtractor = options?.textExtractor;
     this.observer = new Observer((focus) => {
       this.currentFocus = focus;
       this.history.push(focus);
       if (this.history.length > MAX_HISTORY) this.history.shift();
       this.emitter.emit('focus', focus);
-    });
+    }, this.textExtractor);
   }
 
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void {
@@ -65,7 +68,7 @@ export class AskableContextImpl implements AskableContext {
   }
 
   select(element: HTMLElement): void {
-    const focus = buildFocus(element);
+    const focus = buildFocus(element, this.textExtractor);
     if (focus) {
       this.currentFocus = focus;
       this.history.push(focus);
