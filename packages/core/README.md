@@ -126,24 +126,113 @@ ctx.on('focus', handler);
 ctx.off('focus', handler);
 ```
 
-#### `toPromptContext(): string`
+#### `toPromptContext(options?: AskablePromptContextOptions): string`
 
-Serializes the current focus state into a natural language string suitable for inclusion in an LLM prompt. Returns `'No UI element is currently focused.'` when there is no current focus.
+Serializes the current focus state into a prompt-ready string. Returns `'No UI element is currently focused.'` (or `'null'` in JSON format) when nothing is focused.
 
 ```ts
 // With no focus:
 ctx.toPromptContext();
 // → "No UI element is currently focused."
 
-// With a focused element:
+// Natural language (default):
 // <button data-askable='{"action":"delete","target":"account"}'>Delete Account</button>
 ctx.toPromptContext();
 // → "User is focused on: — action: delete, target: account — value "Delete Account""
 
-// With a plain string annotation:
-// <section data-askable="pricing page hero">...</section>
-ctx.toPromptContext();
-// → "User is focused on: — pricing page hero — value "Get started for free...""
+// JSON format:
+ctx.toPromptContext({ format: 'json' });
+// → '{"meta":{"action":"delete","target":"account"},"text":"Delete Account","timestamp":1712345678}'
+
+// Custom prefix and label:
+ctx.toPromptContext({ prefix: 'Active element:', textLabel: 'label' });
+// → "Active element: — action: delete, target: account — label "Delete Account""
+
+// Omit element text:
+ctx.toPromptContext({ includeText: false });
+
+// Truncate text to 100 chars:
+ctx.toPromptContext({ maxTextLength: 100 });
+
+// Exclude specific meta keys:
+ctx.toPromptContext({ excludeKeys: ['_internal', 'debug'] });
+
+// Prioritize key order:
+ctx.toPromptContext({ keyOrder: ['action', 'target'] });
+
+// Token budget — truncates output to ~50 tokens (4 chars/token estimate):
+ctx.toPromptContext({ maxTokens: 50 });
+// If output exceeds ~200 chars: "User is focused on: — ... [truncated]"
+```
+
+##### `AskablePromptContextOptions`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `format` | `'natural' \| 'json'` | `'natural'` | Output format |
+| `includeText` | `boolean` | `true` | Include element text content |
+| `maxTextLength` | `number` | — | Truncate text to this many characters |
+| `excludeKeys` | `string[]` | — | Omit these keys from object meta |
+| `keyOrder` | `string[]` | — | Promote these keys to the front |
+| `prefix` | `string` | `'User is focused on:'` | Prefix in natural format |
+| `textLabel` | `string` | `'value'` | Label for text field in natural format |
+| `maxTokens` | `number` | — | Approximate token budget. Uses a 4 chars/token estimate. Truncates output and appends `[truncated]` if exceeded. |
+
+#### `toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string`
+
+Serializes the focus history (newest first) into a prompt-ready string with numbered entries. Accepts the same `AskablePromptContextOptions` as `toPromptContext()`, including `maxTokens`. Returns `'No interaction history.'` when no interactions have occurred.
+
+```ts
+// After a few interactions:
+ctx.toHistoryContext();
+// → "[1] User is focused on: — action: delete, target: account — value "Delete Account"
+//    [2] User is focused on: — page: settings — value "Account Settings"
+//    [3] User is focused on: — page: dashboard — value "Dashboard""
+
+// Last 3 interactions only:
+ctx.toHistoryContext(3);
+
+// With serialization options:
+ctx.toHistoryContext(5, { includeText: false, excludeKeys: ['_id'] });
+
+// With a token budget:
+ctx.toHistoryContext(10, { maxTokens: 200 });
+```
+
+#### `serializeFocus(options?: AskablePromptContextOptions): AskableSerializedFocus | null`
+
+Returns the current focus as a structured `AskableSerializedFocus` object, or `null` if nothing is focused. Useful when you want to process or store the data before formatting it as a string.
+
+```ts
+const data = ctx.serializeFocus();
+// → { meta: { action: 'delete', target: 'account' }, text: 'Delete Account', timestamp: 1712345678 }
+
+// With options (same as toPromptContext):
+ctx.serializeFocus({ includeText: false, excludeKeys: ['debug'] });
+
+// Use the structured data:
+if (data) {
+  await db.insertFocusEvent(data.meta, data.timestamp);
+}
+```
+
+#### `getHistory(limit?: number): AskableFocus[]`
+
+Returns the focus history, newest first. Optional `limit` caps the number of results. History is capped at 50 entries.
+
+```ts
+const history = ctx.getHistory();     // all entries, newest first
+const recent = ctx.getHistory(5);     // last 5 interactions
+```
+
+#### `clear(): void`
+
+Resets the current focus to `null` and emits a `'clear'` event.
+
+```ts
+ctx.on('clear', () => console.log('Focus cleared'));
+ctx.clear();
+// → focus is null, 'clear' event fires
 ```
 
 #### `select(element: HTMLElement): void`
@@ -425,13 +514,27 @@ async function askWithContext(userMessage: string) {
 
 ```ts
 import type {
-  AskableContext,       // Main context interface
-  AskableFocus,         // Focus state object
-  AskableEvent,         // Trigger event type: 'click' | 'hover' | 'focus'
-  AskableEventMap,      // Map of event names to payload types
-  AskableEventName,     // Union of valid event names: 'focus'
-  AskableEventHandler,  // Generic handler type
+  AskableContext,             // Main context interface
+  AskableFocus,               // Focus state: { meta, text, element, timestamp }
+  AskableSerializedFocus,     // Serialized focus: { meta, text?, timestamp }
+  AskablePromptContextOptions, // Options for toPromptContext / toHistoryContext
+  AskablePromptFormat,        // 'natural' | 'json'
+  AskableEvent,               // Trigger type: 'click' | 'hover' | 'focus'
+  AskableObserveOptions,      // Options for observe(): { events?, hoverDebounce?, hoverThrottle? }
+  AskableEventMap,            // Map of event names to payload types
+  AskableEventName,           // 'focus' | 'clear'
+  AskableEventHandler,        // Generic handler type
 } from '@askable-ui/core';
+```
+
+### `AskableSerializedFocus`
+
+```ts
+interface AskableSerializedFocus {
+  meta: Record<string, unknown> | string;
+  text?: string;    // omitted when includeText: false or text is empty
+  timestamp: number;
+}
 ```
 
 ## License

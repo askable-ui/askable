@@ -59,6 +59,14 @@ const { focus, promptContext } = useAskable({ events: ['click'] });
 **Options:**
 - `events?: AskableEvent[]` — trigger events: `'click'`, `'hover'`, `'focus'`. Defaults to all three.
 
+**`ctx` advanced methods** (via `@askable-ui/core`):
+- `ctx.select(el)` — programmatically set focus ("Ask AI" button pattern)
+- `ctx.clear()` — reset focus to null and emit `'clear'` event
+- `ctx.getHistory(limit?)` — focus history, newest first
+- `ctx.toHistoryContext(limit?, options?)` — history as a prompt-ready string
+- `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
+- `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
+
 ### "Ask AI" button pattern
 
 Use `ctx.select()` to set context explicitly when a user clicks a button:
