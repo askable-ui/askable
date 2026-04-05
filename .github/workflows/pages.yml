@@ -26,10 +26,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build VitePress docs
+        run: npm install && npm run build
+        working-directory: site/docs
+
+      - name: Copy docs into www
+        run: cp -r site/docs/.vitepress/dist site/www/docs
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Upload marketing site
+      - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
           path: site/www
