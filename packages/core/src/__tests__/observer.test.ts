@@ -160,6 +160,65 @@ describe('Observer', () => {
     obs.unobserve();
   });
 
+  it('data-askable-priority: outer with higher priority wins over inner', () => {
+    const outer = attach(makeEl({ level: 'outer' }, 'Outer'));
+    outer.setAttribute('data-askable-priority', '10');
+    const inner = makeEl({ level: 'inner' }, 'Inner');
+    outer.appendChild(inner);
+    elements.push(inner);
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    inner.click();
+
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect((onFocus.mock.calls[0][0].meta as Record<string, unknown>).level).toBe('outer');
+
+    obs.unobserve();
+  });
+
+  it('data-askable-priority: equal priority — inner still wins', () => {
+    const outer = attach(makeEl({ level: 'outer' }, 'Outer'));
+    outer.setAttribute('data-askable-priority', '5');
+    const inner = makeEl({ level: 'inner' }, 'Inner');
+    inner.setAttribute('data-askable-priority', '5');
+    outer.appendChild(inner);
+    elements.push(inner);
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    inner.click();
+
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect((onFocus.mock.calls[0][0].meta as Record<string, unknown>).level).toBe('inner');
+
+    obs.unobserve();
+  });
+
+  it('data-askable-priority: inner with higher priority still wins', () => {
+    const outer = attach(makeEl({ level: 'outer' }, 'Outer'));
+    outer.setAttribute('data-askable-priority', '10');
+    const inner = makeEl({ level: 'inner' }, 'Inner');
+    inner.setAttribute('data-askable-priority', '20');
+    outer.appendChild(inner);
+    elements.push(inner);
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    inner.click();
+
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect((onFocus.mock.calls[0][0].meta as Record<string, unknown>).level).toBe('inner');
+
+    obs.unobserve();
+  });
+
   it('hover debounce: does not fire immediately', async () => {
     const el = attach(makeEl({ id: 'debounce-test' }, 'Hover'));
     const onFocus = vi.fn();

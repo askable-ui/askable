@@ -9,6 +9,7 @@ import type {
   AskableSerializedFocus,
   AskablePromptContextOptions,
   AskablePromptFormat,
+  AskablePromptPreset,
   AskableEvent,
   AskableObserveOptions,
   AskableEventMap,
@@ -52,12 +53,29 @@ interface AskableSerializedFocus {
 
 ---
 
+## `AskablePromptPreset`
+
+Named shorthand for common option combinations. See [Prompt Serialization → Presets](/guide/serialization#presets).
+
+```ts
+type AskablePromptPreset = 'compact' | 'verbose' | 'json';
+```
+
+| Value | Equivalent |
+|---|---|
+| `compact` | `{ includeText: false, format: 'natural' }` |
+| `verbose` | `{ includeText: true, format: 'natural' }` |
+| `json` | `{ format: 'json', includeText: true }` |
+
+---
+
 ## `AskablePromptContextOptions`
 
 Options accepted by `toPromptContext()`, `toHistoryContext()`, and `serializeFocus()`.
 
 ```ts
 interface AskablePromptContextOptions {
+  preset?: AskablePromptPreset;    // Named shorthand. Individual options override it.
   format?: AskablePromptFormat;    // 'natural' | 'json'. Default: 'natural'
   includeText?: boolean;           // Include element text. Default: true
   maxTextLength?: number;          // Truncate text to N chars

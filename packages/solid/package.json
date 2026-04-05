@@ -1,0 +1,53 @@
+{
+  "name": "@askable-ui/solid",
+  "version": "0.2.0",
+  "description": "Solid.js bindings for askable — LLM-aware UI context",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/askable-ui/askable.git",
+    "directory": "packages/solid"
+  },
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly --noEmit false",
+    "dev": "vite build --watch",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "llm",
+    "context",
+    "solid",
+    "solidjs",
+    "ui",
+    "focus"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "solid-js": "^1.0.0"
+  },
+  "dependencies": {
+    "@askable-ui/core": "^0.2.0"
+  },
+  "devDependencies": {
+    "@askable-ui/core": "*",
+    "@solidjs/testing-library": "^0.8.10",
+    "jsdom": "^25.0.0",
+    "solid-js": "^1.9.12",
+    "typescript": "^5.4.5",
+    "vite": "^5.0.0",
+    "vite-plugin-solid": "^2.11.12",
+    "vitest": "^2.0.0"
+  }
+}
