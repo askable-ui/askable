@@ -43,7 +43,25 @@ export interface AskableObserveOptions {
 
 export type AskablePromptFormat = 'natural' | 'json';
 
+/**
+ * Named presets for prompt serialization. Individual options override the preset.
+ *
+ * - `compact`  — meta only, no text content. Good for tight token budgets.
+ * - `verbose`  — meta + full text (same as default, but explicit).
+ * - `json`     — structured JSON output, includes meta + text.
+ */
+export type AskablePromptPreset = 'compact' | 'verbose' | 'json';
+
 export interface AskablePromptContextOptions {
+  /**
+   * Apply a named preset as the default configuration.
+   * Individual options specified alongside the preset take precedence.
+   *
+   * - `compact` → `{ includeText: false, format: 'natural' }`
+   * - `verbose` → `{ includeText: true, format: 'natural' }`
+   * - `json`    → `{ format: 'json', includeText: true }`
+   */
+  preset?: AskablePromptPreset;
   /** Output format. Defaults to natural language. */
   format?: AskablePromptFormat;
   /** Include extracted text in serialized output. Defaults to true. */
