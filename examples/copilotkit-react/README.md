@@ -1,18 +1,22 @@
-# CopilotKit + Askable example (scaffold)
+# CopilotKit + Askable example
 
-This example is the starting point for a first-class Askable integration app.
+This example demonstrates the core Askable interaction pattern for AI-native UIs:
 
-## Goal
+1. annotate a meaningful UI region
+2. explicitly select it with `ctx.select()`
+3. open an assistant panel
+4. pass `promptContext` into the AI layer
 
-Show how Askable can provide UI-aware context to an AI chat / copilot flow in a realistic React app.
+## What this version includes
 
-## Planned pieces
+- three Askable metric cards
+- explicit `Ask AI` buttons
+- a side-panel assistant shell
+- a visible `promptContext` preview
+- a clear handoff point for CopilotKit or AI SDK wiring
 
-- React UI with askable cards/widgets
-- explicit `Ask AI` button flow using `ctx.select()`
-- a simple side-panel chat shell
-- a clear place to wire CopilotKit / AI SDK message flow
+## Next steps
 
-## Current status
-
-This scaffold PR establishes the example app directory and starter files so follow-up implementation can land incrementally in reviewable PRs.
+- replace the mock assistant response with real CopilotKit wiring
+- add streaming messages
+- add richer dashboard widgets and examples
