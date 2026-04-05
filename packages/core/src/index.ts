@@ -9,6 +9,7 @@ export type {
   AskableObserveOptions,
   AskablePromptContextOptions,
   AskablePromptFormat,
+  AskablePromptPreset,
   AskableSerializedFocus,
 } from './types.js';
 

@@ -104,13 +104,29 @@ export class Observer {
   private handleInteraction = (event: Event): void => {
     const el = event.currentTarget as HTMLElement;
 
-    // Nested element priority: when a click/hover reaches a parent [data-askable],
-    // check if the actual target is inside a closer (nested) askable descendant that
-    // is also bound. If so, skip — the inner element takes precedence.
+    // Nested element priority: resolve which [data-askable] element should
+    // handle the event when nested elements are involved.
+    // data-askable-priority (numeric, higher wins) overrides the default innermost-wins rule.
     const target = event.target as HTMLElement;
     if (target !== el) {
+      // Event bubbled from a deeper target — check if a closer descendant should win.
       const closer = target.closest('[data-askable]');
-      if (closer && closer !== el && el.contains(closer)) return;
+      if (closer && closer !== el && el.contains(closer)) {
+        const elPriority = parseInt(el.getAttribute('data-askable-priority') ?? '0', 10);
+        const closerPriority = parseInt((closer as HTMLElement).getAttribute('data-askable-priority') ?? '0', 10);
+        if (elPriority <= closerPriority) return;
+      }
+    } else {
+      // Direct target — check if any [data-askable] ancestor has higher priority.
+      const elPriority = parseInt(el.getAttribute('data-askable-priority') ?? '0', 10);
+      let ancestor = el.parentElement;
+      while (ancestor) {
+        if (ancestor.hasAttribute('data-askable')) {
+          const ancestorPriority = parseInt(ancestor.getAttribute('data-askable-priority') ?? '0', 10);
+          if (ancestorPriority > elPriority) return;
+        }
+        ancestor = ancestor.parentElement;
+      }
     }
 
     const isHover = event.type === 'mouseenter';
