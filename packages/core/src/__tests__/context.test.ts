@@ -582,6 +582,103 @@ describe('createAskableContext', () => {
     });
   });
 
+  describe('sanitizeMeta and sanitizeText options', () => {
+    it('sanitizeMeta strips sensitive fields from object meta', () => {
+      const el = makeEl({ metric: 'revenue', password: 'secret', value: '$2M' }, 'Revenue');
+      const ctx = createAskableContext({
+        sanitizeMeta: ({ password, ...safe }) => safe,
+      });
+      ctx.observe(document);
+      el.click();
+
+      const focus = ctx.getFocus();
+      expect((focus!.meta as Record<string, unknown>).password).toBeUndefined();
+      expect((focus!.meta as Record<string, unknown>).metric).toBe('revenue');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('sanitizeMeta is reflected in toPromptContext()', () => {
+      const el = makeEl({ metric: 'revenue', password: 'secret' }, 'Revenue');
+      const ctx = createAskableContext({
+        sanitizeMeta: ({ password, ...safe }) => safe,
+      });
+      ctx.observe(document);
+      el.click();
+
+      const prompt = ctx.toPromptContext();
+      expect(prompt).not.toContain('password');
+      expect(prompt).not.toContain('secret');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('sanitizeMeta does not apply to string meta', () => {
+      const el = makeEl('plain string meta', 'Text');
+      const sanitize = vi.fn((m: Record<string, unknown>) => m);
+      const ctx = createAskableContext({ sanitizeMeta: sanitize });
+      ctx.observe(document);
+      el.click();
+
+      expect(sanitize).not.toHaveBeenCalled();
+      expect(ctx.getFocus()!.meta).toBe('plain string meta');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('sanitizeText masks text content', () => {
+      const el = makeEl({ item: 'card' }, '4111 1111 1111 1111');
+      const ctx = createAskableContext({
+        sanitizeText: (text) => text.replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '[card]'),
+      });
+      ctx.observe(document);
+      el.click();
+
+      expect(ctx.getFocus()!.text).toBe('[card]');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('sanitizers apply to select() as well', () => {
+      const el = makeEl({ metric: 'revenue', secret: 'x' }, 'Raw text');
+      const ctx = createAskableContext({
+        sanitizeMeta: ({ secret, ...safe }) => safe,
+        sanitizeText: (t) => t.toUpperCase(),
+      });
+
+      ctx.select(el);
+
+      const focus = ctx.getFocus();
+      expect((focus!.meta as Record<string, unknown>).secret).toBeUndefined();
+      expect(focus!.text).toBe('RAW TEXT');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('sanitized data is reflected in history and events', () => {
+      const el = makeEl({ metric: 'revenue', pin: '1234' }, 'Text');
+      const ctx = createAskableContext({
+        sanitizeMeta: ({ pin, ...safe }) => safe,
+      });
+      ctx.observe(document);
+
+      const handler = vi.fn();
+      ctx.on('focus', handler);
+      el.click();
+
+      expect((handler.mock.calls[0][0].meta as Record<string, unknown>).pin).toBeUndefined();
+      expect((ctx.getHistory()[0].meta as Record<string, unknown>).pin).toBeUndefined();
+
+      ctx.destroy();
+      cleanup(el);
+    });
+  });
+
   it('observe() is a no-op when called outside a browser environment', () => {
     const win = globalThis.window;
     Object.defineProperty(globalThis, 'window', { value: undefined, configurable: true });

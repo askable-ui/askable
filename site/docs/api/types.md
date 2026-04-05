@@ -28,10 +28,20 @@ Options passed to `createAskableContext()`.
 ```ts
 interface AskableContextOptions {
   /**
-   * Custom text extractor called for each focused element.
-   * Defaults to el.textContent?.trim() ?? ''
+   * Custom text extractor. Defaults to el.textContent?.trim() ?? ''
+   * Applied at capture time.
    */
   textExtractor?: (el: HTMLElement) => string;
+  /**
+   * Sanitize object meta before storing/emitting.
+   * Applied at capture time. Not called for string meta.
+   */
+  sanitizeMeta?: (meta: Record<string, unknown>) => Record<string, unknown>;
+  /**
+   * Sanitize text content before storing/emitting.
+   * Applied at capture time.
+   */
+  sanitizeText?: (text: string) => string;
 }
 ```
 

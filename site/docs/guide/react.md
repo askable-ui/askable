@@ -146,6 +146,27 @@ function ChatInput() {
 }
 ```
 
+## Sanitization
+
+For production apps, pass sanitizers at context creation time to strip sensitive fields before they're stored or sent to an LLM:
+
+```tsx
+import { createAskableContext } from '@askable-ui/core';
+import { useAskable } from '@askable-ui/react';
+
+const safeCtx = createAskableContext({
+  sanitizeMeta: ({ password, token, ...safe }) => safe,
+  sanitizeText: (text) => text.replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '[card]'),
+});
+
+function App() {
+  const { promptContext } = useAskable({ ctx: safeCtx });
+  // ...
+}
+```
+
+See [Annotating → Sanitization](/guide/annotating#sanitization-and-redaction) for details.
+
 ## Next.js / App Router
 
 `useAskable()` is safe in Server Components tree — it observes the DOM only on the client, inside a `useEffect`. No special configuration needed.
