@@ -91,6 +91,11 @@ const { focus, promptContext } = useAskable({ events: ['click', 'focus'] });
 
 The hook manages a shared singleton context, so multiple calls across your app share the same observer. The context is automatically destroyed when the last consumer unmounts.
 
+
+### SSR note
+
+`useAskable()` is safe to call in SSR frameworks such as Next.js. Observation starts on the client after mount, not during server render.
+
 ### "Ask AI" button pattern
 
 Use `ctx.select()` to set context explicitly when a user clicks a button, instead of relying on hover or focus:
