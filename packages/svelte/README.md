@@ -90,3 +90,8 @@ Use `ctx.select()` to set context explicitly when a user clicks a button:
 ## License
 
 MIT
+
+
+### SSR note
+
+`createAskableStore()` is safe to create in SSR environments. Observation only starts when `document` exists in the browser.

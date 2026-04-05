@@ -99,7 +99,7 @@ Returns the current focus state, or `null` if no element has been interacted wit
 const focus = ctx.getFocus();
 if (focus) {
   console.log(focus.meta);      // Parsed data-askable value
-  console.log(focus.text);      // Element text content (truncated to 200 chars)
+  console.log(focus.text);      // Element text content
   console.log(focus.element);   // The HTMLElement
   console.log(focus.timestamp); // Unix ms when focus was set
 }
@@ -181,7 +181,7 @@ The shape of focus state objects passed to event handlers and returned by `getFo
 ```ts
 interface AskableFocus {
   meta: Record<string, unknown> | string; // Parsed data-askable value
-  text: string;                            // Element text, max 200 chars
+  text: string;                            // Element text content
   element: HTMLElement;                    // The DOM element
   timestamp: number;                       // Unix ms
 }

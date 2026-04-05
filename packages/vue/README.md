@@ -83,3 +83,8 @@ const card = useTemplateRef('card');
 ## License
 
 MIT
+
+
+### SSR note
+
+`useAskable()` is safe to use in SSR frameworks such as Nuxt. Observation starts on the client in `onMounted()`.

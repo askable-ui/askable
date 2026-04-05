@@ -10,11 +10,15 @@
 
 ---
 
-## The problem in one sentence
+## What Askable does
 
-Your LLM doesn't know what the user is looking at — so when they click a chart and ask *"why is this dropping?"*, it guesses.
+Your model usually only sees the prompt. It does **not** know what the user is looking at in the UI.
 
-## The fix in one line
+Askable bridges that gap:
+
+1. annotate meaningful UI with `data-askable`
+2. observe user interaction
+3. inject the current UI context into your LLM call
 
 ```html
 <div data-askable='{"chart":"revenue","delta":"-12%","period":"Q3"}'>
@@ -22,57 +26,54 @@ Your LLM doesn't know what the user is looking at — so when they click a chart
 </div>
 ```
 
-That's it. The same data that renders your component becomes the AI's context. No duplication, no custom events, no framework lock-in.
-
----
-
-## How it works
-
-```
-1. ANNOTATE  →  data-askable on any element that carries meaning
-2. OBSERVE   →  askable.observe(document)  — one call, covers everything
-3. INJECT    →  askable.toPromptContext()  — drop into any LLM call
-```
-
-```ts
-// Before askable
-LLM receives: "why is this dropping?"
-LLM answers:  "Revenue can decline due to many factors such as..."
-
-// After askable — same question, radically better answer
-LLM receives: "UI context: metric: revenue, delta: -12%, period: Q3
-               Question: why is this dropping?"
-LLM answers:  "Your Q3 revenue fell 12%. Based on the data you're
-               viewing, the most likely cause is..."
-```
-
----
-
-## Install
-
-```bash
-npm install @askable-ui/core      # zero deps, ~1kb gz
-npm install @askable-ui/react     # React 17+
-npm install @askable-ui/vue       # Vue 3
-npm install @askable-ui/svelte    # Svelte 4
-
-pip install askable-django        # Django 4+
-pip install askable-streamlit     # Streamlit
-```
-
----
-
-## Quick start
-
 ```ts
 import { createAskableContext } from '@askable-ui/core';
 
 const askable = createAskableContext();
 askable.observe(document);
 
-// In your AI handler — one line
 const prompt = askable.toPromptContext();
 // → "User is focused on: chart: revenue, delta: -12%, period: Q3"
+```
+
+---
+
+## Shipped today
+
+### JavaScript packages
+
+```bash
+npm install @askable-ui/core
+npm install @askable-ui/react
+npm install @askable-ui/vue
+npm install @askable-ui/svelte
+```
+
+- [`@askable-ui/core`](./packages/core) — framework-agnostic observer + context
+- [`@askable-ui/react`](./packages/react) — React bindings
+- [`@askable-ui/vue`](./packages/vue) — Vue 3 bindings
+- [`@askable-ui/svelte`](./packages/svelte) — Svelte bindings
+
+### Experimental / in-repo Python work
+
+There are Python package directories in `packages/python/`, but the primary supported surface in this repo today is the JavaScript package set above.
+
+---
+
+## Quick start
+
+### Core
+
+```ts
+import { createAskableContext } from '@askable-ui/core';
+
+const askable = createAskableContext();
+askable.observe(document, { events: ['click', 'focus'] });
+
+askable.on('focus', (focus) => {
+  console.log(focus.meta);
+  console.log(focus.text);
+});
 ```
 
 ### React
@@ -80,162 +81,96 @@ const prompt = askable.toPromptContext();
 ```tsx
 import { Askable, useAskable } from '@askable-ui/react';
 
-function Dashboard() {
-  const { data } = useSWR('/api/metrics');
-
+function Dashboard({ revenue }) {
   return (
-    <Askable meta={data.revenue}>        {/* ← same data renders the chart */}
-      <RevenueChart data={data.revenue} /> {/* ← AND feeds the AI */}
+    <Askable meta={revenue}>
+      <RevenueChart data={revenue} />
     </Askable>
   );
 }
 
 function AIInput() {
   const { promptContext } = useAskable({ events: ['click'] });
-
-  return (
-    <input
-      placeholder="Ask about what you're looking at…"
-      onKeyDown={e => {
-        if (e.key === 'Enter') sendToLLM(promptContext, e.currentTarget.value);
-      }}
-    />
-  );
+  return <ChatInput context={promptContext} />;
 }
 ```
 
-### "Ask AI" button pattern
+### Explicit “Ask AI” pattern
 
 ```tsx
 function RevenueCard({ data }) {
-  const { askable } = useAskable();
+  const { ctx } = useAskable();
   const ref = useRef<HTMLDivElement>(null);
 
   return (
     <Askable meta={data} ref={ref}>
       <RevenueChart data={data} />
-      <button onClick={() => { askable.select(ref.current!); openChat(); }}>
-        ✦ Ask AI
+      <button onClick={() => { ctx.select(ref.current!); openChat(); }}>
+        Ask AI
       </button>
     </Askable>
   );
 }
 ```
 
-### Vue
+---
 
-```vue
-<script setup>
-import { Askable, useAskable } from '@askable-ui/vue';
-const { promptContext } = useAskable({ events: ['click', 'focus'] });
-</script>
+## Docs map
 
-<template>
-  <Askable :meta="{ chart: 'revenue', period: 'Q3' }">
-    <RevenueChart />
-  </Askable>
-  <AIChatInput :context="promptContext" />
-</template>
-```
+- **Overview:** this README
+- **Core API:** [`packages/core/README.md`](./packages/core/README.md)
+- **React guide:** [`packages/react/README.md`](./packages/react/README.md)
+- **Vue guide:** [`packages/vue/README.md`](./packages/vue/README.md)
+- **Svelte guide:** [`packages/svelte/README.md`](./packages/svelte/README.md)
+- **Landing page / docs shell:** [`docs/index.html`](./docs/index.html)
 
-### Django
+Recommended reading order for new users:
 
-```django
-{% load askable_tags %}
-
-{% askable meta=chart_meta %}
-  <canvas id="revenue-chart"></canvas>
-{% endaskable %}
-```
-
-```python
-# views.py
-def ai_chat(request):
-    data = json.loads(request.body)
-    return JsonResponse({
-        'answer': llm.chat(
-            system=f"UI context: {data['context']}",
-            user=data['question'],
-        )
-    })
-```
+1. this README
+2. framework package README
+3. core API README
 
 ---
 
-## Works with every LLM
+## SSR / framework behavior
+
+Askable is safe to **import** in server-rendered apps, but DOM observation is **client-only**.
+
+- React bindings now defer observation to `useEffect()`
+- Vue bindings now defer observation to `onMounted()`
+- Svelte bindings guard observation behind a browser check
+
+That means Askable works with SSR frameworks, but actual DOM observation starts on the client after mount.
+
+---
+
+## Works with any LLM stack
 
 ```ts
 // Vercel AI SDK
-system: `You are a helpful assistant.\n\n${askable.toPromptContext()}`
+system: `UI context:
+${askable.toPromptContext()}`
 
 // OpenAI
-{ role: 'system', content: `UI context:\n${askable.toPromptContext()}` }
+{ role: 'system', content: `UI context:
+${askable.toPromptContext()}` }
 
 // Anthropic
-system: `UI context:\n${askable.toPromptContext()}`
+system: `UI context:
+${askable.toPromptContext()}`
 ```
 
 ---
 
-## Why not just pass state manually?
+## What’s next
 
-You could. You'd also write your own router.
+Current priority areas:
 
-| | DIY wiring | askable |
-|---|---|---|
-| Setup per component | Custom event + serializer | `data-askable` |
-| Dynamic elements | Manual re-wire | MutationObserver built-in |
-| Framework lock-in | Re-implement per stack | One core, thin adapters |
-| Bundle cost | Your code + your bugs | ~1kb gz, zero deps |
-| Python support | Build it yourself | Django + Streamlit ready |
-
----
-
-## Packages
-
-| Package | Description | Size |
-|---|---|---|
-| [`@askable-ui/core`](./packages/core) | Framework-agnostic observer + context | ~1kb gz |
-| [`@askable-ui/react`](./packages/react) | `<Askable>` + `useAskable()` | ~0.5kb gz |
-| [`@askable-ui/vue`](./packages/vue) | `<Askable>` + `useAskable()` | ~0.5kb gz |
-| [`@askable-ui/svelte`](./packages/svelte) | `<Askable>` + `createAskableStore()` | ~0.5kb gz |
-| [`askable-django`](./packages/python/django) | Template tags + auto-inject middleware | — |
-| [`askable-streamlit`](./packages/python/streamlit) | Returns focus as Python dict | — |
-
----
-
-## API
-
-### `createAskableContext()`
-Returns a new context instance.
-
-### `askable.observe(el, options?)`
-Start watching `el`. Tracks click, hover, and focus on all `[data-askable]` elements — including ones added dynamically.
-
-```ts
-askable.observe(document)                          // all triggers
-askable.observe(document, { events: ['click'] })   // click only
-askable.observe(document, { events: ['hover'] })   // hover only
-askable.observe(document, { events: ['focus'] })   // focus only
-```
-
-### `askable.select(el)`
-Programmatically set focus — use for "Ask AI" buttons.
-
-### `askable.toPromptContext()`
-Returns a natural language string ready for any system prompt:
-```
-User is focused on: chart: revenue, period: Q3 — value "Q3 Revenue: $2.3M"
-```
-
-### `askable.getFocus()`
-Returns `{ meta, text, element, timestamp }` or `null`.
-
-### `askable.on('focus', handler)` / `askable.off('focus', handler)`
-Subscribe to focus changes.
-
-### `askable.destroy()`
-Remove all listeners. Call on unmount.
+- better docs and onboarding
+- AI integration examples
+- CopilotKit guide + example
+- explicit Ask AI workflow guidance
+- debug / inspector tooling
 
 ---
 
