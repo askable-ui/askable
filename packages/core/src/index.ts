@@ -1,4 +1,10 @@
 export { AskableContextImpl } from './context.js';
+export { createAskableInspector } from './inspector.js';
+export type {
+  AskableInspectorHandle,
+  AskableInspectorOptions,
+  AskableInspectorPosition,
+} from './inspector.js';
 export type {
   AskableContext,
   AskableContextOptions,
