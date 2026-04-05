@@ -6,7 +6,7 @@
 
 **Give any UI element LLM awareness with one attribute.**
 
-![askable-ui demo](./docs/demo.gif)
+![askable-ui demo](./site/www/demo.gif)
 
 ---
 
@@ -122,7 +122,8 @@ function RevenueCard({ data }) {
 - **React guide:** [`packages/react/README.md`](./packages/react/README.md)
 - **Vue guide:** [`packages/vue/README.md`](./packages/vue/README.md)
 - **Svelte guide:** [`packages/svelte/README.md`](./packages/svelte/README.md)
-- **Landing page / docs shell:** [`docs/index.html`](./docs/index.html)
+- **Developer docs:** [`site/docs/`](./site/docs/)
+- **Landing page:** [`site/www/index.html`](./site/www/index.html)
 
 Recommended reading order for new users:
 
