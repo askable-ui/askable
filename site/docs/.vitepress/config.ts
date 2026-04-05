@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  base: '/docs/',
+  base: '/askable/docs/',
   title: 'askable-ui',
   description: 'UI context your LLM can actually use. Annotate elements with data-askable and feed structured focus context into any AI assistant.',
   head: [
