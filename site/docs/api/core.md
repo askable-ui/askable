@@ -72,8 +72,17 @@ ctx.observe(document, { hoverThrottle: 100 });
 |---|---|---|
 | `root` | `HTMLElement \| Document` | Root element to observe |
 | `options.events` | `AskableEvent[]` | Trigger events. Default: `['click', 'hover', 'focus']` |
+| `options.targetStrategy` | `AskableTargetStrategy` | Which element wins when nested `[data-askable]` elements are involved. Default: `'deepest'` |
 | `options.hoverDebounce` | `number` | Debounce delay in ms for hover events. Default: `0` |
 | `options.hoverThrottle` | `number` | Throttle window in ms for hover events. Default: `0` |
+
+**`AskableTargetStrategy` values:**
+
+| Value | Behaviour |
+|---|---|
+| `'deepest'` | Innermost `[data-askable]` element wins. Override with `data-askable-priority`. |
+| `'shallowest'` | Outermost `[data-askable]` ancestor wins; inner elements are suppressed. |
+| `'exact'` | Only fires when the event target itself has `[data-askable]`. No bubbled triggers. |
 
 ---
 
