@@ -49,7 +49,7 @@ The key insight: **the same data that renders your component also feeds the AI**
 
 ## Nesting
 
-You can nest `[data-askable]` elements. When a user interacts with a nested element, the innermost (closest ancestor) element takes priority:
+You can nest `[data-askable]` elements. When a user interacts with a nested element, the innermost (closest ancestor) element takes priority by default:
 
 ```html
 <section data-askable='{"page":"dashboard"}'>
@@ -58,6 +58,30 @@ You can nest `[data-askable]` elements. When a user interacts with a nested elem
     <canvas></canvas>
   </div>
 </section>
+```
+
+### Priority targeting
+
+Use `data-askable-priority` (numeric) to override the default innermost-wins rule. Higher values win.
+
+```html
+<!-- Outer has higher priority — clicking the inner card still focuses the section -->
+<section data-askable='{"section":"highlights"}' data-askable-priority="10">
+  <div data-askable='{"card":"revenue"}'>
+    <canvas></canvas>
+  </div>
+</section>
+```
+
+When priorities are equal, the default innermost-wins rule applies. You only need to set the attribute on elements where you want to override that default.
+
+A common use case is a "selected row" pattern where the table-level annotation should take over from individual cell annotations when the row is in a special state:
+
+```html
+<tr data-askable='{"row":"order-42","status":"selected"}' data-askable-priority="5">
+  <td data-askable='{"col":"amount"}'>$1,200</td>
+  <td data-askable='{"col":"date"}'>2024-03-01</td>
+</tr>
 ```
 
 ## Dynamic elements
