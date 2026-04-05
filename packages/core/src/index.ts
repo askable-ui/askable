@@ -1,6 +1,7 @@
 export { AskableContextImpl } from './context.js';
 export type {
   AskableContext,
+  AskableContextOptions,
   AskableEvent,
   AskableEventHandler,
   AskableEventMap,
@@ -14,9 +15,9 @@ export type {
 } from './types.js';
 
 import { AskableContextImpl } from './context.js';
-import type { AskableContext } from './types.js';
+import type { AskableContext, AskableContextOptions } from './types.js';
 
 /** Create a new AskableContext instance */
-export function createAskableContext(): AskableContext {
-  return new AskableContextImpl();
+export function createAskableContext(options?: AskableContextOptions): AskableContext {
+  return new AskableContextImpl(options);
 }

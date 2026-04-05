@@ -5,6 +5,7 @@ All types are exported from `@askable-ui/core`.
 ```ts
 import type {
   AskableContext,
+  AskableContextOptions,
   AskableFocus,
   AskableSerializedFocus,
   AskablePromptContextOptions,
@@ -16,6 +17,22 @@ import type {
   AskableEventName,
   AskableEventHandler,
 } from '@askable-ui/core';
+```
+
+---
+
+## `AskableContextOptions`
+
+Options passed to `createAskableContext()`.
+
+```ts
+interface AskableContextOptions {
+  /**
+   * Custom text extractor called for each focused element.
+   * Defaults to el.textContent?.trim() ?? ''
+   */
+  textExtractor?: (el: HTMLElement) => string;
+}
 ```
 
 ---

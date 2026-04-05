@@ -535,6 +535,53 @@ describe('createAskableContext', () => {
     });
   });
 
+  describe('textExtractor option', () => {
+    it('uses custom text extractor when provided', () => {
+      const el = makeEl({ metric: 'revenue' }, 'Original text');
+      el.setAttribute('aria-label', 'Custom label');
+      const ctx = createAskableContext({
+        textExtractor: (e) => e.getAttribute('aria-label') ?? e.textContent?.trim() ?? '',
+      });
+      ctx.observe(document);
+      el.click();
+
+      const focus = ctx.getFocus();
+      expect(focus?.text).toBe('Custom label');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('uses default text extraction when no extractor provided', () => {
+      const el = makeEl({ metric: 'revenue' }, 'Default text');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      const focus = ctx.getFocus();
+      expect(focus?.text).toBe('Default text');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('select() uses custom text extractor', () => {
+      const el = makeEl({ metric: 'revenue' }, 'Original text');
+      el.setAttribute('aria-label', 'Select label');
+      const ctx = createAskableContext({
+        textExtractor: (e) => e.getAttribute('aria-label') ?? '',
+      });
+
+      ctx.select(el);
+
+      const focus = ctx.getFocus();
+      expect(focus?.text).toBe('Select label');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+  });
+
   it('observe() is a no-op when called outside a browser environment', () => {
     const win = globalThis.window;
     Object.defineProperty(globalThis, 'window', { value: undefined, configurable: true });

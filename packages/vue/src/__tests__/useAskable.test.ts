@@ -73,6 +73,42 @@ describe('useAskable (Vue)', () => {
     expect(prompt).toContain('revenue');
   });
 
+  it('accepts a scoped ctx and does not touch globalCtx', async () => {
+    const { createAskableContext } = await import('@askable-ui/core');
+    const scopedCtx = createAskableContext();
+
+    const ScopedConsumer = defineComponent({
+      name: 'ScopedConsumer',
+      setup() {
+        const { focus, ctx } = useAskable({ ctx: scopedCtx });
+        return { focus, ctx };
+      },
+      template: `
+        <div>
+          <div data-testid="scoped-target" data-askable='{"scope":"scoped"}'>Scoped</div>
+          <span data-testid="scoped-focus">{{ focus ? JSON.stringify(focus.meta) : 'null' }}</span>
+        </div>
+      `,
+    });
+
+    const wrapper = track(mount(ScopedConsumer, { attachTo: document.body }));
+    await flushAll();
+
+    // scopedCtx is provided, so observe is NOT called automatically
+    scopedCtx.observe(document.body);
+    await flushAll();
+
+    await wrapper.find('[data-testid="scoped-target"]').trigger('click');
+    await nextTick();
+
+    const metaText = wrapper.find('[data-testid="scoped-focus"]').text();
+    expect(metaText).not.toBe('null');
+    expect(JSON.parse(metaText)).toEqual({ scope: 'scoped' });
+
+    wrapper.unmount();
+    scopedCtx.destroy();
+  });
+
   it('cleans up listener on unmount', async () => {
     const wrapper = track(mount(Consumer, { attachTo: document.body }));
     await flushAll();
