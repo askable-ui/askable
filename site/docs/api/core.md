@@ -8,15 +8,35 @@ Framework-agnostic context tracker. Zero dependencies, ~1 kb gzipped.
 npm install @askable-ui/core
 ```
 
-## `createAskableContext()`
+## `createAskableContext(options?)`
 
 Factory function. Returns a new `AskableContext` instance.
 
 ```ts
 import { createAskableContext } from '@askable-ui/core';
 
+// Default — uses textContent for text extraction, no sanitization
 const ctx = createAskableContext();
+
+// Custom text extractor — prefer ARIA labels
+const ctx = createAskableContext({
+  textExtractor: (el) => el.getAttribute('aria-label') ?? el.textContent?.trim() ?? '',
+});
+
+// Sanitize sensitive fields before capture
+const ctx = createAskableContext({
+  sanitizeMeta: ({ password, ssn, ...safe }) => safe,
+  sanitizeText: (text) => text.replace(/\b\d{16}\b/g, '[card]'),
+});
 ```
+
+**Options (`AskableContextOptions`):**
+
+| Option | Type | Description |
+|---|---|---|
+| `textExtractor` | `(el: HTMLElement) => string` | Custom text extractor. Defaults to `el.textContent?.trim()`. Applied at capture time. |
+| `sanitizeMeta` | `(meta: Record<string, unknown>) => Record<string, unknown>` | Redact/transform object meta before storing. Not called for string meta. Applied at capture time. |
+| `sanitizeText` | `(text: string) => string` | Redact/transform text content before storing. Applied at capture time. |
 
 ---
 
@@ -241,6 +261,7 @@ inspector.destroy();
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| `preset` | `'compact' \| 'verbose' \| 'json'` | — | Named shorthand. Individual options override it. |
 | `format` | `'natural' \| 'json'` | `'natural'` | Output format |
 | `includeText` | `boolean` | `true` | Include element text content |
 | `maxTextLength` | `number` | — | Truncate text to N characters |
@@ -249,3 +270,11 @@ inspector.destroy();
 | `prefix` | `string` | `'User is focused on:'` | Prefix in natural format |
 | `textLabel` | `string` | `'value'` | Label for text field in natural format |
 | `maxTokens` | `number` | — | Token budget (4 chars/token). Truncates and appends `[truncated]`. |
+
+**Presets:**
+
+| Preset | Equivalent |
+|---|---|
+| `compact` | `{ includeText: false, format: 'natural' }` |
+| `verbose` | `{ includeText: true, format: 'natural' }` |
+| `json` | `{ format: 'json', includeText: true }` |
