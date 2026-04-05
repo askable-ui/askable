@@ -56,7 +56,8 @@ export class AskableContextImpl implements AskableContext {
       root,
       options?.events,
       options?.hoverDebounce ?? 0,
-      options?.hoverThrottle ?? 0
+      options?.hoverThrottle ?? 0,
+      options?.targetStrategy ?? 'deepest'
     );
   }
 
