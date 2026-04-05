@@ -7,8 +7,15 @@ import type {
   AskableFocus,
   AskableObserveOptions,
   AskablePromptContextOptions,
+  AskablePromptPreset,
   AskableSerializedFocus,
 } from './types.js';
+
+const PRESETS: Record<AskablePromptPreset, AskablePromptContextOptions> = {
+  compact: { includeText: false, format: 'natural' },
+  verbose: { includeText: true, format: 'natural' },
+  json: { format: 'json', includeText: true },
+};
 
 const MAX_HISTORY = 50;
 
@@ -74,20 +81,22 @@ export class AskableContextImpl implements AskableContext {
 
   serializeFocus(options?: AskablePromptContextOptions): AskableSerializedFocus | null {
     if (!this.currentFocus) return null;
-    return this.serializeFocusFrom(this.currentFocus, options);
+    return this.serializeFocusFrom(this.currentFocus, this.resolveOptions(options));
   }
 
   toPromptContext(options?: AskablePromptContextOptions): string {
-    const output = this.buildPromptString(this.currentFocus, options);
-    return this.applyTokenBudget(output, options?.maxTokens);
+    const resolved = this.resolveOptions(options);
+    const output = this.buildPromptString(this.currentFocus, resolved);
+    return this.applyTokenBudget(output, resolved.maxTokens);
   }
 
   toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string {
+    const resolved = this.resolveOptions(options);
     const history = this.getHistory(limit);
     if (history.length === 0) return 'No interaction history.';
-    const lines = history.map((focus, i) => `[${i + 1}] ${this.buildPromptString(focus, options)}`);
+    const lines = history.map((focus, i) => `[${i + 1}] ${this.buildPromptString(focus, resolved)}`);
     const output = lines.join('\n');
-    return this.applyTokenBudget(output, options?.maxTokens);
+    return this.applyTokenBudget(output, resolved.maxTokens);
   }
 
   destroy(): void {
@@ -125,8 +134,9 @@ export class AskableContextImpl implements AskableContext {
   }
 
   private buildPromptString(focus: AskableFocus | null, options?: AskablePromptContextOptions): string {
-    const format = options?.format ?? 'natural';
-    const serialized = focus ? this.serializeFocusFrom(focus, options) : null;
+    const resolved = this.resolveOptions(options);
+    const format = resolved.format ?? 'natural';
+    const serialized = focus ? this.serializeFocusFrom(focus, resolved) : null;
 
     if (!serialized) return format === 'json' ? 'null' : 'No UI element is currently focused.';
 
@@ -134,8 +144,8 @@ export class AskableContextImpl implements AskableContext {
       return JSON.stringify(serialized);
     }
 
-    const textLabel = options?.textLabel ?? 'value';
-    const prefix = options?.prefix ?? 'User is focused on:';
+    const textLabel = resolved.textLabel ?? 'value';
+    const prefix = resolved.prefix ?? 'User is focused on:';
 
     const metaStr = typeof serialized.meta === 'string'
       ? serialized.meta
@@ -149,12 +159,13 @@ export class AskableContextImpl implements AskableContext {
   }
 
   private serializeFocusFrom(focus: AskableFocus, options?: AskablePromptContextOptions): AskableSerializedFocus {
-    const includeText = options?.includeText ?? true;
-    const maxTextLength = options?.maxTextLength;
+    const resolved = this.resolveOptions(options);
+    const includeText = resolved.includeText ?? true;
+    const maxTextLength = resolved.maxTextLength;
 
     const meta = typeof focus.meta === 'string'
       ? focus.meta
-      : this.normalizeMeta(focus.meta, options);
+      : this.normalizeMeta(focus.meta, resolved);
 
     const text = includeText ? this.normalizeText(focus.text, maxTextLength) : '';
 
@@ -163,6 +174,12 @@ export class AskableContextImpl implements AskableContext {
       ...(text ? { text } : {}),
       timestamp: focus.timestamp,
     };
+  }
+
+  private resolveOptions(options?: AskablePromptContextOptions): AskablePromptContextOptions {
+    if (!options?.preset) return options ?? {};
+    const { preset, ...rest } = options;
+    return { ...PRESETS[preset], ...rest };
   }
 
   private applyTokenBudget(output: string, maxTokens?: number): string {

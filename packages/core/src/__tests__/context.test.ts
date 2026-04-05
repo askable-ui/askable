@@ -448,6 +448,93 @@ describe('createAskableContext', () => {
     cleanup(el2);
   });
 
+  describe('preset option', () => {
+    it('compact preset omits text and uses natural format', () => {
+      const el = makeEl({ metric: 'churn', value: '4.2%' }, 'Churn Rate');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      const prompt = ctx.toPromptContext({ preset: 'compact' });
+      expect(prompt).toContain('User is focused on');
+      expect(prompt).toContain('metric: churn');
+      expect(prompt).not.toContain('Churn Rate');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('verbose preset includes text and uses natural format', () => {
+      const el = makeEl({ metric: 'churn' }, 'Churn Rate');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      const prompt = ctx.toPromptContext({ preset: 'verbose' });
+      expect(prompt).toContain('User is focused on');
+      expect(prompt).toContain('Churn Rate');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('json preset returns JSON with text', () => {
+      const el = makeEl({ metric: 'churn' }, 'Churn Rate');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      const prompt = ctx.toPromptContext({ preset: 'json' });
+      const parsed = JSON.parse(prompt);
+      expect(parsed.meta).toEqual({ metric: 'churn' });
+      expect(parsed.text).toBe('Churn Rate');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('individual options override the preset', () => {
+      const el = makeEl({ metric: 'churn' }, 'Churn Rate');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      // compact sets includeText: false, but we override it to true
+      const prompt = ctx.toPromptContext({ preset: 'compact', includeText: true });
+      expect(prompt).toContain('Churn Rate');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('serializeFocus() respects preset', () => {
+      const el = makeEl({ metric: 'churn' }, 'Churn Rate');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      const serialized = (ctx as any).serializeFocus({ preset: 'compact' });
+      expect(serialized.text).toBeUndefined();
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('toHistoryContext() respects preset', () => {
+      const el = makeEl({ metric: 'mrr' }, 'MRR');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      const history = ctx.toHistoryContext(undefined, { preset: 'compact' });
+      expect(history).toContain('mrr');
+      expect(history).not.toContain('MRR');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+  });
+
   it('observe() is a no-op when called outside a browser environment', () => {
     const win = globalThis.window;
     Object.defineProperty(globalThis, 'window', { value: undefined, configurable: true });

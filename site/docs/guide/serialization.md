@@ -2,6 +2,30 @@
 
 `toPromptContext()` and `toHistoryContext()` accept an `AskablePromptContextOptions` object to control exactly how context is serialized.
 
+## Presets
+
+Named presets are shorthand for common option combinations. Specify a preset via the `preset` option — any individual options you pass alongside it override the preset.
+
+| Preset | Equivalent options | Use case |
+|---|---|---|
+| `compact` | `{ includeText: false, format: 'natural' }` | Tight token budgets, meta-only |
+| `verbose` | `{ includeText: true, format: 'natural' }` | Full natural language (same as default) |
+| `json` | `{ format: 'json', includeText: true }` | Structured output for tool calls / storage |
+
+```ts
+ctx.toPromptContext({ preset: 'compact' });
+// → "User is focused on: — metric: revenue, delta: -12%"
+
+ctx.toPromptContext({ preset: 'json' });
+// → '{"meta":{"metric":"revenue","delta":"-12%"},"text":"Revenue","timestamp":...}'
+
+// Individual options override the preset
+ctx.toPromptContext({ preset: 'compact', includeText: true });
+// compact but with text included
+```
+
+Presets work with all serialization methods: `toPromptContext()`, `toHistoryContext()`, and `serializeFocus()`.
+
 ## Default output
 
 ```ts
@@ -120,6 +144,7 @@ Use this to:
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| `preset` | `'compact' \| 'verbose' \| 'json'` | — | Named shorthand; individual options override it |
 | `format` | `'natural' \| 'json'` | `'natural'` | Output format |
 | `includeText` | `boolean` | `true` | Include element text content |
 | `maxTextLength` | `number` | — | Truncate text to N characters |
