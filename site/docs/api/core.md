@@ -201,6 +201,42 @@ ctx.destroy();
 
 ---
 
+---
+
+## `createAskableInspector(ctx, options?)`
+
+Mount a floating inspector panel that shows the active focus, parsed metadata, and prompt output in real time. Designed for development and demos.
+
+```ts
+import { createAskableContext, createAskableInspector } from '@askable-ui/core';
+
+const ctx = createAskableContext();
+ctx.observe(document);
+
+const inspector = createAskableInspector(ctx);
+// Shows a floating panel in the bottom-right corner.
+
+// Tear down when done:
+inspector.destroy();
+```
+
+**Options (`AskableInspectorOptions`):**
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `position` | `'bottom-right' \| 'bottom-left' \| 'top-right' \| 'top-left'` | `'bottom-right'` | Panel anchor position |
+| `highlight` | `boolean` | `true` | Outline the focused element |
+| `promptOptions` | `AskablePromptContextOptions` | — | Options passed to `toPromptContext()` for the preview |
+
+**Returns:** `AskableInspectorHandle` — object with `destroy()` method.
+
+**Notes:**
+- No-op in non-browser environments (SSR-safe)
+- Calling `createAskableInspector()` a second time replaces any existing panel
+- Add it in development only — wrap in `if (process.env.NODE_ENV !== 'production')`
+
+---
+
 ## `AskablePromptContextOptions`
 
 | Option | Type | Default | Description |
