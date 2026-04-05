@@ -87,7 +87,13 @@ const { focus, promptContext } = useAskable({ events: ['click', 'focus'] });
 **Returns:**
 - `focus: AskableFocus | null` — current focus state
 - `promptContext: string` — natural language string ready to inject into LLM prompts
-- `ctx: AskableContext` — the underlying context instance (e.g. `ctx.select(el)`)
+- `ctx: AskableContext` — the underlying context instance for advanced use:
+  - `ctx.select(el)` — programmatically set focus ("Ask AI" button pattern)
+  - `ctx.clear()` — reset focus to null
+  - `ctx.getHistory(limit?)` — focus history, newest first
+  - `ctx.toHistoryContext(limit?, options?)` — history as a prompt-ready string
+  - `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
+  - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
 
 The hook manages a shared singleton context, so multiple calls across your app share the same observer. The context is automatically destroyed when the last consumer unmounts.
 
