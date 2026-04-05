@@ -331,6 +331,123 @@ describe('createAskableContext', () => {
     cleanup(el);
   });
 
+  it('toPromptContext() truncates output when maxTokens is exceeded', () => {
+    // meta value long enough to exceed a small token budget
+    const longMeta = { description: 'A'.repeat(200) };
+    const el = makeEl(longMeta, '');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    const prompt = ctx.toPromptContext({ maxTokens: 10 });
+    expect(prompt).toContain('[truncated]');
+    expect(prompt.length).toBeLessThanOrEqual(10 * 4);
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('toPromptContext() does not truncate when output fits within maxTokens', () => {
+    const el = makeEl({ x: 1 }, 'short');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    const full = ctx.toPromptContext();
+    const prompt = ctx.toPromptContext({ maxTokens: 1000 });
+    expect(prompt).toBe(full);
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('toHistoryContext() returns no-history string when empty', () => {
+    const ctx = createAskableContext();
+    ctx.observe(document);
+    expect(ctx.toHistoryContext()).toBe('No interaction history.');
+    ctx.destroy();
+  });
+
+  it('toHistoryContext() serializes history newest-first with numbered entries', () => {
+    const el1 = makeEl({ id: 'a' }, 'A');
+    const el2 = makeEl({ id: 'b' }, 'B');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el1.click();
+    el2.click();
+
+    const history = ctx.toHistoryContext();
+    const lines = history.split('\n');
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toMatch(/^\[1\]/);
+    expect(lines[0]).toContain('id: b');
+    expect(lines[1]).toMatch(/^\[2\]/);
+    expect(lines[1]).toContain('id: a');
+
+    ctx.destroy();
+    cleanup(el1);
+    cleanup(el2);
+  });
+
+  it('toHistoryContext() respects limit', () => {
+    const el1 = makeEl({ id: 'a' }, 'A');
+    const el2 = makeEl({ id: 'b' }, 'B');
+    const el3 = makeEl({ id: 'c' }, 'C');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el1.click();
+    el2.click();
+    el3.click();
+
+    const history = ctx.toHistoryContext(2);
+    const lines = history.split('\n');
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toContain('id: c');
+
+    ctx.destroy();
+    cleanup(el1);
+    cleanup(el2);
+    cleanup(el3);
+  });
+
+  it('toHistoryContext() respects serialization options', () => {
+    const el = makeEl({ metric: 'mrr', secret: 'x' }, 'MRR');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    const history = ctx.toHistoryContext(undefined, { excludeKeys: ['secret'], includeText: false });
+    expect(history).toContain('mrr');
+    expect(history).not.toContain('secret');
+    expect(history).not.toContain('MRR');
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('toHistoryContext() truncates when maxTokens exceeded', () => {
+    const el1 = makeEl({ id: 'a', description: 'A'.repeat(100) }, 'A');
+    const el2 = makeEl({ id: 'b', description: 'B'.repeat(100) }, 'B');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el1.click();
+    el2.click();
+
+    const history = ctx.toHistoryContext(undefined, { maxTokens: 10 });
+    expect(history).toContain('[truncated]');
+    expect(history.length).toBeLessThanOrEqual(10 * 4);
+
+    ctx.destroy();
+    cleanup(el1);
+    cleanup(el2);
+  });
+
   it('observe() is a no-op when called outside a browser environment', () => {
     const win = globalThis.window;
     Object.defineProperty(globalThis, 'window', { value: undefined, configurable: true });

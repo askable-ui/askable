@@ -58,6 +58,13 @@ export interface AskablePromptContextOptions {
   prefix?: string;
   /** Label used for text in natural format. Defaults to "value" */
   textLabel?: string;
+  /**
+   * Approximate token budget for the output string.
+   * Uses a 4 chars/token estimate. If the serialized output exceeds the budget
+   * it is truncated and a `[truncated]` marker is appended.
+   * No limit by default.
+   */
+  maxTokens?: number;
 }
 
 export interface AskableSerializedFocus {
@@ -87,6 +94,8 @@ export interface AskableContext {
   serializeFocus(options?: AskablePromptContextOptions): AskableSerializedFocus | null;
   /** Serialize current focus to a prompt-ready string */
   toPromptContext(options?: AskablePromptContextOptions): string;
+  /** Serialize focus history to a prompt-ready string (newest first). Optional limit caps the entries returned. */
+  toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string;
   /** Clean up all listeners and observers */
   destroy(): void;
 }

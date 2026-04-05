@@ -73,47 +73,21 @@ export class AskableContextImpl implements AskableContext {
   }
 
   serializeFocus(options?: AskablePromptContextOptions): AskableSerializedFocus | null {
-    const focus = this.currentFocus;
-    if (!focus) return null;
-
-    const includeText = options?.includeText ?? true;
-    const maxTextLength = options?.maxTextLength;
-
-    const meta = typeof focus.meta === 'string'
-      ? focus.meta
-      : this.normalizeMeta(focus.meta, options);
-
-    const text = includeText ? this.normalizeText(focus.text, maxTextLength) : '';
-
-    return {
-      meta,
-      ...(text ? { text } : {}),
-      timestamp: focus.timestamp,
-    };
+    if (!this.currentFocus) return null;
+    return this.serializeFocusFrom(this.currentFocus, options);
   }
 
   toPromptContext(options?: AskablePromptContextOptions): string {
-    const format = options?.format ?? 'natural';
-    const serialized = this.serializeFocus(options);
+    const output = this.buildPromptString(this.currentFocus, options);
+    return this.applyTokenBudget(output, options?.maxTokens);
+  }
 
-    if (!serialized) return format === 'json' ? 'null' : 'No UI element is currently focused.';
-
-    if (format === 'json') {
-      return JSON.stringify(serialized);
-    }
-
-    const textLabel = options?.textLabel ?? 'value';
-    const prefix = options?.prefix ?? 'User is focused on:';
-
-    const metaStr = typeof serialized.meta === 'string'
-      ? serialized.meta
-      : Object.entries(serialized.meta).map(([k, v]) => `${k}: ${String(v)}`).join(', ');
-
-    const parts: string[] = [prefix];
-    if (metaStr) parts.push(metaStr);
-    if (serialized.text) parts.push(`${textLabel} "${serialized.text}"`);
-
-    return parts.join(' — ');
+  toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string {
+    const history = this.getHistory(limit);
+    if (history.length === 0) return 'No interaction history.';
+    const lines = history.map((focus, i) => `[${i + 1}] ${this.buildPromptString(focus, options)}`);
+    const output = lines.join('\n');
+    return this.applyTokenBudget(output, options?.maxTokens);
   }
 
   destroy(): void {
@@ -148,5 +122,54 @@ export class AskableContextImpl implements AskableContext {
   private normalizeText(text: string, maxTextLength?: number): string {
     if (maxTextLength === undefined) return text;
     return text.slice(0, Math.max(0, maxTextLength));
+  }
+
+  private buildPromptString(focus: AskableFocus | null, options?: AskablePromptContextOptions): string {
+    const format = options?.format ?? 'natural';
+    const serialized = focus ? this.serializeFocusFrom(focus, options) : null;
+
+    if (!serialized) return format === 'json' ? 'null' : 'No UI element is currently focused.';
+
+    if (format === 'json') {
+      return JSON.stringify(serialized);
+    }
+
+    const textLabel = options?.textLabel ?? 'value';
+    const prefix = options?.prefix ?? 'User is focused on:';
+
+    const metaStr = typeof serialized.meta === 'string'
+      ? serialized.meta
+      : Object.entries(serialized.meta).map(([k, v]) => `${k}: ${String(v)}`).join(', ');
+
+    const parts: string[] = [prefix];
+    if (metaStr) parts.push(metaStr);
+    if (serialized.text) parts.push(`${textLabel} "${serialized.text}"`);
+
+    return parts.join(' — ');
+  }
+
+  private serializeFocusFrom(focus: AskableFocus, options?: AskablePromptContextOptions): AskableSerializedFocus {
+    const includeText = options?.includeText ?? true;
+    const maxTextLength = options?.maxTextLength;
+
+    const meta = typeof focus.meta === 'string'
+      ? focus.meta
+      : this.normalizeMeta(focus.meta, options);
+
+    const text = includeText ? this.normalizeText(focus.text, maxTextLength) : '';
+
+    return {
+      meta,
+      ...(text ? { text } : {}),
+      timestamp: focus.timestamp,
+    };
+  }
+
+  private applyTokenBudget(output: string, maxTokens?: number): string {
+    if (maxTokens === undefined) return output;
+    const budget = maxTokens * 4;
+    if (output.length <= budget) return output;
+    const marker = '... [truncated]';
+    return output.slice(0, Math.max(0, budget - marker.length)) + marker;
   }
 }
