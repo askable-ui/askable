@@ -51,6 +51,7 @@ export default defineConfig({
             { text: 'Focus & History', link: '/guide/focus-history' },
             { text: 'Prompt Serialization', link: '/guide/serialization' },
             { text: 'SSR Safety', link: '/guide/ssr' },
+            { text: 'Browser Support', link: '/guide/browser-support' },
           ],
         },
       ],
