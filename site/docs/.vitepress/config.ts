@@ -14,7 +14,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/', activeMatch: '/guide/' },
       { text: 'API Reference', link: '/api/core', activeMatch: '/api/' },
-      { text: 'Examples', link: '/examples/ai-sdk', activeMatch: '/examples/' },
+      { text: 'Examples', link: '/examples/dashboard', activeMatch: '/examples/' },
       {
         text: 'v0.2.0',
         items: [
@@ -55,6 +55,13 @@ export default defineConfig({
             { text: 'Browser Support', link: '/guide/browser-support' },
           ],
         },
+        {
+          text: 'Integrations',
+          items: [
+            { text: 'CopilotKit', link: '/guide/copilotkit' },
+            { text: 'Python Packages', link: '/guide/python' },
+          ],
+        },
       ],
       '/api/': [
         {
@@ -84,9 +91,11 @@ export default defineConfig({
         {
           text: 'Examples',
           items: [
+            { text: 'Dashboard Assistant', link: '/examples/dashboard' },
             { text: 'AI SDK Integration', link: '/examples/ai-sdk' },
             { text: 'CopilotKit', link: '/examples/copilotkit' },
             { text: 'Ask AI Button', link: '/examples/ask-ai-button' },
+            { text: 'Python (Django / Streamlit)', link: '/examples/python' },
           ],
         },
       ],
