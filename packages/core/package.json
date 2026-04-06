@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/core",
-  "version": "0.3.0",
+  "version": "0.2.0",
   "description": "Framework-agnostic context tracker for LLM-aware UIs",
   "type": "module",
   "main": "./dist/index.js",
