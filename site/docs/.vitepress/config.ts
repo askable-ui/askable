@@ -14,7 +14,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/', activeMatch: '/guide/' },
       { text: 'API Reference', link: '/api/core', activeMatch: '/api/' },
-      { text: 'Examples', link: '/examples/ai-sdk', activeMatch: '/examples/' },
+      { text: 'Examples', link: '/examples/dashboard', activeMatch: '/examples/' },
       {
         text: 'v0.2.0',
         items: [
@@ -40,7 +40,6 @@ export default defineConfig({
             { text: 'React', link: '/guide/react' },
             { text: 'Vue', link: '/guide/vue' },
             { text: 'Svelte', link: '/guide/svelte' },
-            { text: 'Angular', link: '/guide/angular' },
             { text: 'Plain JS / HTML', link: '/guide/vanilla' },
           ],
         },
@@ -55,6 +54,19 @@ export default defineConfig({
             { text: 'Browser Support', link: '/guide/browser-support' },
           ],
         },
+        {
+          text: 'Integrations',
+          items: [
+            { text: 'CopilotKit', link: '/guide/copilotkit' },
+            { text: 'Python Packages', link: '/guide/python' },
+          ],
+        },
+        {
+          text: 'Tooling',
+          items: [
+            { text: 'Inspector / Dev Panel', link: '/guide/inspector' },
+          ],
+        },
       ],
       '/api/': [
         {
@@ -64,7 +76,7 @@ export default defineConfig({
             { text: '@askable-ui/react', link: '/api/react' },
             { text: '@askable-ui/vue', link: '/api/vue' },
             { text: '@askable-ui/svelte', link: '/api/svelte' },
-            { text: '@askable-ui/angular', link: '/api/angular' },
+
           ],
         },
         {
@@ -84,9 +96,11 @@ export default defineConfig({
         {
           text: 'Examples',
           items: [
+            { text: 'Dashboard Assistant', link: '/examples/dashboard' },
             { text: 'AI SDK Integration', link: '/examples/ai-sdk' },
             { text: 'CopilotKit', link: '/examples/copilotkit' },
             { text: 'Ask AI Button', link: '/examples/ask-ai-button' },
+            { text: 'Python (Django / Streamlit)', link: '/examples/python' },
           ],
         },
       ],

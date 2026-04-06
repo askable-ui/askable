@@ -120,6 +120,35 @@ A common use case is a "selected row" pattern where the table-level annotation s
 </tr>
 ```
 
+## Element-level text override
+
+The `data-askable-text` attribute lets a single element override the text that Askable captures, independent of any `textExtractor` configured on the context.
+
+```html
+<!-- Use a cleaner label instead of the raw text content -->
+<td data-askable='{"col":"revenue"}' data-askable-text="Revenue: $2.3M">
+  <span class="currency">$</span>2.3<span class="unit">M</span>
+</td>
+
+<!-- Suppress text entirely for a sensitive field -->
+<td data-askable='{"col":"ssn"}' data-askable-text="">
+  ***-**-1234
+</td>
+```
+
+`data-askable-text` takes priority over both `textContent` extraction and any custom `textExtractor`. Set it to an empty string `""` to send no text for that element — useful for sensitive data where the AI should rely only on the structured `meta` annotation.
+
+This also works on framework `<Askable>` components by setting the HTML attribute directly:
+
+```tsx
+<Askable
+  meta={{ col: 'ssn', type: 'sensitive' }}
+  data-askable-text=""     // suppress text via HTML attribute
+>
+  ***-**-1234
+</Askable>
+```
+
 ## Dynamic elements
 
 The underlying `MutationObserver` automatically attaches listeners when new `[data-askable]` elements appear in the DOM and detaches them when they are removed. You do not need to call `observe()` again after async renders, route changes within an SPA, or virtualized list updates.
