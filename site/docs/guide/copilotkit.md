@@ -106,7 +106,144 @@ export async function POST(req: Request) {
 }
 ```
 
-## "Ask AI" button pattern
+## Context-in-input pattern (recommended)
+
+Rather than auto-sending to the LLM when the user selects an element, a better UX shows the focused context **in the chat input area** and lets the user add their own question before sending. This gives users control and leads to higher-quality conversations.
+
+```
+[ KPI: revenue $128k +12%  ×  ]   ← context bar, visible before sending
+[ Why is this growing?          ]   ← input pre-filled with a suggested question
+[ Send ↑ ]
+```
+
+### Implementation
+
+```tsx
+'use client';
+import { useState, useEffect } from 'react';
+import { useAskable } from '@askable-ui/react';
+import { useCopilotChat } from '@copilotkit/react-core';
+import { TextMessage, MessageRole } from '@copilotkit/runtime-client-gql';
+
+/** Generates a default question based on element meta */
+function defaultQuestion(meta: Record<string, unknown>): string {
+  const w = String(meta.widget ?? meta.metric ?? '');
+  if (w === 'revenue') return 'Why is MRR trending this way?';
+  if (w === 'churn')   return 'What is driving churn?';
+  if (w === 'arpu')    return 'How can we improve ARPU?';
+  if (w === 'nps')     return 'What should we do with this NPS score?';
+  if (meta.status === 'at_risk') return 'What is the recommended action for this account?';
+  if (meta.status === 'churned') return 'Can we win this account back?';
+  return 'Tell me about this.';
+}
+
+export function ContextAwareChat() {
+  const { ctx, focus, promptContext } = useAskable();
+  const { appendMessage } = useCopilotChat();
+
+  const [inputValue, setInputValue] = useState('');
+  const [contextDismissed, setContextDismissed] = useState(false);
+
+  // When focus changes: show context bar and pre-fill input with suggestion
+  useEffect(() => {
+    if (!focus) return;
+    setContextDismissed(false);
+    const meta = focus.meta as Record<string, unknown>;
+    setInputValue(typeof meta === 'object' ? defaultQuestion(meta) : '');
+  }, [focus]);
+
+  function handleDismiss() {
+    setContextDismissed(true);
+    ctx.clear();
+    setInputValue('');
+  }
+
+  async function handleSend() {
+    const text = inputValue.trim();
+    if (!text) return;
+    setInputValue('');
+
+    // Build a message that includes the UI context when available
+    const ctxLine = !contextDismissed && focus
+      ? `\n\n[UI context: ${ctx.toPromptContext()}]`
+      : '';
+
+    await appendMessage(
+      new TextMessage({ content: text + ctxLine, role: MessageRole.User })
+    );
+  }
+
+  const showContextBar = focus && !contextDismissed;
+
+  return (
+    <div className="chat-shell">
+      {/* Context bar — appears when an element is selected */}
+      {showContextBar && (
+        <div className="context-bar">
+          <span className="context-label">Context:</span>
+          <span className="context-value">{promptContext}</span>
+          <button onClick={handleDismiss} aria-label="Clear context">×</button>
+        </div>
+      )}
+
+      {/* Input with pre-filled suggestion */}
+      <div className="chat-input-row">
+        <input
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          placeholder={
+            focus
+              ? 'Add your question or press Enter to send…'
+              : 'Select an element, then ask anything…'
+          }
+          autoFocus={!!focus}
+        />
+        <button onClick={handleSend} disabled={!inputValue.trim()}>↑</button>
+      </div>
+    </div>
+  );
+}
+```
+
+Then mount this instead of the default CopilotKit input:
+
+```tsx
+<CopilotSidebar
+  instructions="You are a dashboard assistant. The user can share UI context alongside their question."
+  // hide the built-in input; render ContextAwareChat in its place
+  Input={() => <ContextAwareChat />}
+/>
+```
+
+::: tip Why this pattern works
+The user sees *what context the AI will receive* before they commit to sending. This reduces hallucinations, builds trust, and makes the interaction feel intentional rather than automatic.
+:::
+
+### Using chat suggestions instead
+
+If you prefer CopilotKit's built-in UI, use `useCopilotChatSuggestions` to auto-generate contextual prompts from the current focus. The user still initiates the send.
+
+```tsx
+import { useCopilotChatSuggestions } from '@copilotkit/react-ui';
+import { useAskable } from '@askable-ui/react';
+
+export function DashboardWithSuggestions() {
+  const { focus } = useAskable();
+
+  useCopilotChatSuggestions({
+    instructions: focus
+      ? `The user is focused on: ${JSON.stringify(focus.meta)}. Suggest 3 specific questions they might want answered about this element.`
+      : 'Suggest 3 general questions about this dashboard.',
+    minSuggestions: 2,
+    maxSuggestions: 3,
+  });
+
+  return <Dashboard />;
+}
+```
+
+
 
 For explicit, user-triggered context capture, use `ctx.select()` before the CopilotKit panel opens. This ensures the copilot always answers about the exact element the user clicked.
 

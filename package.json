@@ -2,9 +2,16 @@
   "name": "askable",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm run build:e2e-bundle && playwright test",
+    "build:e2e-bundle": "esbuild packages/core/src/index.ts --bundle --format=iife --global-name=AskableCore --outfile=e2e/.bundle/askable-core.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
   }
 }
