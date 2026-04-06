@@ -17,10 +17,23 @@ if (focus) {
 
 ## History
 
-Askable automatically tracks the last 50 focus events (newest first). Use `getHistory()` to access them:
+Askable automatically tracks focus events (newest first). The default buffer size is 50; configure it with `maxHistory`:
 
 ```ts
-const all   = ctx.getHistory();     // all up to 50, newest first
+// Default: last 50 events
+const ctx = createAskableContext();
+
+// Custom buffer
+const ctx = createAskableContext({ maxHistory: 10 });
+
+// Disable history entirely
+const ctx = createAskableContext({ maxHistory: 0 });
+```
+
+Use `getHistory()` to access the buffer:
+
+```ts
+const all   = ctx.getHistory();     // all entries, newest first
 const last5 = ctx.getHistory(5);    // capped at 5
 ```
 

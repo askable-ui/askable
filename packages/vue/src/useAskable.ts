@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { createAskableContext } from '@askable-ui/core';
-import type { AskableEvent, AskableFocus, AskableContext } from '@askable-ui/core';
+import type { AskableContextOptions, AskableEvent, AskableFocus, AskableContext } from '@askable-ui/core';
 
 let globalCtx: AskableContext | null = null;
 let refCount = 0;
@@ -17,15 +17,37 @@ function getGlobalCtx(): AskableContext {
   return globalCtx;
 }
 
+export interface UseAskableOptions extends AskableContextOptions {
+  events?: AskableEvent[];
+  /**
+   * Provide a pre-created context. When set, all `AskableContextOptions`
+   * (maxHistory, sanitizeMeta, etc.) are ignored — configure those on the
+   * context you pass in.
+   */
+  ctx?: AskableContext;
+}
+
 export interface UseAskableResult {
   focus: ReturnType<typeof ref<AskableFocus | null>>;
   promptContext: ReturnType<typeof computed<string>>;
   ctx: AskableContext;
 }
 
-export function useAskable(options?: { events?: AskableEvent[]; ctx?: AskableContext }) {
+function hasContextCreationOptions(options?: UseAskableOptions): boolean {
+  return Boolean(
+    options?.maxHistory !== undefined ||
+    options?.sanitizeMeta ||
+    options?.sanitizeText ||
+    options?.textExtractor
+  );
+}
+
+export function useAskable(options?: UseAskableOptions) {
   const usesProvidedCtx = Boolean(options?.ctx);
-  const ctx = options?.ctx ?? getGlobalCtx();
+  // Use a private context when context-creation options are specified
+  const usePrivateCtx = !usesProvidedCtx && hasContextCreationOptions(options);
+
+  const ctx = options?.ctx ?? (usePrivateCtx ? createAskableContext(options) : getGlobalCtx());
   const focus = ref<AskableFocus | null>(ctx.getFocus());
   // Reference focus.value so Vue tracks it as a reactive dependency;
   // ctx.toPromptContext() is a plain method and not itself reactive.
@@ -43,7 +65,7 @@ export function useAskable(options?: { events?: AskableEvent[]; ctx?: AskableCon
 
   onMounted(() => {
     if (!usesProvidedCtx) {
-      refCount++;
+      if (!usePrivateCtx) refCount++;
       if (typeof document !== 'undefined') {
         ctx.observe(document, { events: options?.events });
       }
@@ -56,10 +78,14 @@ export function useAskable(options?: { events?: AskableEvent[]; ctx?: AskableCon
     ctx.off('focus', handler);
     ctx.off('clear', clearHandler);
     if (!usesProvidedCtx) {
-      refCount--;
-      if (refCount === 0) {
-        globalCtx?.destroy();
-        globalCtx = null;
+      if (usePrivateCtx) {
+        ctx.destroy();
+      } else {
+        refCount--;
+        if (refCount === 0) {
+          globalCtx?.destroy();
+          globalCtx = null;
+        }
       }
     }
   });

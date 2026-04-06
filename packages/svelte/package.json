@@ -1,7 +1,7 @@
 {
   "name": "@askable-ui/svelte",
   "version": "0.3.0",
-  "description": "Svelte 4 bindings for askable — LLM-aware UI context",
+  "description": "Svelte 4 & 5 bindings for askable — LLM-aware UI context",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,11 +10,15 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./Askable.svelte": "./src/Askable.svelte"
+    "./Askable.svelte": "./src/Askable.svelte",
+    "./Askable5.svelte": "./src/Askable5.svelte",
+    "./useAskable.svelte": "./src/useAskable.svelte.ts"
   },
   "files": [
     "dist",
     "src/Askable.svelte",
+    "src/Askable5.svelte",
+    "src/useAskable.svelte.ts",
     "README.md"
   ],
   "repository": {
@@ -32,12 +36,13 @@
     "context",
     "svelte",
     "svelte4",
+    "svelte5",
     "ui",
     "focus"
   ],
   "license": "MIT",
   "peerDependencies": {
-    "svelte": "^4.0.0"
+    "svelte": "^4.0.0 || ^5.0.0"
   },
   "dependencies": {
     "@askable-ui/core": "^0.3.0"

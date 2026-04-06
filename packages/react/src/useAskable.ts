@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createAskableContext } from '@askable-ui/core';
-import type { AskableEvent, AskableFocus, AskableContext } from '@askable-ui/core';
+import type { AskableContextOptions, AskableEvent, AskableFocus, AskableContext } from '@askable-ui/core';
 
 let globalCtx: AskableContext | null = null;
 let refCount = 0;
@@ -17,25 +17,46 @@ function getGlobalCtx(): AskableContext {
   return globalCtx;
 }
 
+export interface UseAskableOptions extends AskableContextOptions {
+  events?: AskableEvent[];
+  /**
+   * Provide a pre-created context. When set, all `AskableContextOptions`
+   * (maxHistory, sanitizeMeta, etc.) are ignored — configure those on the
+   * context you pass in.
+   */
+  ctx?: AskableContext;
+}
+
 export interface UseAskableResult {
   focus: AskableFocus | null;
   promptContext: string;
   ctx: AskableContext;
 }
 
-export function useAskable(options?: {
-  events?: AskableEvent[];
-  ctx?: AskableContext;
-}): UseAskableResult {
+function hasContextCreationOptions(options?: UseAskableOptions): boolean {
+  return Boolean(
+    options?.maxHistory !== undefined ||
+    options?.sanitizeMeta ||
+    options?.sanitizeText ||
+    options?.textExtractor
+  );
+}
+
+export function useAskable(options?: UseAskableOptions): UseAskableResult {
   const usesProvidedCtx = Boolean(options?.ctx);
-  const ctx = useRef<AskableContext>(options?.ctx ?? getGlobalCtx());
+  // Use a private context when context-creation options are specified
+  const usePrivateCtx = !usesProvidedCtx && hasContextCreationOptions(options);
+
+  const ctx = useRef<AskableContext>(
+    options?.ctx ?? (usePrivateCtx ? createAskableContext(options) : getGlobalCtx())
+  );
   const [focus, setFocus] = useState<AskableFocus | null>(() => ctx.current.getFocus());
 
   useEffect(() => {
     const current = ctx.current;
 
     if (!usesProvidedCtx) {
-      refCount++;
+      if (!usePrivateCtx) refCount++;
       if (typeof document !== 'undefined') {
         current.observe(document, { events: options?.events });
       }
@@ -50,14 +71,18 @@ export function useAskable(options?: {
       current.off('focus', handler);
       current.off('clear', clearHandler);
       if (!usesProvidedCtx) {
-        refCount--;
-        if (refCount === 0) {
-          globalCtx?.destroy();
-          globalCtx = null;
+        if (usePrivateCtx) {
+          current.destroy();
+        } else {
+          refCount--;
+          if (refCount === 0) {
+            globalCtx?.destroy();
+            globalCtx = null;
+          }
         }
       }
     };
-  }, [options?.events, usesProvidedCtx]);
+  }, [options?.events, usesProvidedCtx, usePrivateCtx]);
 
   return {
     focus,
