@@ -40,7 +40,6 @@ export default defineConfig({
             { text: 'React', link: '/guide/react' },
             { text: 'Vue', link: '/guide/vue' },
             { text: 'Svelte', link: '/guide/svelte' },
-            { text: 'Angular', link: '/guide/angular' },
             { text: 'Plain JS / HTML', link: '/guide/vanilla' },
           ],
         },
@@ -71,7 +70,7 @@ export default defineConfig({
             { text: '@askable-ui/react', link: '/api/react' },
             { text: '@askable-ui/vue', link: '/api/vue' },
             { text: '@askable-ui/svelte', link: '/api/svelte' },
-            { text: '@askable-ui/angular', link: '/api/angular' },
+
           ],
         },
         {
