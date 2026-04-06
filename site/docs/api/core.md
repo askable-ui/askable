@@ -40,6 +40,16 @@ const ctx = createAskableContext({
 
 ---
 
+## HTML attributes
+
+| Attribute | Value | Description |
+|---|---|---|
+| `data-askable` | JSON object or string | Marks an element as askable. Value becomes `AskableFocus.meta`. |
+| `data-askable-priority` | integer | Override the default innermost-wins rule in `'deepest'` strategy. Higher values win. |
+| `data-askable-text` | string | Override the text captured from this element. Empty string `""` suppresses text entirely. Takes priority over `textExtractor`. |
+
+---
+
 ## `AskableContext`
 
 ### `observe(root, options?)`

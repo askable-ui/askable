@@ -42,6 +42,10 @@ When nothing has been interacted with, `getFocus()` returns `null`. Serializatio
 - JSON format: `"null"`
 - `serializeFocus()`: `null`
 
+### `data-askable-text` attribute
+
+If the element has a `data-askable-text` attribute, its value is used as `AskableFocus.text` instead of the output of `textExtractor`. An empty string `""` is valid and results in `text: ""`. This attribute takes priority over `textExtractor` and the default `textContent` extraction.
+
 ## Meta value rules
 
 1. If `data-askable` is valid JSON, it is parsed to a `Record<string, unknown>`.
