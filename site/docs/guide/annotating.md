@@ -249,3 +249,57 @@ For per-call field exclusion at serialization time, use `excludeKeys` in `toProm
 - Generic layout wrappers with no semantic meaning (`<div class="flex">`)
 - Elements whose content is already entirely captured by a parent annotation
 - Sensitive data (passwords, payment card numbers, PII) — use `sanitizeMeta`/`sanitizeText` at context creation or `excludeKeys` at serialization time
+
+## Wrapping your whole application
+
+A common question: *what happens if I call `observe(document.body)` across my entire app?*
+
+**Short answer: it works well.** Askable is designed for this pattern. `observe()` runs a single `querySelectorAll('[data-askable]')` at call time, then one `MutationObserver` watches for additions and removals. The overhead scales with the number of annotated elements, not the total DOM size.
+
+### What stays the same
+
+- `toPromptContext()` always returns only the **current focus** — one element, lean output, regardless of how many elements are annotated
+- History is append-only and bounded in memory
+- The single `MutationObserver` is shared across all root elements
+
+### Practical considerations
+
+| Scenario | Recommendation |
+|---|---|
+| **SPA with route changes** | One `observe(document.body)` is enough. New `[data-askable]` elements added on route change are picked up automatically. Clear focus on navigation with `ctx.clear()`. |
+| **Large tables (1,000+ rows)** | Annotate the `<tr>` level, not individual cells. This keeps listener count manageable and context semantically useful. |
+| **Virtualized lists** | Works transparently — Askable tracks DOM additions/removals, so as rows scroll in and out they are attached and detached automatically. |
+| **Multiple parallel contexts** | Create one `ctx` per independent concern (e.g., a main assistant and a separate inline tooltip). Each gets its own focus state. |
+
+### Clear focus on navigation
+
+When the user navigates to a new page within an SPA, the previously focused element is no longer relevant. Clear it explicitly:
+
+```ts
+// React Router
+const location = useLocation();
+useEffect(() => { ctx.clear(); }, [location.pathname]);
+
+// Vue Router
+router.afterEach(() => ctx.clear());
+
+// Plain SPA
+window.addEventListener('popstate', () => ctx.clear());
+```
+
+### Scoping to a section
+
+If you only want Askable to track interactions within one panel (e.g., a dashboard widget, not the whole page), pass a specific root:
+
+```ts
+const panel = document.getElementById('analytics-panel');
+ctx.observe(panel);
+```
+
+Events outside `panel` will not fire. Switching between panels is handled by `unobserve()` + `observe()`:
+
+```ts
+function activatePanel(id: string) {
+  ctx.unobserve();
+  ctx.observe(document.getElementById(id)!);
+}
