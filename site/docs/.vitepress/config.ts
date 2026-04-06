@@ -61,6 +61,12 @@ export default defineConfig({
             { text: 'Python Packages', link: '/guide/python' },
           ],
         },
+        {
+          text: 'Tooling',
+          items: [
+            { text: 'Inspector / Dev Panel', link: '/guide/inspector' },
+          ],
+        },
       ],
       '/api/': [
         {
