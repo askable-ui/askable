@@ -275,7 +275,8 @@
 
     /* DEMO DECK */
     .deck { padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--line); background: #f9fafb; }
-    .demo-controls { display: flex; justify-content: center; align-items: center; gap: .6rem; margin-bottom: 1.35rem; flex-wrap: wrap; }
+    .demo-controls { display: flex; flex-direction: column; align-items: center; gap: .75rem; margin-bottom: 1.35rem; }
+    .demo-controls-row { display: flex; justify-content: center; align-items: center; gap: .6rem; flex-wrap: wrap; }
     .toggle-label { color: var(--ink-3); font-size: .82rem; }
     .toggle-group { display: inline-flex; gap: .22rem; padding: .22rem; border-radius: var(--radius-pill); background: #fff; border: 1px solid var(--line); box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
     .toggle-btn { border: none; background: transparent; color: var(--ink-3); padding: .45rem .9rem; border-radius: var(--radius-pill); font-size: .82rem; font-weight: 600; cursor: pointer; transition: background .14s, color .14s; }
@@ -419,8 +420,8 @@
       .lens-grid, .code-panel, .kpi-grid { grid-template-columns: 1fr; }
       .insight-grid, .steps, .pkg-grid { grid-template-columns: 1fr; }
       .deck { padding: 1rem; border-radius: 24px; }
-      .demo-controls { align-items: stretch; }
-      .toggle-group { width: 100%; justify-content: stretch; }
+      .demo-controls-row { align-items: stretch; flex-wrap: wrap; }
+      .toggle-group { justify-content: stretch; }
       .toggle-btn { flex: 1 1 0; padding-inline: .65rem; }
       .panel { overflow: visible; }
       .panel-header { flex-direction: column; align-items: flex-start; gap: .2rem; }
@@ -477,6 +478,7 @@
       <a href="#demo" class="nav-link">Demo</a>
       <a href="#how" class="nav-link">How it works</a>
       <a href="#packages" class="nav-link">Packages</a>
+      <a href="https://askable-ui.github.io/askable/docs/" target="_blank" class="nav-link">Docs</a>
       <a href="https://github.com/askable-ui/askable" target="_blank" class="nav-gh">GitHub</a>
     </div>
   </nav>
@@ -497,6 +499,7 @@
             <span class="copy-icon" id="copy-icon">⎘ copy</span>
           </div>
           <a href="#demo" class="btn btn-primary">See it live</a>
+          <a href="https://askable-ui.github.io/askable/docs/" class="btn btn-secondary" target="_blank">Documentation</a>
           <a href="https://github.com/askable-ui/askable" class="btn btn-secondary" target="_blank">GitHub</a>
         </div>
         <div class="hero-meta">
@@ -587,11 +590,25 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
 
       <div class="deck">
         <div class="demo-controls">
-          <span class="toggle-label">Trigger on:</span>
-          <div class="toggle-group">
-            <button class="toggle-btn" data-mode="hover">Hover</button>
-            <button class="toggle-btn active" data-mode="click">Click</button>
-            <button class="toggle-btn" data-mode="button">Button</button>
+          <div class="demo-controls-row">
+            <span class="toggle-label">Trigger on:</span>
+            <div class="toggle-group">
+              <button class="toggle-btn" data-mode="hover">Hover</button>
+              <button class="toggle-btn active" data-mode="click">Click</button>
+              <button class="toggle-btn" data-mode="button">Button</button>
+            </div>
+          </div>
+          <div class="demo-controls-row">
+            <span class="toggle-label">Format:</span>
+            <div class="toggle-group">
+              <button class="toggle-btn active" data-format="natural">Natural</button>
+              <button class="toggle-btn" data-format="json">JSON</button>
+            </div>
+            <span class="toggle-label" style="margin-left:.5rem">Text:</span>
+            <div class="toggle-group">
+              <button class="toggle-btn active" data-text="on">On</button>
+              <button class="toggle-btn" data-text="off">Off</button>
+            </div>
           </div>
         </div>
 
@@ -730,6 +747,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
     <footer>
       <span>askable-ui — context that feels native to the UI</span>
       <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <a href="https://askable-ui.github.io/askable/docs/" target="_blank">Docs</a>
         <a href="https://github.com/askable-ui/askable" target="_blank">GitHub</a>
         <a href="https://www.npmjs.com/org/askable-ui" target="_blank">npm</a>
         <a href="https://pypi.org/project/askable-django/" target="_blank">PyPI</a>
@@ -799,13 +817,21 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
       this.focus = f; this.currentFocus = f; this.cbs.forEach(function(fn) { fn(f); });
     };
     Ctx.prototype.clear = function() { this.focus = null; this.currentFocus = null; };
-    Ctx.prototype.toPromptContext = function() {
+    Ctx.prototype.toPromptContext = function(opts) {
       var f = this.focus; if (!f) return 'No UI element is currently focused.';
+      var fmt = (opts && opts.format) || 'natural';
+      var inclText = (opts && opts.includeText === false) ? false : true;
       var m = f.meta;
+      if (fmt === 'json') {
+        var out = { meta: m };
+        if (inclText && f.text) out.text = f.text;
+        out.timestamp = f.timestamp;
+        return JSON.stringify(out, null, 2);
+      }
       var ms = typeof m === 'string' ? m : Object.keys(m).map(function(k) { return k + ': ' + m[k]; }).join(', ');
       var p = ['User is focused on:'];
       if (ms) p.push(ms);
-      if (f.text) p.push('value "' + f.text + '"');
+      if (inclText && f.text) p.push('value "' + f.text + '"');
       return p.join(' — ');
     };
     var kpiData = [
@@ -859,6 +885,12 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
     var contextChip = document.getElementById('context-chip');
     var activeEl = null; var typingTimer = null; var lastKey = null;
     var dashboard = document.querySelector('.dashboard');
+    var promptOpts = { format: 'natural', includeText: true };
+    function refreshCtxDisplay() {
+      var prompt = askable.toPromptContext(promptOpts);
+      codeCtx.textContent = prompt;
+      if (askable.focus) { codeCtx.classList.remove('empty'); contextChip.textContent = prompt; }
+    }
     askable.observe(document, { events: ['click'] });
     document.addEventListener('click', function(e) {
       var btn = e.target.closest('.ask-btn, .ask-btn-row');
@@ -867,15 +899,33 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
       var el = btn.closest('[data-askable]');
       if (el) askable.select(el);
     });
-    document.querySelectorAll('.toggle-btn').forEach(function(btn) {
+    document.querySelectorAll('[data-mode]').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        document.querySelectorAll('.toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('[data-mode]').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         var mode = btn.getAttribute('data-mode');
         lastKey = null; askable.unobserve();
         if (mode === 'button') { dashboard.classList.add('button-mode'); }
         else { dashboard.classList.remove('button-mode'); askable.observe(document, { events: mode === 'hover' ? ['hover'] : ['click'] }); }
+      });
+    });
+    document.querySelectorAll('[data-format]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.querySelectorAll('[data-format]').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        promptOpts.format = btn.getAttribute('data-format');
+        refreshCtxDisplay();
+      });
+    });
+    document.querySelectorAll('[data-text]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.querySelectorAll('[data-text]').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        promptOpts.includeText = btn.getAttribute('data-text') === 'on';
+        refreshCtxDisplay();
       });
     });
     var responses = {
@@ -901,7 +951,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
     function showTyping() { var el = document.createElement('div'); el.className = 'typing'; el.id = 'typing'; el.innerHTML = '<span></span><span></span><span></span>'; messagesEl.appendChild(el); scrollBottom(); }
     function removeTyping() { var t = document.getElementById('typing'); if (t) t.remove(); }
     askable.on('focus', function(focus) {
-      var meta = focus.meta; var prompt = askable.toPromptContext(); var key = JSON.stringify(meta);
+      var meta = focus.meta; var prompt = askable.toPromptContext(promptOpts); var key = JSON.stringify(meta);
       if (key === lastKey) return; lastKey = key;
       var tag = focus.element.tagName.toLowerCase();
       var inner = focus.element.innerHTML.trim().split('\n').map(function(l) { return '  ' + l; }).join('\n');
