@@ -69,10 +69,6 @@ jobs:
         run: npm publish --access public --provenance --tag ${{ steps.tag.outputs.dist_tag }}
         working-directory: packages/svelte
 
-      - name: Publish @askable-ui/solid
-        run: npm publish --access public --provenance --tag ${{ steps.tag.outputs.dist_tag }}
-        working-directory: packages/solid
-
       - name: Create GitHub Release
         uses: actions/github-script@v7
         with:
