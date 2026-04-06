@@ -1,12 +1,46 @@
 # Svelte Guide
 
+Both Svelte 4 (store-based) and Svelte 5 (runes-based) APIs are supported.
+
 ## Install
 
 ```bash
 npm install @askable-ui/svelte @askable-ui/core
 ```
 
-## Quick start
+## Quick start (Svelte 5 runes)
+
+```svelte
+<script lang="ts">
+  import { useAskable } from '@askable-ui/svelte/useAskable.svelte';
+  import Askable5 from '@askable-ui/svelte/Askable5.svelte';
+
+  const { focus, promptContext, destroy, ctx } = useAskable();
+  $effect(() => () => destroy());
+
+  async function ask(question: string) {
+    return fetch('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: `UI context: ${promptContext}` },
+          { role: 'user', content: question },
+        ],
+      }),
+    });
+  }
+</script>
+
+<Askable5 meta={{ metric: 'revenue', value: '$128k', period: 'Q3' }}>
+  <RevenueChart />
+</Askable5>
+
+{#if focus}
+  <p>Focused: {JSON.stringify(focus.meta)}</p>
+{/if}
+```
+
+## Quick start (Svelte 4 stores)
 
 ```svelte
 <script lang="ts">
@@ -39,7 +73,57 @@ npm install @askable-ui/svelte @askable-ui/core
 {/if}
 ```
 
-## `<Askable>`
+## Svelte 5: `useAskable(options?)`
+
+Runes-based composable. Must be called inside a Svelte 5 component or `.svelte.ts` file.
+
+```svelte
+<script lang="ts">
+  import { useAskable } from '@askable-ui/svelte/useAskable.svelte';
+
+  // Observes document automatically (SSR-safe)
+  const askable = useAskable();
+
+  // Click events only
+  const askable = useAskable({ observe: { events: ['click'] } });
+
+  // Disable auto-observe, use a shared context
+  import { createAskableContext } from '@askable-ui/core';
+  const ctx = createAskableContext();
+  const askable = useAskable({ ctx, observe: false });
+</script>
+
+<!-- askable.focus and askable.promptContext are reactive state -->
+<p>{askable.promptContext}</p>
+```
+
+**Returns:**
+| Value | Type | Description |
+|---|---|---|
+| `focus` | `AskableFocus \| null` | Reactive current focus (`$state`) |
+| `promptContext` | `string` | Reactive prompt-ready string (`$derived`) |
+| `ctx` | `AskableContext` | Underlying context for advanced use |
+| `destroy` | `() => void` | Tears down the context — call in `$effect(() => () => destroy())` |
+
+## Svelte 5: `<Askable5>`
+
+```svelte
+<script lang="ts">
+  import Askable5 from '@askable-ui/svelte/Askable5.svelte';
+</script>
+
+<!-- Object meta -->
+<Askable5 meta={{ widget: 'churn-rate', value: '4.2%' }}>
+  <ChurnChart />
+</Askable5>
+
+<!-- String meta, custom element -->
+<Askable5 meta="pricing page hero" as="section">
+  <HeroSection />
+</Askable5>
+```
+
+## `<Askable>` (Svelte 4)
 
 Renders any element (default: `div`) with `data-askable` set from the `meta` prop.
 
