@@ -134,6 +134,15 @@ export interface AskableContextOptions {
    * })
    */
   sanitizeText?: (text: string) => string;
+  /**
+   * Maximum number of focus entries retained in history.
+   * Oldest entries are evicted when the limit is exceeded.
+   * Defaults to 50. Set to 0 to disable history entirely.
+   *
+   * @example
+   * createAskableContext({ maxHistory: 10 })
+   */
+  maxHistory?: number;
 }
 
 export interface AskableSerializedFocus {

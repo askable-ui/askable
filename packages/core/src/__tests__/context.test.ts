@@ -311,6 +311,29 @@ describe('createAskableContext', () => {
     cleanup(el3);
   });
 
+  it('maxHistory option caps the history buffer', () => {
+    const els = [makeEl({ id: 'a' }), makeEl({ id: 'b' }), makeEl({ id: 'c' }), makeEl({ id: 'd' })];
+    const ctx = createAskableContext({ maxHistory: 2 });
+    ctx.observe(document);
+    els.forEach(el => el.click());
+    const history = ctx.getHistory();
+    expect(history).toHaveLength(2);
+    expect((history[0].meta as Record<string, unknown>).id).toBe('d');
+    expect((history[1].meta as Record<string, unknown>).id).toBe('c');
+    ctx.destroy();
+    els.forEach(cleanup);
+  });
+
+  it('maxHistory: 0 disables history entirely', () => {
+    const el = makeEl({ id: 'x' });
+    const ctx = createAskableContext({ maxHistory: 0 });
+    ctx.observe(document);
+    el.click();
+    expect(ctx.getHistory()).toHaveLength(0);
+    ctx.destroy();
+    cleanup(el);
+  });
+
   it('clear() resets focus to null and emits clear event', () => {
     const el = makeEl({ widget: 'chart' }, 'Chart');
     const ctx = createAskableContext();

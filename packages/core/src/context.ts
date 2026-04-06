@@ -18,13 +18,14 @@ const PRESETS: Record<AskablePromptPreset, AskablePromptContextOptions> = {
   json: { format: 'json', includeText: true },
 };
 
-const MAX_HISTORY = 50;
+const DEFAULT_MAX_HISTORY = 50;
 
 export class AskableContextImpl implements AskableContext {
   private emitter = new Emitter();
   private observer: Observer;
   private currentFocus: AskableFocus | null = null;
   private history: AskableFocus[] = [];
+  private maxHistory: number;
   private textExtractor: ((el: HTMLElement) => string) | undefined;
   private sanitizeMetaFn: ((meta: Record<string, unknown>) => Record<string, unknown>) | undefined;
   private sanitizeTextFn: ((text: string) => string) | undefined;
@@ -33,11 +34,14 @@ export class AskableContextImpl implements AskableContext {
     this.textExtractor = options?.textExtractor;
     this.sanitizeMetaFn = options?.sanitizeMeta;
     this.sanitizeTextFn = options?.sanitizeText;
+    this.maxHistory = options?.maxHistory ?? DEFAULT_MAX_HISTORY;
     this.observer = new Observer((rawFocus) => {
       const focus = this.applySanitizers(rawFocus);
       this.currentFocus = focus;
-      this.history.push(focus);
-      if (this.history.length > MAX_HISTORY) this.history.shift();
+      if (this.maxHistory > 0) {
+        this.history.push(focus);
+        if (this.history.length > this.maxHistory) this.history.shift();
+      }
       this.emitter.emit('focus', focus);
     }, this.textExtractor);
   }
@@ -87,8 +91,10 @@ export class AskableContextImpl implements AskableContext {
     const focus = rawFocus ? this.applySanitizers(rawFocus) : null;
     if (focus) {
       this.currentFocus = focus;
-      this.history.push(focus);
-      if (this.history.length > MAX_HISTORY) this.history.shift();
+      if (this.maxHistory > 0) {
+        this.history.push(focus);
+        if (this.history.length > this.maxHistory) this.history.shift();
+      }
       this.emitter.emit('focus', focus);
     }
   }

@@ -77,15 +77,25 @@ const { focus, promptContext, ctx } = useAskable();
 // Click only
 const { focus } = useAskable({ events: ['click'] });
 
-// Scoped to a custom context instance
+// Inline context options — creates a private context (not the singleton)
+const { focus } = useAskable({ maxHistory: 10 });
+const { focus } = useAskable({ sanitizeMeta: ({ secret, ...rest }) => rest });
+
+// Scoped to a pre-created context instance
 const { focus } = useAskable({ ctx: myCtx });
 ```
+
+When any `AskableContextOptions` are provided (`maxHistory`, `sanitizeMeta`, `sanitizeText`, `textExtractor`), a private context is created for that component instead of sharing the global singleton.
 
 **Options:**
 | Option | Type | Description |
 |---|---|---|
 | `events` | `AskableEvent[]` | Which events trigger updates. Defaults to `['click', 'hover', 'focus']`. |
-| `ctx` | `AskableContext` | Use a custom context instead of the global singleton. |
+| `maxHistory` | `number` | History buffer size. Defaults to 50. Set to `0` to disable. |
+| `sanitizeMeta` | `(meta) => meta` | Redact sensitive metadata keys before storage. |
+| `sanitizeText` | `(text) => string` | Redact sensitive text content before storage. |
+| `textExtractor` | `(el) => string` | Custom text extraction function. |
+| `ctx` | `AskableContext` | Use a pre-created context (ignores all options above). |
 
 **Returns:**
 | Value | Type | Description |
@@ -148,20 +158,30 @@ function ChatInput() {
 
 ## Sanitization
 
-For production apps, pass sanitizers at context creation time to strip sensitive fields before they're stored or sent to an LLM:
+Pass sanitizers inline to strip sensitive fields before they're stored or sent to an LLM:
+
+```tsx
+function App() {
+  const { promptContext } = useAskable({
+    sanitizeMeta: ({ password, token, ...safe }) => safe,
+    sanitizeText: (text) => text.replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '[card]'),
+  });
+  // ...
+}
+```
+
+When `sanitizeMeta` or `sanitizeText` are provided, a private context is created for that component. For app-wide sanitization shared across all components, create a context manually:
 
 ```tsx
 import { createAskableContext } from '@askable-ui/core';
-import { useAskable } from '@askable-ui/react';
 
+// Create once at module level (or with useMemo)
 const safeCtx = createAskableContext({
   sanitizeMeta: ({ password, token, ...safe }) => safe,
-  sanitizeText: (text) => text.replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '[card]'),
 });
 
 function App() {
   const { promptContext } = useAskable({ ctx: safeCtx });
-  // ...
 }
 ```
 

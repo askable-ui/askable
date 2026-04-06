@@ -68,13 +68,23 @@ const { focus, promptContext, ctx } = useAskable();
 
 // Click only
 const { focus } = useAskable({ events: ['click'] });
+
+// Inline context options — creates a private context (not the singleton)
+const { focus } = useAskable({ maxHistory: 10 });
+const { focus } = useAskable({ sanitizeMeta: ({ secret, ...rest }) => rest });
 ```
+
+When `maxHistory`, `sanitizeMeta`, `sanitizeText`, or `textExtractor` are provided, a private context is created for that component instead of sharing the global singleton.
 
 **Options:**
 | Option | Type | Description |
 |---|---|---|
 | `events` | `AskableEvent[]` | Which events trigger updates. Defaults to `['click', 'hover', 'focus']`. |
-| `ctx` | `AskableContext` | Provide a scoped context instead of the global singleton. See below. |
+| `maxHistory` | `number` | History buffer size. Defaults to 50. Set to `0` to disable. |
+| `sanitizeMeta` | `(meta) => meta` | Redact sensitive metadata keys before storage. |
+| `sanitizeText` | `(text) => string` | Redact sensitive text content before storage. |
+| `textExtractor` | `(el) => string` | Custom text extraction function. |
+| `ctx` | `AskableContext` | Provide a pre-created context (ignores all options above). See below. |
 
 ## Scoped contexts
 
