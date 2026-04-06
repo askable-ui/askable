@@ -49,6 +49,7 @@ export default defineConfig({
           items: [
             { text: 'Annotating Elements', link: '/guide/annotating' },
             { text: 'Focus & History', link: '/guide/focus-history' },
+            { text: 'Ask AI Buttons (select())', link: '/guide/select' },
             { text: 'Prompt Serialization', link: '/guide/serialization' },
             { text: 'SSR Safety', link: '/guide/ssr' },
             { text: 'Browser Support', link: '/guide/browser-support' },

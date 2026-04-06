@@ -1,5 +1,6 @@
 export { AskableContextImpl } from './context.js';
 export { createAskableInspector } from './inspector.js';
+export { a11yTextExtractor } from './a11y.js';
 export type {
   AskableInspectorHandle,
   AskableInspectorOptions,

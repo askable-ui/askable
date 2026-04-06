@@ -287,3 +287,28 @@ inspector.destroy();
 | `compact` | `{ includeText: false, format: 'natural' }` |
 | `verbose` | `{ includeText: true, format: 'natural' }` |
 | `json` | `{ format: 'json', includeText: true }` |
+
+---
+
+## `a11yTextExtractor`
+
+Built-in accessibility-aware text extractor. Pass it as `textExtractor` to `createAskableContext()` to prefer ARIA labels and accessible names over raw `textContent`.
+
+```ts
+import { createAskableContext, a11yTextExtractor } from '@askable-ui/core';
+
+const ctx = createAskableContext({ textExtractor: a11yTextExtractor });
+```
+
+**Priority order (returns first non-empty value):**
+
+| Priority | Source | Notes |
+|---|---|---|
+| 1 | `aria-label` | Highest — explicit author label |
+| 2 | `aria-labelledby` | Concatenates referenced elements |
+| 3 | `title` | Tooltip/fallback label |
+| 4 | `alt` | Images and image inputs |
+| 5 | `placeholder` | Input hints |
+| 6 | `textContent.trim()` | Default fallback |
+
+See [Accessibility-aware text extraction](/guide/annotating#accessibility-aware-text-extraction) in the guide.

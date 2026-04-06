@@ -138,28 +138,46 @@ Good candidates:
 | Dashboard KPI | `{"metric":"churn","value":"4.2%","trend":"up"}` |
 | Page section | `"analytics overview"` |
 
-## Custom text extraction
+## Accessibility-aware text extraction
 
-By default, Askable uses `element.textContent.trim()` to derive the text for each focused element. You can override this globally when creating the context:
+By default, Askable uses `element.textContent.trim()` to derive the text for each focused element. For applications where accessible names (ARIA labels, `aria-labelledby`, `title`, `alt`) are more semantically meaningful to the LLM, use the built-in `a11yTextExtractor`:
 
 ```ts
-import { createAskableContext } from '@askable-ui/core';
+import { createAskableContext, a11yTextExtractor } from '@askable-ui/core';
 
-const ctx = createAskableContext({
-  textExtractor: (el) =>
-    el.getAttribute('aria-label') ??
-    el.getAttribute('title') ??
-    el.textContent?.trim() ??
-    '',
-});
+const ctx = createAskableContext({ textExtractor: a11yTextExtractor });
 ```
 
-The extractor receives the DOM element and returns a string. It applies to all focus events — clicks, hovers, and explicit `select()` calls.
+`a11yTextExtractor` follows this priority order, returning the first non-empty value:
 
-Use this when:
-- Accessible names (ARIA labels) are more meaningful to the LLM than raw text content
-- Elements contain noisy child text (icons, timestamps, decorative strings) you want to exclude
-- You need a different representation per element type
+| Priority | Source | Example |
+|---|---|---|
+| 1 | `aria-label` | `"Close dialog"` |
+| 2 | `aria-labelledby` references | `"Q3 Revenue chart"` |
+| 3 | `title` attribute | `"Bar chart — hover for details"` |
+| 4 | `alt` attribute (images) | `"Revenue trend line"` |
+| 5 | `placeholder` (inputs) | `"Search metrics…"` |
+| 6 | `textContent.trim()` | `"Revenue: $2.3M"` |
+
+This is useful for icon buttons, data cells with screen-reader-only labels, or any element whose visible text is less informative than its accessible name.
+
+### Custom extractor
+
+For full control, write your own extractor. The function receives the DOM element and returns a string. It applies to all focus events and explicit `select()` calls:
+
+```ts
+const ctx = createAskableContext({
+  textExtractor: (el) => {
+    // prefer data attribute, fall back to aria-label, then textContent
+    return (
+      el.getAttribute('data-label') ??
+      el.getAttribute('aria-label') ??
+      el.textContent?.trim() ??
+      ''
+    );
+  },
+});
+```
 
 ## Sanitization and redaction
 
