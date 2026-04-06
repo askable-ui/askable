@@ -66,6 +66,12 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Python',
+          items: [
+            { text: 'askable-shared (serializer)', link: '/api/python-shared' },
+          ],
+        },
+        {
           text: 'Types',
           items: [
             { text: 'Type Reference', link: '/api/types' },
