@@ -64,11 +64,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Django package
-        run: pip install -e packages/python/django/
-
       - name: Install test dependencies
         run: pip install pytest
+
+      - name: Install shared serializer package
+        run: pip install -e packages/python/shared/
+
+      - name: Run shared serializer tests
+        run: pytest packages/python/shared/askable/tests/ -v
+
+      - name: Install Django package
+        run: pip install -e packages/python/django/
 
       - name: Run Django smoke tests
         run: pytest packages/python/django/tests/ -v

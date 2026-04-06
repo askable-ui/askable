@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "askable-shared"
+version = "0.1.0"
+description = "Shared serialization utilities for askable-ui Python packages"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "askable-ui contributors"}]
+requires-python = ">=3.9"
+dependencies = []
+keywords = ["llm", "ai", "context", "ui", "serialization"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/askable-ui/askable"
+Source = "https://github.com/askable-ui/askable/tree/main/packages/python/shared"
+"Bug Tracker" = "https://github.com/askable-ui/askable/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
