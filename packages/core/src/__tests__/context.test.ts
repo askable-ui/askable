@@ -582,6 +582,58 @@ describe('createAskableContext', () => {
     });
   });
 
+  describe('data-askable-text element-level override', () => {
+    it('uses data-askable-text instead of textContent', () => {
+      const el = makeEl({ metric: 'revenue' }, 'Raw text content');
+      el.setAttribute('data-askable-text', 'Custom override');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      expect(ctx.getFocus()?.text).toBe('Custom override');
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('empty data-askable-text suppresses text', () => {
+      const el = makeEl({ metric: 'revenue' }, 'Sensitive content');
+      el.setAttribute('data-askable-text', '');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      expect(ctx.getFocus()?.text).toBe('');
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('data-askable-text takes priority over textExtractor', () => {
+      const el = makeEl({ metric: 'revenue' }, 'Original');
+      el.setAttribute('aria-label', 'ARIA label');
+      el.setAttribute('data-askable-text', 'Element override');
+      const ctx = createAskableContext({
+        textExtractor: (e) => e.getAttribute('aria-label') ?? '',
+      });
+      ctx.observe(document);
+      el.click();
+
+      expect(ctx.getFocus()?.text).toBe('Element override');
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('select() respects data-askable-text', () => {
+      const el = makeEl({ metric: 'revenue' }, 'Original');
+      el.setAttribute('data-askable-text', 'Selected override');
+      const ctx = createAskableContext();
+      ctx.select(el);
+
+      expect(ctx.getFocus()?.text).toBe('Selected override');
+      ctx.destroy();
+      cleanup(el);
+    });
+  });
+
   describe('sanitizeMeta and sanitizeText options', () => {
     it('sanitizeMeta strips sensitive fields from object meta', () => {
       const el = makeEl({ metric: 'revenue', password: 'secret', value: '$2M' }, 'Revenue');
