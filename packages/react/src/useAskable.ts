@@ -6,6 +6,11 @@ let globalCtx: AskableContext | null = null;
 let refCount = 0;
 
 function getGlobalCtx(): AskableContext {
+  // During SSR (no window), never persist to the module-level singleton —
+  // each render gets a fresh throwaway context so requests don't share state.
+  if (typeof window === 'undefined') {
+    return createAskableContext();
+  }
   if (!globalCtx) {
     globalCtx = createAskableContext();
   }
