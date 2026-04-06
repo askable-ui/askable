@@ -4,177 +4,98 @@
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@askable-ui/core?color=6366f1&label=~1kb)](https://bundlephobia.com/package/@askable-ui/core)
 [![license](https://img.shields.io/npm/l/@askable-ui/core?color=6366f1)](./LICENSE)
 
-**Give any UI element LLM awareness with one attribute.**
+> UI context your LLM can actually use.
 
-![askable-ui demo](./site/www/demo.gif)
-
----
-
-## What Askable does
-
-Your model usually only sees the prompt. It does **not** know what the user is looking at in the UI.
-
-Askable bridges that gap:
-
-1. annotate meaningful UI with `data-askable`
-2. observe user interaction
-3. inject the current UI context into your LLM call
-
-```html
-<div data-askable='{"chart":"revenue","delta":"-12%","period":"Q3"}'>
-  <RevenueChart />
-</div>
-```
-
-```ts
-import { createAskableContext } from '@askable-ui/core';
-
-const askable = createAskableContext();
-askable.observe(document);
-
-const prompt = askable.toPromptContext();
-// → "User is focused on: chart: revenue, delta: -12%, period: Q3"
-```
-
----
-
-## Shipped today
-
-### JavaScript packages
+Annotate any element with `data-askable`. Askable tracks what the user is interacting with and gives you a prompt-ready string to inject into any AI call — automatically.
 
 ```bash
-npm install @askable-ui/core
-npm install @askable-ui/react
-npm install @askable-ui/vue
-npm install @askable-ui/svelte
+npm install @askable-ui/react   # or vue / svelte / core
 ```
-
-- [`@askable-ui/core`](./packages/core) — framework-agnostic observer + context
-- [`@askable-ui/react`](./packages/react) — React bindings
-- [`@askable-ui/vue`](./packages/vue) — Vue 3 bindings
-- [`@askable-ui/svelte`](./packages/svelte) — Svelte bindings
-
-### Experimental / in-repo Python work
-
-There are Python package directories in `packages/python/`, but the primary supported surface in this repo today is the JavaScript package set above.
 
 ---
 
-## Quick start
+## How it works
 
-### Core
+**1. Annotate your UI**
+
+```tsx
+import { Askable } from '@askable-ui/react';
+
+<Askable meta={{ metric: 'revenue', value: '$2.3M', delta: '+12%' }}>
+  <RevenueChart data={data} />
+</Askable>
+```
+
+**2. Read the context**
+
+```tsx
+import { useAskable } from '@askable-ui/react';
+
+const { promptContext } = useAskable();
+// "User is focused on: — metric: revenue, value: $2.3M, delta: +12%"
+```
+
+**3. Inject into your AI call**
 
 ```ts
-import { createAskableContext } from '@askable-ui/core';
-
-const askable = createAskableContext();
-askable.observe(document, { events: ['click', 'focus'] });
-
-askable.on('focus', (focus) => {
-  console.log(focus.meta);
-  console.log(focus.text);
+// Works with any LLM SDK — Vercel AI, Anthropic, OpenAI, etc.
+const result = streamText({
+  model: openai('gpt-4o'),
+  system: `You are a helpful assistant.\n\n${uiContext}`,
+  messages,
 });
 ```
 
-### React
-
-```tsx
-import { Askable, useAskable } from '@askable-ui/react';
-
-function Dashboard({ revenue }) {
-  return (
-    <Askable meta={revenue}>
-      <RevenueChart data={revenue} />
-    </Askable>
-  );
-}
-
-function AIInput() {
-  const { promptContext } = useAskable({ events: ['click'] });
-  return <ChatInput context={promptContext} />;
-}
-```
-
-### Explicit “Ask AI” pattern
-
-```tsx
-function RevenueCard({ data }) {
-  const { ctx } = useAskable();
-  const ref = useRef<HTMLDivElement>(null);
-
-  return (
-    <Askable meta={data} ref={ref}>
-      <RevenueChart data={data} />
-      <button onClick={() => { ctx.select(ref.current!); openChat(); }}>
-        Ask AI
-      </button>
-    </Askable>
-  );
-}
-```
+`promptContext` updates automatically as the user interacts. No polling, no manual wiring.
 
 ---
 
-## Docs map
+## Features
 
-- **Overview:** this README
-- **Core API:** [`packages/core/README.md`](./packages/core/README.md)
-- **React guide:** [`packages/react/README.md`](./packages/react/README.md)
-- **Vue guide:** [`packages/vue/README.md`](./packages/vue/README.md)
-- **Svelte guide:** [`packages/svelte/README.md`](./packages/svelte/README.md)
-- **Developer docs:** [`site/docs/`](./site/docs/)
-- **Landing page:** [`site/www/index.html`](./site/www/index.html)
-
-Recommended reading order for new users:
-
-1. this README
-2. framework package README
-3. core API README
+- **Zero config** — one attribute, works instantly
+- **Framework adapters** — React, Vue 3, Svelte (same API everywhere)
+- **SSR safe** — observation defers to the client, import anywhere
+- **~1 kb** — no runtime dependencies
+- **Explicit select** — `ctx.select(el)` for "Ask AI" button patterns
+- **History** — `ctx.toHistoryContext(5)` for multi-turn conversations
+- **Redaction** — `sanitizeMeta` / `sanitizeText` hooks for sensitive data
+- **Inspector** — floating dev panel to see what Askable is tracking
 
 ---
 
-## SSR / framework behavior
+## Install
 
-Askable is safe to **import** in server-rendered apps, but DOM observation is **client-only**.
+| Package | Use when |
+|---|---|
+| `@askable-ui/react` | React 18+ apps |
+| `@askable-ui/vue` | Vue 3 apps |
+| `@askable-ui/svelte` | Svelte / SvelteKit apps |
+| `@askable-ui/core` | Vanilla JS or custom framework integration |
 
-- React bindings now defer observation to `useEffect()`
-- Vue bindings now defer observation to `onMounted()`
-- Svelte bindings guard observation behind a browser check
-
-That means Askable works with SSR frameworks, but actual DOM observation starts on the client after mount.
-
----
-
-## Works with any LLM stack
-
-```ts
-// Vercel AI SDK
-system: `UI context:
-${askable.toPromptContext()}`
-
-// OpenAI
-{ role: 'system', content: `UI context:
-${askable.toPromptContext()}` }
-
-// Anthropic
-system: `UI context:
-${askable.toPromptContext()}`
+```bash
+npm install @askable-ui/react
+# or
+npm install @askable-ui/vue
+# or
+npm install @askable-ui/svelte
+# or
+npm install @askable-ui/core
 ```
 
 ---
 
-## What’s next
+## Documentation
 
-Current priority areas:
+**[askable-ui.github.io/askable/docs →](https://askable-ui.github.io/askable/docs/)**
 
-- better docs and onboarding
-- AI integration examples
-- CopilotKit guide + example
-- explicit Ask AI workflow guidance
-- debug / inspector tooling
+- [Getting Started](https://askable-ui.github.io/askable/docs/guide/getting-started)
+- [React](https://askable-ui.github.io/askable/docs/guide/react) · [Vue](https://askable-ui.github.io/askable/docs/guide/vue) · [Svelte](https://askable-ui.github.io/askable/docs/guide/svelte)
+- [Dashboard example](https://askable-ui.github.io/askable/docs/examples/dashboard)
+- [CopilotKit integration](https://askable-ui.github.io/askable/docs/guide/copilotkit)
+- [API reference](https://askable-ui.github.io/askable/docs/api/core)
 
 ---
 
 ## License
 
-MIT
+MIT — see [LICENSE](./LICENSE)

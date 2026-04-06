@@ -4,20 +4,23 @@ Askable works with any LLM SDK. Here are drop-in patterns for the most common on
 
 ## Vercel AI SDK
 
-```tsx
+::: code-group
+
+```ts [API route]
 // app/api/chat/route.ts
 import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 
 export async function POST(req: Request) {
-  const { messages, uiContext } = await req.json();
+  const { messages, uiContext, historyContext } = await req.json();
+
+  const systemParts = ['You are a helpful UI assistant.'];
+  if (uiContext) systemParts.push(`Current UI context:\n${uiContext}`);
+  if (historyContext) systemParts.push(`Recent interactions:\n${historyContext}`);
 
   const result = streamText({
     model: openai('gpt-4o'),
-    system: [
-      'You are a helpful UI assistant.',
-      uiContext ? `Current UI context: ${uiContext}` : '',
-    ].filter(Boolean).join('\n'),
+    system: systemParts.join('\n\n'),
     messages,
   });
 
@@ -25,29 +28,109 @@ export async function POST(req: Request) {
 }
 ```
 
-```tsx
-// components/Chat.tsx
+```tsx [React client]
 'use client';
 import { useChat } from 'ai/react';
 import { useAskable } from '@askable-ui/react';
 
 export function Chat() {
-  const { promptContext } = useAskable();
+  const { ctx, promptContext } = useAskable();
+
   const { messages, input, handleInputChange, handleSubmit } = useChat({
-    body: { uiContext: promptContext },  // sent with every request
+    api: '/api/chat',
+    body: {
+      uiContext: promptContext,
+      historyContext: ctx.toHistoryContext(5),
+    },
   });
 
   return (
     <form onSubmit={handleSubmit}>
-      {messages.map(m => (
-        <div key={m.id}>{m.content}</div>
+      {messages.map((m) => (
+        <div key={m.id} className={`msg-${m.role}`}>{m.content}</div>
       ))}
-      <input value={input} onChange={handleInputChange} />
+      <input value={input} onChange={handleInputChange} placeholder="Ask…" />
       <button type="submit">Send</button>
     </form>
   );
 }
 ```
+
+```vue [Vue client]
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useChat } from '@ai-sdk/vue';
+import { useAskable } from '@askable-ui/vue';
+
+const { ctx, promptContext } = useAskable();
+
+const { messages, input, handleSubmit } = useChat({
+  api: '/api/chat',
+  body: computed(() => ({
+    uiContext: promptContext.value,
+    historyContext: ctx.toHistoryContext(5),
+  })),
+});
+</script>
+
+<template>
+  <form @submit.prevent="handleSubmit">
+    <div v-for="m in messages" :key="m.id" :class="`msg-${m.role}`">{{ m.content }}</div>
+    <input v-model="input" placeholder="Ask…" />
+    <button type="submit">Send</button>
+  </form>
+</template>
+```
+
+```svelte [Svelte client]
+<script lang="ts">
+  import { onDestroy } from 'svelte';
+  import { createAskableStore } from '@askable-ui/svelte';
+
+  const { ctx, promptContext, destroy } = createAskableStore();
+  onDestroy(destroy);
+
+  let messages: { id: string; role: string; content: string }[] = [];
+  let input = '';
+
+  async function send() {
+    if (!input.trim()) return;
+    const userMsg = input;
+    input = '';
+    messages = [...messages, { id: crypto.randomUUID(), role: 'user', content: userMsg }];
+
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages,
+        uiContext: $promptContext,
+        historyContext: ctx.toHistoryContext(5),
+      }),
+    });
+
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let reply = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      reply += decoder.decode(value);
+    }
+    messages = [...messages, { id: crypto.randomUUID(), role: 'assistant', content: reply }];
+  }
+</script>
+
+<form on:submit|preventDefault={send}>
+  {#each messages as m (m.id)}
+    <div class="msg-{m.role}">{m.content}</div>
+  {/each}
+  <input bind:value={input} placeholder="Ask…" />
+  <button type="submit">Send</button>
+</form>
+```
+
+:::
 
 ## Anthropic SDK
 

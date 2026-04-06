@@ -31,9 +31,15 @@ function extractText(el: HTMLElement): string {
 export function buildFocus(el: HTMLElement, textExtractor?: (el: HTMLElement) => string): AskableFocus | null {
   const raw = el.getAttribute('data-askable');
   if (raw === null) return null;
+  // data-askable-text overrides both textExtractor and default textContent extraction.
+  // Set to an empty string ("") to suppress text entirely for a single element.
+  const textOverride = el.getAttribute('data-askable-text');
+  const text = textOverride !== null
+    ? textOverride
+    : textExtractor ? textExtractor(el) : extractText(el);
   return {
     meta: parseMeta(raw),
-    text: textExtractor ? textExtractor(el) : extractText(el),
+    text,
     element: el,
     timestamp: Date.now(),
   };
