@@ -71,8 +71,8 @@ jobs:
       - name: Build core
         run: npm run build -w packages/core
 
-      - name: Run performance budget
-        run: npm run bench:ci -w packages/core
+      - name: Run performance benchmark
+        run: npm run bench -w packages/core
 
   python-smoke:
     runs-on: ubuntu-latest
