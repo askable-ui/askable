@@ -12,6 +12,7 @@
     "build:e2e-bundle": "esbuild packages/core/src/index.ts --bundle --format=iife --global-name=AskableCore --outfile=e2e/.bundle/askable-core.js"
   },
   "devDependencies": {
-    "@playwright/test": "^1.56.0"
+    "@playwright/test": "^1.56.0",
+    "jsdom": "^29.0.1"
   }
 }
