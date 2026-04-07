@@ -1,7 +1,8 @@
 name: Publish to npm
 
-# Triggered by version tags pushed by the tag workflow or manually.
-# npm Trusted Publisher is configured for this workflow file.
+# Triggered by version tags. Uses npm OIDC Trusted Publisher — no token needed.
+# Configure the Trusted Publisher at npmjs.com → package → Settings → Publishing.
+# Point it at: repo=askable-ui/askable, workflow=.github/workflows/publish.yml
 #
 #   v1.2.3         → stable release (dist-tag "latest")
 #   v1.2.3-beta.1  → pre-release   (dist-tag "beta")
@@ -18,7 +19,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write   # npm OIDC Trusted Publisher
+  id-token: write   # required for npm OIDC Trusted Publisher
 
 jobs:
   publish:
@@ -35,7 +36,12 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          registry-url: "https://registry.npmjs.org"
+          # Intentionally no registry-url — setup-node injects GITHUB_TOKEN as
+          # NODE_AUTH_TOKEN when registry-url is set, which overrides OIDC auth.
+          # We configure the registry manually below instead.
+
+      - name: Configure npm registry
+        run: echo "registry=https://registry.npmjs.org/" > ~/.npmrc
 
       - name: Install dependencies
         run: npm ci
@@ -55,10 +61,8 @@ jobs:
           TAG="${{ github.event.inputs.tag || github.ref_name }}"
           if [[ "$TAG" == *"-beta."* || "$TAG" == *"-alpha."* || "$TAG" == *"-rc."* ]]; then
             echo "dist_tag=beta" >> "$GITHUB_OUTPUT"
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
             echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Publish @askable-ui/core
