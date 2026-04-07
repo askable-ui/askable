@@ -41,7 +41,7 @@ jobs:
         run: echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.resolve-tag.outputs.tag }}
 
