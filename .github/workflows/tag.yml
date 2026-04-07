@@ -1,7 +1,10 @@
 name: tag / auto
 
-# Detects a version bump in packages/core/package.json on main and pushes
-# a git tag. The tag triggers publish_release.yml (npm) and release.yml (GitHub Release).
+# Detects a version bump in packages/core/package.json on main, pushes a
+# git tag, then dispatches publish_release.yml.
+#
+# NOTE: Tags pushed by GITHUB_TOKEN do NOT trigger other workflows (GitHub
+# security measure). We explicitly dispatch publish_release.yml instead.
 
 on:
   push:
@@ -16,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  actions: write # needed to dispatch publish_release.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -62,3 +66,13 @@ jobs:
           TAG="v${TAG_VERSION}"
           git tag "$TAG" 2>&1 || echo "::warning::Tag $TAG already exists locally"
           git push origin "$TAG" 2>&1 || echo "::warning::Failed to push tag $TAG (may already exist)"
+
+      - name: Trigger publish workflow
+        if: steps.version.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh workflow run publish_release.yml \
+            -f tag="v${TAG_VERSION}" \
+            --ref "v${TAG_VERSION}"
