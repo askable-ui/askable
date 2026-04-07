@@ -62,3 +62,15 @@ jobs:
           TAG="v${TAG_VERSION}"
           git tag "$TAG" 2>&1 || echo "::warning::Tag $TAG already exists locally"
           git push origin "$TAG" 2>&1 || echo "::warning::Failed to push tag $TAG (may already exist)"
+<<<<<<< HEAD
+=======
+
+      - name: Trigger publish workflow
+        if: steps.version.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh workflow run publish_release.yml \
+            --field tag="v${TAG_VERSION}" \
+            --ref "v${TAG_VERSION}"
