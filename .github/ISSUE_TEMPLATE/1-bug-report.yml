@@ -1,0 +1,77 @@
+name: Bug Report
+description: Found a bug? Report it here!
+title: "bug: "
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to fill out this bug report.
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: Explain how to reproduce the bug
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: Tell us what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: Tell us what actually happened. Include screenshots if relevant.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      description: Which package is affected?
+      options:
+        - "@askable-ui/core"
+        - "@askable-ui/react"
+        - "@askable-ui/vue"
+        - "@askable-ui/svelte"
+        - "askable-django"
+        - "askable-streamlit"
+        - "Documentation"
+        - "Other"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Package Version
+      description: What version are you using?
+      placeholder: "e.g. 0.3.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        Any relevant environment details (OS, Node version, browser, framework version, etc.)
+      placeholder: |
+        - OS: macOS 14.5
+        - Node: 20.11.0
+        - Browser: Chrome 125
+    validations:
+      required: false

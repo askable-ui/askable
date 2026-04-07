@@ -1,0 +1,55 @@
+name: test / unit / python
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/python/**"
+      - ".github/workflows/test_unit-python.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/python/**"
+      - ".github/workflows/test_unit-python.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install test dependencies
+        run: pip install pytest
+
+      - name: Install and test shared package
+        run: |
+          pip install -e packages/python/shared/
+          pytest packages/python/shared/askable/tests/ -v
+
+      - name: Install and test Django package
+        run: |
+          pip install -e packages/python/django/
+          pytest packages/python/django/tests/ -v
+
+      - name: Install and test Streamlit package
+        run: |
+          pip install -e packages/python/streamlit/
+          pytest packages/python/streamlit/tests/ -v

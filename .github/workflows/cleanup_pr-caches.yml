@@ -1,0 +1,31 @@
+name: cleanup / pr-caches
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Delete PR caches
+        run: |
+          echo "Fetching cache keys for PR branch..."
+          cacheKeysForPR=$(gh cache list --ref $BRANCH --limit 100 --json id --jq '.[].id')
+
+          set +e
+          echo "Deleting caches..."
+          for cacheKey in $cacheKeysForPR; do
+            gh cache delete "$cacheKey"
+          done
+          echo "Done"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: refs/pull/${{ github.event.pull_request.number }}/merge

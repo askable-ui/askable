@@ -1,37 +1,61 @@
-name: Release Python
+name: publish / release / python
 
-# Triggered by Python-specific version tags:
-#   py-v0.2.0          → stable release
-#   py-v0.2.0-beta1    → pre-release
+# Triggered by Python-specific version tags. Uses PyPI Trusted Publishing (OIDC).
+#
+# Setup: pypi.org → package → Settings → Publishing → Add publisher
+#   Repository:  askable-ui/askable
+#   Workflow:    .github/workflows/publish_release-python.yml
+#   Environment: (leave blank)
+#
+#   py-v0.2.0        → stable release
+#   py-v0.2.0-beta1  → pre-release
 
 on:
   push:
     tags:
       - "py-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. py-v0.2.0)"
+        required: true
 
 permissions:
   contents: write
-  id-token: write   # PyPI trusted publishing
+  id-token: write # required for PyPI trusted publishing
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  release-python:
+  publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install build tools
-        run: pip install build twine
+        run: pip install build pytest
+
+      - name: Install and test shared package
+        run: |
+          pip install -e packages/python/shared/
+          pytest packages/python/shared/askable/tests/ -v
 
       - name: Install and test Django package
         run: |
-          pip install -e packages/python/django/ pytest
+          pip install -e packages/python/django/
           pytest packages/python/django/tests/ -v
 
       - name: Install and test Streamlit package
@@ -59,9 +83,11 @@ jobs:
 
       - name: Create GitHub Release
         uses: actions/github-script@v7
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
         with:
           script: |
-            const tag = context.ref.replace('refs/tags/', '');
+            const tag = process.env.RELEASE_TAG;
             const isPrerelease = tag.includes('beta') || tag.includes('alpha') || tag.includes('rc');
             await github.rest.repos.createRelease({
               owner: context.repo.owner,
