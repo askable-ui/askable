@@ -1,55 +1,78 @@
-name: Tag on version change
+name: Publish to npm
 
-# Detects a version bump in packages/core/package.json and pushes a git tag.
-# The tag triggers release.yml which handles building, testing, publishing to
-# npm, and creating the GitHub Release.
+# Triggered by version tags pushed by the tag workflow or manually.
+# npm Trusted Publisher is configured for this workflow file.
+#
+#   v1.2.3         → stable release (dist-tag "latest")
+#   v1.2.3-beta.1  → pre-release   (dist-tag "beta")
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'packages/*/package.json'
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to tag (e.g. 0.2.0) — leave blank to read from packages/core/package.json'
-        required: false
+      tag:
+        description: 'Tag to release (e.g. v0.3.1)'
+        required: true
+
+permissions:
+  contents: read
+  id-token: write   # npm OIDC Trusted Publisher
 
 jobs:
-  tag:
+  publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          ref: ${{ github.event.inputs.tag || github.ref }}
 
-      - name: Resolve version
-        id: version
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build core
+        run: npm run build -w packages/core
+
+      - name: Build all packages
+        run: npm run build --workspaces --if-present
+
+      - name: Run tests
+        run: npm test -- --runInBand
+
+      - name: Resolve dist-tag
+        id: tag
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
-            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          if [[ "$TAG" == *"-beta."* || "$TAG" == *"-alpha."* || "$TAG" == *"-rc."* ]]; then
+            echo "dist_tag=beta" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
-            CHANGED=$(git diff HEAD~1 HEAD --name-only -- 'packages/*/package.json' | head -1)
-            if [ -z "$CHANGED" ]; then
-              echo "changed=false" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            VERSION=$(node -p "require('./packages/core/package.json').version")
-            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Push git tag
-        if: steps.version.outputs.changed == 'true'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          TAG="v${{ steps.version.outputs.version }}"
-          git tag "$TAG" || echo "Tag already exists, skipping"
-          git push origin "$TAG" || echo "Tag already pushed, skipping"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish @askable-ui/core
+        run: npm publish --access public --provenance --tag ${{ steps.tag.outputs.dist_tag }}
+        working-directory: packages/core
+
+      - name: Publish @askable-ui/react
+        run: npm publish --access public --provenance --tag ${{ steps.tag.outputs.dist_tag }}
+        working-directory: packages/react
+
+      - name: Publish @askable-ui/vue
+        run: npm publish --access public --provenance --tag ${{ steps.tag.outputs.dist_tag }}
+        working-directory: packages/vue
+
+      - name: Publish @askable-ui/svelte
+        run: npm publish --access public --provenance --tag ${{ steps.tag.outputs.dist_tag }}
+        working-directory: packages/svelte
