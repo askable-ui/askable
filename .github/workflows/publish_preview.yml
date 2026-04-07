@@ -1,0 +1,53 @@
+name: publish / preview
+
+# Publishes preview packages for every push to main and PRs using pkg-pr-new.
+# Allows reviewers to install and test changes before merge.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "site/**"
+      - "README.md"
+      - "packages/python/**"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "site/**"
+      - "README.md"
+      - "packages/python/**"
+
+permissions:
+  contents: read
+  pull-requests: write # for PR comments
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build core
+        run: npm run build -w packages/core
+
+      - name: Build all packages
+        run: npm run build --workspaces --if-present
+
+      - name: Publish preview packages
+        run: npx pkg-pr-new publish ./packages/core ./packages/react ./packages/vue ./packages/svelte

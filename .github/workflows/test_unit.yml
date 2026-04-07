@@ -1,0 +1,68 @@
+name: test / unit
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "site/**"
+      - "README.md"
+      - "examples/**"
+      - "packages/python/**"
+      - ".github/workflows/pages.yml"
+      - ".github/workflows/publish_release.yml"
+      - "packages/**/CHANGELOG.md"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "site/**"
+      - "README.md"
+      - "examples/**"
+      - "packages/python/**"
+      - ".github/workflows/pages.yml"
+      - ".github/workflows/publish_release.yml"
+      - "packages/**/CHANGELOG.md"
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to run the workflow on"
+        required: true
+        default: "main"
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: "node-${{ matrix.node-version }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build core
+        run: npm run build -w packages/core
+
+      - name: Build all packages
+        run: npm run build --workspaces --if-present
+
+      - name: Run tests
+        run: npm test

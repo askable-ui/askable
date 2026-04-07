@@ -1,14 +1,32 @@
-name: E2E Tests
+name: test / e2e
 
 on:
-  pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths-ignore:
+      - "site/**"
+      - "README.md"
+      - "examples/**"
+      - "packages/python/**"
+      - "packages/**/CHANGELOG.md"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "site/**"
+      - "README.md"
+      - "examples/**"
+      - "packages/python/**"
+      - "packages/**/CHANGELOG.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   playwright:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
