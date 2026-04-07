@@ -1,14 +1,14 @@
 name: publish / release
 
-# Triggered by version tags. Uses npm OIDC Trusted Publisher — no secret needed.
+# Triggered by tag/auto via workflow_dispatch, or manual tag pushes.
+# Uses npm OIDC Trusted Publisher — no NPM_TOKEN needed.
 #
 # Setup: npmjs.com → package → Settings → Publishing → Add Trusted Publisher
 #   Repository:  askable-ui/askable
-#   Workflow:    .github/workflows/publish_release.yml
+#   Workflow:    publish_release.yml
 #   Environment: (leave blank)
 #
-#   v1.2.3         → stable release  (dist-tag "latest")
-#   v1.2.3-beta.1  → pre-release     (dist-tag "beta")
+# Modeled after: Vite (vitejs/vite), Effect-TS, shadcn/ui
 
 on:
   push:
@@ -34,19 +34,28 @@ jobs:
     timeout-minutes: 20
 
     steps:
+      - name: Resolve tag
+        id: resolve-tag
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ steps.resolve-tag.outputs.tag }}
 
-      # setup-node with registry-url configures .npmrc for OIDC automatically.
-      # Do NOT manually write to .npmrc — it will clobber the auth config.
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: "https://registry.npmjs.org"
           cache: npm
+
+      # Node 20 ships npm v10.x which has a known OIDC bug for scoped
+      # packages (npm/cli#9088). Upgrade to npm >= 11.5.1 to fix.
+      - name: Upgrade npm for OIDC support
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: npm ci
@@ -63,13 +72,13 @@ jobs:
       - name: Resolve dist-tag
         id: dist-tag
         env:
-          INPUT_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          RELEASE_TAG: ${{ steps.resolve-tag.outputs.tag }}
         run: |
-          if [[ "$INPUT_TAG" == *"-beta."* ]]; then
+          if [[ "$RELEASE_TAG" == *"-beta."* ]]; then
             echo "tag=beta" >> "$GITHUB_OUTPUT"
-          elif [[ "$INPUT_TAG" == *"-alpha."* ]]; then
+          elif [[ "$RELEASE_TAG" == *"-alpha."* ]]; then
             echo "tag=alpha" >> "$GITHUB_OUTPUT"
-          elif [[ "$INPUT_TAG" == *"-rc."* ]]; then
+          elif [[ "$RELEASE_TAG" == *"-rc."* ]]; then
             echo "tag=rc" >> "$GITHUB_OUTPUT"
           else
             echo "tag=latest" >> "$GITHUB_OUTPUT"
