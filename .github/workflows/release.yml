@@ -49,7 +49,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           RELEASE_TAG: ${{ steps.meta.outputs.tag }}
           IS_PRERELEASE: ${{ steps.meta.outputs.prerelease }}
