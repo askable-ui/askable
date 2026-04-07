@@ -1,0 +1,343 @@
+/* ── Reset & base ─────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #f5f6f8;
+  color: #1a1a2e;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Setup banner (no API key) ────────────────────────────────────────────── */
+
+.setup-banner {
+  background: #fef3cd;
+  border-bottom: 1px solid #f0d77c;
+  padding: 12px 24px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.setup-banner code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* ── CopilotKit sidebar header ────────────────────────────────────────────── */
+
+.sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sidebar-header__title {
+  font-size: 15px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.sidebar-context {
+  background: #f0f4ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.sidebar-context__label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6366f1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.sidebar-context__card {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sidebar-context__widget {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e1b4b;
+}
+
+.sidebar-context__value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.sidebar-context__change {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.sidebar-context__empty {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* ── Dashboard layout ─────────────────────────────────────────────────────── */
+
+.dashboard {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.header__title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.header__subtitle {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.context-badge {
+  font-size: 13px;
+  padding: 6px 12px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 20px;
+  color: #4338ca;
+  white-space: nowrap;
+}
+
+/* ── Metric cards ─────────────────────────────────────────────────────────── */
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.metric-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.metric-card:hover {
+  border-color: #c7d2fe;
+}
+
+.metric-card--focused {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.metric-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.metric-card__title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metric-card__badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.metric-card__badge--positive {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.metric-card__badge--negative {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.metric-card__badge--neutral {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.metric-card__value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.metric-card__detail {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* ── Table card ───────────────────────────────────────────────────────────── */
+
+.table-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  margin-bottom: 24px;
+}
+
+.table-card:hover {
+  border-color: #c7d2fe;
+}
+
+.table-card--focused {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.table-card__title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.deals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.deals-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.deals-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f9fafb;
+}
+
+.deals-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.deals-table__company {
+  font-weight: 500;
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Stage badges ─────────────────────────────────────────────────────────── */
+
+.stage {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.stage--discovery {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.stage--proposal {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.stage--negotiation {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.stage--closed-won {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* ── Context preview ──────────────────────────────────────────────────────── */
+
+.context-preview {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.context-preview__title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.context-preview__hint {
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.context-preview__code {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #374151;
+  max-height: 200px;
+  overflow-y: auto;
+}
