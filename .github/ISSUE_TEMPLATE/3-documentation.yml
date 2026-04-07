@@ -17,6 +17,6 @@ body:
     attributes:
       label: Page URL
       description: Link to the relevant docs page (if applicable)
-      placeholder: "https://askable-ui.github.io/askable/docs/..."
+      placeholder: "https://askable-ui.com/docs/..."
     validations:
       required: false

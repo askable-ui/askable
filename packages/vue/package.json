@@ -33,6 +33,7 @@
     "ui",
     "focus"
   ],
+  "homepage": "https://askable-ui.com",
   "license": "MIT",
   "peerDependencies": {
     "vue": "^3.0.0"

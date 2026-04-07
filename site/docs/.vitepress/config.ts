@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  base: '/askable/docs/',
+  base: '/docs/',
   title: 'askable-ui',
   description: 'UI context your LLM can actually use. Annotate elements with data-askable and feed structured focus context into any AI assistant.',
   head: [
@@ -16,7 +16,7 @@ export default defineConfig({
       { text: 'API Reference', link: '/api/core', activeMatch: '/api/' },
       { text: 'Examples', link: '/examples/dashboard', activeMatch: '/examples/' },
       {
-        text: 'v0.2.0',
+        text: 'v0.4.0',
         items: [
           { text: 'Changelog', link: 'https://github.com/askable-ui/askable/releases' },
           { text: 'npm', link: 'https://www.npmjs.com/package/@askable-ui/core' },

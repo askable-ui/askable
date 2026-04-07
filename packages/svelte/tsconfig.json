@@ -13,5 +13,5 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/useAskable.svelte.ts"]
+  "exclude": ["src/useAskable.svelte.ts", "src/__tests__"]
 }
