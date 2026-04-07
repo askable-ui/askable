@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { createAskableContext } from '@askable-ui/core';
-import type { AskableContextOptions, AskableEvent, AskableFocus, AskableContext } from '@askable-ui/core';
+import { createAskableContext, createAskableInspector } from '@askable-ui/core';
+import type { AskableContextOptions, AskableEvent, AskableFocus, AskableContext, AskableInspectorOptions } from '@askable-ui/core';
 
 let globalCtx: AskableContext | null = null;
 let refCount = 0;
@@ -25,6 +25,8 @@ export interface UseAskableOptions extends AskableContextOptions {
    * context you pass in.
    */
   ctx?: AskableContext;
+  /** Mount the floating inspector dev panel. Pass true for defaults or an options object. */
+  inspector?: boolean | AskableInspectorOptions;
 }
 
 export interface UseAskableResult {
@@ -59,6 +61,8 @@ export function useAskable(options?: UseAskableOptions) {
   function handler(f: AskableFocus) {
     focus.value = f;
   }
+  let inspectorHandle: { destroy(): void } | null = null;
+
   function clearHandler(_: null) {
     focus.value = null;
   }
@@ -72,9 +76,15 @@ export function useAskable(options?: UseAskableOptions) {
     }
     ctx.on('focus', handler);
     ctx.on('clear', clearHandler);
+
+    if (options?.inspector) {
+      const inspectorOpts = typeof options.inspector === 'object' ? options.inspector : {};
+      inspectorHandle = createAskableInspector(ctx, inspectorOpts);
+    }
   });
 
   onUnmounted(() => {
+    inspectorHandle?.destroy();
     ctx.off('focus', handler);
     ctx.off('clear', clearHandler);
     if (!usesProvidedCtx) {

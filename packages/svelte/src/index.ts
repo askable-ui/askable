@@ -1,6 +1,6 @@
 // Svelte 4 — store-based API
 export { createAskableStore } from './askable.js';
-export type { AskableStore } from './askable.js';
+export type { AskableStore, AskableStoreOptions } from './askable.js';
 
 // Svelte 5 runes-based API:
 //   import { useAskable } from '@askable-ui/svelte/useAskable.svelte'

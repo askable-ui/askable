@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { createAskableContext } from '@askable-ui/core';
-import type { AskableContextOptions, AskableEvent, AskableFocus, AskableContext } from '@askable-ui/core';
+import { createAskableContext, createAskableInspector } from '@askable-ui/core';
+import type { AskableContextOptions, AskableEvent, AskableFocus, AskableContext, AskableInspectorOptions } from '@askable-ui/core';
 
 let globalCtx: AskableContext | null = null;
 let refCount = 0;
@@ -25,6 +25,8 @@ export interface UseAskableOptions extends AskableContextOptions {
    * context you pass in.
    */
   ctx?: AskableContext;
+  /** Mount the floating inspector dev panel. Pass true for defaults or an options object. */
+  inspector?: boolean | AskableInspectorOptions;
 }
 
 export interface UseAskableResult {
@@ -67,7 +69,14 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
     current.on('focus', handler);
     current.on('clear', clearHandler);
 
+    let inspectorHandle: { destroy(): void } | null = null;
+    if (options?.inspector) {
+      const inspectorOpts = typeof options.inspector === 'object' ? options.inspector : {};
+      inspectorHandle = createAskableInspector(current, inspectorOpts);
+    }
+
     return () => {
+      inspectorHandle?.destroy();
       current.off('focus', handler);
       current.off('clear', clearHandler);
       if (!usesProvidedCtx) {
