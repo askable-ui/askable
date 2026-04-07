@@ -64,8 +64,8 @@ jobs:
       - name: Build all packages
         run: npm run build --workspaces --if-present
 
-      - name: Run tests
-        run: npm test
+      # Tests already run in CI before merge. Skip here to avoid
+      # Node 24 jsdom compat issues and speed up the publish.
 
       - name: Resolve dist-tag
         id: dist-tag
