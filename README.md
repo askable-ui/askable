@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/npm/v/@askable-ui/core?color=4f46e5&label=npm" alt="npm version" />
   </a>
   <a href="https://bundlephobia.com/package/@askable-ui/core">
-    <img src="https://img.shields.io/bundlephobia/minzip/@askable-ui/core?color=4f46e5&label=~1kb" alt="bundle size" />
+    <img src="https://img.shields.io/badge/minzip-~1kb-4f46e5" alt="bundle size ~1kb" />
   </a>
   <a href="./LICENSE">
     <img src="https://img.shields.io/npm/l/@askable-ui/core?color=4f46e5" alt="license: MIT" />
