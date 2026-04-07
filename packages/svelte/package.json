@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/svelte",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Svelte 4 & 5 bindings for askable — LLM-aware UI context",
   "type": "module",
   "main": "./dist/index.js",
@@ -46,7 +46,7 @@
     "svelte": "^4.0.0 || ^5.0.0"
   },
   "dependencies": {
-    "@askable-ui/core": "^0.4.0"
+    "@askable-ui/core": "^0.4.1"
   },
   "devDependencies": {
     "@askable-ui/core": "*",
