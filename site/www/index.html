@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>askable-ui — UI context your model can actually use</title>
   <meta name="description" content="Mark any element with data-askable and turn visible UI state into usable LLM context. React, Vue, Svelte, Django, Streamlit, or plain HTML." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://askable-ui.com/" />
+  <meta property="og:title" content="askable-ui — UI context your model can actually use" />
+  <meta property="og:description" content="Mark any element with data-askable and turn visible UI state into usable LLM context. React, Vue, Svelte, Django, Streamlit, or plain HTML." />
+  <meta property="og:image" content="https://askable-ui.com/social.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="askable-ui — UI context your model can actually use" />
+  <meta name="twitter:description" content="One attribute. Real context. Your model knows what just caught their eye." />
+  <meta name="twitter:image" content="https://askable-ui.com/social.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23111317'/><text x='16' y='22' font-family='system-ui,sans-serif' font-size='18' font-weight='900' fill='white' text-anchor='middle'>✦</text></svg>" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -334,6 +346,7 @@
     .chat-dot { width: .62rem; height: .62rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 5px rgba(22,163,74,0.1); animation: pulse 1.8s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(.85);opacity:.7} }
     .chat-title { font-size: .87rem; font-weight: 700; letter-spacing: -.02em; }
+    .chat-sim-badge { font-size: .6rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); background: rgba(0,0,0,0.05); padding: .18rem .5rem; border-radius: var(--radius-pill); }
     .chat-sub { margin-left: auto; font-size: .68rem; color: var(--ink-3); }
     .chat-messages { flex: 1 1 0; min-height: 0; padding: .88rem; overflow-y: auto; display: flex; flex-direction: column; gap: .6rem; overscroll-behavior: contain; }
     .chat-messages::-webkit-scrollbar { width: 4px; }
@@ -375,6 +388,7 @@
     .step-num { width: 1.9rem; height: 1.9rem; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-pill); background: var(--ink); color: #fff; font-weight: 800; font-size: .78rem; margin-bottom: 1rem; }
     .step h3 { margin-bottom: .44rem; font-size: 1rem; font-weight: 700; letter-spacing: -.025em; }
     .step p { color: var(--ink-2); font-size: .87rem; line-height: 1.62; }
+    .step-code { margin-top: .85rem; padding: .75rem .9rem; border-radius: 12px; background: #f6f7f9; border: 1px solid rgba(0,0,0,0.06); font-family: var(--mono); font-size: .72rem; line-height: 1.6; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
 
     /* PACKAGES */
     .pkg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2.5rem; }
@@ -403,6 +417,12 @@
     footer a { color: inherit; text-decoration: none; transition: color .15s; }
     footer a:hover { color: var(--ink); }
 
+    /* REDUCED MOTION */
+    @media (prefers-reduced-motion: reduce) {
+      #field-canvas { display: none; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
     /* RESPONSIVE */
     @media (max-width: 1040px) {
       .hero { grid-template-columns: 1fr; }
@@ -411,7 +431,7 @@
       .demo-layout { grid-template-columns: 1fr; }
       .chat-sidebar { position: relative; top: auto; height: 480px; max-height: none; }
       .insight-grid, .steps { grid-template-columns: 1fr 1fr; }
-      .pkg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pkg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
     }
     @media (max-width: 720px) {
       nav { padding: 0 1rem; }
@@ -419,7 +439,8 @@
       .page-shell { padding: 0 1rem 4rem; }
       .hero { padding-top: 3.5rem; }
       .lens-grid, .code-panel, .kpi-grid { grid-template-columns: 1fr; }
-      .insight-grid, .steps, .pkg-grid { grid-template-columns: 1fr; }
+      .insight-grid, .steps { grid-template-columns: 1fr; }
+      .pkg-grid { grid-template-columns: 1fr !important; }
       .deck { padding: 1rem; border-radius: 24px; }
       .demo-controls-row { align-items: stretch; flex-wrap: wrap; }
       .toggle-group { justify-content: stretch; }
@@ -471,7 +492,7 @@
   </style>
 </head>
 <body>
-  <canvas id="field-canvas"></canvas>
+  <canvas id="field-canvas" aria-hidden="true"></canvas>
 
   <nav>
     <a href="#" class="nav-logo"><span class="spark">✦</span> askable-ui</a>
@@ -479,8 +500,9 @@
       <a href="#demo" class="nav-link">Demo</a>
       <a href="#how" class="nav-link">How it works</a>
       <a href="#packages" class="nav-link">Packages</a>
-      <a href="https://askable-ui.com/docs/" target="_blank" class="nav-link">Docs</a>
-      <a href="https://github.com/askable-ui/askable" target="_blank" class="nav-gh">GitHub</a>
+      <a href="#integrations" class="nav-link">Integrations</a>
+      <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer" class="nav-link">Docs</a>
+      <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer" class="nav-gh">GitHub</a>
     </div>
   </nav>
 
@@ -495,13 +517,13 @@
           visual focus — not a guess, the real thing.
         </p>
         <div class="hero-actions">
-          <div class="install-cmd" id="install-copy" title="Click to copy">
-            <span>npm install @askable-ui/core</span>
+          <button class="install-cmd" id="install-copy" title="Click to copy" type="button">
+            <span>npm install @askable-ui/react</span>
             <span class="copy-icon" id="copy-icon">⎘ copy</span>
-          </div>
+          </button>
           <a href="#demo" class="btn btn-primary">See it live</a>
-          <a href="https://askable-ui.com/docs/" class="btn btn-secondary" target="_blank">Documentation</a>
-          <a href="https://github.com/askable-ui/askable" class="btn btn-secondary" target="_blank">GitHub</a>
+          <a href="https://askable-ui.com/docs/" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Documentation</a>
+          <a href="https://github.com/askable-ui/askable" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
         <div class="hero-meta">
           <span>One attribute</span>
@@ -567,19 +589,19 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
     <section class="section">
       <div class="insight-grid">
         <article class="insight-card">
-          <div class="insight-eyebrow">Precision</div>
-          <h3>Context follows attention</h3>
-          <p>Users ask about whatever they're staring at. askable captures the exact focal target — not a serialized page dump.</p>
+          <div class="insight-eyebrow">No page scraping</div>
+          <h3>Context follows attention, not the whole DOM</h3>
+          <p>Other approaches serialize the entire page or guess what matters. askable captures exactly the element the user is looking at — one attribute, one focus target.</p>
         </article>
         <article class="insight-card">
-          <div class="insight-eyebrow">Elegant</div>
-          <h3>Metadata lives where the UI already lives</h3>
-          <p>The same API payload that renders a row or card becomes model-ready context with one attribute.</p>
+          <div class="insight-eyebrow">Zero glue code</div>
+          <h3>Your API data is already the metadata</h3>
+          <p>The same object that renders a row or card becomes model-ready context. No separate data pipeline, no prompt templates, no mapping layer.</p>
         </article>
         <article class="insight-card">
-          <div class="insight-eyebrow">Universal</div>
-          <h3>Works in real product surfaces</h3>
-          <p>Dashboards, forms, tables, support tooling — anywhere a user points, hovers, clicks, or focuses.</p>
+          <div class="insight-eyebrow">Any stack</div>
+          <h3>Dashboards, forms, tables, support tools</h3>
+          <p>Works anywhere a user points, clicks, or hovers. React, Vue, Svelte, Django, Streamlit, or plain HTML — same one-attribute pattern.</p>
         </article>
       </div>
     </section>
@@ -629,6 +651,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
             <div class="chat-header">
               <div class="chat-dot"></div>
               <span class="chat-title">AI Assistant</span>
+              <span class="chat-sim-badge">simulated</span>
               <span class="chat-sub">powered by askable</span>
             </div>
             <div class="chat-messages" id="chat-messages">
@@ -677,16 +700,24 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
           <div class="step-num">1</div>
           <h3>Annotate</h3>
           <p>Add <code>data-askable</code> wherever your UI already has meaning: rows, charts, KPIs, inputs, cards, timeline items.</p>
+          <pre class="step-code">&lt;div data-askable='{"metric":"MRR","value":"$128K"}'&gt;
+  ...
+&lt;/div&gt;</pre>
         </article>
         <article class="step">
           <div class="step-num">2</div>
           <h3>Observe</h3>
           <p>Call <code>askable.observe(document)</code> once. askable tracks click, hover, or focus and adapts as the DOM changes.</p>
+          <pre class="step-code">askable.observe(document, {
+  events: ['click']
+});</pre>
         </article>
         <article class="step">
           <div class="step-num">3</div>
           <h3>Inject</h3>
           <p>At the AI boundary, send <code>askable.toPromptContext()</code>. The assistant now knows what the user is actually looking at.</p>
+          <pre class="step-code">const context = askable.toPromptContext();
+// → "User is focused on: metric: MRR, value: $128K"</pre>
         </article>
       </div>
     </section>
@@ -696,42 +727,58 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
       <h2 class="section-title">Pick your stack. Keep the idea.</h2>
       <p class="section-sub">One core library. Thin adapters for every framework. Same mental model everywhere.</p>
       <div class="pkg-grid">
-        <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/core" target="_blank">
+        <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/core" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · Core</div>
           <div class="pkg-name">@askable-ui/core</div>
           <div class="pkg-desc">Framework-agnostic observer and context builder. Zero dependencies.</div>
           <span class="pkg-tag">~1kb gz</span>
         </a>
-        <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/react" target="_blank">
+        <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/react" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · React</div>
           <div class="pkg-name">@askable-ui/react</div>
           <div class="pkg-desc"><code>useAskable()</code> hook and <code>&lt;Askable&gt;</code> component for React 17+.</div>
           <span class="pkg-tag">~0.5kb gz</span>
         </a>
-        <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/vue" target="_blank">
+        <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/vue" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · Vue</div>
           <div class="pkg-name">@askable-ui/vue</div>
           <div class="pkg-desc">Vue 3 composables and component for the same focus-aware pattern.</div>
           <span class="pkg-tag">~0.5kb gz</span>
         </a>
-        <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/svelte" target="_blank">
+        <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/svelte" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · Svelte</div>
           <div class="pkg-name">@askable-ui/svelte</div>
           <div class="pkg-desc">Svelte store and component helpers for fast-moving interfaces.</div>
           <span class="pkg-tag">~0.5kb gz</span>
         </a>
-        <a class="pkg-card" href="https://pypi.org/project/askable-django/" target="_blank">
-          <div class="pkg-badge">Python · Django</div>
-          <div class="pkg-name">askable-django</div>
-          <div class="pkg-desc">Template tags and auto-inject middleware for Django 4+.</div>
-          <span class="pkg-tag">PyPI</span>
-        </a>
-        <a class="pkg-card" href="https://pypi.org/project/askable-streamlit/" target="_blank">
-          <div class="pkg-badge">Python · Streamlit</div>
-          <div class="pkg-name">askable-streamlit</div>
-          <div class="pkg-desc">Custom component that returns UI focus as a Python dict.</div>
-          <span class="pkg-tag">PyPI</span>
-        </a>
+      </div>
+    </section>
+
+    <section id="integrations" class="section">
+      <p class="section-label">Integrations</p>
+      <h2 class="section-title">Plugs into your AI layer.</h2>
+      <p class="section-sub"><code>toPromptContext()</code> returns a plain string. Pass it to any LLM framework or API — no adapter needed.</p>
+      <div class="pkg-grid" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">Framework</div>
+          <div class="pkg-name">CopilotKit</div>
+          <div class="pkg-desc">Pass context via <code>useCopilotReadable()</code>. The LLM sees what the user selected.</div>
+        </div>
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">Framework</div>
+          <div class="pkg-name">Vercel AI SDK</div>
+          <div class="pkg-desc">Inject into the system message or tool context for streaming chat UIs.</div>
+        </div>
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">Framework</div>
+          <div class="pkg-name">LangChain</div>
+          <div class="pkg-desc">Drop into a prompt template variable or tool description for context-aware agents.</div>
+        </div>
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">Any LLM API</div>
+          <div class="pkg-name">Direct API</div>
+          <div class="pkg-desc">Append the string to your system or user message. Works with OpenAI, Anthropic, or any provider.</div>
+        </div>
       </div>
     </section>
 
@@ -740,8 +787,9 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
         <h2>Start with one attribute.</h2>
         <p>Drop <code style="color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.1)">data-askable</code> on your most important element. Working context in under five minutes.</p>
         <div class="cta-actions">
-          <a href="https://github.com/askable-ui/askable" target="_blank" class="btn btn-inverse">View on GitHub</a>
-          <a href="https://www.npmjs.com/package/@askable-ui/core" target="_blank" class="btn btn-ghost-white">npm install</a>
+          <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer" class="btn btn-inverse">Read the docs</a>
+          <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white">View on GitHub</a>
+          <a href="https://www.npmjs.com/package/@askable-ui/core" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white">npm install</a>
         </div>
       </div>
     </div>
@@ -749,11 +797,11 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
     <footer>
       <span>askable-ui — context that feels native to the UI</span>
       <div style="display:flex;gap:1rem;flex-wrap:wrap">
-        <a href="https://askable-ui.com/docs/" target="_blank">Docs</a>
-        <a href="https://github.com/askable-ui/askable" target="_blank">GitHub</a>
-        <a href="https://www.npmjs.com/org/askable-ui" target="_blank">npm</a>
-        <a href="https://pypi.org/project/askable-django/" target="_blank">PyPI</a>
-        <a href="https://github.com/askable-ui/askable/blob/main/LICENSE" target="_blank">MIT</a>
+        <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer">Docs</a>
+        <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://www.npmjs.com/org/askable-ui" target="_blank" rel="noopener noreferrer">npm</a>
+        <a href="https://pypi.org/project/askable-django/" target="_blank" rel="noopener noreferrer">PyPI</a>
+        <a href="https://github.com/askable-ui/askable/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a>
       </div>
     </footer>
   </main>
@@ -962,7 +1010,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
       if (w === 'nps') return 'What should we do with this NPS score?';
       if (w === 'account_row') {
         var s = meta.status;
-        if (s === 'at_risk') return 'What's the recommended action for this account?';
+        if (s === 'at_risk') return 'What is the recommended action for this account?';
         if (s === 'churned') return 'Can we win this account back?';
         return 'Is this account an upsell candidate?';
       }
@@ -1063,7 +1111,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
         var el = document.getElementById('copy-icon');
         function flash(label) { if (!el) return; el.textContent = label; setTimeout(function() { el.textContent = '⎘ copy'; }, 1800); }
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText('npm install @askable-ui/core').then(function() { flash('✓ copied'); }).catch(function() { flash('copy manually'); });
+          navigator.clipboard.writeText('npm install @askable-ui/react').then(function() { flash('✓ copied'); }).catch(function() { flash('copy manually'); });
         } else { flash('copy manually'); }
       });
     }
@@ -1074,6 +1122,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
   (function() {
     var canvas = document.getElementById('field-canvas');
     if (!canvas || !canvas.getContext) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var ctx = canvas.getContext('2d');
     if (!ctx) return;
     var dots = [];
