@@ -76,3 +76,13 @@ jobs:
           gh workflow run publish_release.yml \
             -f tag="v${TAG_VERSION}" \
             --ref "v${TAG_VERSION}"
+
+      - name: Trigger GitHub Release
+        if: steps.version.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh workflow run release.yml \
+            -f tag="v${TAG_VERSION}" \
+            --ref main

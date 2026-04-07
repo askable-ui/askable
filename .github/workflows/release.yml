@@ -1,13 +1,8 @@
 name: release / github
 
-# Creates a GitHub Release after npm publish succeeds.
-# Waits for publish_release.yml to complete so the release is only created
-# when packages are actually on npm.
+# Creates a GitHub Release. Dispatched by tag.yml after tagging.
 
 on:
-  workflow_run:
-    workflows: ["publish / release"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       tag:
@@ -21,27 +16,13 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Only run if publish succeeded (or manual dispatch)
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
 
     steps:
-      - name: Resolve tag and pre-release flag
+      - name: Resolve pre-release flag
         id: meta
         env:
-          INPUT_TAG: ${{ github.event.inputs.tag || '' }}
-          RUN_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch || '' }}
+          TAG: ${{ github.event.inputs.tag }}
         run: |
-          if [ -n "$INPUT_TAG" ]; then
-            TAG="$INPUT_TAG"
-          elif [ -n "$RUN_HEAD_BRANCH" ]; then
-            TAG="$RUN_HEAD_BRANCH"
-          else
-            echo "::error::Could not resolve tag"
-            exit 1
-          fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           if [[ "$TAG" == *"-beta."* || "$TAG" == *"-alpha."* || "$TAG" == *"-rc."* ]]; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
@@ -49,9 +30,9 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         env:
-          RELEASE_TAG: ${{ steps.meta.outputs.tag }}
+          RELEASE_TAG: ${{ github.event.inputs.tag }}
           IS_PRERELEASE: ${{ steps.meta.outputs.prerelease }}
         with:
           script: |
