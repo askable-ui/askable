@@ -43,8 +43,8 @@
   "devDependencies": {
     "@askable-ui/core": "*",
     "@vue/test-utils": "^2.4.6",
-    "typescript": "^5.4.5",
-    "vitest": "^2.0.0",
-    "vue": "^3.4.29"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2",
+    "vue": "^3.5.32"
   }
 }
