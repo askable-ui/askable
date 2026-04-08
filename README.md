@@ -5,8 +5,8 @@
 <h1 align="center">askable-ui</h1>
 
 <p align="center">
-  <strong>Give your AI copilot eyes.</strong><br />
-  One HTML attribute. Zero prompt engineering. Your LLM knows exactly what the user is looking at.
+  <strong>Two lines of code to give your LLM eyes.</strong><br />
+  One attribute. Zero prompt engineering. It knows exactly what the user sees.
 </p>
 
 <p align="center">
@@ -35,7 +35,7 @@
   <a href="#works-with">Works with</a> &nbsp;·&nbsp;
   <a href="#features">Features</a> &nbsp;·&nbsp;
   <a href="#packages">Packages</a> &nbsp;·&nbsp;
-  <a href="#documentation">Docs</a>
+  <a href="https://askable-ui.com/docs/">Docs</a>
 </p>
 
 <p align="center">
