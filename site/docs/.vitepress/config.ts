@@ -16,7 +16,7 @@ export default defineConfig({
       { text: 'API Reference', link: '/api/core', activeMatch: '/api/' },
       { text: 'Examples', link: '/examples/dashboard', activeMatch: '/examples/' },
       {
-        text: 'v0.4.0',
+        text: 'v0.4.1',
         items: [
           { text: 'Changelog', link: 'https://github.com/askable-ui/askable/releases' },
           { text: 'npm', link: 'https://www.npmjs.com/package/@askable-ui/core' },
