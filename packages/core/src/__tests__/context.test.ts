@@ -47,6 +47,7 @@ describe('createAskableContext', () => {
     expect(focus!.text).toBe('Revenue Chart');
     expect(typeof focus!.timestamp).toBe('number');
     expect(focus!.element).toBe(el);
+    expect(focus!.source).toBe('dom');
 
     ctx.destroy();
     cleanup(el);
@@ -764,6 +765,7 @@ describe('createAskableContext', () => {
       expect(focus!.meta).toEqual({ widget: 'deals-table', rowIndex: 3, company: 'Acme' });
       expect(focus!.text).toBe('Acme — Closed — $50k');
       expect(focus!.element).toBeUndefined();
+      expect(focus!.source).toBe('push');
       expect(typeof focus!.timestamp).toBe('number');
 
       ctx.destroy();
@@ -841,6 +843,109 @@ describe('createAskableContext', () => {
       expect(prompt).toContain('Acme');
 
       ctx.destroy();
+    });
+  });
+
+  describe('source field', () => {
+    it('DOM click sets source to "dom"', () => {
+      const el = makeEl({ widget: 'chart' });
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+      expect(ctx.getFocus()!.source).toBe('dom');
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('select() sets source to "select"', () => {
+      const el = makeEl({ widget: 'chart' });
+      const ctx = createAskableContext();
+      ctx.select(el);
+      expect(ctx.getFocus()!.source).toBe('select');
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('push() sets source to "push"', () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'grid' });
+      expect(ctx.getFocus()!.source).toBe('push');
+      ctx.destroy();
+    });
+  });
+
+  describe('toContext()', () => {
+    it('with no history option behaves like toPromptContext()', () => {
+      const el = makeEl({ metric: 'revenue' }, 'Revenue');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      expect(ctx.toContext()).toBe(ctx.toPromptContext());
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('includes current focus and history sections when history > 0', () => {
+      const el1 = makeEl({ id: 'a' }, 'A');
+      const el2 = makeEl({ id: 'b' }, 'B');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el1.click();
+      el2.click();
+
+      const out = ctx.toContext({ history: 5 });
+      expect(out).toContain('Current:');
+      expect(out).toContain('Recent interactions:');
+      expect(out).toContain('id: b');
+      expect(out).toContain('id: a');
+
+      ctx.destroy();
+      cleanup(el1);
+      cleanup(el2);
+    });
+
+    it('respects custom labels', () => {
+      const el = makeEl({ metric: 'mrr' }, 'MRR');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      const out = ctx.toContext({ history: 1, currentLabel: 'Now', historyLabel: 'Before' });
+      expect(out).toContain('Now:');
+      expect(out).toContain('Before:');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('omits history section when history entries are empty', () => {
+      const el = makeEl({ metric: 'mrr' }, 'MRR');
+      const ctx = createAskableContext({ maxHistory: 0 });
+      ctx.observe(document);
+      el.click();
+
+      const out = ctx.toContext({ history: 5 });
+      expect(out).toContain('Current:');
+      expect(out).not.toContain('Recent interactions:');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('respects serialization options', () => {
+      const el = makeEl({ metric: 'mrr', secret: 'x' }, 'MRR');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      const out = ctx.toContext({ excludeKeys: ['secret'], includeText: false });
+      expect(out).not.toContain('secret');
+      expect(out).not.toContain('MRR');
+
+      ctx.destroy();
+      cleanup(el);
     });
   });
 
