@@ -1,3 +1,11 @@
+/**
+ * Indicates how a focus entry was created.
+ * - `'dom'`    — user interacted with a `[data-askable]` element (click, hover, or keyboard focus)
+ * - `'select'` — set programmatically via `ctx.select(element)`
+ * - `'push'`   — set programmatically via `ctx.push(meta, text)` (no DOM element involved)
+ */
+export type AskableFocusSource = 'dom' | 'select' | 'push';
+
 export interface AskableFocus {
   /** Parsed data-askable attribute (JSON object or raw string) */
   meta: Record<string, unknown> | string;
@@ -8,6 +16,8 @@ export interface AskableFocus {
    * Undefined when focus was set programmatically via `ctx.push()`.
    */
   element?: HTMLElement;
+  /** How this focus entry was created. */
+  source: AskableFocusSource;
   /** Unix timestamp (ms) of when focus was set */
   timestamp: number;
 }
@@ -154,6 +164,27 @@ export interface AskableSerializedFocus {
   timestamp: number;
 }
 
+/**
+ * Options for `toContext()` — combines current focus and recent history into one string.
+ */
+export interface AskableContextOutputOptions extends AskablePromptContextOptions {
+  /**
+   * Number of history entries to include after the current focus.
+   * Defaults to 0 (current focus only — same as `toPromptContext()`).
+   */
+  history?: number;
+  /**
+   * Section label for the current focus.
+   * @default 'Current'
+   */
+  currentLabel?: string;
+  /**
+   * Section label for the history block.
+   * @default 'Recent interactions'
+   */
+  historyLabel?: string;
+}
+
 export interface AskableContext {
   /** Observe a DOM subtree for [data-askable] elements */
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void;
@@ -193,6 +224,19 @@ export interface AskableContext {
   toPromptContext(options?: AskablePromptContextOptions): string;
   /** Serialize focus history to a prompt-ready string (newest first). Optional limit caps the entries returned. */
   toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string;
+  /**
+   * Serialize current focus and optional history into a single prompt-ready string.
+   * When `history` is 0 or omitted the output is identical to `toPromptContext()`.
+   *
+   * @example
+   * ctx.toContext({ history: 5, maxTokens: 300 })
+   * // Current: User is focused on: widget: deals-table, rowIndex: 3 — value "Acme Corp"
+   * //
+   * // Recent interactions:
+   * // [1] User is focused on: metric: revenue — value "$2.3M"
+   * // [2] User is focused on: widget: churn-chart — value "4.2%"
+   */
+  toContext(options?: AskableContextOutputOptions): string;
   /** Clean up all listeners and observers */
   destroy(): void;
 }
