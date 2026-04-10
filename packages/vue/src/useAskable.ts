@@ -5,16 +5,28 @@ import type { AskableContextOptions, AskableEvent, AskableFocus, AskableContext,
 let globalCtx: AskableContext | null = null;
 let refCount = 0;
 
+const namedRegistry = new Map<string, { ctx: AskableContext; refCount: number }>();
+
 function getGlobalCtx(): AskableContext {
-  // During SSR (no window), never persist to the module-level singleton —
-  // each render gets a fresh throwaway context so requests don't share state.
-  if (typeof window === 'undefined') {
-    return createAskableContext();
-  }
-  if (!globalCtx) {
-    globalCtx = createAskableContext();
-  }
+  if (typeof window === 'undefined') return createAskableContext();
+  if (!globalCtx) globalCtx = createAskableContext();
   return globalCtx;
+}
+
+function getNamedCtx(name: string, options?: AskableContextOptions): AskableContext {
+  if (typeof window === 'undefined') return createAskableContext(options);
+  const entry = namedRegistry.get(name);
+  if (entry) { entry.refCount++; return entry.ctx; }
+  const ctx = createAskableContext(options);
+  namedRegistry.set(name, { ctx, refCount: 1 });
+  return ctx;
+}
+
+function releaseNamedCtx(name: string): void {
+  const entry = namedRegistry.get(name);
+  if (!entry) return;
+  entry.refCount--;
+  if (entry.refCount === 0) { entry.ctx.destroy(); namedRegistry.delete(name); }
 }
 
 export interface UseAskableOptions extends AskableContextOptions {
@@ -27,6 +39,11 @@ export interface UseAskableOptions extends AskableContextOptions {
   ctx?: AskableContext;
   /** Mount the floating inspector dev panel. Pass true for defaults or an options object. */
   inspector?: boolean | AskableInspectorOptions;
+  /**
+   * Scope this composable to a named context. Multiple components using the same
+   * `name` share one context instance. Useful for pages with independent AI regions.
+   */
+  name?: string;
 }
 
 export interface UseAskableResult {
@@ -46,10 +63,12 @@ function hasContextCreationOptions(options?: UseAskableOptions): boolean {
 
 export function useAskable(options?: UseAskableOptions) {
   const usesProvidedCtx = Boolean(options?.ctx);
-  // Use a private context when context-creation options are specified
-  const usePrivateCtx = !usesProvidedCtx && hasContextCreationOptions(options);
+  const usesNamedCtx = !usesProvidedCtx && Boolean(options?.name);
+  const usePrivateCtx = !usesProvidedCtx && !usesNamedCtx && hasContextCreationOptions(options);
 
-  const ctx = options?.ctx ?? (usePrivateCtx ? createAskableContext(options) : getGlobalCtx());
+  const ctx = options?.ctx
+    ?? (usesNamedCtx ? getNamedCtx(options!.name!, options) : undefined)
+    ?? (usePrivateCtx ? createAskableContext(options) : getGlobalCtx());
   const focus = ref<AskableFocus | null>(ctx.getFocus());
   // Reference focus.value so Vue tracks it as a reactive dependency;
   // ctx.toPromptContext() is a plain method and not itself reactive.
@@ -69,7 +88,7 @@ export function useAskable(options?: UseAskableOptions) {
 
   onMounted(() => {
     if (!usesProvidedCtx) {
-      if (!usePrivateCtx) refCount++;
+      if (!usePrivateCtx && !usesNamedCtx) refCount++;
       if (typeof document !== 'undefined') {
         ctx.observe(document, { events: options?.events });
       }
@@ -88,7 +107,9 @@ export function useAskable(options?: UseAskableOptions) {
     ctx.off('focus', handler);
     ctx.off('clear', clearHandler);
     if (!usesProvidedCtx) {
-      if (usePrivateCtx) {
+      if (usesNamedCtx) {
+        releaseNamedCtx(options!.name!);
+      } else if (usePrivateCtx) {
         ctx.destroy();
       } else {
         refCount--;

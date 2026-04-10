@@ -1,10 +1,33 @@
 import { createAskableContext } from '@askable-ui/core';
 import type { AskableContext, AskableContextOptions, AskableFocus, AskableObserveOptions } from '@askable-ui/core';
 
+const namedRegistry = new Map<string, { ctx: AskableContext; refCount: number }>();
+
+function getNamedCtx(name: string, options?: AskableContextOptions): AskableContext {
+  if (typeof window === 'undefined') return createAskableContext(options);
+  const entry = namedRegistry.get(name);
+  if (entry) { entry.refCount++; return entry.ctx; }
+  const ctx = createAskableContext(options);
+  namedRegistry.set(name, { ctx, refCount: 1 });
+  return ctx;
+}
+
+function releaseNamedCtx(name: string): void {
+  const entry = namedRegistry.get(name);
+  if (!entry) return;
+  entry.refCount--;
+  if (entry.refCount === 0) { entry.ctx.destroy(); namedRegistry.delete(name); }
+}
+
 export interface UseAskableOptions extends AskableContextOptions {
   observe?: boolean | AskableObserveOptions;
   /** Provide an existing context instead of creating a new one. */
   ctx?: AskableContext;
+  /**
+   * Scope this composable to a named context. Multiple components using the same
+   * `name` share one context instance. Useful for pages with independent AI regions.
+   */
+  name?: string;
 }
 
 export interface UseAskable {
@@ -31,7 +54,9 @@ export interface UseAskable {
  */
 export function useAskable(options?: UseAskableOptions): UseAskable {
   const usesProvidedCtx = Boolean(options?.ctx);
-  const ctx = options?.ctx ?? createAskableContext(options);
+  const usesNamedCtx = !usesProvidedCtx && Boolean(options?.name);
+  const ctx = options?.ctx
+    ?? (usesNamedCtx ? getNamedCtx(options!.name!, options) : createAskableContext(options));
 
   let focus: AskableFocus | null = $state(null);
 
@@ -53,7 +78,10 @@ export function useAskable(options?: UseAskableOptions): UseAskable {
   }
 
   function destroy() {
-    if (!usesProvidedCtx) ctx.destroy();
+    if (!usesProvidedCtx) {
+      if (usesNamedCtx) releaseNamedCtx(options!.name!);
+      else ctx.destroy();
+    }
   }
 
   return {
