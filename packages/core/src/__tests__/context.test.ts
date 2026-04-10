@@ -754,6 +754,96 @@ describe('createAskableContext', () => {
     });
   });
 
+  describe('push()', () => {
+    it('sets focus from raw meta and text without a DOM element', () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'deals-table', rowIndex: 3, company: 'Acme' }, 'Acme — Closed — $50k');
+
+      const focus = ctx.getFocus();
+      expect(focus).not.toBeNull();
+      expect(focus!.meta).toEqual({ widget: 'deals-table', rowIndex: 3, company: 'Acme' });
+      expect(focus!.text).toBe('Acme — Closed — $50k');
+      expect(focus!.element).toBeUndefined();
+      expect(typeof focus!.timestamp).toBe('number');
+
+      ctx.destroy();
+    });
+
+    it('defaults text to empty string when omitted', () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'grid', row: 0 });
+      expect(ctx.getFocus()!.text).toBe('');
+      ctx.destroy();
+    });
+
+    it('accepts a plain string as meta', () => {
+      const ctx = createAskableContext();
+      ctx.push('row 5 of deals table');
+      expect(ctx.getFocus()!.meta).toBe('row 5 of deals table');
+      ctx.destroy();
+    });
+
+    it('emits a focus event', () => {
+      const ctx = createAskableContext();
+      const handler = vi.fn();
+      ctx.on('focus', handler);
+      ctx.push({ widget: 'grid', row: 1 }, 'Row 1');
+
+      expect(handler).toHaveBeenCalledOnce();
+      expect(handler.mock.calls[0][0].meta).toEqual({ widget: 'grid', row: 1 });
+
+      ctx.destroy();
+    });
+
+    it('adds to history', () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'grid', row: 0 }, 'Row 0');
+      ctx.push({ widget: 'grid', row: 1 }, 'Row 1');
+
+      const history = ctx.getHistory();
+      expect(history).toHaveLength(2);
+      expect((history[0].meta as Record<string, unknown>).row).toBe(1);
+      expect((history[1].meta as Record<string, unknown>).row).toBe(0);
+
+      ctx.destroy();
+    });
+
+    it('applies sanitizeMeta', () => {
+      const ctx = createAskableContext({
+        sanitizeMeta: ({ internalId, ...safe }) => safe,
+      });
+      ctx.push({ widget: 'grid', row: 2, internalId: 'abc-123' }, 'Row 2');
+
+      const focus = ctx.getFocus();
+      expect((focus!.meta as Record<string, unknown>).internalId).toBeUndefined();
+      expect((focus!.meta as Record<string, unknown>).row).toBe(2);
+
+      ctx.destroy();
+    });
+
+    it('applies sanitizeText', () => {
+      const ctx = createAskableContext({
+        sanitizeText: (t) => t.replace(/\b\d{16}\b/g, '[card]'),
+      });
+      ctx.push({ widget: 'payments' }, '4111111111111111');
+
+      expect(ctx.getFocus()!.text).toBe('[card]');
+      ctx.destroy();
+    });
+
+    it('is reflected in toPromptContext()', () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'deals-table', stage: 'Closed Won' }, 'Acme');
+
+      const prompt = ctx.toPromptContext();
+      expect(prompt).toContain('widget: deals-table');
+      expect(prompt).toContain('stage: Closed Won');
+      expect(prompt).toContain('Acme');
+
+      ctx.destroy();
+    });
+  });
+
   it('observe() is a no-op when called outside a browser environment', () => {
     const win = globalThis.window;
     Object.defineProperty(globalThis, 'window', { value: undefined, configurable: true });

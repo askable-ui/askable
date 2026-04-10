@@ -3,8 +3,11 @@ export interface AskableFocus {
   meta: Record<string, unknown> | string;
   /** Trimmed textContent of the element */
   text: string;
-  /** The DOM element itself */
-  element: HTMLElement;
+  /**
+   * The DOM element that triggered the focus, if one exists.
+   * Undefined when focus was set programmatically via `ctx.push()`.
+   */
+  element?: HTMLElement;
   /** Unix timestamp (ms) of when focus was set */
   timestamp: number;
 }
@@ -166,6 +169,22 @@ export interface AskableContext {
   off<K extends AskableEventName>(event: K, handler: AskableEventHandler<K>): void;
   /** Programmatically select an element — use for explicit "Ask AI" buttons */
   select(element: HTMLElement): void;
+  /**
+   * Programmatically push focus from raw data without a DOM element.
+   * Use this when integrating with libraries that render their own DOM (AG Grid,
+   * TanStack Virtual, Handsontable, etc.) and you cannot annotate individual rows
+   * with `data-askable`.
+   *
+   * @example
+   * // AG Grid — push row focus on row click
+   * gridOptions.onRowClicked = ({ data, rowIndex }) => {
+   *   ctx.push(
+   *     { widget: 'deals-table', rowIndex, id: data.id, stage: data.stage },
+   *     `${data.company} — ${data.stage} — ${data.value}`
+   *   );
+   * };
+   */
+  push(meta: Record<string, unknown> | string, text?: string): void;
   /** Reset the current focus to null and emit a 'clear' event */
   clear(): void;
   /** Serialize current focus to structured prompt-ready data */

@@ -99,6 +99,17 @@ export class AskableContextImpl implements AskableContext {
     }
   }
 
+  push(meta: Record<string, unknown> | string, text = ''): void {
+    const rawFocus: AskableFocus = { meta, text, timestamp: Date.now() };
+    const focus = this.applySanitizers(rawFocus);
+    this.currentFocus = focus;
+    if (this.maxHistory > 0) {
+      this.history.push(focus);
+      if (this.history.length > this.maxHistory) this.history.shift();
+    }
+    this.emitter.emit('focus', focus);
+  }
+
   clear(): void {
     this.currentFocus = null;
     this.emitter.emit('clear', null);
