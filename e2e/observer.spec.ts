@@ -348,3 +348,141 @@ test.describe('toPromptContext() serialization', () => {
     expect(prompt).toBe('No UI element is currently focused.');
   });
 });
+
+test.describe('push() API', () => {
+  test('push() sets focus with correct meta and text', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      (window as any).ctx.push(
+        { widget: 'deals-table', rowIndex: 3, stage: 'Closed Won' },
+        'Acme Corp — Closed Won — $50k'
+      );
+    });
+
+    const focus = await page.evaluate(() => {
+      const f = (window as any).ctx.getFocus();
+      return f ? { meta: f.meta, text: f.text, hasElement: f.element !== undefined, source: f.source } : null;
+    });
+
+    expect(focus).not.toBeNull();
+    expect(focus!.meta).toEqual({ widget: 'deals-table', rowIndex: 3, stage: 'Closed Won' });
+    expect(focus!.text).toBe('Acme Corp — Closed Won — $50k');
+    expect(focus!.hasElement).toBe(false);
+    expect(focus!.source).toBe('push');
+  });
+
+  test('push() with plain string meta', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      (window as any).ctx.push('row 5 of deals table');
+    });
+
+    const meta = await page.evaluate(() => (window as any).ctx.getFocus()?.meta);
+    expect(meta).toBe('row 5 of deals table');
+  });
+
+  test('push() emits focus event', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    const fired = await page.evaluate(() => {
+      let eventFired = false;
+      (window as any).ctx.on('focus', () => { eventFired = true; });
+      (window as any).ctx.push({ widget: 'grid', row: 1 }, 'Row 1');
+      return eventFired;
+    });
+
+    expect(fired).toBe(true);
+  });
+
+  test('push() adds to history', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      (window as any).ctx.push({ widget: 'grid', row: 0 }, 'Row 0');
+      (window as any).ctx.push({ widget: 'grid', row: 1 }, 'Row 1');
+    });
+
+    const histLen = await page.evaluate(() => (window as any).ctx.getHistory().length);
+    expect(histLen).toBe(2);
+  });
+
+  test('push() is reflected in toPromptContext()', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      (window as any).ctx.push({ widget: 'deals-table', stage: 'Closed Won' }, 'Acme Corp');
+    });
+
+    const prompt = await page.evaluate(() => (window as any).ctx.toPromptContext());
+    expect(prompt).toContain('widget: deals-table');
+    expect(prompt).toContain('stage: Closed Won');
+    expect(prompt).toContain('"Acme Corp"');
+  });
+});
+
+test.describe('source field', () => {
+  test('DOM click sets source to "dom"', async ({ harness }) => {
+    const page = await harness(`
+      <div id="card" data-askable='{"widget":"kpi"}' tabindex="0">KPI</div>
+    `);
+
+    await page.click('#card');
+    const source = await page.evaluate(() => (window as any).ctx.getFocus()?.source);
+    expect(source).toBe('dom');
+  });
+
+  test('select() sets source to "select"', async ({ harness }) => {
+    const page = await harness(`
+      <div id="card" data-askable='{"widget":"kpi"}'>KPI</div>
+    `);
+
+    await page.evaluate(() => {
+      const el = document.getElementById('card') as HTMLElement;
+      (window as any).ctx.select(el);
+    });
+
+    const source = await page.evaluate(() => (window as any).ctx.getFocus()?.source);
+    expect(source).toBe('select');
+  });
+
+  test('push() sets source to "push"', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+    await page.evaluate(() => { (window as any).ctx.push({ x: 1 }); });
+    const source = await page.evaluate(() => (window as any).ctx.getFocus()?.source);
+    expect(source).toBe('push');
+  });
+});
+
+test.describe('toContext() combined output', () => {
+  test('without history option equals toPromptContext()', async ({ harness }) => {
+    const page = await harness(`
+      <div id="card" data-askable='{"metric":"revenue"}' tabindex="0">Revenue</div>
+    `);
+
+    await page.click('#card');
+
+    const [ctx, plain] = await page.evaluate(() => [
+      (window as any).ctx.toContext(),
+      (window as any).ctx.toPromptContext(),
+    ]);
+    expect(ctx).toBe(plain);
+  });
+
+  test('with history includes both sections', async ({ harness }) => {
+    const page = await harness(`
+      <div id="a" data-askable='{"widget":"a"}' tabindex="0">A</div>
+      <div id="b" data-askable='{"widget":"b"}' tabindex="0">B</div>
+    `);
+
+    await page.click('#a');
+    await page.click('#b');
+
+    const out = await page.evaluate(() => (window as any).ctx.toContext({ history: 5 }));
+    expect(out).toContain('Current:');
+    expect(out).toContain('Recent interactions:');
+    expect(out).toContain('widget: b');
+    expect(out).toContain('widget: a');
+  });
+});
