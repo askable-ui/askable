@@ -72,8 +72,15 @@ function buildPanelHTML(focus: AskableFocus | null, promptContext: string): stri
       <code style="color:#8b949e">(programmatic — no DOM element)</code>
     </div>`;
 
+  const sourceColors: Record<string, string> = { dom: '#7ee787', select: '#f0883e', push: '#58a6ff' };
+  const sourceColor = sourceColors[focus.source] ?? '#8b949e';
+
   return `
     ${elementSection}
+    <div style="margin-bottom:8px">
+      <span style="color:#7ee787;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Source</span><br>
+      <code style="color:${sourceColor}">${escapeHtml(focus.source)}</code>
+    </div>
     <div style="margin-bottom:8px">
       <span style="color:#7ee787;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Meta</span><br>
       <pre style="color:#e6edf3;margin:4px 0;white-space:pre-wrap;word-break:break-all">${renderMeta(focus.meta)}</pre>

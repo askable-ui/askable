@@ -3,6 +3,7 @@ import { buildFocus, Observer } from './observer.js';
 import type {
   AskableContext,
   AskableContextOptions,
+  AskableContextOutputOptions,
   AskableEventHandler,
   AskableEventName,
   AskableFocus,
@@ -87,7 +88,7 @@ export class AskableContextImpl implements AskableContext {
   }
 
   select(element: HTMLElement): void {
-    const rawFocus = buildFocus(element, this.textExtractor);
+    const rawFocus = buildFocus(element, this.textExtractor, 'select');
     const focus = rawFocus ? this.applySanitizers(rawFocus) : null;
     if (focus) {
       this.currentFocus = focus;
@@ -100,7 +101,7 @@ export class AskableContextImpl implements AskableContext {
   }
 
   push(meta: Record<string, unknown> | string, text = ''): void {
-    const rawFocus: AskableFocus = { meta, text, timestamp: Date.now() };
+    const rawFocus: AskableFocus = { meta, text, source: 'push', timestamp: Date.now() };
     const focus = this.applySanitizers(rawFocus);
     this.currentFocus = focus;
     if (this.maxHistory > 0) {
@@ -132,6 +133,25 @@ export class AskableContextImpl implements AskableContext {
     if (history.length === 0) return 'No interaction history.';
     const lines = history.map((focus, i) => `[${i + 1}] ${this.buildPromptString(focus, resolved)}`);
     const output = lines.join('\n');
+    return this.applyTokenBudget(output, resolved.maxTokens);
+  }
+
+  toContext(options?: AskableContextOutputOptions): string {
+    const { history: historyLimit = 0, currentLabel = 'Current', historyLabel = 'Recent interactions', ...promptOpts } = options ?? {};
+    const resolved = this.resolveOptions(promptOpts);
+    const currentStr = this.buildPromptString(this.currentFocus, resolved);
+
+    if (historyLimit === 0) {
+      return this.applyTokenBudget(currentStr, resolved.maxTokens);
+    }
+
+    const history = this.getHistory(historyLimit);
+    const parts: string[] = [`${currentLabel}: ${currentStr}`];
+    if (history.length > 0) {
+      const lines = history.map((focus, i) => `[${i + 1}] ${this.buildPromptString(focus, resolved)}`);
+      parts.push(`\n${historyLabel}:\n${lines.join('\n')}`);
+    }
+    const output = parts.join('\n');
     return this.applyTokenBudget(output, resolved.maxTokens);
   }
 

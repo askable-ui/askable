@@ -1,4 +1,4 @@
-import type { AskableFocus, AskableEvent, AskableTargetStrategy } from './types.js';
+import type { AskableFocus, AskableEvent, AskableFocusSource, AskableTargetStrategy } from './types.js';
 
 type FocusCallback = (focus: AskableFocus) => void;
 
@@ -28,7 +28,11 @@ function extractText(el: HTMLElement): string {
   return (el.textContent ?? '').trim();
 }
 
-export function buildFocus(el: HTMLElement, textExtractor?: (el: HTMLElement) => string): AskableFocus | null {
+export function buildFocus(
+  el: HTMLElement,
+  textExtractor?: (el: HTMLElement) => string,
+  source: AskableFocusSource = 'dom'
+): AskableFocus | null {
   const raw = el.getAttribute('data-askable');
   if (raw === null) return null;
   // data-askable-text overrides both textExtractor and default textContent extraction.
@@ -41,6 +45,7 @@ export function buildFocus(el: HTMLElement, textExtractor?: (el: HTMLElement) =>
     meta: parseMeta(raw),
     text,
     element: el,
+    source,
     timestamp: Date.now(),
   };
 }
