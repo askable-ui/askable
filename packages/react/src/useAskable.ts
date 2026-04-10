@@ -54,6 +54,8 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
   );
   const [focus, setFocus] = useState<AskableFocus | null>(() => ctx.current.getFocus());
 
+  const inspectorKey = JSON.stringify(options?.inspector ?? false);
+
   useEffect(() => {
     const current = ctx.current;
 
@@ -91,7 +93,7 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
         }
       }
     };
-  }, [options?.events, usesProvidedCtx, usePrivateCtx]);
+  }, [options?.events, usesProvidedCtx, usePrivateCtx, inspectorKey]);
 
   return {
     focus,
