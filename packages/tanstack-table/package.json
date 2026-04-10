@@ -1,0 +1,46 @@
+{
+  "name": "@askable-ui/tanstack-table",
+  "version": "0.1.0",
+  "description": "TanStack Table adapter for askable — row-level LLM context tracking without DOM annotation",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/askable-ui/askable.git",
+    "directory": "packages/tanstack-table"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "keywords": ["llm", "context", "tanstack-table", "react-table", "table", "askable"],
+  "homepage": "https://askable-ui.com",
+  "license": "MIT",
+  "peerDependencies": {
+    "@askable-ui/core": ">=0.4.0",
+    "@tanstack/table-core": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tanstack/table-core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@askable-ui/core": "workspace:*",
+    "@tanstack/table-core": "^8.0.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}
