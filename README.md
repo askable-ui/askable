@@ -115,8 +115,6 @@ const result = await streamText({
 
 **Frameworks** — React · Vue 3 · Svelte · Vanilla JS · Next.js · Nuxt · SvelteKit
 
-**Python** — Django · Streamlit
-
 askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it eyes.
 
 ---

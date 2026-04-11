@@ -59,7 +59,6 @@ export default defineConfig({
           items: [
             { text: 'Third-Party Libraries', link: '/guide/third-party-libraries' },
             { text: 'CopilotKit', link: '/guide/copilotkit' },
-            { text: 'Python Packages', link: '/guide/python' },
           ],
         },
         {
@@ -81,12 +80,6 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Python',
-          items: [
-            { text: 'askable-shared (serializer)', link: '/api/python-shared' },
-          ],
-        },
-        {
           text: 'Types',
           items: [
             { text: 'Type Reference', link: '/api/types' },
@@ -101,7 +94,6 @@ export default defineConfig({
             { text: 'AI SDK Integration', link: '/examples/ai-sdk' },
             { text: 'CopilotKit', link: '/examples/copilotkit' },
             { text: 'Ask AI Button', link: '/examples/ask-ai-button' },
-            { text: 'Python (Django / Streamlit)', link: '/examples/python' },
           ],
         },
       ],

@@ -9,13 +9,11 @@ on:
     paths-ignore:
       - "site/**"
       - "README.md"
-      - "packages/python/**"
   pull_request:
     branches: [main]
     paths-ignore:
       - "site/**"
       - "README.md"
-      - "packages/python/**"
 
 permissions:
   contents: read
