@@ -64,7 +64,7 @@ import { Askable } from '@askable-ui/react';
 
 ## Step 2 — Observe the page
 
-One call covers your entire document. The observer automatically picks up dynamically rendered elements via `MutationObserver`.
+One call covers your entire document. The observer automatically picks up dynamically rendered elements via `MutationObserver`, and it also responds when existing elements gain/lose `data-askable` or update `data-askable-text` / `data-askable-priority`.
 
 ::: code-group
 

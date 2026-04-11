@@ -54,7 +54,7 @@ const ctx = createAskableContext({
 
 ### `observe(root, options?)`
 
-Start observing a DOM subtree for `[data-askable]` elements. Attaches event listeners to all matching elements and uses a `MutationObserver` to track dynamically added/removed elements.
+Start observing a DOM subtree for `[data-askable]` elements. Attaches event listeners to all matching elements and uses a `MutationObserver` to track dynamically added/removed elements as well as attribute updates to `data-askable`, `data-askable-text`, and `data-askable-priority`.
 
 Safe to call outside the browser — it is a no-op if `window`, `document`, or `MutationObserver` are unavailable.
 
