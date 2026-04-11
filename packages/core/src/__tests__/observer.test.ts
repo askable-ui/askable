@@ -142,6 +142,94 @@ describe('Observer', () => {
     obs.unobserve();
   });
 
+  it('attaches when data-askable is added to an existing element', async () => {
+    const el = attach(document.createElement('div'));
+    el.textContent = 'Lazy attach';
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    el.setAttribute('data-askable', '{"id":"late-add"}');
+    await new Promise((r) => setTimeout(r, 0));
+
+    el.click();
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'late-add' });
+
+    obs.unobserve();
+  });
+
+  it('detaches when data-askable is removed from an existing element', async () => {
+    const el = attach(makeEl({ id: 'remove-attr' }, 'Remove attr'));
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    el.removeAttribute('data-askable');
+    await new Promise((r) => setTimeout(r, 0));
+
+    el.click();
+    expect(onFocus).not.toHaveBeenCalled();
+
+    obs.unobserve();
+  });
+
+  it('uses updated meta after data-askable changes', async () => {
+    const el = attach(makeEl({ id: 'before' }, 'Meta update'));
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    el.setAttribute('data-askable', '{"id":"after","state":"updated"}');
+    await new Promise((r) => setTimeout(r, 0));
+
+    el.click();
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'after', state: 'updated' });
+
+    obs.unobserve();
+  });
+
+  it('uses updated data-askable-text after attribute changes', async () => {
+    const el = attach(makeEl({ id: 'text-change' }, 'Original text'));
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    el.setAttribute('data-askable-text', 'Updated text');
+    await new Promise((r) => setTimeout(r, 0));
+
+    el.click();
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect(onFocus.mock.calls[0][0].text).toBe('Updated text');
+
+    obs.unobserve();
+  });
+
+  it('uses updated data-askable-priority after attribute changes', async () => {
+    const outer = attach(makeEl({ level: 'outer' }, 'Outer'));
+    const inner = makeEl({ level: 'inner' }, 'Inner');
+    outer.appendChild(inner);
+    elements.push(inner);
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    outer.setAttribute('data-askable-priority', '10');
+    await new Promise((r) => setTimeout(r, 0));
+
+    inner.click();
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect((onFocus.mock.calls[0][0].meta as Record<string, unknown>).level).toBe('outer');
+
+    obs.unobserve();
+  });
+
   it('nested elements: innermost [data-askable] wins on click', () => {
     const outer = attach(makeEl({ level: 'outer' }, ''));
     const inner = makeEl({ level: 'inner' }, 'Inner text');

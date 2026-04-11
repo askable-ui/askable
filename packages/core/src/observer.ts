@@ -47,6 +47,7 @@ export function buildFocus(el: HTMLElement, textExtractor?: (el: HTMLElement) =>
 }
 
 const ALL_EVENTS: AskableEvent[] = ['click', 'hover', 'focus'];
+const OBSERVED_ATTRIBUTES = ['data-askable', 'data-askable-text', 'data-askable-priority'] as const;
 
 export class Observer {
   private root: HTMLElement | Document | null = null;
@@ -87,6 +88,13 @@ export class Observer {
 
     this.mutationObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
+        if (mutation.type === 'attributes') {
+          const target = mutation.target;
+          if (target instanceof HTMLElement) {
+            this.handleAttributeMutation(target, mutation.attributeName);
+          }
+          continue;
+        }
         mutation.addedNodes.forEach((node) => {
           if (!(node instanceof HTMLElement)) return;
           if (node.hasAttribute('data-askable')) this.attach(node);
@@ -98,7 +106,12 @@ export class Observer {
       }
     });
 
-    this.mutationObserver.observe(root, { childList: true, subtree: true });
+    this.mutationObserver.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: [...OBSERVED_ATTRIBUTES],
+    });
   }
 
   unobserve(): void {
@@ -178,6 +191,27 @@ export class Observer {
     if (this.boundElements.has(el)) return;
     this.activeEvents.forEach((e) => el.addEventListener(EVENT_MAP[e], this.handleInteraction));
     this.boundElements.add(el);
+  }
+
+  private handleAttributeMutation(el: HTMLElement, attributeName: string | null): void {
+    if (attributeName === 'data-askable') {
+      if (el.hasAttribute('data-askable')) {
+        this.attach(el);
+      } else {
+        this.detach(el);
+      }
+      return;
+    }
+
+    if (!this.boundElements.has(el)) return;
+
+    if (attributeName === 'data-askable-priority') {
+      return;
+    }
+
+    if (attributeName === 'data-askable-text') {
+      return;
+    }
   }
 
   private detachTree(root: HTMLElement): void {
