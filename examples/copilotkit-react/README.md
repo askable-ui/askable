@@ -1,22 +1,55 @@
-# CopilotKit + Askable example
+# Askable Context Capture — React Example
 
-This example demonstrates the core Askable interaction pattern for AI-native UIs:
+Demonstrates the core askable-ui interaction pattern: annotate UI regions, capture focus context, and hand it off to any AI layer (CopilotKit, Vercel AI SDK, or your own backend).
 
-1. annotate a meaningful UI region
-2. explicitly select it with `ctx.select()`
-3. open an assistant panel
-4. pass `promptContext` into the AI layer
+## What it shows
 
-## What this version includes
+- Metric cards annotated with `<Askable meta={...}>`
+- Explicit "Ask AI" buttons using `ctx.select()`
+- A side panel displaying the captured `promptContext`
+- A clear integration point for CopilotKit or AI SDK wiring
 
-- three Askable metric cards
-- explicit `Ask AI` buttons
-- a side-panel assistant shell
-- a visible `promptContext` preview
-- a clear handoff point for CopilotKit or AI SDK wiring
+## Running
 
-## Next steps
+```bash
+npm install
+npm run dev
+```
 
-- replace the mock assistant response with real CopilotKit wiring
-- add streaming messages
-- add richer dashboard widgets and examples
+## Integrating with CopilotKit
+
+Wire `promptContext` into CopilotKit's `useCopilotReadable`:
+
+```tsx
+import { useAskable } from '@askable-ui/react';
+import { useCopilotReadable } from '@copilotkit/react-core';
+
+function App() {
+  const { promptContext } = useAskable();
+
+  useCopilotReadable({
+    description: 'The UI element the user is currently focused on',
+    value: promptContext,
+  });
+
+  return <Dashboard />;
+}
+```
+
+## Integrating with Vercel AI SDK
+
+```tsx
+import { useAskable } from '@askable-ui/react';
+import { useChat } from 'ai/react';
+
+function App() {
+  const { ctx } = useAskable();
+  const { messages, input, handleSubmit } = useChat({
+    body: { context: ctx.toContext({ history: 5 }) },
+  });
+
+  return <Chat messages={messages} />;
+}
+```
+
+See the [docs](https://askable-ui.github.io/askable/docs/guide/) for full integration guides.
