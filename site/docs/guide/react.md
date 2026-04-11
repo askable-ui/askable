@@ -69,7 +69,7 @@ const ref = useRef<HTMLDivElement>(null);
 
 ## `useAskable(options?)`
 
-Hook that connects to the shared global context. Observation starts after mount and stops when the last consumer unmounts.
+Hook that connects to a shared context for the requested `events` configuration. Observation starts after mount, consumers with the same `events` reuse one observer lifecycle, and each shared context stops when its last consumer unmounts.
 
 ```ts
 const { focus, promptContext, ctx } = useAskable();
@@ -85,7 +85,7 @@ const { focus } = useAskable({ sanitizeMeta: ({ secret, ...rest }) => rest });
 const { focus } = useAskable({ ctx: myCtx });
 ```
 
-When any `AskableContextOptions` are provided (`maxHistory`, `sanitizeMeta`, `sanitizeText`, `textExtractor`), a private context is created for that component instead of sharing the global singleton.
+When any `AskableContextOptions` are provided (`maxHistory`, `sanitizeMeta`, `sanitizeText`, `textExtractor`), a private context is created for that component instead of sharing the per-`events` context.
 
 **Options:**
 | Option | Type | Description |

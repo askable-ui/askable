@@ -2,19 +2,54 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { createAskableContext, createAskableInspector } from '@askable-ui/core';
 import type { AskableContextOptions, AskableEvent, AskableFocus, AskableContext, AskableInspectorOptions } from '@askable-ui/core';
 
-let globalCtx: AskableContext | null = null;
-let refCount = 0;
+const DEFAULT_EVENTS: AskableEvent[] = ['click', 'hover', 'focus'];
+const globalCtxByEvents = new Map<string, AskableContext>();
+const globalRefCountByEvents = new Map<string, number>();
 
-function getGlobalCtx(): AskableContext {
+function normalizeEvents(events?: AskableEvent[]): AskableEvent[] {
+  const configured = events ?? DEFAULT_EVENTS;
+  return DEFAULT_EVENTS.filter((event, index) => configured.includes(event) && configured.indexOf(event) === index);
+}
+
+function getEventsKey(events?: AskableEvent[]): string {
+  return normalizeEvents(events).join('|');
+}
+
+function getGlobalCtx(events?: AskableEvent[]): AskableContext {
   // During SSR (no window), never persist to the module-level singleton —
   // each render gets a fresh throwaway context so requests don't share state.
   if (typeof window === 'undefined') {
     return createAskableContext();
   }
-  if (!globalCtx) {
-    globalCtx = createAskableContext();
+  const key = getEventsKey(events);
+  const existing = globalCtxByEvents.get(key);
+  if (existing) return existing;
+  const ctx = createAskableContext();
+  globalCtxByEvents.set(key, ctx);
+  return ctx;
+}
+
+function retainGlobalCtx(ctx: AskableContext, events?: AskableEvent[]): void {
+  const key = getEventsKey(events);
+  const nextCount = (globalRefCountByEvents.get(key) ?? 0) + 1;
+  globalRefCountByEvents.set(key, nextCount);
+  if (nextCount === 1 && typeof document !== 'undefined') {
+    ctx.observe(document, { events: normalizeEvents(events) });
   }
-  return globalCtx;
+}
+
+function releaseGlobalCtx(events?: AskableEvent[]): void {
+  const key = getEventsKey(events);
+  const ctx = globalCtxByEvents.get(key);
+  if (!ctx) return;
+  const nextCount = (globalRefCountByEvents.get(key) ?? 0) - 1;
+  if (nextCount > 0) {
+    globalRefCountByEvents.set(key, nextCount);
+    return;
+  }
+  globalRefCountByEvents.delete(key);
+  globalCtxByEvents.delete(key);
+  ctx.destroy();
 }
 
 export interface UseAskableOptions extends AskableContextOptions {
@@ -49,7 +84,7 @@ export function useAskable(options?: UseAskableOptions) {
   // Use a private context when context-creation options are specified
   const usePrivateCtx = !usesProvidedCtx && hasContextCreationOptions(options);
 
-  const ctx = options?.ctx ?? (usePrivateCtx ? createAskableContext(options) : getGlobalCtx());
+  const ctx = options?.ctx ?? (usePrivateCtx ? createAskableContext(options) : getGlobalCtx(options?.events));
   const focus = ref<AskableFocus | null>(ctx.getFocus());
   // Reference focus.value so Vue tracks it as a reactive dependency;
   // ctx.toPromptContext() is a plain method and not itself reactive.
@@ -69,9 +104,12 @@ export function useAskable(options?: UseAskableOptions) {
 
   onMounted(() => {
     if (!usesProvidedCtx) {
-      if (!usePrivateCtx) refCount++;
-      if (typeof document !== 'undefined') {
-        ctx.observe(document, { events: options?.events });
+      if (usePrivateCtx) {
+        if (typeof document !== 'undefined') {
+          ctx.observe(document, { events: options?.events });
+        }
+      } else {
+        retainGlobalCtx(ctx, options?.events);
       }
     }
     ctx.on('focus', handler);
@@ -91,11 +129,7 @@ export function useAskable(options?: UseAskableOptions) {
       if (usePrivateCtx) {
         ctx.destroy();
       } else {
-        refCount--;
-        if (refCount === 0) {
-          globalCtx?.destroy();
-          globalCtx = null;
-        }
+        releaseGlobalCtx(options?.events);
       }
     }
   });
