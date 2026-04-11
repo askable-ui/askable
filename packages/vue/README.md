@@ -44,7 +44,7 @@ Renders any element (default: `div`) with a `data-askable` attribute.
 
 ### `useAskable(options?)`
 
-Returns reactive focus state from the shared global context.
+Returns reactive focus state from the shared context for the requested `events` configuration.
 
 ```ts
 const { focus, promptContext, ctx } = useAskable();
@@ -66,6 +66,8 @@ const { focus, promptContext } = useAskable({ events: ['click'] });
 - `ctx.toHistoryContext(limit?, options?)` — history as a prompt-ready string
 - `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
 - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
+
+The composable manages a shared singleton context per `events` configuration. Multiple `useAskable()` consumers with the same `events` reuse one observer lifecycle, while differing `events` configurations get isolated shared contexts of their own. Each shared context is automatically destroyed when its last consumer unmounts.
 
 ### "Ask AI" button pattern
 

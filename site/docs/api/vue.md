@@ -35,7 +35,7 @@ Renders a wrapper element with `data-askable` managed reactively from `:meta`.
 
 ## `useAskable(options?)`
 
-Composable that provides reactive access to the shared global `AskableContext`. Observation starts in `onMounted()`; context is destroyed when the last consumer unmounts.
+Composable that provides reactive access to a shared `AskableContext` for the requested `events` configuration. Observation starts in `onMounted()`; additional consumers with the same `events` reuse the existing observer instead of re-observing the document. Differing `events` configurations get isolated shared contexts, each destroyed when its last consumer unmounts.
 
 ```ts
 import { useAskable } from '@askable-ui/vue';

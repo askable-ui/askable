@@ -95,7 +95,7 @@ const { focus, promptContext } = useAskable({ events: ['click', 'focus'] });
   - `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
   - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
 
-The hook manages a shared singleton context, so multiple calls across your app share the same observer. The context is automatically destroyed when the last consumer unmounts.
+The hook manages a shared singleton context per `events` configuration. Multiple `useAskable()` consumers with the same `events` reuse one observer lifecycle, while differing `events` configurations get isolated shared contexts of their own. Each shared context is automatically destroyed when its last consumer unmounts.
 
 
 ### SSR note

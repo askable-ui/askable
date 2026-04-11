@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { useEffect } from 'react';
 import { createAskableContext } from '@askable-ui/core';
+import type { AskableContext } from '@askable-ui/core';
 import { useAskable } from '../useAskable';
 
 function Consumer({
@@ -160,6 +162,145 @@ describe('useAskable', () => {
 
     ctxA.destroy();
     ctxB.destroy();
+  });
+
+  it('observes the shared global context only once for multiple consumers with the same events', async () => {
+    let capturedCtx: ReturnType<typeof createAskableContext> | null = null;
+
+    function CaptureCtx({ label }: { label: string }) {
+      const { ctx } = useAskable();
+      useEffect(() => {
+        capturedCtx = ctx;
+      }, [ctx]);
+      return <span data-testid={`capture-${label}`}>ready</span>;
+    }
+
+    const first = render(<CaptureCtx label="one" />);
+    await flushMicrotasks();
+    expect(capturedCtx).not.toBeNull();
+
+    const observeSpy = vi.spyOn(capturedCtx!, 'observe');
+    const second = render(<CaptureCtx label="two" />);
+    await flushMicrotasks();
+
+    expect(observeSpy).not.toHaveBeenCalled();
+
+    second.unmount();
+    first.unmount();
+  });
+
+  it('reuses the same shared context when events rerender with the same logical values', async () => {
+    const seen: AskableContext[] = [];
+
+    function DynamicCtx({ events }: { events: ('click' | 'focus')[] }) {
+      const { ctx } = useAskable({ events });
+      useEffect(() => {
+        seen.push(ctx);
+      }, [ctx]);
+      return null;
+    }
+
+    const view = render(<DynamicCtx events={['click']} />);
+    await flushMicrotasks();
+
+    view.rerender(<DynamicCtx events={['click']} />);
+    await flushMicrotasks();
+
+    expect(seen).toHaveLength(1);
+
+    view.unmount();
+  });
+
+  it('keeps private contexts stable across rerenders with inline creation options', async () => {
+    const seen: AskableContext[] = [];
+
+    function PrivateCtx() {
+      const { ctx } = useAskable({ sanitizeText: (text) => text.trim() });
+      useEffect(() => {
+        seen.push(ctx);
+      }, [ctx]);
+      return null;
+    }
+
+    const view = render(<PrivateCtx />);
+    await flushMicrotasks();
+
+    view.rerender(<PrivateCtx />);
+    await flushMicrotasks();
+
+    expect(seen).toHaveLength(1);
+
+    view.unmount();
+  });
+
+  it('switches to the matching shared context when events change', async () => {
+    const seen: AskableContext[] = [];
+
+    function DynamicCtx({ events }: { events: ('click' | 'focus')[] }) {
+      const { ctx } = useAskable({ events });
+      useEffect(() => {
+        seen.push(ctx);
+      }, [ctx]);
+      return null;
+    }
+
+    const view = render(<DynamicCtx events={['click']} />);
+    await flushMicrotasks();
+
+    view.rerender(<DynamicCtx events={['focus']} />);
+    await flushMicrotasks();
+
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).not.toBe(seen[1]);
+
+    view.unmount();
+  });
+
+  it('isolates differing shared event configurations and preserves the remaining config on unmount', async () => {
+    function EventConsumer({
+      label,
+      events,
+    }: {
+      label: string;
+      events: ('click' | 'focus')[];
+    }) {
+      const { focus } = useAskable({ events });
+      return <span data-testid={`event-${label}`}>{focus ? JSON.stringify(focus.meta) : 'null'}</span>;
+    }
+
+    const clickView = render(
+      <>
+        <button data-testid="event-target" data-askable='{"widget":"shared-events"}'>
+          Shared events
+        </button>
+        <EventConsumer label="click" events={['click']} />
+      </>
+    );
+    await flushMicrotasks();
+
+    const focusView = render(<EventConsumer label="focus" events={['focus']} />);
+    await flushMicrotasks();
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('event-target'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('event-click').textContent).toContain('shared-events');
+    });
+    expect(screen.getByTestId('event-focus').textContent).toBe('null');
+
+    focusView.unmount();
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('event-target'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('event-click').textContent).toContain('shared-events');
+    });
+
+    clickView.unmount();
   });
 });
 

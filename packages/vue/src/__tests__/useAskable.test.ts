@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
 import { useAskable } from '../useAskable.js';
@@ -137,5 +137,84 @@ describe('useAskable (Vue)', () => {
     );
     await flushAll();
     expect(wrapper2.text()).toBe('null');
+  });
+
+  it('observes the shared global context only once for multiple consumers with the same events', async () => {
+    let capturedCtx: ReturnType<typeof import('@askable-ui/core').createAskableContext> | null = null;
+
+    const CaptureConsumer = defineComponent({
+      name: 'CaptureConsumer',
+      setup() {
+        const { ctx } = useAskable();
+        capturedCtx = ctx;
+        return {};
+      },
+      template: `<span>ready</span>`,
+    });
+
+    const wrapperA = track(mount(CaptureConsumer, { attachTo: document.body }));
+    await flushAll();
+    expect(capturedCtx).not.toBeNull();
+
+    const observeSpy = vi.spyOn(capturedCtx!, 'observe');
+    const wrapperB = track(mount(CaptureConsumer, { attachTo: document.body }));
+    await flushAll();
+
+    expect(observeSpy).not.toHaveBeenCalled();
+
+    wrapperB.unmount();
+    wrapperA.unmount();
+  });
+
+  it('isolates differing shared event configurations and preserves the remaining config on unmount', async () => {
+    const EventConsumer = defineComponent({
+      name: 'EventConsumer',
+      props: {
+        label: { type: String, required: true },
+        events: { type: Array as () => ('click' | 'focus')[], required: true },
+      },
+      setup(props) {
+        const { focus } = useAskable({ events: props.events });
+        return { focus };
+      },
+      template: `<span :data-testid="'event-' + label">{{ focus ? JSON.stringify(focus.meta) : 'null' }}</span>`,
+    });
+
+    const clickWrapper = track(
+      mount(
+        defineComponent({
+          components: { EventConsumer },
+          template: `
+            <div>
+              <button data-testid="event-target" data-askable='{"widget":"shared-events"}'>Shared events</button>
+              <EventConsumer label="click" :events="['click']" />
+            </div>
+          `,
+        }),
+        { attachTo: document.body }
+      )
+    );
+    await flushAll();
+
+    const focusWrapper = track(mount(EventConsumer, {
+      attachTo: document.body,
+      props: { label: 'focus', events: ['focus'] },
+    }));
+    await flushAll();
+
+    await clickWrapper.find('[data-testid="event-target"]').trigger('click');
+    await nextTick();
+
+    expect(clickWrapper.find('[data-testid="event-click"]').text()).toContain('shared-events');
+    expect(focusWrapper.find('[data-testid="event-focus"]').text()).toBe('null');
+
+    focusWrapper.unmount();
+
+    await clickWrapper.find('[data-testid="event-target"]').trigger('click');
+    await nextTick();
+
+    expect(clickWrapper.find('[data-testid="event-click"]').text()).toContain('shared-events');
+
+    clickWrapper.unmount();
   });
 });

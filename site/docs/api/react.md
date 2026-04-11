@@ -39,7 +39,7 @@ import { Askable } from '@askable-ui/react';
 
 ## `useAskable(options?)`
 
-Hook that provides reactive access to the shared global `AskableContext`. Observation starts after mount; context is destroyed when the last consumer unmounts.
+Hook that provides reactive access to a shared `AskableContext` for the requested `events` configuration. Observation starts after mount; additional consumers with the same `events` reuse the existing observer instead of re-observing the document. Differing `events` configurations get isolated shared contexts, each destroyed when its last consumer unmounts.
 
 ```ts
 import { useAskable } from '@askable-ui/react';

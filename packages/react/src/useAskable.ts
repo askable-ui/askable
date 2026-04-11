@@ -1,20 +1,55 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createAskableContext, createAskableInspector } from '@askable-ui/core';
 import type { AskableContextOptions, AskableEvent, AskableFocus, AskableContext, AskableInspectorOptions } from '@askable-ui/core';
 
-let globalCtx: AskableContext | null = null;
-let refCount = 0;
+const DEFAULT_EVENTS: AskableEvent[] = ['click', 'hover', 'focus'];
+const globalCtxByEvents = new Map<string, AskableContext>();
+const globalRefCountByEvents = new Map<string, number>();
 
-function getGlobalCtx(): AskableContext {
+function normalizeEvents(events?: AskableEvent[]): AskableEvent[] {
+  const configured = events ?? DEFAULT_EVENTS;
+  return DEFAULT_EVENTS.filter((event, index) => configured.includes(event) && configured.indexOf(event) === index);
+}
+
+function getEventsKey(events?: AskableEvent[]): string {
+  return normalizeEvents(events).join('|');
+}
+
+function getGlobalCtx(events?: AskableEvent[]): AskableContext {
   // During SSR (no window), never persist to the module-level singleton —
   // each render gets a fresh throwaway context so requests don't share state.
   if (typeof window === 'undefined') {
     return createAskableContext();
   }
-  if (!globalCtx) {
-    globalCtx = createAskableContext();
+  const key = getEventsKey(events);
+  const existing = globalCtxByEvents.get(key);
+  if (existing) return existing;
+  const ctx = createAskableContext();
+  globalCtxByEvents.set(key, ctx);
+  return ctx;
+}
+
+function retainGlobalCtx(ctx: AskableContext, events?: AskableEvent[]): void {
+  const key = getEventsKey(events);
+  const nextCount = (globalRefCountByEvents.get(key) ?? 0) + 1;
+  globalRefCountByEvents.set(key, nextCount);
+  if (nextCount === 1 && typeof document !== 'undefined') {
+    ctx.observe(document, { events: normalizeEvents(events) });
   }
-  return globalCtx;
+}
+
+function releaseGlobalCtx(events?: AskableEvent[]): void {
+  const key = getEventsKey(events);
+  const ctx = globalCtxByEvents.get(key);
+  if (!ctx) return;
+  const nextCount = (globalRefCountByEvents.get(key) ?? 0) - 1;
+  if (nextCount > 0) {
+    globalRefCountByEvents.set(key, nextCount);
+    return;
+  }
+  globalRefCountByEvents.delete(key);
+  globalCtxByEvents.delete(key);
+  ctx.destroy();
 }
 
 export interface UseAskableOptions extends AskableContextOptions {
@@ -49,20 +84,40 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
   // Use a private context when context-creation options are specified
   const usePrivateCtx = !usesProvidedCtx && hasContextCreationOptions(options);
 
-  const ctx = useRef<AskableContext>(
-    options?.ctx ?? (usePrivateCtx ? createAskableContext(options) : getGlobalCtx())
-  );
-  const [focus, setFocus] = useState<AskableFocus | null>(() => ctx.current.getFocus());
+  const eventsKey = getEventsKey(options?.events);
+  const privateCtxRef = useRef<AskableContext | null>(null);
+
+  const sharedCtx = useMemo<AskableContext | null>(() => {
+    if (options?.ctx || usePrivateCtx) return null;
+    return getGlobalCtx(options?.events);
+  }, [options?.ctx, usePrivateCtx, eventsKey]);
+
+  if (!options?.ctx && usePrivateCtx && !privateCtxRef.current) {
+    privateCtxRef.current = createAskableContext(options);
+  }
+  if (!usePrivateCtx && !options?.ctx) {
+    privateCtxRef.current = null;
+  }
+
+  const ctx = options?.ctx ?? privateCtxRef.current ?? sharedCtx!;
+  const [focus, setFocus] = useState<AskableFocus | null>(() => ctx.getFocus());
 
   const inspectorKey = JSON.stringify(options?.inspector ?? false);
 
   useEffect(() => {
-    const current = ctx.current;
+    setFocus(ctx.getFocus());
+  }, [ctx]);
+
+  useEffect(() => {
+    const current = ctx;
 
     if (!usesProvidedCtx) {
-      if (!usePrivateCtx) refCount++;
-      if (typeof document !== 'undefined') {
-        current.observe(document, { events: options?.events });
+      if (usePrivateCtx) {
+        if (typeof document !== 'undefined') {
+          current.observe(document, { events: options?.events });
+        }
+      } else {
+        retainGlobalCtx(current, options?.events);
       }
     }
 
@@ -84,20 +139,19 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
       if (!usesProvidedCtx) {
         if (usePrivateCtx) {
           current.destroy();
-        } else {
-          refCount--;
-          if (refCount === 0) {
-            globalCtx?.destroy();
-            globalCtx = null;
+          if (privateCtxRef.current === current) {
+            privateCtxRef.current = null;
           }
+        } else {
+          releaseGlobalCtx(options?.events);
         }
       }
     };
-  }, [options?.events, usesProvidedCtx, usePrivateCtx, inspectorKey]);
+  }, [ctx, eventsKey, usesProvidedCtx, usePrivateCtx, inspectorKey]);
 
   return {
     focus,
-    promptContext: ctx.current.toPromptContext(),
-    ctx: ctx.current,
+    promptContext: ctx.toPromptContext(),
+    ctx,
   };
 }
