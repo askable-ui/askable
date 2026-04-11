@@ -754,6 +754,133 @@ describe('createAskableContext', () => {
     });
   });
 
+  describe('source field', () => {
+    it('DOM interactions set source to "dom"', () => {
+      const el = makeEl({ id: 'test' }, 'Test');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      expect(ctx.getFocus()!.source).toBe('dom');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('select() sets source to "select"', () => {
+      const el = makeEl({ id: 'test' }, 'Test');
+      const ctx = createAskableContext();
+      ctx.select(el);
+
+      expect(ctx.getFocus()!.source).toBe('select');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('push() sets source to "push"', () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'chart' }, 'Revenue');
+
+      expect(ctx.getFocus()!.source).toBe('push');
+
+      ctx.destroy();
+    });
+  });
+
+  describe('push() method', () => {
+    it('sets focus with meta object and text', () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'deals-table', rowIndex: 3 }, 'Acme Corp');
+
+      const focus = ctx.getFocus();
+      expect(focus).not.toBeNull();
+      expect(focus!.meta).toEqual({ widget: 'deals-table', rowIndex: 3 });
+      expect(focus!.text).toBe('Acme Corp');
+      expect(focus!.element).toBeUndefined();
+      expect(typeof focus!.timestamp).toBe('number');
+
+      ctx.destroy();
+    });
+
+    it('sets focus with string meta', () => {
+      const ctx = createAskableContext();
+      ctx.push('plain-string-meta');
+
+      expect(ctx.getFocus()!.meta).toBe('plain-string-meta');
+      expect(ctx.getFocus()!.text).toBe('');
+
+      ctx.destroy();
+    });
+
+    it('emits a focus event', () => {
+      const ctx = createAskableContext();
+      const handler = vi.fn();
+      ctx.on('focus', handler);
+
+      ctx.push({ id: 'row-5' }, 'Row data');
+
+      expect(handler).toHaveBeenCalledOnce();
+      expect(handler.mock.calls[0][0].meta).toEqual({ id: 'row-5' });
+      expect(handler.mock.calls[0][0].source).toBe('push');
+
+      ctx.destroy();
+    });
+
+    it('adds entries to history', () => {
+      const ctx = createAskableContext();
+      ctx.push({ id: 'a' }, 'A');
+      ctx.push({ id: 'b' }, 'B');
+
+      const history = ctx.getHistory();
+      expect(history).toHaveLength(2);
+      expect((history[0].meta as Record<string, unknown>).id).toBe('b');
+      expect((history[1].meta as Record<string, unknown>).id).toBe('a');
+
+      ctx.destroy();
+    });
+
+    it('respects maxHistory', () => {
+      const ctx = createAskableContext({ maxHistory: 2 });
+      ctx.push({ id: 'a' });
+      ctx.push({ id: 'b' });
+      ctx.push({ id: 'c' });
+
+      const history = ctx.getHistory();
+      expect(history).toHaveLength(2);
+      expect((history[0].meta as Record<string, unknown>).id).toBe('c');
+
+      ctx.destroy();
+    });
+
+    it('toPromptContext() works with push()-set focus', () => {
+      const ctx = createAskableContext();
+      ctx.push({ metric: 'revenue' }, '$2.3M');
+
+      const prompt = ctx.toPromptContext();
+      expect(prompt).toContain('User is focused on');
+      expect(prompt).toContain('revenue');
+      expect(prompt).toContain('$2.3M');
+
+      ctx.destroy();
+    });
+
+    it('sanitizeMeta and sanitizeText apply to push()', () => {
+      const ctx = createAskableContext({
+        sanitizeMeta: ({ secret, ...safe }) => safe,
+        sanitizeText: (t) => t.toUpperCase(),
+      });
+
+      ctx.push({ widget: 'table', secret: 'x' }, 'hello');
+
+      const focus = ctx.getFocus();
+      expect((focus!.meta as Record<string, unknown>).secret).toBeUndefined();
+      expect(focus!.text).toBe('HELLO');
+
+      ctx.destroy();
+    });
+  });
+
   it('observe() is a no-op when called outside a browser environment', () => {
     const win = globalThis.window;
     Object.defineProperty(globalThis, 'window', { value: undefined, configurable: true });

@@ -88,15 +88,33 @@ export class AskableContextImpl implements AskableContext {
 
   select(element: HTMLElement): void {
     const rawFocus = buildFocus(element, this.textExtractor);
-    const focus = rawFocus ? this.applySanitizers(rawFocus) : null;
-    if (focus) {
-      this.currentFocus = focus;
-      if (this.maxHistory > 0) {
-        this.history.push(focus);
-        if (this.history.length > this.maxHistory) this.history.shift();
-      }
-      this.emitter.emit('focus', focus);
+    if (!rawFocus) return;
+    const focus = this.applySanitizers({ ...rawFocus, source: 'select' });
+    this.currentFocus = focus;
+    if (this.maxHistory > 0) {
+      this.history.push(focus);
+      if (this.history.length > this.maxHistory) this.history.shift();
     }
+    this.emitter.emit('focus', focus);
+  }
+
+  push(meta: Record<string, unknown> | string, text?: string): void {
+    const sanitizedMeta = this.sanitizeMetaFn && typeof meta !== 'string'
+      ? this.sanitizeMetaFn(meta) : meta;
+    const sanitizedText = this.sanitizeTextFn && text
+      ? this.sanitizeTextFn(text) : (text ?? '');
+    const focus: AskableFocus = {
+      source: 'push',
+      meta: sanitizedMeta,
+      text: sanitizedText,
+      timestamp: Date.now(),
+    };
+    this.currentFocus = focus;
+    if (this.maxHistory > 0) {
+      this.history.push(focus);
+      if (this.history.length > this.maxHistory) this.history.shift();
+    }
+    this.emitter.emit('focus', focus);
   }
 
   clear(): void {

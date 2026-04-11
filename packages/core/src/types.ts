@@ -1,10 +1,15 @@
+/** How focus was initiated */
+export type AskableFocusSource = 'dom' | 'select' | 'push';
+
 export interface AskableFocus {
+  /** How focus was initiated */
+  source: AskableFocusSource;
   /** Parsed data-askable attribute (JSON object or raw string) */
   meta: Record<string, unknown> | string;
   /** Trimmed textContent of the element */
   text: string;
-  /** The DOM element itself */
-  element: HTMLElement;
+  /** The DOM element (undefined when set via push()) */
+  element?: HTMLElement;
   /** Unix timestamp (ms) of when focus was set */
   timestamp: number;
 }
@@ -166,6 +171,8 @@ export interface AskableContext {
   off<K extends AskableEventName>(event: K, handler: AskableEventHandler<K>): void;
   /** Programmatically select an element — use for explicit "Ask AI" buttons */
   select(element: HTMLElement): void;
+  /** Set focus from data alone — no DOM element required. Ideal for virtualizing table libraries. */
+  push(meta: Record<string, unknown> | string, text?: string): void;
   /** Reset the current focus to null and emit a 'clear' event */
   clear(): void;
   /** Serialize current focus to structured prompt-ready data */
