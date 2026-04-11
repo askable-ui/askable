@@ -38,6 +38,7 @@ export function buildFocus(el: HTMLElement, textExtractor?: (el: HTMLElement) =>
     ? textOverride
     : textExtractor ? textExtractor(el) : extractText(el);
   return {
+    source: 'dom',
     meta: parseMeta(raw),
     text,
     element: el,

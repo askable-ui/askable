@@ -53,17 +53,21 @@ function buildPanelHTML(focus: AskableFocus | null, promptContext: string): stri
     `;
   }
 
-  const tag = focus.element.tagName.toLowerCase();
-  const id = focus.element.id ? `#${escapeHtml(focus.element.id)}` : '';
-  const cls = focus.element.className
-    ? `.${String(focus.element.className).trim().split(/\s+/).slice(0, 2).map(escapeHtml).join('.')}`
+  const el = focus.element;
+  const tag = el ? el.tagName.toLowerCase() : null;
+  const id = el?.id ? `#${escapeHtml(el.id)}` : '';
+  const cls = el?.className
+    ? `.${String(el.className).trim().split(/\s+/).slice(0, 2).map(escapeHtml).join('.')}`
     : '';
 
   return `
-    <div style="margin-bottom:8px">
+    ${tag ? `<div style="margin-bottom:8px">
       <span style="color:#7ee787;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Element</span><br>
       <code style="color:#e6edf3">&lt;${escapeHtml(tag)}${id}${cls}&gt;</code>
-    </div>
+    </div>` : `<div style="margin-bottom:8px">
+      <span style="color:#7ee787;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Source</span><br>
+      <code style="color:#e6edf3">${escapeHtml(focus.source)}</code>
+    </div>`}
     <div style="margin-bottom:8px">
       <span style="color:#7ee787;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Meta</span><br>
       <pre style="color:#e6edf3;margin:4px 0;white-space:pre-wrap;word-break:break-all">${renderMeta(focus.meta)}</pre>
@@ -163,7 +167,7 @@ export function createAskableInspector(
   function update(focus: AskableFocus | null) {
     const promptContext = ctx.toPromptContext(promptOptions);
     body.innerHTML = buildPanelHTML(focus, promptContext);
-    if (focus && focus.element.isConnected) applyHighlight(focus.element);
+    if (focus?.element?.isConnected) applyHighlight(focus.element);
     else clearHighlight();
   }
 
