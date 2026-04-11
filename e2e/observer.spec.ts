@@ -296,6 +296,188 @@ test.describe('clear() and history', () => {
   });
 });
 
+test.describe('push() API', () => {
+  test('push() sets focus with meta and text', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      (window as any).ctx.push({ widget: 'deals-table', rowIndex: 3 }, 'Acme Corp');
+    });
+
+    const focus = await page.evaluate(() => {
+      const f = (window as any).ctx.getFocus();
+      return f ? { meta: f.meta, text: f.text, source: f.source, hasElement: !!f.element } : null;
+    });
+
+    expect(focus).not.toBeNull();
+    expect(focus!.meta).toEqual({ widget: 'deals-table', rowIndex: 3 });
+    expect(focus!.text).toBe('Acme Corp');
+    expect(focus!.source).toBe('push');
+    expect(focus!.hasElement).toBe(false);
+  });
+
+  test('push() with plain string meta', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      (window as any).ctx.push('row-label');
+    });
+
+    const meta = await page.evaluate(() => (window as any).ctx.getFocus()?.meta);
+    expect(meta).toBe('row-label');
+  });
+
+  test('push() emits focus event', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    const eventData = await page.evaluate(() => {
+      return new Promise<any>((resolve) => {
+        (window as any).ctx.on('focus', (f: any) => {
+          resolve({ meta: f.meta, source: f.source });
+        });
+        (window as any).ctx.push({ id: 'row-5' }, 'Row data');
+      });
+    });
+
+    expect(eventData.meta).toEqual({ id: 'row-5' });
+    expect(eventData.source).toBe('push');
+  });
+
+  test('push() entries appear in history', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      (window as any).ctx.push({ id: 'a' }, 'A');
+      (window as any).ctx.push({ id: 'b' }, 'B');
+    });
+
+    const history = await page.evaluate(() =>
+      (window as any).ctx.getHistory().map((f: any) => f.meta.id)
+    );
+
+    expect(history).toEqual(['b', 'a']);
+  });
+
+  test('push() focus renders in toPromptContext()', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      (window as any).ctx.push({ metric: 'revenue' }, '$2.3M');
+    });
+
+    const prompt = await page.evaluate(() => (window as any).ctx.toPromptContext());
+    expect(prompt).toContain('revenue');
+    expect(prompt).toContain('$2.3M');
+  });
+});
+
+test.describe('source field', () => {
+  test('DOM click sets source to "dom"', async ({ harness }) => {
+    const page = await harness(`
+      <div id="card" data-askable='{"widget":"kpi"}' tabindex="0">KPI</div>
+    `);
+
+    await page.click('#card');
+
+    const source = await page.evaluate(() => (window as any).ctx.getFocus()?.source);
+    expect(source).toBe('dom');
+  });
+
+  test('select() sets source to "select"', async ({ harness }) => {
+    const page = await harness(`
+      <div id="card" data-askable='{"widget":"nps"}'>NPS</div>
+    `);
+
+    await page.evaluate(() => {
+      (window as any).ctx.select(document.getElementById('card'));
+    });
+
+    const source = await page.evaluate(() => (window as any).ctx.getFocus()?.source);
+    expect(source).toBe('select');
+  });
+
+  test('push() sets source to "push"', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      (window as any).ctx.push({ id: 'row' });
+    });
+
+    const source = await page.evaluate(() => (window as any).ctx.getFocus()?.source);
+    expect(source).toBe('push');
+  });
+
+  test('source is preserved in history across mixed origins', async ({ harness }) => {
+    const page = await harness(
+      `<div id="card" data-askable='{"widget":"dom-card"}' tabindex="0">Card</div>`,
+      `window.ctx.unobserve(); window.ctx.observe(document, { events: ['click'] });`,
+    );
+
+    await page.click('#card');
+    await page.evaluate(() => {
+      (window as any).ctx.select(document.getElementById('card')!);
+      (window as any).ctx.push({ via: 'push' });
+    });
+
+    const sources = await page.evaluate(() =>
+      (window as any).ctx.getHistory().map((f: any) => f.source)
+    );
+    // newest first: push, select, dom
+    expect(sources).toEqual(['push', 'select', 'dom']);
+  });
+});
+
+test.describe('toContext() combined output', () => {
+  test('without history matches toPromptContext() with label', async ({ harness }) => {
+    const page = await harness(`
+      <div id="card" data-askable='{"metric":"churn"}' tabindex="0">Churn</div>
+    `);
+
+    await page.click('#card');
+
+    const [toCtx, prompt] = await page.evaluate(() => [
+      (window as any).ctx.toContext(),
+      (window as any).ctx.toPromptContext(),
+    ]);
+
+    expect(toCtx).toBe(`Current: ${prompt}`);
+  });
+
+  test('with history includes labeled sections', async ({ harness }) => {
+    const page = await harness(`
+      <div id="a" data-askable='{"id":"a"}' tabindex="0">A</div>
+      <div id="b" data-askable='{"id":"b"}' tabindex="0">B</div>
+    `);
+
+    await page.click('#a');
+    await page.click('#b');
+
+    const output = await page.evaluate(() =>
+      (window as any).ctx.toContext({ history: 5 })
+    );
+
+    expect(output).toContain('Current:');
+    expect(output).toContain('Recent interactions:');
+    expect(output).toContain('[1]');
+  });
+
+  test('respects custom labels', async ({ harness }) => {
+    const page = await harness(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      (window as any).ctx.push({ id: 'a' }, 'A');
+      (window as any).ctx.push({ id: 'b' }, 'B');
+    });
+
+    const output = await page.evaluate(() =>
+      (window as any).ctx.toContext({ history: 5, currentLabel: 'Now', historyLabel: 'Before' })
+    );
+
+    expect(output).toMatch(/^Now:/);
+    expect(output).toContain('Before:');
+  });
+});
+
 test.describe('toPromptContext() serialization', () => {
   test('natural format — default', async ({ harness }) => {
     const page = await harness(`
