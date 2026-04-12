@@ -1,0 +1,54 @@
+{
+  "name": "@askable-ui/react-native",
+  "version": "0.4.1",
+  "description": "React Native bindings for askable — LLM-aware UI context",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/askable-ui/askable.git",
+    "directory": "packages/react-native"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "llm",
+    "context",
+    "react-native",
+    "mobile",
+    "ui",
+    "focus"
+  ],
+  "homepage": "https://askable-ui.com",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=17.0.0"
+  },
+  "dependencies": {
+    "@askable-ui/core": "^0.4.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "react": "^18.3.1",
+    "react-test-renderer": "^18.3.1",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  },
+  "overrides": {
+    "react": "^18.3.1"
+  }
+}

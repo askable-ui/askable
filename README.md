@@ -144,11 +144,35 @@ askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it
 |---|---|---|
 | [`@askable-ui/core`](https://www.npmjs.com/package/@askable-ui/core) | [![npm](https://img.shields.io/npm/v/@askable-ui/core?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/core) | Vanilla JS, custom framework, or as a peer dep |
 | [`@askable-ui/react`](https://www.npmjs.com/package/@askable-ui/react) | [![npm](https://img.shields.io/npm/v/@askable-ui/react?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react) | React 18+ |
+| [`@askable-ui/react-native`](https://www.npmjs.com/package/@askable-ui/react-native) | [![npm](https://img.shields.io/npm/v/@askable-ui/react-native?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react-native) | React Native (initial press-driven adapter) |
 | [`@askable-ui/vue`](https://www.npmjs.com/package/@askable-ui/vue) | [![npm](https://img.shields.io/npm/v/@askable-ui/vue?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/vue) | Vue 3 |
 | [`@askable-ui/svelte`](https://www.npmjs.com/package/@askable-ui/svelte) | [![npm](https://img.shields.io/npm/v/@askable-ui/svelte?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/svelte) | Svelte 4 & 5 |
 
 <details>
 <summary><strong>Framework quick starts</strong></summary>
+
+### React Native
+
+```bash
+npm install @askable-ui/react-native
+```
+
+```tsx
+import { Pressable, Text } from 'react-native';
+import { Askable, useAskable } from '@askable-ui/react-native';
+
+function RevenueCard() {
+  const { ctx, promptContext } = useAskable();
+
+  return (
+    <Askable ctx={ctx} meta={{ widget: 'revenue' }} text="Revenue card">
+      <Pressable>
+        <Text>Revenue</Text>
+      </Pressable>
+    </Askable>
+  );
+}
+```
 
 ### Vue 3
 
