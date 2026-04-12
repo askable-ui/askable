@@ -12,6 +12,7 @@ budgets before merging.
 | `observe(5k elements)` | **80ms** | |
 | `observe(10k elements)` | **160ms** | Scales linearly; avoid annotating >5k elements |
 | Event handler p99 (click/hover/focus) | **0.5ms** | Per-event cost at 1k annotated elements |
+| Repeated event handler p99 (same element) | **0.2ms** | Hot path for repeated hover/click on already-seen elements |
 | `toPromptContext()` — natural | **0.2ms** | Serialization call (median over 1k runs) |
 | `toPromptContext()` — json | **0.2ms** | |
 | `MutationObserver` batch (100 nodes) | **10ms** | Bulk DOM insertion, includes MO flush overhead |
@@ -54,6 +55,23 @@ These rules are derived from the budgets above and should guide implementation d
 
 6. **History is capped at `MAX_HISTORY` (currently 50).** The cap prevents unbounded memory growth in
    long-lived sessions. A configurable `maxHistory` option is planned (#83).
+
+7. **Parsed `data-askable` metadata is cached per element and invalidated on attribute changes.**
+   Repeated interactions over the same annotated element should not re-parse identical metadata.
+
+## Lazy text extraction decision
+
+Lazy text extraction is **not shipping by default in this phase**.
+
+Reasoning:
+
+- metadata parsing was the low-risk, clear win for repeated interactions
+- eager text capture preserves current `getFocus()`, history, events, and serialization semantics
+- changing text capture timing would need a cross-adapter API decision and real-browser profiling to
+  prove it is worth the complexity
+
+We should revisit lazy text extraction only if profiling shows text extraction, not metadata parsing,
+is the dominant hot path in representative large UIs.
 
 ## Adding a new budget
 

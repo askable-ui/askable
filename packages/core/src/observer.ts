@@ -28,7 +28,31 @@ function extractText(el: HTMLElement): string {
   return (el.textContent ?? '').trim();
 }
 
-export function buildFocus(el: HTMLElement, textExtractor?: (el: HTMLElement) => string): AskableFocus | null {
+type MetaCacheEntry = {
+  raw: string;
+  parsed: Record<string, unknown> | string;
+};
+
+function resolveMeta(
+  el: HTMLElement,
+  raw: string,
+  metaCache?: WeakMap<HTMLElement, MetaCacheEntry>
+): Record<string, unknown> | string {
+  const cached = metaCache?.get(el);
+  if (cached && cached.raw === raw) {
+    return cached.parsed;
+  }
+
+  const parsed = parseMeta(raw);
+  metaCache?.set(el, { raw, parsed });
+  return parsed;
+}
+
+export function buildFocus(
+  el: HTMLElement,
+  textExtractor?: (el: HTMLElement) => string,
+  metaCache?: WeakMap<HTMLElement, MetaCacheEntry>
+): AskableFocus | null {
   const raw = el.getAttribute('data-askable');
   if (raw === null) return null;
   // data-askable-text overrides both textExtractor and default textContent extraction.
@@ -39,7 +63,7 @@ export function buildFocus(el: HTMLElement, textExtractor?: (el: HTMLElement) =>
     : textExtractor ? textExtractor(el) : extractText(el);
   return {
     source: 'dom',
-    meta: parseMeta(raw),
+    meta: resolveMeta(el, raw, metaCache),
     text,
     element: el,
     timestamp: Date.now(),
@@ -53,6 +77,7 @@ export class Observer {
   private root: HTMLElement | Document | null = null;
   private mutationObserver: MutationObserver | null = null;
   private boundElements = new Set<HTMLElement>();
+  private metaCache = new WeakMap<HTMLElement, MetaCacheEntry>();
   private onFocus: FocusCallback;
   private textExtractor: ((el: HTMLElement) => string) | undefined;
   private activeEvents: AskableEvent[] = ALL_EVENTS;
@@ -119,6 +144,7 @@ export class Observer {
     this.mutationObserver = null;
     this.boundElements.forEach((el) => this.detach(el));
     this.boundElements.clear();
+    this.metaCache = new WeakMap<HTMLElement, MetaCacheEntry>();
     this.root = null;
     if (this.hoverTimer !== null) {
       clearTimeout(this.hoverTimer);
@@ -171,7 +197,7 @@ export class Observer {
       if (this.hoverTimer !== null) clearTimeout(this.hoverTimer);
       this.hoverTimer = setTimeout(() => {
         this.hoverTimer = null;
-        const focus = buildFocus(el, this.textExtractor);
+        const focus = buildFocus(el, this.textExtractor, this.metaCache);
         if (focus) this.onFocus(focus);
       }, this.hoverDebounce);
       return;
@@ -183,7 +209,7 @@ export class Observer {
       this.lastHoverTimestamp = now;
     }
 
-    const focus = buildFocus(el, this.textExtractor);
+    const focus = buildFocus(el, this.textExtractor, this.metaCache);
     if (focus) this.onFocus(focus);
   };
 
@@ -195,6 +221,7 @@ export class Observer {
 
   private handleAttributeMutation(el: HTMLElement, attributeName: string | null): void {
     if (attributeName === 'data-askable') {
+      this.metaCache.delete(el);
       if (el.hasAttribute('data-askable')) {
         this.attach(el);
       } else {
@@ -222,5 +249,6 @@ export class Observer {
   private detach(el: HTMLElement): void {
     this.activeEvents.forEach((e) => el.removeEventListener(EVENT_MAP[e], this.handleInteraction));
     this.boundElements.delete(el);
+    this.metaCache.delete(el);
   }
 }

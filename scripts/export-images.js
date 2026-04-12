@@ -235,7 +235,7 @@ const SOCIAL_HTML = `<!DOCTYPE html>
       <h1>Your model knows what <em>they</em> see.</h1>
       <p class="desc">
         Give any UI element LLM awareness with <code style="font-family:ui-monospace,monospace;font-size:.9em;background:rgba(79,70,229,0.08);color:#4f46e5;padding:2px 7px;border-radius:6px">data-askable</code>.
-        Zero framework lock-in. ~1kb.
+        Zero framework lock-in. Lightweight core.
       </p>
       <div class="tags">
         <span class="tag">React</span>
@@ -285,7 +285,7 @@ const SOCIAL_HTML = `<!DOCTYPE html>
     <div class="brand"><em>ask</em>able-ui</div>
     <div class="pills">
       <span class="pill">github.com/askable-ui/askable</span>
-      <span class="pill">~1kb gz</span>
+      <span class="pill">lightweight core</span>
       <span class="pill">MIT</span>
     </div>
   </div>

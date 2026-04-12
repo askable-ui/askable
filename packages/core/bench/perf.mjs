@@ -6,15 +6,17 @@
  * Measures:
  *   1. observe() init time on large DOM (1k / 5k / 10k annotated elements)
  *   2. Per-event handler execution time (click, hover, focus)
- *   3. toPromptContext() serialization time (natural + JSON)
- *   4. MutationObserver batch (100 nodes added at once)
- *   5. Memory baseline (heap before/after observe)
+ *   3. Repeated interactions on the same element (metadata cache hot path)
+ *   4. toPromptContext() serialization time (natural + JSON)
+ *   5. MutationObserver batch (100 nodes added at once)
+ *   6. Memory baseline (heap before/after observe)
  *
  * Budget targets (enforced in CI via --budget flag):
  *   observe(1k)     < 20ms
  *   observe(5k)     < 80ms
  *   observe(10k)    < 160ms
  *   event handler   < 0.5ms per event (p99)
+ *   repeated event  < 0.2ms per event (p99)
  *   toPromptContext < 0.2ms
  *   mutation batch  < 5ms per 100 nodes
  */
@@ -105,6 +107,7 @@ const BUDGETS = {
   'observe(5k elements)':       80,
   'observe(10k elements)':     160,
   'event handler p99 (1k)':      0.5,
+  'repeated event p99 (1k)':     0.2,
   'toPromptContext natural':     0.2,
   'toPromptContext json':        0.2,
   'mutation batch (100 nodes)': 10, // JSDOM MutationObserver flush adds ~5ms overhead
@@ -143,7 +146,23 @@ for (const count of [1_000, 5_000, 10_000]) {
   ctx.unobserve?.();
 }
 
-// 3. toPromptContext() serialization
+// 3. Repeated interactions on the same element — exercises metadata cache reuse
+{
+  buildDOM(1_000);
+  const ctx = createAskableContext();
+  ctx.observe(window.document);
+  const el = window.document.querySelector('[data-askable]');
+  const times = [];
+  for (let i = 0; i < 500; i++) {
+    const t0 = performance.now();
+    el.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    times.push(performance.now() - t0);
+  }
+  check('repeated event p99 (1k)', p99(times), BUDGETS['repeated event p99 (1k)']);
+  ctx.unobserve?.();
+}
+
+// 4. toPromptContext() serialization
 {
   buildDOM(1);
   const ctx = createAskableContext();
@@ -166,7 +185,7 @@ for (const count of [1_000, 5_000, 10_000]) {
   ctx.unobserve?.();
 }
 
-// 4. MutationObserver batch — 100 nodes added at once
+// 5. MutationObserver batch — 100 nodes added at once
 {
   const body = buildDOM(0);
   const ctx = createAskableContext();
@@ -187,7 +206,7 @@ for (const count of [1_000, 5_000, 10_000]) {
   ctx.unobserve?.();
 }
 
-// 5. unobserve cleanup
+// 6. unobserve cleanup
 {
   buildDOM(1_000);
   const ctx = createAskableContext();

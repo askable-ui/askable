@@ -176,21 +176,54 @@ describe('Observer', () => {
     obs.unobserve();
   });
 
-  it('uses updated meta after data-askable changes', async () => {
+  it('reuses parsed metadata for repeated interactions on the same element', () => {
+    const parseSpy = vi.spyOn(JSON, 'parse');
+    const rawMeta = '{"id":"cached-meta"}';
+    const el = attach(makeEl({ id: 'cached-meta' }, 'Cached meta'));
+
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document);
+
+    el.click();
+    el.click();
+
+    const parseCount = parseSpy.mock.calls.filter(([value]) => value === rawMeta).length;
+
+    expect(onFocus).toHaveBeenCalledTimes(2);
+    expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'cached-meta' });
+    expect(onFocus.mock.calls[1][0].meta).toEqual({ id: 'cached-meta' });
+    expect(parseCount).toBe(1);
+
+    obs.unobserve();
+    parseSpy.mockRestore();
+  });
+
+  it('invalidates cached metadata when data-askable changes', async () => {
+    const parseSpy = vi.spyOn(JSON, 'parse');
+    const rawBefore = '{"id":"before"}';
+    const rawAfter = '{"id":"after","state":"updated"}';
     const el = attach(makeEl({ id: 'before' }, 'Meta update'));
 
     const onFocus = vi.fn();
     const obs = new Observer(onFocus);
     obs.observe(document);
 
-    el.setAttribute('data-askable', '{"id":"after","state":"updated"}');
+    el.click();
+    expect(parseSpy.mock.calls.filter(([value]) => value === rawBefore).length).toBe(1);
+
+    el.setAttribute('data-askable', rawAfter);
     await new Promise((r) => setTimeout(r, 0));
 
     el.click();
-    expect(onFocus).toHaveBeenCalledOnce();
-    expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'after', state: 'updated' });
+    expect(onFocus).toHaveBeenCalledTimes(2);
+    expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'before' });
+    expect(onFocus.mock.calls[1][0].meta).toEqual({ id: 'after', state: 'updated' });
+    expect(parseSpy.mock.calls.filter(([value]) => value === rawBefore).length).toBe(1);
+    expect(parseSpy.mock.calls.filter(([value]) => value === rawAfter).length).toBe(1);
 
     obs.unobserve();
+    parseSpy.mockRestore();
   });
 
   it('uses updated data-askable-text after attribute changes', async () => {

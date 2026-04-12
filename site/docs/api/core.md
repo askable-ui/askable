@@ -1,6 +1,6 @@
 # @askable-ui/core
 
-Framework-agnostic context tracker. Zero dependencies, ~1 kb gzipped.
+Framework-agnostic context tracker. Zero dependencies and built to stay lightweight.
 
 ## Install
 

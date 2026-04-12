@@ -16,9 +16,7 @@
   <a href="https://www.npmjs.com/package/@askable-ui/core">
     <img src="https://img.shields.io/npm/dw/@askable-ui/core?color=4f46e5&label=downloads" alt="npm downloads" />
   </a>
-  <a href="https://bundlephobia.com/package/@askable-ui/core">
-    <img src="https://img.shields.io/badge/gzip-~1kb-4f46e5" alt="~1kb gzipped" />
-  </a>
+
   <a href="./LICENSE">
     <img src="https://img.shields.io/npm/l/@askable-ui/core?color=4f46e5" alt="MIT license" />
   </a>
@@ -76,7 +74,7 @@ That's friction — and it's imprecise.
 
 askable-ui solves this with one HTML attribute. Mark any element with `data-askable`, and the library tracks user focus and serializes it into a prompt-ready string. The model gets the user's exact visual context — not a guess, the real thing.
 
-No page scraping. No DOM serialization. No prompt bloat. **~1 kb gzipped.**
+No page scraping. No DOM serialization. No prompt bloat. **Lightweight and zero-dependency.**
 
 ---
 
@@ -128,7 +126,7 @@ askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it
 - **Conversation history** — `ctx.toHistoryContext(n)` for multi-turn context
 - **Redaction hooks** — strip sensitive fields before data reaches serialization
 - **Inspector panel** — `<AskableInspector />` or `useAskable({ inspector: true })` for a live dev overlay
-- **~1 kb gzipped** — zero runtime dependencies
+- **Lightweight core** — zero runtime dependencies
 
 ---
 
