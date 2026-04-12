@@ -35,6 +35,11 @@ interface AskableContextOptions {
    */
   name?: string;
   /**
+   * Track which annotated elements are currently visible in the viewport.
+   * Off by default to avoid extra observer overhead.
+   */
+  viewport?: boolean;
+  /**
    * Custom text extractor. Defaults to el.textContent?.trim() ?? ''
    * Applied at capture time.
    */

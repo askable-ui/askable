@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createAskableContext } from '../index.js';
 
 function makeEl(meta: object | string, text = 'Hello'): HTMLElement {
@@ -12,6 +12,44 @@ function makeEl(meta: object | string, text = 'Hello'): HTMLElement {
 function cleanup(el: HTMLElement) {
   document.body.removeChild(el);
 }
+
+class MockIntersectionObserver {
+  static instances: MockIntersectionObserver[] = [];
+  callback: IntersectionObserverCallback;
+  observed = new Set<Element>();
+
+  constructor(callback: IntersectionObserverCallback) {
+    this.callback = callback;
+    MockIntersectionObserver.instances.push(this);
+  }
+
+  observe = (el: Element) => {
+    this.observed.add(el);
+  };
+
+  unobserve = (el: Element) => {
+    this.observed.delete(el);
+  };
+
+  disconnect = () => {
+    this.observed.clear();
+  };
+
+  trigger(entries: Array<{ target: Element; isIntersecting: boolean }>) {
+    this.callback(
+      entries.map((entry) => ({
+        target: entry.target,
+        isIntersecting: entry.isIntersecting,
+        intersectionRatio: entry.isIntersecting ? 1 : 0,
+      })) as IntersectionObserverEntry[],
+      this as unknown as IntersectionObserver,
+    );
+  }
+}
+
+afterEach(() => {
+  MockIntersectionObserver.instances = [];
+});
 
 describe('createAskableContext', () => {
   it('reuses the same named context instance in the browser', () => {
@@ -44,6 +82,8 @@ describe('createAskableContext', () => {
     expect(typeof ctx.off).toBe('function');
     expect(typeof ctx.toPromptContext).toBe('function');
     expect(typeof (ctx as any).serializeFocus).toBe('function');
+    expect(typeof (ctx as any).getVisibleElements).toBe('function');
+    expect(typeof (ctx as any).toViewportContext).toBe('function');
     expect(typeof ctx.destroy).toBe('function');
     ctx.destroy();
   });
@@ -53,6 +93,33 @@ describe('createAskableContext', () => {
     ctx.observe(document);
     expect(ctx.getFocus()).toBeNull();
     ctx.destroy();
+  });
+
+  it('tracks visible annotated elements when viewport mode is enabled', () => {
+    const originalIntersectionObserver = globalThis.IntersectionObserver;
+    globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+
+    const first = makeEl({ widget: 'table' }, 'Table');
+    const second = makeEl({ widget: 'chart' }, 'Chart');
+    const ctx = createAskableContext({ viewport: true });
+    ctx.observe(document);
+
+    const observer = MockIntersectionObserver.instances[0];
+    observer.trigger([
+      { target: first, isIntersecting: true },
+      { target: second, isIntersecting: true },
+    ]);
+
+    const visible = (ctx as any).getVisibleElements();
+    expect(visible).toHaveLength(2);
+    expect(visible.map((item: { meta: Record<string, unknown> }) => item.meta.widget)).toEqual(['table', 'chart']);
+    expect((ctx as any).toViewportContext()).toContain('table');
+    expect((ctx as any).toViewportContext()).toContain('chart');
+
+    ctx.destroy();
+    cleanup(first);
+    cleanup(second);
+    globalThis.IntersectionObserver = originalIntersectionObserver;
   });
 
   it('getFocus() returns correct data after simulated click', () => {

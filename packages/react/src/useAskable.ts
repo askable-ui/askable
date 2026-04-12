@@ -15,9 +15,10 @@ function getEventsKey(events?: AskableEvent[]): string {
   return normalizeEvents(events).join('|');
 }
 
-function getSharedKey(name?: string, events?: AskableEvent[]): string {
+function getSharedKey(name?: string, events?: AskableEvent[], viewport?: boolean): string {
   const scope = name?.trim() ? `name:${name.trim()}` : 'global';
-  return `${scope}::${getEventsKey(events)}`;
+  const viewportKey = viewport ? 'viewport:on' : 'viewport:off';
+  return `${scope}::${getEventsKey(events)}::${viewportKey}`;
 }
 
 function getGlobalCtx(options?: UseAskableOptions): AskableContext {
@@ -26,7 +27,7 @@ function getGlobalCtx(options?: UseAskableOptions): AskableContext {
   if (typeof window === 'undefined') {
     return createAskableContext(options);
   }
-  const key = getSharedKey(options?.name, options?.events);
+  const key = getSharedKey(options?.name, options?.events, options?.viewport);
   const existing = globalCtxByEvents.get(key);
   if (existing) return existing;
   const ctx = createAskableContext(options);
@@ -34,8 +35,8 @@ function getGlobalCtx(options?: UseAskableOptions): AskableContext {
   return ctx;
 }
 
-function retainGlobalCtx(ctx: AskableContext, name?: string, events?: AskableEvent[]): void {
-  const key = getSharedKey(name, events);
+function retainGlobalCtx(ctx: AskableContext, name?: string, events?: AskableEvent[], viewport?: boolean): void {
+  const key = getSharedKey(name, events, viewport);
   const nextCount = (globalRefCountByEvents.get(key) ?? 0) + 1;
   globalRefCountByEvents.set(key, nextCount);
   if (nextCount === 1 && typeof document !== 'undefined') {
@@ -43,8 +44,8 @@ function retainGlobalCtx(ctx: AskableContext, name?: string, events?: AskableEve
   }
 }
 
-function releaseGlobalCtx(name?: string, events?: AskableEvent[]): void {
-  const key = getSharedKey(name, events);
+function releaseGlobalCtx(name?: string, events?: AskableEvent[], viewport?: boolean): void {
+  const key = getSharedKey(name, events, viewport);
   const ctx = globalCtxByEvents.get(key);
   if (!ctx) return;
   const nextCount = (globalRefCountByEvents.get(key) ?? 0) - 1;
@@ -90,7 +91,7 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
   // Use a private context when context-creation options are specified without a shared name
   const usePrivateCtx = !usesProvidedCtx && !usesNamedSharedCtx && hasContextCreationOptions(options);
 
-  const sharedKey = getSharedKey(options?.name, options?.events);
+  const sharedKey = getSharedKey(options?.name, options?.events, options?.viewport);
   const privateCtxRef = useRef<AskableContext | null>(null);
 
   const sharedCtx = useMemo<AskableContext | null>(() => {
@@ -123,7 +124,7 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
           current.observe(document, { events: options?.events });
         }
       } else {
-        retainGlobalCtx(current, options?.name, options?.events);
+        retainGlobalCtx(current, options?.name, options?.events, options?.viewport);
       }
     }
 
@@ -149,7 +150,7 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
             privateCtxRef.current = null;
           }
         } else {
-          releaseGlobalCtx(options?.name, options?.events);
+          releaseGlobalCtx(options?.name, options?.events, options?.viewport);
         }
       }
     };

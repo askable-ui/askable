@@ -28,12 +28,16 @@ const ctx = createAskableContext({
   sanitizeMeta: ({ password, ssn, ...safe }) => safe,
   sanitizeText: (text) => text.replace(/\b\d{16}\b/g, '[card]'),
 });
+
+// Track all annotated elements currently visible in the viewport
+const viewportCtx = createAskableContext({ viewport: true });
 ```
 
 **Options (`AskableContextOptions`):**
 
 | Option | Type | Description |
 |---|---|---|
+| `viewport` | `boolean` | Enable viewport tracking via `IntersectionObserver`. Default: `false`. |
 | `textExtractor` | `(el: HTMLElement) => string` | Custom text extractor. Defaults to `el.textContent?.trim()`. Applied at capture time. |
 | `sanitizeMeta` | `(meta: Record<string, unknown>) => Record<string, unknown>` | Redact/transform object meta before storing. Not called for string meta. Applied at capture time. |
 | `sanitizeText` | `(text: string) => string` | Redact/transform text content before storing. Applied at capture time. |

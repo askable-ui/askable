@@ -97,6 +97,9 @@ const { ctx, promptContext } = useAskable();
 const { ctx: tableCtx } = useAskable({ name: 'table' });
 const { ctx: chartCtx } = useAskable({ name: 'chart' });
 // named contexts stay isolated for multi-region pages
+
+const { ctx: screenCtx } = useAskable({ viewport: true });
+// screenCtx.toViewportContext() serializes currently visible annotated elements
 ```
 
 **3. Inject** — at the AI boundary, one line
@@ -128,6 +131,7 @@ askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it
 - **SSR safe** — defers to client lifecycle, no `window is not defined`
 - **"Ask AI" button** — `ctx.select(element)` pins focus to any element programmatically
 - **Conversation history** — `ctx.toHistoryContext(n)` for multi-turn context
+- **Viewport awareness** — `ctx.getVisibleElements()` / `ctx.toViewportContext()` for on-screen context
 - **Redaction hooks** — strip sensitive fields before data reaches serialization
 - **Inspector panel** — `<AskableInspector />` or `useAskable({ inspector: true })` for a live dev overlay
 - **Lightweight core** — zero runtime dependencies

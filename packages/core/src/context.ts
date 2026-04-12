@@ -26,6 +26,9 @@ export class AskableContextImpl implements AskableContext {
   private observer: Observer;
   private currentFocus: AskableFocus | null = null;
   private history: AskableFocus[] = [];
+  private visibleElements = new Set<HTMLElement>();
+  private intersectionObserver: IntersectionObserver | null = null;
+  private viewportEnabled: boolean;
   private maxHistory: number;
   private textExtractor: ((el: HTMLElement) => string) | undefined;
   private sanitizeMetaFn: ((meta: Record<string, unknown>) => Record<string, unknown>) | undefined;
@@ -35,6 +38,7 @@ export class AskableContextImpl implements AskableContext {
     this.textExtractor = options?.textExtractor;
     this.sanitizeMetaFn = options?.sanitizeMeta;
     this.sanitizeTextFn = options?.sanitizeText;
+    this.viewportEnabled = options?.viewport ?? false;
     this.maxHistory = options?.maxHistory ?? DEFAULT_MAX_HISTORY;
     this.observer = new Observer((rawFocus) => {
       const focus = this.applySanitizers(rawFocus);
@@ -44,7 +48,13 @@ export class AskableContextImpl implements AskableContext {
         if (this.history.length > this.maxHistory) this.history.shift();
       }
       this.emitter.emit('focus', focus);
-    }, this.textExtractor);
+    }, this.textExtractor, {
+      onAttach: (el) => this.intersectionObserver?.observe(el),
+      onDetach: (el) => {
+        this.intersectionObserver?.unobserve(el);
+        this.visibleElements.delete(el);
+      },
+    });
   }
 
   private applySanitizers(focus: AskableFocus): AskableFocus {
@@ -57,6 +67,21 @@ export class AskableContextImpl implements AskableContext {
   }
 
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void {
+    if (this.viewportEnabled && typeof IntersectionObserver !== 'undefined') {
+      this.intersectionObserver?.disconnect();
+      this.visibleElements.clear();
+      this.intersectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const el = entry.target as HTMLElement;
+          if (entry.isIntersecting) {
+            this.visibleElements.add(el);
+          } else {
+            this.visibleElements.delete(el);
+          }
+        });
+      });
+    }
+
     this.observer.observe(
       root,
       options?.events,
@@ -67,6 +92,9 @@ export class AskableContextImpl implements AskableContext {
   }
 
   unobserve(): void {
+    this.intersectionObserver?.disconnect();
+    this.intersectionObserver = null;
+    this.visibleElements.clear();
     this.observer.unobserve();
   }
 
@@ -77,6 +105,13 @@ export class AskableContextImpl implements AskableContext {
   getHistory(limit?: number): AskableFocus[] {
     const hist = this.history.slice().reverse();
     return limit !== undefined ? hist.slice(0, limit) : hist;
+  }
+
+  getVisibleElements(): AskableFocus[] {
+    return Array.from(this.visibleElements)
+      .map((el) => buildFocus(el, this.textExtractor))
+      .filter((focus): focus is AskableFocus => Boolean(focus))
+      .map((focus) => this.applySanitizers(focus));
   }
 
   on<K extends AskableEventName>(event: K, handler: AskableEventHandler<K>): void {
@@ -143,6 +178,17 @@ export class AskableContextImpl implements AskableContext {
     return this.applyTokenBudget(output, resolved.maxTokens);
   }
 
+  toViewportContext(options?: AskablePromptContextOptions): string {
+    const resolved = this.resolveOptions(options);
+    const visible = this.getVisibleElements();
+    if (visible.length === 0) return resolved.format === 'json' ? '[]' : 'No annotated UI elements are currently visible.';
+    if (resolved.format === 'json') {
+      return JSON.stringify(visible.map((focus) => this.serializeFocusFrom(focus, resolved)));
+    }
+    const lines = visible.map((focus, i) => `[${i + 1}] ${this.buildPromptString(focus, resolved)}`);
+    return this.applyTokenBudget(lines.join('\n'), resolved.maxTokens);
+  }
+
   toContext(options?: AskableContextOutputOptions): string {
     const { history: historyCount = 0, currentLabel = 'Current', historyLabel = 'Recent interactions', ...promptOptions } = options ?? {};
     const resolved = this.resolveOptions(promptOptions);
@@ -165,10 +211,11 @@ export class AskableContextImpl implements AskableContext {
   }
 
   destroy(): void {
-    this.observer.unobserve();
+    this.unobserve();
     this.emitter.clear();
     this.currentFocus = null;
     this.history = [];
+    this.visibleElements.clear();
   }
 
   private normalizeMeta(

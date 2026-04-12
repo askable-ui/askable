@@ -1,6 +1,10 @@
 import type { AskableFocus, AskableEvent, AskableTargetStrategy } from './types.js';
 
 type FocusCallback = (focus: AskableFocus) => void;
+type ObserverLifecycleCallbacks = {
+  onAttach?: (el: HTMLElement) => void;
+  onDetach?: (el: HTMLElement) => void;
+};
 
 const EVENT_MAP: Record<AskableEvent, string> = {
   click: 'click',
@@ -79,6 +83,7 @@ export class Observer {
   private boundElements = new Set<HTMLElement>();
   private metaCache = new WeakMap<HTMLElement, MetaCacheEntry>();
   private onFocus: FocusCallback;
+  private lifecycleCallbacks: ObserverLifecycleCallbacks;
   private textExtractor: ((el: HTMLElement) => string) | undefined;
   private activeEvents: AskableEvent[] = ALL_EVENTS;
   private targetStrategy: AskableTargetStrategy = 'deepest';
@@ -87,9 +92,14 @@ export class Observer {
   private hoverTimer: ReturnType<typeof setTimeout> | null = null;
   private lastHoverTimestamp = 0;
 
-  constructor(onFocus: FocusCallback, textExtractor?: (el: HTMLElement) => string) {
+  constructor(
+    onFocus: FocusCallback,
+    textExtractor?: (el: HTMLElement) => string,
+    lifecycleCallbacks: ObserverLifecycleCallbacks = {}
+  ) {
     this.onFocus = onFocus;
     this.textExtractor = textExtractor;
+    this.lifecycleCallbacks = lifecycleCallbacks;
   }
 
   observe(
@@ -115,18 +125,18 @@ export class Observer {
       for (const mutation of mutations) {
         if (mutation.type === 'attributes') {
           const target = mutation.target;
-          if (target instanceof HTMLElement) {
+          if (typeof HTMLElement !== 'undefined' && target instanceof HTMLElement) {
             this.handleAttributeMutation(target, mutation.attributeName);
           }
           continue;
         }
         mutation.addedNodes.forEach((node) => {
-          if (!(node instanceof HTMLElement)) return;
+          if (!(typeof HTMLElement !== 'undefined' && node instanceof HTMLElement)) return;
           if (node.hasAttribute('data-askable')) this.attach(node);
           node.querySelectorAll<HTMLElement>('[data-askable]').forEach((el) => this.attach(el));
         });
         mutation.removedNodes.forEach((node) => {
-          if (node instanceof HTMLElement) this.detachTree(node);
+          if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) this.detachTree(node);
         });
       }
     });
@@ -217,6 +227,7 @@ export class Observer {
     if (this.boundElements.has(el)) return;
     this.activeEvents.forEach((e) => el.addEventListener(EVENT_MAP[e], this.handleInteraction));
     this.boundElements.add(el);
+    this.lifecycleCallbacks.onAttach?.(el);
   }
 
   private handleAttributeMutation(el: HTMLElement, attributeName: string | null): void {
@@ -250,5 +261,6 @@ export class Observer {
     this.activeEvents.forEach((e) => el.removeEventListener(EVENT_MAP[e], this.handleInteraction));
     this.boundElements.delete(el);
     this.metaCache.delete(el);
+    this.lifecycleCallbacks.onDetach?.(el);
   }
 }

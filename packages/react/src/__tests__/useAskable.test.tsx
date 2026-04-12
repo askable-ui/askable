@@ -103,6 +103,24 @@ describe('useAskable', () => {
     expect(prompt).toContain('revenue');
   });
 
+  it('can create a viewport-aware context via hook options', () => {
+    let seenCtx: AskableContext | null = null;
+
+    function ViewportConsumer() {
+      const { ctx } = useAskable({ viewport: true });
+      useEffect(() => {
+        seenCtx = ctx;
+      }, [ctx]);
+      return null;
+    }
+
+    const view = render(<ViewportConsumer />);
+    expect(seenCtx).not.toBeNull();
+    expect(typeof (seenCtx as any).getVisibleElements).toBe('function');
+    expect(typeof (seenCtx as any).toViewportContext).toBe('function');
+    view.unmount();
+  });
+
   it('can use an explicitly provided scoped context', async () => {
     const ctx = createAskableContext();
     ctx.observe(document, { events: ['click'] });

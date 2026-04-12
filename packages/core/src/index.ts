@@ -36,15 +36,16 @@ export function createAskableContext(options?: AskableContextOptions): AskableCo
     return new AskableContextImpl(options);
   }
 
-  const existing = namedContexts.get(name);
+  const key = `${name}::viewport:${options?.viewport ? 'on' : 'off'}`;
+  const existing = namedContexts.get(key);
   if (existing) return existing;
 
   const ctx = new AskableContextImpl(options);
   const originalDestroy = ctx.destroy.bind(ctx);
   ctx.destroy = () => {
-    namedContexts.delete(name);
+    namedContexts.delete(key);
     originalDestroy();
   };
-  namedContexts.set(name, ctx);
+  namedContexts.set(key, ctx);
   return ctx;
 }

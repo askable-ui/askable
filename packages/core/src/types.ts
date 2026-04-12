@@ -117,6 +117,11 @@ export interface AskableContextOptions {
    */
   name?: string;
   /**
+   * Track which annotated elements are currently visible in the viewport.
+   * Off by default to avoid extra observer overhead.
+   */
+  viewport?: boolean;
+  /**
    * Custom text extractor called for each focused element.
    * Receives the DOM element, returns the text to use as `AskableFocus.text`.
    * Defaults to `el.textContent?.trim() ?? ''`.
@@ -179,6 +184,8 @@ export interface AskableContext {
   getFocus(): AskableFocus | null;
   /** Return the focus history, newest first. Optional limit caps the result. */
   getHistory(limit?: number): AskableFocus[];
+  /** Return all annotated elements currently visible in the viewport. */
+  getVisibleElements(): AskableFocus[];
   /** Subscribe to an event */
   on<K extends AskableEventName>(event: K, handler: AskableEventHandler<K>): void;
   /** Unsubscribe from an event */
@@ -195,6 +202,8 @@ export interface AskableContext {
   toPromptContext(options?: AskablePromptContextOptions): string;
   /** Serialize focus history to a prompt-ready string (newest first). Optional limit caps the entries returned. */
   toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string;
+  /** Serialize visible viewport elements to a prompt-ready string. */
+  toViewportContext(options?: AskablePromptContextOptions): string;
   /** Combined current focus + history in a single prompt-ready string */
   toContext(options?: AskableContextOutputOptions): string;
   /** Clean up all listeners and observers */

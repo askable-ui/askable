@@ -51,6 +51,7 @@ const { focus, promptContext, ctx } = useAskable();
 | Option | Type | Description |
 |---|---|---|
 | `name` | `string` | Optional shared context name for region-scoped context reuse |
+| `viewport` | `boolean` | Enable viewport-aware context tracking for this composable's context |
 | `events` | `AskableEvent[]` | Trigger events. Default: `['click', 'hover', 'focus']` |
 
 **Returns:**
