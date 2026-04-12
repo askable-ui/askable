@@ -164,6 +164,55 @@ describe('useAskable', () => {
     ctxB.destroy();
   });
 
+  it('reuses the same named shared context across consumers', async () => {
+    const seen: AskableContext[] = [];
+
+    function NamedConsumer({ label }: { label: string }) {
+      const { ctx } = useAskable({ name: 'table' });
+      useEffect(() => {
+        seen.push(ctx);
+      }, [ctx]);
+      return <span data-testid={`named-${label}`}>ready</span>;
+    }
+
+    const first = render(<NamedConsumer label="one" />);
+    await flushMicrotasks();
+
+    const second = render(<NamedConsumer label="two" />);
+    await flushMicrotasks();
+
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).toBe(seen[1]);
+
+    second.unmount();
+    first.unmount();
+  });
+
+  it('keeps different named shared contexts isolated', async () => {
+    const seen: AskableContext[] = [];
+
+    function NamedConsumer({ name }: { name: string }) {
+      const { ctx } = useAskable({ name });
+      useEffect(() => {
+        seen.push(ctx);
+      }, [ctx]);
+      return null;
+    }
+
+    const view = render(
+      <>
+        <NamedConsumer name="table" />
+        <NamedConsumer name="chart" />
+      </>
+    );
+    await flushMicrotasks();
+
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).not.toBe(seen[1]);
+
+    view.unmount();
+  });
+
   it('observes the shared global context only once for multiple consumers with the same events', async () => {
     let capturedCtx: ReturnType<typeof createAskableContext> | null = null;
 

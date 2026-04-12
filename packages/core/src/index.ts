@@ -26,7 +26,25 @@ export type {
 import { AskableContextImpl } from './context.js';
 import type { AskableContext, AskableContextOptions } from './types.js';
 
+const namedContexts = new Map<string, AskableContext>();
+
 /** Create a new AskableContext instance */
 export function createAskableContext(options?: AskableContextOptions): AskableContext {
-  return new AskableContextImpl(options);
+  const name = options?.name?.trim();
+
+  if (typeof window === 'undefined' || !name) {
+    return new AskableContextImpl(options);
+  }
+
+  const existing = namedContexts.get(name);
+  if (existing) return existing;
+
+  const ctx = new AskableContextImpl(options);
+  const originalDestroy = ctx.destroy.bind(ctx);
+  ctx.destroy = () => {
+    namedContexts.delete(name);
+    originalDestroy();
+  };
+  namedContexts.set(name, ctx);
+  return ctx;
 }

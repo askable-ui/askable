@@ -35,7 +35,7 @@ Renders a wrapper element with `data-askable` managed reactively from `:meta`.
 
 ## `useAskable(options?)`
 
-Composable that provides reactive access to a shared `AskableContext` for the requested `events` configuration. Observation starts in `onMounted()`; additional consumers with the same `events` reuse the existing observer instead of re-observing the document. Differing `events` configurations get isolated shared contexts, each destroyed when its last consumer unmounts.
+Composable that provides reactive access to a shared `AskableContext` for the requested `events` configuration. Observation starts in `onMounted()`; additional consumers with the same `events` reuse the existing observer instead of re-observing the document. Differing `events` configurations get isolated shared contexts, each destroyed when its last consumer unmounts. Pass `name` to scope that shared lifecycle to a specific UI region (for example `table` vs `chart`).
 
 ```ts
 import { useAskable } from '@askable-ui/vue';
@@ -50,6 +50,7 @@ const { focus, promptContext, ctx } = useAskable();
 
 | Option | Type | Description |
 |---|---|---|
+| `name` | `string` | Optional shared context name for region-scoped context reuse |
 | `events` | `AskableEvent[]` | Trigger events. Default: `['click', 'hover', 'focus']` |
 
 **Returns:**

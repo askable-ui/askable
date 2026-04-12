@@ -1,8 +1,8 @@
 import { writable, derived, readonly } from 'svelte/store';
 import { createAskableContext, createAskableInspector } from '@askable-ui/core';
-import type { AskableEvent, AskableFocus, AskableContext, AskableInspectorOptions } from '@askable-ui/core';
+import type { AskableEvent, AskableFocus, AskableContext, AskableInspectorOptions, AskableContextOptions } from '@askable-ui/core';
 
-export interface AskableStoreOptions {
+export interface AskableStoreOptions extends Pick<AskableContextOptions, 'name'> {
   events?: AskableEvent[];
   ctx?: AskableContext;
   inspector?: boolean | AskableInspectorOptions;
@@ -17,7 +17,7 @@ export interface AskableStore {
 
 export function createAskableStore(options?: AskableStoreOptions) {
   const usesProvidedCtx = Boolean(options?.ctx);
-  const ctx = options?.ctx ?? createAskableContext();
+  const ctx = options?.ctx ?? createAskableContext(options?.name ? { name: options.name } : undefined);
 
   if (!usesProvidedCtx && typeof document !== 'undefined') {
     ctx.observe(document, { events: options?.events });

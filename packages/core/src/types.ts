@@ -112,6 +112,11 @@ export interface AskablePromptContextOptions {
  */
 export interface AskableContextOptions {
   /**
+   * Optional name for reusing a shared context instance across the same page/runtime.
+   * Unnamed contexts remain independent.
+   */
+  name?: string;
+  /**
    * Custom text extractor called for each focused element.
    * Receives the DOM element, returns the text to use as `AskableFocus.text`.
    * Defaults to `el.textContent?.trim() ?? ''`.

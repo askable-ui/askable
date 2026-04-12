@@ -93,6 +93,10 @@ No page scraping. No DOM serialization. No prompt bloat. **Lightweight and zero-
 ```tsx
 const { ctx, promptContext } = useAskable();
 // promptContext updates whenever the user clicks, hovers, or focuses
+
+const { ctx: tableCtx } = useAskable({ name: 'table' });
+const { ctx: chartCtx } = useAskable({ name: 'chart' });
+// named contexts stay isolated for multi-region pages
 ```
 
 **3. Inject** — at the AI boundary, one line

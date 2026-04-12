@@ -139,6 +139,32 @@ describe('useAskable (Vue)', () => {
     expect(wrapper2.text()).toBe('null');
   });
 
+  it('reuses the same named shared context across consumers', async () => {
+    const seen: unknown[] = [];
+
+    const NamedConsumer = defineComponent({
+      name: 'NamedConsumer',
+      props: { label: { type: String, required: true } },
+      setup() {
+        const { ctx } = useAskable({ name: 'table' });
+        seen.push(ctx);
+        return {};
+      },
+      template: `<span>ready</span>`,
+    });
+
+    const wrapperA = track(mount(NamedConsumer, { attachTo: document.body, props: { label: 'one' } }));
+    await flushAll();
+    const wrapperB = track(mount(NamedConsumer, { attachTo: document.body, props: { label: 'two' } }));
+    await flushAll();
+
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).toBe(seen[1]);
+
+    wrapperB.unmount();
+    wrapperA.unmount();
+  });
+
   it('observes the shared global context only once for multiple consumers with the same events', async () => {
     let capturedCtx: ReturnType<typeof import('@askable-ui/core').createAskableContext> | null = null;
 

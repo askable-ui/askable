@@ -14,6 +14,28 @@ function cleanup(el: HTMLElement) {
 }
 
 describe('createAskableContext', () => {
+  it('reuses the same named context instance in the browser', () => {
+    const tableA = createAskableContext({ name: 'table' });
+    const tableB = createAskableContext({ name: 'table' });
+    const chart = createAskableContext({ name: 'chart' });
+
+    expect(tableA).toBe(tableB);
+    expect(chart).not.toBe(tableA);
+
+    tableA.destroy();
+    chart.destroy();
+  });
+
+  it('keeps unnamed contexts independent', () => {
+    const first = createAskableContext();
+    const second = createAskableContext();
+
+    expect(first).not.toBe(second);
+
+    first.destroy();
+    second.destroy();
+  });
+
   it('returns an object with the expected methods', () => {
     const ctx = createAskableContext();
     expect(typeof ctx.observe).toBe('function');

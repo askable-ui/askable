@@ -75,6 +75,19 @@ describe('createAskableStore', () => {
     expect(get(store.focus)).toBeNull();
   });
 
+  it('reuses the same named context across stores', () => {
+    const tableA = createAskableStore({ name: 'table' });
+    const tableB = createAskableStore({ name: 'table' });
+    const chart = createAskableStore({ name: 'chart' });
+
+    expect(tableA.ctx).toBe(tableB.ctx);
+    expect(chart.ctx).not.toBe(tableA.ctx);
+
+    tableA.destroy();
+    tableB.destroy();
+    chart.destroy();
+  });
+
   it('accepts a scoped ctx and reflects events from it', async () => {
     const { createAskableContext } = await import('@askable-ui/core');
     const scopedCtx = createAskableContext();

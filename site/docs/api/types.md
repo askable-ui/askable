@@ -30,6 +30,11 @@ Options passed to `createAskableContext()`.
 ```ts
 interface AskableContextOptions {
   /**
+   * Optional shared context name. Contexts with the same name reuse one instance
+   * in the same page/runtime; unnamed contexts remain independent.
+   */
+  name?: string;
+  /**
    * Custom text extractor. Defaults to el.textContent?.trim() ?? ''
    * Applied at capture time.
    */
