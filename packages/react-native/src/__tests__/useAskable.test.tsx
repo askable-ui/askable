@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
-import { useAskable, useAskableScreen } from '../index';
+import { useAskable, useAskableScreen, useAskableVisibility } from '../index';
 import type { AskableContext } from '@askable-ui/core';
 
 describe('useAskable (React Native)', () => {
@@ -97,6 +97,127 @@ describe('useAskable (React Native)', () => {
 
     act(() => {
       renderer!.update(<Consumer active={false} />);
+    });
+
+    expect(seenCtx!.getFocus()).toBeNull();
+  });
+
+  it('pushes the first visible item from viewability updates into the shared askable context', () => {
+    let seenCtx: AskableContext | null = null;
+    let onViewableItemsChanged: ((info: { viewableItems: Array<{ item: unknown; index?: number | null; isViewable?: boolean }> }) => void) | null = null;
+
+    function Consumer() {
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      onViewableItemsChanged = useAskableVisibility({
+        ctx,
+        getMeta: (item) => ({ productId: (item as { id: string }).id }),
+        getText: (item) => (item as { title: string }).title,
+      }).onViewableItemsChanged;
+      return null;
+    }
+
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
+    act(() => {
+      onViewableItemsChanged!({
+        viewableItems: [
+          { item: { id: 'p-1', title: 'Revenue Dashboard' }, index: 0, isViewable: true },
+          { item: { id: 'p-2', title: 'Pipeline Summary' }, index: 1, isViewable: true },
+        ],
+      });
+    });
+
+    expect(seenCtx!.getFocus()).toMatchObject({
+      meta: { productId: 'p-1' },
+      text: 'Revenue Dashboard',
+      source: 'push',
+    });
+  });
+
+  it('clears visibility context when no items remain visible', () => {
+    let seenCtx: AskableContext | null = null;
+    let onViewableItemsChanged: ((info: { viewableItems: Array<{ item: unknown; index?: number | null; isViewable?: boolean }> }) => void) | null = null;
+
+    function Consumer() {
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      onViewableItemsChanged = useAskableVisibility({
+        ctx,
+        getMeta: (item) => ({ productId: (item as { id: string }).id }),
+        getText: (item) => (item as { title: string }).title,
+      }).onViewableItemsChanged;
+      return null;
+    }
+
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
+    act(() => {
+      onViewableItemsChanged!({
+        viewableItems: [{ item: { id: 'p-1', title: 'Revenue Dashboard' }, index: 0, isViewable: true }],
+      });
+    });
+
+    expect(seenCtx!.getFocus()).toMatchObject({
+      meta: { productId: 'p-1' },
+      text: 'Revenue Dashboard',
+      source: 'push',
+    });
+
+    act(() => {
+      onViewableItemsChanged!({ viewableItems: [] });
+    });
+
+    expect(seenCtx!.getFocus()).toBeNull();
+  });
+
+  it('ignores visibility updates while inactive and clears existing focus on blur by default', () => {
+    let seenCtx: AskableContext | null = null;
+    let onViewableItemsChanged: ((info: { viewableItems: Array<{ item: unknown; index?: number | null; isViewable?: boolean }> }) => void) | null = null;
+    let renderer: TestRenderer.ReactTestRenderer;
+
+    function Consumer({ active }: { active: boolean }) {
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      onViewableItemsChanged = useAskableVisibility({
+        ctx,
+        active,
+        getMeta: (item) => ({ productId: (item as { id: string }).id }),
+        getText: (item) => (item as { title: string }).title,
+      }).onViewableItemsChanged;
+      return null;
+    }
+
+    act(() => {
+      renderer = TestRenderer.create(<Consumer active={true} />);
+    });
+
+    act(() => {
+      onViewableItemsChanged!({
+        viewableItems: [{ item: { id: 'p-1', title: 'Revenue Dashboard' }, index: 0, isViewable: true }],
+      });
+    });
+
+    expect(seenCtx!.getFocus()).toMatchObject({
+      meta: { productId: 'p-1' },
+      text: 'Revenue Dashboard',
+      source: 'push',
+    });
+
+    act(() => {
+      renderer!.update(<Consumer active={false} />);
+    });
+
+    expect(seenCtx!.getFocus()).toBeNull();
+
+    act(() => {
+      onViewableItemsChanged!({
+        viewableItems: [{ item: { id: 'p-2', title: 'Pipeline Summary' }, index: 1, isViewable: true }],
+      });
     });
 
     expect(seenCtx!.getFocus()).toBeNull();

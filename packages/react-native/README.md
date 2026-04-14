@@ -6,6 +6,7 @@ React Native bindings for askable.
 
 - `useAskable()` hook backed by `@askable-ui/core`
 - `useAskableScreen()` hook for screen/navigation-aware context updates
+- `useAskableVisibility()` hook for FlatList / SectionList visibility-driven context updates
 - `<Askable ctx={...}>` wrapper that turns `onPress` / `onLongPress` into context updates
 - Runnable Expo example in [`examples/react-native-expo`](../../examples/react-native-expo)
 
@@ -48,5 +49,41 @@ export function RevenueScreen() {
   });
 
   return null;
+}
+```
+
+## List visibility awareness
+
+Use `useAskableVisibility()` with `FlatList` / `SectionList` viewability callbacks to mirror the top visible item into askable context while the user scrolls.
+
+```tsx
+import { FlatList, Text, View } from 'react-native';
+import { useAskable, useAskableVisibility } from '@askable-ui/react-native';
+
+const products = [
+  { id: 'p-1', title: 'Revenue Dashboard' },
+  { id: 'p-2', title: 'Pipeline Summary' },
+];
+
+export function ProductList() {
+  const { ctx } = useAskable();
+  const { onViewableItemsChanged } = useAskableVisibility({
+    ctx,
+    getMeta: (item) => ({ productId: item.id }),
+    getText: (item) => item.title,
+  });
+
+  return (
+    <FlatList
+      data={products}
+      keyExtractor={(item) => item.id}
+      onViewableItemsChanged={onViewableItemsChanged}
+      renderItem={({ item }) => (
+        <View>
+          <Text>{item.title}</Text>
+        </View>
+      )}
+    />
+  );
 }
 ```

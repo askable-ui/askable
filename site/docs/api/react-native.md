@@ -2,7 +2,7 @@
 
 React Native bindings for askable-ui.
 
-This initial slice focuses on explicit mobile interactions: `useAskable()` provides a context backed by `@askable-ui/core`, `useAskableScreen()` lets you mirror screen focus into that context, and `<Askable />` turns `onPress` / `onLongPress` interactions into prompt-ready focus updates.
+This initial slice focuses on explicit mobile interactions: `useAskable()` provides a context backed by `@askable-ui/core`, `useAskableScreen()` lets you mirror screen focus into that context, `useAskableVisibility()` mirrors viewability updates from mobile lists, and `<Askable />` turns `onPress` / `onLongPress` interactions into prompt-ready focus updates.
 
 A runnable Expo reference app lives in [`examples/react-native-expo`](https://github.com/askable-ui/askable/tree/main/examples/react-native-expo).
 
@@ -107,9 +107,57 @@ function RevenueScreen() {
 | `clearOnBlur` | `boolean` | Clear the context when the screen becomes inactive. Default: `true` |
 | `name` / `viewport` / `events` | Core options | Forwarded when the hook creates its own context |
 
+## `useAskableVisibility(options)`
+
+Mirrors `FlatList` / `SectionList` viewability callbacks into the shared `AskableContext`.
+
+```tsx
+import { FlatList, Text, View } from 'react-native';
+import { useAskable, useAskableVisibility } from '@askable-ui/react-native';
+
+const rows = [
+  { id: 'deal-1', title: 'Enterprise renewal' },
+  { id: 'deal-2', title: 'Expansion pipeline' },
+];
+
+function DealsList() {
+  const { ctx } = useAskable();
+  const { onViewableItemsChanged } = useAskableVisibility({
+    ctx,
+    getMeta: (item) => ({ dealId: item.id }),
+    getText: (item) => item.title,
+  });
+
+  return (
+    <FlatList
+      data={rows}
+      keyExtractor={(item) => item.id}
+      onViewableItemsChanged={onViewableItemsChanged}
+      renderItem={({ item }) => (
+        <View>
+          <Text>{item.title}</Text>
+        </View>
+      )}
+    />
+  );
+}
+```
+
+**Options:**
+
+| Option | Type | Description |
+|---|---|---|
+| `ctx` | `AskableContext` | Reuse an existing context instead of creating a new one |
+| `active` | `boolean` | Whether visibility updates should currently affect focus. Default: `true` |
+| `clearOnBlur` | `boolean` | Clear existing visibility focus when tracking becomes inactive. Default: `true` |
+| `getMeta` | `(item, token) => Record<string, unknown> \| string` | Maps the visible row into askable metadata |
+| `getText` | `(item, token) => string` | Optional human-readable label stored alongside the metadata |
+| `selectViewable` | `(tokens) => token \| null` | Override which visible token should win focus. Default: the first visible item |
+| `name` / `viewport` / `events` | Core options | Forwarded when the hook creates its own context |
+
 ## Notes
 
-- This adapter currently covers press-driven interactions plus lightweight screen-awareness.
+- This adapter currently covers press-driven interactions, lightweight screen-awareness, and list viewability callbacks.
 - `useAskableScreen()` is designed to pair with React Navigation's `useIsFocused()` or a similar focus signal.
-- ScrollView visibility tracking is still planned follow-up work.
+- `useAskableVisibility()` is ideal for `FlatList` / `SectionList`; raw `ScrollView` measurement is still follow-up work.
 - Existing child `onPress` / `onLongPress` handlers are preserved and still run.

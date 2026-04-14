@@ -3,6 +3,7 @@ import { NavigationContainer, useIsFocused } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import {
+  FlatList,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -11,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import type { AskableContext } from '@askable-ui/core';
-import { Askable, useAskable, useAskableScreen } from '@askable-ui/react-native';
+import { Askable, useAskable, useAskableScreen, useAskableVisibility } from '@askable-ui/react-native';
 
 type RootStackParamList = {
   Dashboard: undefined;
@@ -54,7 +55,17 @@ const insightActions = [
     meta: { panel: 'launch-feedback', question: 'Summarize launch feedback themes' },
     text: 'Launch feedback summary panel',
   },
+  {
+    title: 'Review retention outliers',
+    caption: 'Three enterprise accounts dipped below their 90-day baseline.',
+    meta: { panel: 'retention-outliers', question: 'What changed for the at-risk accounts?' },
+    text: 'Retention outliers panel',
+  },
 ] as const;
+
+const insightViewabilityConfig = {
+  itemVisiblePercentThreshold: 70,
+};
 
 function PromptContextPanel({ promptContext }: { promptContext: string }) {
   return (
@@ -127,26 +138,40 @@ function InsightsScreen({
     text: 'Insights analysis screen',
   });
 
-  return (
-    <ScrollView contentContainerStyle={styles.screenContent}>
-      <Text style={styles.eyebrow}>Navigation-aware context</Text>
-      <Text style={styles.title}>Insights</Text>
-      <Text style={styles.subtitle}>
-        Each screen pushes its own metadata while focused. Press any action card to refine the
-        context further.
-      </Text>
+  const { onViewableItemsChanged } = useAskableVisibility({
+    ctx,
+    active: isFocused,
+    getMeta: (item) => ({ ...item.meta, visible: true, source: 'list-viewability' }),
+    getText: (item) => `${item.title} is currently leading the visible insights list`,
+  });
 
-      {insightActions.map((action) => (
-        <Askable key={action.title} ctx={ctx} meta={action.meta} text={action.text}>
+  return (
+    <FlatList
+      data={insightActions}
+      contentContainerStyle={styles.screenContent}
+      keyExtractor={(item) => item.title}
+      onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={insightViewabilityConfig}
+      ListHeaderComponent={
+        <>
+          <Text style={styles.eyebrow}>Navigation-aware + visibility-aware context</Text>
+          <Text style={styles.title}>Insights</Text>
+          <Text style={styles.subtitle}>
+            Each screen pushes its own metadata while focused. Scroll the list to see the currently
+            visible card lead askable context, then tap an action card to refine it further.
+          </Text>
+        </>
+      }
+      renderItem={({ item }) => (
+        <Askable key={item.title} ctx={ctx} meta={item.meta} text={item.text}>
           <Pressable style={styles.card}>
-            <Text style={styles.cardTitle}>{action.title}</Text>
-            <Text style={styles.cardCaption}>{action.caption}</Text>
+            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardCaption}>{item.caption}</Text>
           </Pressable>
         </Askable>
-      ))}
-
-      <PromptContextPanel promptContext={promptContext} />
-    </ScrollView>
+      )}
+      ListFooterComponent={<PromptContextPanel promptContext={promptContext} />}
+    />
   );
 }
 
