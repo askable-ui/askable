@@ -12,7 +12,13 @@ import {
   View,
 } from 'react-native';
 import type { AskableContext } from '@askable-ui/core';
-import { Askable, useAskable, useAskableScreen, useAskableVisibility } from '@askable-ui/react-native';
+import {
+  Askable,
+  useAskable,
+  useAskableScreen,
+  useAskableScrollView,
+  useAskableVisibility,
+} from '@askable-ui/react-native';
 
 type RootStackParamList = {
   Dashboard: undefined;
@@ -67,6 +73,9 @@ const insightViewabilityConfig = {
   itemVisiblePercentThreshold: 70,
 };
 
+type DashboardCard = (typeof dashboardCards)[number];
+type InsightAction = (typeof insightActions)[number];
+
 function PromptContextPanel({ promptContext }: { promptContext: string }) {
   return (
     <View style={styles.promptPanel}>
@@ -96,17 +105,25 @@ function DashboardScreen({
     text: 'Dashboard overview screen',
   });
 
+  const { onScroll, createOnItemLayout } = useAskableScrollView<DashboardCard>({
+    ctx,
+    active: isFocused,
+    getMeta: (card) => ({ ...card.meta, visible: true, source: 'scrollview-measurement' }),
+    getText: (card) => `${card.title} is currently leading the dashboard scroll view`,
+  });
+
   return (
-    <ScrollView contentContainerStyle={styles.screenContent}>
+    <ScrollView contentContainerStyle={styles.screenContent} onScroll={onScroll} scrollEventThrottle={16}>
       <Text style={styles.eyebrow}>React Native + askable-ui</Text>
       <Text style={styles.title}>Dashboard</Text>
       <Text style={styles.subtitle}>
-        Tap a card to push focus into askable context, then inspect the prompt preview below.
+        Scroll the dashboard to mirror the leading visible card into askable context, then tap a
+        card to refine it further.
       </Text>
 
       {dashboardCards.map((card) => (
         <Askable key={card.title} ctx={ctx} meta={card.meta} text={card.text}>
-          <Pressable style={styles.card}>
+          <Pressable style={styles.card} onLayout={createOnItemLayout(card.title, card)}>
             <Text style={styles.cardTitle}>{card.title}</Text>
             <Text style={styles.cardValue}>{card.value}</Text>
           </Pressable>
@@ -138,7 +155,7 @@ function InsightsScreen({
     text: 'Insights analysis screen',
   });
 
-  const { onViewableItemsChanged } = useAskableVisibility({
+  const { onViewableItemsChanged } = useAskableVisibility<InsightAction>({
     ctx,
     active: isFocused,
     getMeta: (item) => ({ ...item.meta, visible: true, source: 'list-viewability' }),

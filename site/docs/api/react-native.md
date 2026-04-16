@@ -2,7 +2,7 @@
 
 React Native bindings for askable-ui.
 
-This initial slice focuses on explicit mobile interactions: `useAskable()` provides a context backed by `@askable-ui/core`, `useAskableScreen()` lets you mirror screen focus into that context, `useAskableVisibility()` mirrors viewability updates from mobile lists, and `<Askable />` turns `onPress` / `onLongPress` interactions into prompt-ready focus updates.
+This initial slice focuses on explicit mobile interactions: `useAskable()` provides a context backed by `@askable-ui/core`, `useAskableScreen()` lets you mirror screen focus into that context, `useAskableScrollView()` mirrors raw `ScrollView` measurement into that context, `useAskableVisibility()` mirrors viewability updates from mobile lists, and `<Askable />` turns `onPress` / `onLongPress` interactions into prompt-ready focus updates.
 
 A runnable Expo reference app lives in [`examples/react-native-expo`](https://github.com/askable-ui/askable/tree/main/examples/react-native-expo).
 
@@ -107,6 +107,64 @@ function RevenueScreen() {
 | `clearOnBlur` | `boolean` | Clear the context when the screen becomes inactive. Default: `true` |
 | `name` / `viewport` / `events` | Core options | Forwarded when the hook creates its own context |
 
+## `useAskableScrollView(options)`
+
+Mirrors raw `ScrollView` measurement into the shared `AskableContext` by tracking child layouts and selecting the top visible measured item.
+
+```tsx
+import { Pressable, ScrollView, Text } from 'react-native';
+import { Askable, useAskable, useAskableScrollView } from '@askable-ui/react-native';
+
+const cards = [
+  { id: 'rev', title: 'Revenue', meta: { widget: 'revenue' } },
+  { id: 'pipe', title: 'Pipeline', meta: { widget: 'pipeline' } },
+];
+
+function DashboardFeed() {
+  const { ctx } = useAskable();
+  const { onScroll, createOnItemLayout } = useAskableScrollView({
+    ctx,
+    getMeta: (card) => ({ ...card.meta, visible: true }),
+    getText: (card) => `${card.title} is leading the dashboard scroll view`,
+  });
+
+  return (
+    <ScrollView onScroll={onScroll} scrollEventThrottle={16}>
+      {cards.map((card) => (
+        <Askable key={card.id} ctx={ctx} meta={card.meta} text={card.title}>
+          <Pressable onLayout={createOnItemLayout(card.id, card)}>
+            <Text>{card.title}</Text>
+          </Pressable>
+        </Askable>
+      ))}
+    </ScrollView>
+  );
+}
+```
+
+**Options:**
+
+| Option | Type | Description |
+|---|---|---|
+| `ctx` | `AskableContext` | Reuse an existing context instead of creating a new one |
+| `active` | `boolean` | Whether scroll updates should currently affect focus. Default: `true` |
+| `clearOnBlur` | `boolean` | Clear existing scroll focus when tracking becomes inactive. Default: `true` |
+| `getMeta` | `(item, measured) => Record<string, unknown> \| string` | Maps the visible measured item into askable metadata |
+| `getText` | `(item, measured) => string` | Optional human-readable label stored alongside the metadata |
+| `selectVisible` | `(items) => item \| null` | Override which measured item should win focus. Default: the top-most visible item |
+| `name` / `viewport` / `events` | Core options | Forwarded when the hook creates its own context |
+
+**Returns:**
+
+| Value | Type | Description |
+|---|---|---|
+| `ctx` | `AskableContext` | Context instance used for scroll-driven focus updates |
+| `onScroll` | `(event) => void` | Attach to `ScrollView.onScroll` |
+| `measureItem` | `(key, item, layout) => void` | Manually register/update a child layout |
+| `unmeasureItem` | `(key) => void` | Remove a child layout when it leaves the tree |
+| `clearVisibleItem` | `() => void` | Clear the current scroll-driven focus |
+| `createOnItemLayout` | `(key, item) => onLayoutHandler` | Convenience helper for `onLayout` wiring |
+
 ## `useAskableVisibility(options)`
 
 Mirrors `FlatList` / `SectionList` viewability callbacks into the shared `AskableContext`.
@@ -157,7 +215,8 @@ function DealsList() {
 
 ## Notes
 
-- This adapter currently covers press-driven interactions, lightweight screen-awareness, and list viewability callbacks.
+- This adapter currently covers press-driven interactions, lightweight screen-awareness, raw `ScrollView` measurement, and list viewability callbacks.
 - `useAskableScreen()` is designed to pair with React Navigation's `useIsFocused()` or a similar focus signal.
-- `useAskableVisibility()` is ideal for `FlatList` / `SectionList`; raw `ScrollView` measurement is still follow-up work.
+- `useAskableScrollView()` is a good fit for custom dashboard layouts built with `ScrollView`.
+- `useAskableVisibility()` is ideal for `FlatList` / `SectionList`.
 - Existing child `onPress` / `onLongPress` handlers are preserved and still run.

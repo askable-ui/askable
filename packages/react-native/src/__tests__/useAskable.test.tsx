@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
-import { useAskable, useAskableScreen, useAskableVisibility } from '../index';
+import { useAskable, useAskableScreen, useAskableScrollView, useAskableVisibility } from '../index';
 import type { AskableContext } from '@askable-ui/core';
 
 describe('useAskable (React Native)', () => {
@@ -218,6 +218,126 @@ describe('useAskable (React Native)', () => {
       onViewableItemsChanged!({
         viewableItems: [{ item: { id: 'p-2', title: 'Pipeline Summary' }, index: 1, isViewable: true }],
       });
+    });
+
+    expect(seenCtx!.getFocus()).toBeNull();
+  });
+
+  it('pushes the top visible ScrollView item into the shared askable context', () => {
+    let seenCtx: AskableContext | null = null;
+    let onScroll: ((event: { nativeEvent: { contentOffset?: { y?: number }; layoutMeasurement?: { height?: number } } }) => void) | null = null;
+    let measureItem: ((key: string, item: { id: string; title: string }, layout: { y: number; height: number }) => void) | null = null;
+
+    function Consumer() {
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      const tracker = useAskableScrollView({
+        ctx,
+        getMeta: (item) => ({ insightId: item.id }),
+        getText: (item) => item.title,
+      });
+      onScroll = tracker.onScroll;
+      measureItem = tracker.measureItem;
+      return null;
+    }
+
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
+    act(() => {
+      measureItem!('a', { id: 'a', title: 'Revenue Insight' }, { y: 0, height: 120 });
+      measureItem!('b', { id: 'b', title: 'Pipeline Insight' }, { y: 140, height: 120 });
+      onScroll!({ nativeEvent: { contentOffset: { y: 20 }, layoutMeasurement: { height: 160 } } });
+    });
+
+    expect(seenCtx!.getFocus()).toMatchObject({
+      meta: { insightId: 'a' },
+      text: 'Revenue Insight',
+      source: 'push',
+    });
+  });
+
+  it('updates ScrollView context as the viewport moves between measured items', () => {
+    let seenCtx: AskableContext | null = null;
+    let onScroll: ((event: { nativeEvent: { contentOffset?: { y?: number }; layoutMeasurement?: { height?: number } } }) => void) | null = null;
+    let measureItem: ((key: string, item: { id: string; title: string }, layout: { y: number; height: number }) => void) | null = null;
+
+    function Consumer() {
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      const tracker = useAskableScrollView({
+        ctx,
+        getMeta: (item) => ({ insightId: item.id }),
+        getText: (item) => item.title,
+      });
+      onScroll = tracker.onScroll;
+      measureItem = tracker.measureItem;
+      return null;
+    }
+
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
+    act(() => {
+      measureItem!('a', { id: 'a', title: 'Revenue Insight' }, { y: 0, height: 120 });
+      measureItem!('b', { id: 'b', title: 'Pipeline Insight' }, { y: 140, height: 120 });
+      onScroll!({ nativeEvent: { contentOffset: { y: 20 }, layoutMeasurement: { height: 140 } } });
+    });
+
+    expect(seenCtx!.getFocus()).toMatchObject({
+      meta: { insightId: 'a' },
+      text: 'Revenue Insight',
+      source: 'push',
+    });
+
+    act(() => {
+      onScroll!({ nativeEvent: { contentOffset: { y: 150 }, layoutMeasurement: { height: 140 } } });
+    });
+
+    expect(seenCtx!.getFocus()).toMatchObject({
+      meta: { insightId: 'b' },
+      text: 'Pipeline Insight',
+      source: 'push',
+    });
+  });
+
+  it('clears ScrollView context when no measured item intersects the viewport', () => {
+    let seenCtx: AskableContext | null = null;
+    let onScroll: ((event: { nativeEvent: { contentOffset?: { y?: number }; layoutMeasurement?: { height?: number } } }) => void) | null = null;
+    let measureItem: ((key: string, item: { id: string; title: string }, layout: { y: number; height: number }) => void) | null = null;
+
+    function Consumer() {
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      const tracker = useAskableScrollView({
+        ctx,
+        getMeta: (item) => ({ insightId: item.id }),
+        getText: (item) => item.title,
+      });
+      onScroll = tracker.onScroll;
+      measureItem = tracker.measureItem;
+      return null;
+    }
+
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
+    act(() => {
+      measureItem!('a', { id: 'a', title: 'Revenue Insight' }, { y: 0, height: 120 });
+      onScroll!({ nativeEvent: { contentOffset: { y: 10 }, layoutMeasurement: { height: 100 } } });
+    });
+
+    expect(seenCtx!.getFocus()).toMatchObject({
+      meta: { insightId: 'a' },
+      text: 'Revenue Insight',
+      source: 'push',
+    });
+
+    act(() => {
+      onScroll!({ nativeEvent: { contentOffset: { y: 400 }, layoutMeasurement: { height: 100 } } });
     });
 
     expect(seenCtx!.getFocus()).toBeNull();

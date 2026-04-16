@@ -7,6 +7,7 @@ React Native bindings for askable.
 - `useAskable()` hook backed by `@askable-ui/core`
 - `useAskableScreen()` hook for screen/navigation-aware context updates
 - `useAskableVisibility()` hook for FlatList / SectionList visibility-driven context updates
+- `useAskableScrollView()` hook for raw `ScrollView` measurement-driven visibility tracking
 - `<Askable ctx={...}>` wrapper that turns `onPress` / `onLongPress` into context updates
 - Runnable Expo example in [`examples/react-native-expo`](../../examples/react-native-expo)
 
@@ -84,6 +85,41 @@ export function ProductList() {
         </View>
       )}
     />
+  );
+}
+```
+
+## Raw ScrollView tracking
+
+For dashboards or custom feeds built with `ScrollView`, use `useAskableScrollView()` to measure child layouts and mirror the top visible card into askable context.
+
+```tsx
+import { Pressable, ScrollView, Text } from 'react-native';
+import { Askable, useAskable, useAskableScrollView } from '@askable-ui/react-native';
+
+const cards = [
+  { id: 'revenue', title: 'Revenue', meta: { widget: 'revenue' } },
+  { id: 'pipeline', title: 'Pipeline', meta: { widget: 'pipeline' } },
+];
+
+export function Dashboard() {
+  const { ctx } = useAskable();
+  const { onScroll, createOnItemLayout } = useAskableScrollView({
+    ctx,
+    getMeta: (card) => ({ ...card.meta, visible: true }),
+    getText: (card) => `${card.title} is leading the dashboard scroll view`,
+  });
+
+  return (
+    <ScrollView onScroll={onScroll} scrollEventThrottle={16}>
+      {cards.map((card) => (
+        <Askable key={card.id} ctx={ctx} meta={card.meta} text={card.title}>
+          <Pressable onLayout={createOnItemLayout(card.id, card)}>
+            <Text>{card.title}</Text>
+          </Pressable>
+        </Askable>
+      ))}
+    </ScrollView>
   );
 }
 ```
