@@ -51,4 +51,28 @@ describe('Askable (React Native)', () => {
 
     ctx.destroy();
   });
+
+  it('pushes scoped focus when scope is provided', () => {
+    const ctx = createAskableContext();
+    const tree = TestRenderer.create(
+      <Askable ctx={ctx} meta={{ widget: 'revenue' }} text="Revenue card" scope="analytics">
+        {React.createElement('Pressable', { testID: 'pressable' })}
+      </Askable>
+    );
+
+    const pressable = tree.root.findByProps({ testID: 'pressable' });
+
+    act(() => {
+      pressable.props.onPress();
+    });
+
+    expect(ctx.getFocus()).toMatchObject({
+      meta: { widget: 'revenue' },
+      text: 'Revenue card',
+      scope: 'analytics',
+      source: 'push',
+    });
+
+    ctx.destroy();
+  });
 });

@@ -19,6 +19,7 @@ export type {
   AskablePromptContextOptions,
   AskablePromptFormat,
   AskablePromptPreset,
+  AskablePushOptions,
   AskableSerializedFocus,
   AskableTargetStrategy,
 } from './types.js';

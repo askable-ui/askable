@@ -10,6 +10,7 @@ import type {
   AskableObserveOptions,
   AskablePromptContextOptions,
   AskablePromptPreset,
+  AskablePushOptions,
   AskableSerializedFocus,
 } from './types.js';
 
@@ -64,6 +65,17 @@ export class AskableContextImpl implements AskableContext {
       : focus.meta;
     const text = this.sanitizeTextFn ? this.sanitizeTextFn(focus.text) : focus.text;
     return { ...focus, meta, text };
+  }
+
+  private matchesScope(focus: AskableFocus | null, scope?: string): focus is AskableFocus {
+    if (!focus) return false;
+    if (!scope) return true;
+    return focus.scope === undefined || focus.scope === scope;
+  }
+
+  private filterByScope(focuses: AskableFocus[], scope?: string): AskableFocus[] {
+    if (!scope) return focuses;
+    return focuses.filter((focus) => this.matchesScope(focus, scope));
   }
 
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void {
@@ -134,7 +146,7 @@ export class AskableContextImpl implements AskableContext {
     this.emitter.emit('focus', focus);
   }
 
-  push(meta: Record<string, unknown> | string, text?: string): void {
+  push(meta: Record<string, unknown> | string, text?: string, options?: AskablePushOptions): void {
     const sanitizedMeta = this.sanitizeMetaFn && typeof meta !== 'string'
       ? this.sanitizeMetaFn(meta) : meta;
     const sanitizedText = this.sanitizeTextFn && text
@@ -142,6 +154,7 @@ export class AskableContextImpl implements AskableContext {
     const focus: AskableFocus = {
       source: 'push',
       meta: sanitizedMeta,
+      ...(options?.scope ? { scope: options.scope } : {}),
       text: sanitizedText,
       timestamp: Date.now(),
     };
@@ -159,19 +172,21 @@ export class AskableContextImpl implements AskableContext {
   }
 
   serializeFocus(options?: AskablePromptContextOptions): AskableSerializedFocus | null {
-    if (!this.currentFocus) return null;
-    return this.serializeFocusFrom(this.currentFocus, this.resolveOptions(options));
+    const resolved = this.resolveOptions(options);
+    if (!this.matchesScope(this.currentFocus, resolved.scope)) return null;
+    return this.serializeFocusFrom(this.currentFocus, resolved);
   }
 
   toPromptContext(options?: AskablePromptContextOptions): string {
     const resolved = this.resolveOptions(options);
-    const output = this.buildPromptString(this.currentFocus, resolved);
+    const focus = this.matchesScope(this.currentFocus, resolved.scope) ? this.currentFocus : null;
+    const output = this.buildPromptString(focus, resolved);
     return this.applyTokenBudget(output, resolved.maxTokens);
   }
 
   toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string {
     const resolved = this.resolveOptions(options);
-    const history = this.getHistory(limit);
+    const history = this.filterByScope(this.getHistory(limit), resolved.scope);
     if (history.length === 0) return 'No interaction history.';
     const lines = history.map((focus, i) => `[${i + 1}] ${this.buildPromptString(focus, resolved)}`);
     const output = lines.join('\n');
@@ -180,7 +195,7 @@ export class AskableContextImpl implements AskableContext {
 
   toViewportContext(options?: AskablePromptContextOptions): string {
     const resolved = this.resolveOptions(options);
-    const visible = this.getVisibleElements();
+    const visible = this.filterByScope(this.getVisibleElements(), resolved.scope);
     if (visible.length === 0) return resolved.format === 'json' ? '[]' : 'No annotated UI elements are currently visible.';
     if (resolved.format === 'json') {
       return JSON.stringify(visible.map((focus) => this.serializeFocusFrom(focus, resolved)));
@@ -193,13 +208,14 @@ export class AskableContextImpl implements AskableContext {
     const { history: historyCount = 0, currentLabel = 'Current', historyLabel = 'Recent interactions', ...promptOptions } = options ?? {};
     const resolved = this.resolveOptions(promptOptions);
 
-    const currentLine = `${currentLabel}: ${this.buildPromptString(this.currentFocus, resolved)}`;
+    const currentFocus = this.matchesScope(this.currentFocus, resolved.scope) ? this.currentFocus : null;
+    const currentLine = `${currentLabel}: ${this.buildPromptString(currentFocus, resolved)}`;
 
     if (historyCount <= 0) {
       return this.applyTokenBudget(currentLine, resolved.maxTokens);
     }
 
-    const historyEntries = this.getHistory(historyCount);
+    const historyEntries = this.filterByScope(this.getHistory(historyCount), resolved.scope);
     if (historyEntries.length === 0) {
       return this.applyTokenBudget(currentLine, resolved.maxTokens);
     }
@@ -283,6 +299,7 @@ export class AskableContextImpl implements AskableContext {
 
     return {
       meta,
+      ...(focus.scope ? { scope: focus.scope } : {}),
       ...(text ? { text } : {}),
       timestamp: focus.timestamp,
     };

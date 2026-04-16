@@ -65,9 +65,11 @@ export function buildFocus(
   const text = textOverride !== null
     ? textOverride
     : textExtractor ? textExtractor(el) : extractText(el);
+  const scope = el.getAttribute('data-askable-scope')?.trim() || undefined;
   return {
     source: 'dom',
     meta: resolveMeta(el, raw, metaCache),
+    ...(scope ? { scope } : {}),
     text,
     element: el,
     timestamp: Date.now(),
@@ -75,7 +77,7 @@ export function buildFocus(
 }
 
 const ALL_EVENTS: AskableEvent[] = ['click', 'hover', 'focus'];
-const OBSERVED_ATTRIBUTES = ['data-askable', 'data-askable-text', 'data-askable-priority'] as const;
+const OBSERVED_ATTRIBUTES = ['data-askable', 'data-askable-text', 'data-askable-priority', 'data-askable-scope'] as const;
 
 export class Observer {
   private root: HTMLElement | Document | null = null;

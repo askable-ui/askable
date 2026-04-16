@@ -16,7 +16,7 @@ npm install @askable-ui/core
   Complete Purchase
 </button>
 
-<input data-askable='{"field":"email","required":true}' placeholder="Email address" />
+<input data-askable='{"field":"email","required":true}' data-askable-scope="form-helper" placeholder="Email address" />
 ```
 
 ```ts
@@ -35,6 +35,7 @@ ctx.on('focus', (focus) => {
 
 // Get the current focus as an LLM prompt string
 const prompt = ctx.toPromptContext();
+const formPrompt = ctx.toPromptContext({ scope: 'form-helper' });
 // e.g. "User is focused on: — action: submit, form: checkout — value "Complete Purchase""
 
 // Clean up when done

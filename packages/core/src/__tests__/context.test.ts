@@ -187,6 +187,50 @@ describe('createAskableContext', () => {
     cleanup(el);
   });
 
+  it('captures scope from data-askable-scope and filters prompt/history output by scope', () => {
+    const analytics = makeEl({ metric: 'revenue' }, 'Revenue Chart');
+    analytics.setAttribute('data-askable-scope', 'analytics');
+    const form = makeEl({ field: 'email' }, 'Email input');
+    form.setAttribute('data-askable-scope', 'form-helper');
+    const unscoped = makeEl({ widget: 'global-help' }, 'Help tip');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    analytics.click();
+    form.click();
+    unscoped.click();
+
+    expect(ctx.getHistory().map((focus) => focus.scope)).toEqual([undefined, 'form-helper', 'analytics']);
+    expect(ctx.toPromptContext({ scope: 'analytics' })).toContain('global-help');
+    expect(ctx.toPromptContext({ scope: 'form-helper' })).toContain('global-help');
+    expect(ctx.toHistoryContext(3, { scope: 'analytics' })).toContain('metric: revenue');
+    expect(ctx.toHistoryContext(3, { scope: 'analytics' })).not.toContain('field: email');
+    expect(ctx.toHistoryContext(3, { scope: 'form-helper' })).toContain('field: email');
+    expect(ctx.toHistoryContext(3, { scope: 'form-helper' })).not.toContain('metric: revenue');
+
+    ctx.destroy();
+    cleanup(analytics);
+    cleanup(form);
+    cleanup(unscoped);
+  });
+
+  it('filters pushed focus/history by scope while keeping unscoped entries visible everywhere', () => {
+    const ctx = createAskableContext();
+
+    ctx.push({ metric: 'revenue' }, 'Revenue card', { scope: 'analytics' });
+    ctx.push({ field: 'email' }, 'Email field', { scope: 'form-helper' });
+    ctx.push({ widget: 'global-help' }, 'Help tip');
+
+    expect(ctx.toPromptContext({ scope: 'analytics' })).toContain('global-help');
+    expect(ctx.toPromptContext({ scope: 'form-helper' })).toContain('global-help');
+    expect(ctx.toHistoryContext(3, { scope: 'analytics' })).toContain('metric: revenue');
+    expect(ctx.toHistoryContext(3, { scope: 'analytics' })).not.toContain('field: email');
+    expect(ctx.toHistoryContext(3, { scope: 'form-helper' })).toContain('field: email');
+    expect(ctx.toHistoryContext(3, { scope: 'form-helper' })).not.toContain('metric: revenue');
+
+    ctx.destroy();
+  });
+
   it('serializeFocus() respects excludeKeys and keyOrder', () => {
     const el = makeEl({ z: 1, metric: 'churn', secret: 'x', value: '4.2%' }, 'Churn Rate');
     const ctx = createAskableContext();

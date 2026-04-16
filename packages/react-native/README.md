@@ -21,7 +21,7 @@ export function RevenueCard() {
   const { ctx, promptContext } = useAskable();
 
   return (
-    <Askable ctx={ctx} meta={{ widget: 'revenue' }} text="Revenue card">
+    <Askable ctx={ctx} meta={{ widget: 'revenue' }} scope="analytics" text="Revenue card">
       <Pressable>
         <Text>Revenue</Text>
       </Pressable>
@@ -29,6 +29,8 @@ export function RevenueCard() {
   );
 }
 ```
+
+`scope` is optional and lets you later read filtered context with `ctx.toPromptContext({ scope: 'analytics' })` or `ctx.toHistoryContext(5, { scope: 'analytics' })`.
 
 ## Screen awareness
 

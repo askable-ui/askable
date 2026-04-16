@@ -85,6 +85,8 @@ interface AskableFocus {
   source: AskableFocusSource;
   /** Parsed data-askable value. JSON → object; plain string → string. */
   meta: Record<string, unknown> | string;
+  /** Optional category used to filter context for different agents/copilots. */
+  scope?: string;
   /** Trimmed textContent of the element. */
   text: string;
   /** The DOM element. Undefined when set via push(). */
@@ -103,6 +105,7 @@ The shape returned by `serializeFocus()`. Similar to `AskableFocus` but without 
 ```ts
 interface AskableSerializedFocus {
   meta: Record<string, unknown> | string;
+  scope?: string;
   text?: string;
   timestamp: number;
 }
@@ -133,6 +136,7 @@ Options accepted by `toPromptContext()`, `toHistoryContext()`, and `serializeFoc
 ```ts
 interface AskablePromptContextOptions {
   preset?: AskablePromptPreset;    // Named shorthand. Individual options override it.
+  scope?: string;                  // Optional category filter. Unscoped entries are included everywhere.
   format?: AskablePromptFormat;    // 'natural' | 'json'. Default: 'natural'
   includeText?: boolean;           // Include element text. Default: true
   maxTextLength?: number;          // Truncate text to N chars

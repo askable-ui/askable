@@ -49,6 +49,7 @@ const viewportCtx = createAskableContext({ viewport: true });
 | Attribute | Value | Description |
 |---|---|---|
 | `data-askable` | JSON object or string | Marks an element as askable. Value becomes `AskableFocus.meta`. |
+| `data-askable-scope` | string | Optional category filter. Scoped queries like `ctx.toPromptContext({ scope: 'analytics' })` include matching scoped entries plus unscoped ones. |
 | `data-askable-priority` | integer | Override the default innermost-wins rule in `'deepest'` strategy. Higher values win. |
 | `data-askable-text` | string | Override the text captured from this element. Empty string `""` suppresses text entirely. Takes priority over `textExtractor`. |
 
@@ -222,6 +223,7 @@ ctx.toPromptContext({ maxTokens: 50 });
 // Truncates to ~200 chars and appends [truncated] if needed
 
 ctx.toPromptContext({ excludeKeys: ['_id'], keyOrder: ['metric', 'value'] });
+ctx.toPromptContext({ scope: 'analytics' });
 ```
 
 **Returns:** `string` — `'No UI element is currently focused.'` (or `'null'` for JSON format) when nothing is focused.
@@ -238,6 +240,7 @@ ctx.toHistoryContext();
 
 ctx.toHistoryContext(5);
 ctx.toHistoryContext(5, { excludeKeys: ['_id'], maxTokens: 200 });
+ctx.toHistoryContext(5, { scope: 'analytics' });
 ```
 
 **Returns:** `string` — `'No interaction history.'` when history is empty.
