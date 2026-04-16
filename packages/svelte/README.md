@@ -47,6 +47,8 @@ npm install @askable-ui/svelte @askable-ui/core
 
 Renders any element (default: `div`) with a `data-askable` attribute. Accepts a `<slot />`.
 
+- `scope` is optional and writes `data-askable-scope` for scoped prompt/history queries.
+
 ### `createAskableStore(options?)`
 
 Returns Svelte stores backed by a core `AskableContext`.

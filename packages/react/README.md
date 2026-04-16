@@ -59,6 +59,10 @@ Renders any element (default: `div`) with a `data-askable` attribute. The `meta`
   <ChurnChart />
 </Askable>
 
+<Askable meta={{ widget: 'revenue-chart' }} scope="analytics">
+  <RevenueChart />
+</Askable>
+
 <Askable meta="main navigation" as="nav">
   <NavLinks />
 </Askable>
@@ -66,6 +70,7 @@ Renders any element (default: `div`) with a `data-askable` attribute. The `meta`
 
 **Props:**
 - `meta` — structured metadata attached to the element (`Record<string, unknown> | string`)
+- `scope` — optional category written to `data-askable-scope` for scoped prompt/history queries
 - `as` — HTML tag to render (default: `"div"`)
 - All other props are forwarded to the underlying element
 

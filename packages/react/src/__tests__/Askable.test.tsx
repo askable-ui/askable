@@ -52,4 +52,12 @@ describe('Askable', () => {
     expect(el.className).toBe('panel');
     expect(el.getAttribute('data-testid')).toBe('fwd');
   });
+
+  it('sets data-askable-scope when scope is provided', () => {
+    const { container } = render(
+      <Askable meta={{ widget: 'revenue' }} scope="analytics">Revenue Chart</Askable>
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.getAttribute('data-askable-scope')).toBe('analytics');
+  });
 });

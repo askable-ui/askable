@@ -41,6 +41,7 @@ function RevenueCard() {
 |---|---|---|
 | `ctx` | `AskableContext` | Context instance that receives focus updates |
 | `meta` | `Record<string, unknown> \| string` | Metadata pushed into the context on press |
+| `scope` | `string` | Optional category stored with press-driven focus for scoped prompt/history queries |
 | `text` | `string` | Optional human-readable label stored alongside `meta` |
 | `children` | `ReactElement` | A single child that accepts `onPress` / `onLongPress` props |
 

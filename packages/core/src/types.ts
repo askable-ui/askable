@@ -6,6 +6,8 @@ export interface AskableFocus {
   source: AskableFocusSource;
   /** Parsed data-askable attribute (JSON object or raw string) */
   meta: Record<string, unknown> | string;
+  /** Optional category used to filter context for different agents/copilots. */
+  scope?: string;
   /** Trimmed textContent of the element */
   text: string;
   /** The DOM element (undefined when set via push()) */
@@ -84,6 +86,8 @@ export interface AskablePromptContextOptions {
    * - `json`    → `{ format: 'json', includeText: true }`
    */
   preset?: AskablePromptPreset;
+  /** Optional scope/category filter. Unscoped entries are included in every scoped view. */
+  scope?: string;
   /** Output format. Defaults to natural language. */
   format?: AskablePromptFormat;
   /** Include extracted text in serialized output. Defaults to true. */
@@ -162,8 +166,14 @@ export interface AskableContextOptions {
 
 export interface AskableSerializedFocus {
   meta: Record<string, unknown> | string;
+  scope?: string;
   text?: string;
   timestamp: number;
+}
+
+export interface AskablePushOptions {
+  /** Optional category used to filter context for different agents/copilots. */
+  scope?: string;
 }
 
 export interface AskableContextOutputOptions extends AskablePromptContextOptions {
@@ -193,7 +203,7 @@ export interface AskableContext {
   /** Programmatically select an element — use for explicit "Ask AI" buttons */
   select(element: HTMLElement): void;
   /** Set focus from data alone — no DOM element required. Ideal for virtualizing table libraries. */
-  push(meta: Record<string, unknown> | string, text?: string): void;
+  push(meta: Record<string, unknown> | string, text?: string, options?: AskablePushOptions): void;
   /** Reset the current focus to null and emit a 'clear' event */
   clear(): void;
   /** Serialize current focus to structured prompt-ready data */

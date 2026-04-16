@@ -55,4 +55,9 @@ describe('Askable (Vue)', () => {
     expect(wrapper.attributes('class')).toBe('panel');
     expect(wrapper.attributes('data-testid')).toBe('fwd');
   });
+
+  it('sets data-askable-scope when scope is provided', () => {
+    const wrapper = track(mount(Askable, { props: { meta: { widget: 'revenue' }, scope: 'analytics' } }));
+    expect(wrapper.attributes('data-askable-scope')).toBe('analytics');
+  });
 });

@@ -42,6 +42,8 @@ async function ask(question: string) {
 
 Renders any element (default: `div`) with a `data-askable` attribute.
 
+- `scope` is optional and writes `data-askable-scope` for scoped prompt/history queries.
+
 ### `useAskable(options?)`
 
 Returns reactive focus state from the shared context for the requested `events` configuration.

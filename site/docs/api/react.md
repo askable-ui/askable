@@ -21,6 +21,10 @@ import { Askable } from '@askable-ui/react';
   <RevenueChart />
 </Askable>
 
+<Askable meta={{ metric: 'revenue' }} scope="analytics">
+  <RevenueChart />
+</Askable>
+
 <Askable meta="main navigation" as="nav">
   <NavLinks />
 </Askable>
@@ -31,6 +35,7 @@ import { Askable } from '@askable-ui/react';
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `meta` | `Record<string, unknown> \| string` | — | Value for `data-askable` attribute |
+| `scope` | `string` | — | Optional category written to `data-askable-scope` for scoped prompt/history queries |
 | `as` | `keyof JSX.IntrinsicElements` | `"div"` | HTML element to render |
 | `ref` | `Ref<HTMLElement>` | — | Forwarded to the underlying element |
 | ...rest | | | All other props forwarded to the element |

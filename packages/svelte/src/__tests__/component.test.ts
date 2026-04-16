@@ -36,4 +36,10 @@ describe('Askable (Svelte)', () => {
     const { getByText } = render(AskableWithContent);
     expect(getByText('Revenue Chart')).toBeInTheDocument();
   });
+
+  it('sets data-askable-scope when scope is provided', () => {
+    const { container } = render(Askable, { props: { meta: { widget: 'revenue' }, scope: 'analytics' } });
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-askable-scope')).toBe('analytics');
+  });
 });

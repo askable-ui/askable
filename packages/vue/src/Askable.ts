@@ -12,12 +12,20 @@ export const Askable = defineComponent({
       type: String,
       default: 'div',
     },
+    scope: {
+      type: String,
+      default: undefined,
+    },
   },
   setup(props, { slots, attrs }) {
     return () => {
       const dataAskable =
         typeof props.meta === 'string' ? props.meta : JSON.stringify(props.meta);
-      return h(props.as, { 'data-askable': dataAskable, ...attrs }, slots.default?.());
+      return h(
+        props.as,
+        { 'data-askable': dataAskable, ...(props.scope ? { 'data-askable-scope': props.scope } : {}), ...attrs },
+        slots.default?.()
+      );
     };
   },
 });
