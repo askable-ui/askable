@@ -16,7 +16,7 @@ export default defineConfig({
       { text: 'API Reference', link: '/api/core', activeMatch: '/api/' },
       { text: 'Examples', link: '/examples/dashboard', activeMatch: '/examples/' },
       {
-        text: 'v0.4.1',
+        text: 'v0.5.0',
         items: [
           { text: 'Changelog', link: 'https://github.com/askable-ui/askable/releases' },
           { text: 'npm', link: 'https://www.npmjs.com/package/@askable-ui/core' },
@@ -74,6 +74,7 @@ export default defineConfig({
           items: [
             { text: '@askable-ui/core', link: '/api/core' },
             { text: '@askable-ui/react', link: '/api/react' },
+            { text: '@askable-ui/react-native', link: '/api/react-native' },
             { text: '@askable-ui/vue', link: '/api/vue' },
             { text: '@askable-ui/svelte', link: '/api/svelte' },
 

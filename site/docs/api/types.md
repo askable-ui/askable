@@ -8,11 +8,14 @@ import type {
   AskableContextOptions,
   AskableContextOutputOptions,
   AskableFocus,
+  AskableFocusSegment,
   AskableFocusSource,
   AskableSerializedFocus,
+  AskableSerializedFocusSegment,
   AskablePromptContextOptions,
   AskablePromptFormat,
   AskablePromptPreset,
+  AskablePushOptions,
   AskableEvent,
   AskableObserveOptions,
   AskableEventMap,
@@ -87,12 +90,22 @@ interface AskableFocus {
   meta: Record<string, unknown> | string;
   /** Optional category used to filter context for different agents/copilots. */
   scope?: string;
+  /** Optional ancestor chain, outermost first. */
+  ancestors?: AskableFocusSegment[];
   /** Trimmed textContent of the element. */
   text: string;
   /** The DOM element. Undefined when set via push(). */
   element?: HTMLElement;
   /** Unix timestamp (ms) when focus was set. */
   timestamp: number;
+}
+```
+
+```ts
+interface AskableFocusSegment {
+  meta: Record<string, unknown> | string;
+  scope?: string;
+  text: string;
 }
 ```
 
@@ -106,8 +119,30 @@ The shape returned by `serializeFocus()`. Similar to `AskableFocus` but without 
 interface AskableSerializedFocus {
   meta: Record<string, unknown> | string;
   scope?: string;
+  ancestors?: AskableSerializedFocusSegment[];
   text?: string;
   timestamp: number;
+}
+```
+
+```ts
+interface AskableSerializedFocusSegment {
+  meta: Record<string, unknown> | string;
+  scope?: string;
+  text?: string;
+}
+```
+
+---
+
+## `AskablePushOptions`
+
+Options accepted by `ctx.push(meta, text, options)`.
+
+```ts
+interface AskablePushOptions {
+  scope?: string;
+  ancestors?: AskableFocusSegment[];
 }
 ```
 

@@ -2,6 +2,8 @@
 
 ## Pick your framework
 
+> Current npm release: **v0.5.0**.
+
 ::: code-group
 
 ```bash [React]

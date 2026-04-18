@@ -16,7 +16,7 @@ npm install @askable-ui/react-native @askable-ui/core
 
 ## `<Askable>`
 
-Clones a single React Native pressable child and merges focus updates into its `onPress` and `onLongPress` handlers.
+Clones a single React Native pressable child and merges focus updates into its `onPress` and `onLongPress` handlers. Nested `<Askable>` wrappers also contribute ancestor segments, so press-driven mobile flows can serialize the same hierarchy paths as DOM-based web flows.
 
 ```tsx
 import { Pressable, Text } from 'react-native';
@@ -44,6 +44,21 @@ function RevenueCard() {
 | `scope` | `string` | Optional category stored with press-driven focus for scoped prompt/history queries |
 | `text` | `string` | Optional human-readable label stored alongside `meta` |
 | `children` | `ReactElement` | A single child that accepts `onPress` / `onLongPress` props |
+
+```tsx
+<Askable ctx={ctx} meta={{ view: 'dashboard' }} text="Dashboard" scope="analytics">
+  <Askable ctx={ctx} meta={{ tab: 'finance' }} text="Finance" scope="analytics">
+    <Askable ctx={ctx} meta={{ metric: 'revenue' }} text="Revenue card" scope="analytics">
+      <Pressable>
+        <Text>Revenue</Text>
+      </Pressable>
+    </Askable>
+  </Askable>
+</Askable>
+
+ctx.toPromptContext();
+// → "User is focused on: — view: dashboard > tab: finance > metric: revenue — value \"Revenue card\""
+```
 
 ---
 

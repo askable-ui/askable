@@ -5,6 +5,9 @@ hero:
   name: "askable-ui"
   text: "UI context your LLM can actually use"
   tagline: Annotate any DOM element with data-askable and instantly turn what the user is looking at into structured, prompt-ready context.
+  image:
+    src: /logo-dark.svg
+    alt: askable-ui
   actions:
     - theme: brand
       text: Get Started
@@ -33,6 +36,8 @@ features:
     title: Works with any LLM
     details: toPromptContext() returns a plain string — drop it into OpenAI, Anthropic, Vercel AI SDK, CopilotKit, or any LLM pipeline. No vendor lock-in.
 ---
+
+> Current npm release: **v0.5.0**.
 
 ## Quick look
 
