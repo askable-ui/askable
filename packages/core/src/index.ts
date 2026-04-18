@@ -14,6 +14,7 @@ export type {
   AskableEventMap,
   AskableEventName,
   AskableFocus,
+  AskableFocusSegment,
   AskableFocusSource,
   AskableObserveOptions,
   AskablePromptContextOptions,
@@ -21,6 +22,7 @@ export type {
   AskablePromptPreset,
   AskablePushOptions,
   AskableSerializedFocus,
+  AskableSerializedFocusSegment,
   AskableTargetStrategy,
 } from './types.js';
 

@@ -1,4 +1,4 @@
-import type { AskableFocus, AskableEvent, AskableTargetStrategy } from './types.js';
+import type { AskableFocus, AskableEvent, AskableFocusSegment, AskableTargetStrategy } from './types.js';
 
 type FocusCallback = (focus: AskableFocus) => void;
 type ObserverLifecycleCallbacks = {
@@ -32,6 +32,19 @@ function extractText(el: HTMLElement): string {
   return (el.textContent ?? '').trim();
 }
 
+function resolveExplicitParent(el: HTMLElement): HTMLElement | null {
+  const selector = el.getAttribute('data-askable-parent')?.trim();
+  if (!selector) return null;
+  const rootNode = el.getRootNode();
+  const queryRoot = typeof (rootNode as ParentNode).querySelector === 'function'
+    ? rootNode as ParentNode
+    : document;
+  const candidate = queryRoot.querySelector(selector);
+  return candidate instanceof HTMLElement && candidate !== el && candidate.hasAttribute('data-askable')
+    ? candidate
+    : null;
+}
+
 type MetaCacheEntry = {
   raw: string;
   parsed: Record<string, unknown> | string;
@@ -52,32 +65,71 @@ function resolveMeta(
   return parsed;
 }
 
-export function buildFocus(
+function buildFocusSegment(
   el: HTMLElement,
   textExtractor?: (el: HTMLElement) => string,
   metaCache?: WeakMap<HTMLElement, MetaCacheEntry>
-): AskableFocus | null {
+): AskableFocusSegment | null {
   const raw = el.getAttribute('data-askable');
   if (raw === null) return null;
-  // data-askable-text overrides both textExtractor and default textContent extraction.
-  // Set to an empty string ("") to suppress text entirely for a single element.
   const textOverride = el.getAttribute('data-askable-text');
   const text = textOverride !== null
     ? textOverride
     : textExtractor ? textExtractor(el) : extractText(el);
   const scope = el.getAttribute('data-askable-scope')?.trim() || undefined;
+
   return {
-    source: 'dom',
     meta: resolveMeta(el, raw, metaCache),
     ...(scope ? { scope } : {}),
     text,
+  };
+}
+
+function resolveAncestorSegments(
+  el: HTMLElement,
+  textExtractor?: (el: HTMLElement) => string,
+  metaCache?: WeakMap<HTMLElement, MetaCacheEntry>
+): AskableFocusSegment[] {
+  const segments: AskableFocusSegment[] = [];
+  const visited = new Set<HTMLElement>([el]);
+  let current: HTMLElement | null = el;
+
+  while (current) {
+    const explicitParent = resolveExplicitParent(current);
+    const parent: HTMLElement | null = explicitParent ?? current.parentElement?.closest('[data-askable]') ?? null;
+    if (!parent || visited.has(parent)) break;
+    visited.add(parent);
+    const segment = buildFocusSegment(parent, textExtractor, metaCache);
+    if (segment) {
+      segments.push(segment);
+    }
+    current = parent;
+  }
+
+  return segments.reverse();
+}
+
+export function buildFocus(
+  el: HTMLElement,
+  textExtractor?: (el: HTMLElement) => string,
+  metaCache?: WeakMap<HTMLElement, MetaCacheEntry>
+): AskableFocus | null {
+  const segment = buildFocusSegment(el, textExtractor, metaCache);
+  if (!segment) return null;
+  const ancestors = resolveAncestorSegments(el, textExtractor, metaCache);
+  return {
+    source: 'dom',
+    meta: segment.meta,
+    ...(segment.scope ? { scope: segment.scope } : {}),
+    ...(ancestors.length > 0 ? { ancestors } : {}),
+    text: segment.text,
     element: el,
     timestamp: Date.now(),
   };
 }
 
 const ALL_EVENTS: AskableEvent[] = ['click', 'hover', 'focus'];
-const OBSERVED_ATTRIBUTES = ['data-askable', 'data-askable-text', 'data-askable-priority', 'data-askable-scope'] as const;
+const OBSERVED_ATTRIBUTES = ['data-askable', 'data-askable-text', 'data-askable-priority', 'data-askable-scope', 'data-askable-parent'] as const;
 
 export class Observer {
   private root: HTMLElement | Document | null = null;

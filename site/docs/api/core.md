@@ -50,6 +50,7 @@ const viewportCtx = createAskableContext({ viewport: true });
 |---|---|---|
 | `data-askable` | JSON object or string | Marks an element as askable. Value becomes `AskableFocus.meta`. |
 | `data-askable-scope` | string | Optional category filter. Scoped queries like `ctx.toPromptContext({ scope: 'analytics' })` include matching scoped entries plus unscoped ones. |
+| `data-askable-parent` | CSS selector | Explicit parent annotation to use in hierarchy paths when DOM nesting alone is not enough. |
 | `data-askable-priority` | integer | Override the default innermost-wins rule in `'deepest'` strategy. Higher values win. |
 | `data-askable-text` | string | Override the text captured from this element. Empty string `""` suppresses text entirely. Takes priority over `textExtractor`. |
 
@@ -120,6 +121,7 @@ const focus = ctx.getFocus();
 if (focus) {
   console.log(focus.source);    // 'dom' | 'select' | 'push'
   console.log(focus.meta);      // Record<string, unknown> | string
+  console.log(focus.ancestors); // optional ancestor chain, outermost first
   console.log(focus.text);      // trimmed textContent
   console.log(focus.element);   // HTMLElement | undefined (undefined for push())
   console.log(focus.timestamp); // Unix ms
@@ -177,7 +179,7 @@ ctx.select(el);
 
 ---
 
-### `push(meta, text?)`
+### `push(meta, text?, options?)`
 
 Set focus from data alone — no DOM element required. Fires the `'focus'` event and updates history. The resulting `AskableFocus` has `source: 'push'` and `element: undefined`.
 
@@ -192,6 +194,18 @@ ctx.push('row-label');
 
 // No text
 ctx.push({ chart: 'revenue', period: 'Q3' });
+
+// Explicit hierarchy for non-DOM or synthetic UIs
+ctx.push(
+  { metric: 'revenue', value: '$2.3M' },
+  'Revenue card',
+  {
+    ancestors: [
+      { meta: { view: 'dashboard' }, text: 'Dashboard' },
+      { meta: { tab: 'finance' }, text: 'Finance' },
+    ],
+  },
+);
 ```
 
 Sanitizers (`sanitizeMeta`, `sanitizeText`) apply to `push()` the same way they apply to DOM-sourced focus.
@@ -214,7 +228,10 @@ Serialize the current focus to a prompt-ready string. See [Prompt Serialization]
 
 ```ts
 ctx.toPromptContext();
-// → "User is focused on: — metric: revenue, delta: -12% — value "Revenue""
+// → "User is focused on: — metric: revenue, delta: -12% — value \"Revenue\""
+
+ctx.toPromptContext({ hierarchyDepth: 1 });
+// Limit ancestor depth when hierarchical context is available
 
 ctx.toPromptContext({ format: 'json' });
 // → '{"meta":{"metric":"revenue","delta":"-12%"},"text":"Revenue","timestamp":1712345678}'

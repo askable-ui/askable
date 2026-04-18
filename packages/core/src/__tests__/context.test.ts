@@ -231,6 +231,119 @@ describe('createAskableContext', () => {
     ctx.destroy();
   });
 
+  it('includes ancestor chains from nested [data-askable] elements in prompt output', () => {
+    const dashboard = makeEl({ view: 'dashboard' }, 'Dashboard');
+    const finance = makeEl({ tab: 'finance' }, 'Finance');
+    const revenue = makeEl({ metric: 'revenue', value: '$2.3M' }, 'Revenue card');
+    dashboard.appendChild(finance);
+    finance.appendChild(revenue);
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    revenue.click();
+
+    expect(ctx.toPromptContext()).toContain('view: dashboard > tab: finance > metric: revenue, value: $2.3M');
+    expect(ctx.toHistoryContext(1)).toContain('view: dashboard > tab: finance > metric: revenue, value: $2.3M');
+
+    ctx.destroy();
+    dashboard.remove();
+  });
+
+  it('supports explicit data-askable-parent links and hierarchy depth limits', () => {
+    const dashboard = makeEl({ view: 'dashboard' }, 'Dashboard');
+    dashboard.id = 'dashboard-root';
+    const finance = makeEl({ tab: 'finance' }, 'Finance');
+    finance.id = 'finance-tab';
+    finance.setAttribute('data-askable-parent', '#dashboard-root');
+    const revenue = makeEl({ metric: 'revenue', value: '$2.3M' }, 'Revenue card');
+    revenue.setAttribute('data-askable-parent', '#finance-tab');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    revenue.click();
+
+    expect(ctx.toPromptContext()).toContain('view: dashboard > tab: finance > metric: revenue, value: $2.3M');
+    expect(ctx.toPromptContext({ hierarchyDepth: 1 })).toContain('tab: finance > metric: revenue, value: $2.3M');
+    expect(ctx.toPromptContext({ hierarchyDepth: 1 })).not.toContain('view: dashboard >');
+    expect((ctx as any).serializeFocus({ hierarchyDepth: 1 })).toEqual({
+      meta: { metric: 'revenue', value: '$2.3M' },
+      ancestors: [
+        { meta: { tab: 'finance' }, text: 'Finance' },
+      ],
+      text: 'Revenue card',
+      timestamp: expect.any(Number),
+    });
+
+    ctx.destroy();
+    dashboard.remove();
+    finance.remove();
+    revenue.remove();
+  });
+
+  it('serializes DOM hierarchy in JSON output and respects scope filtering for ancestors', () => {
+    const dashboard = makeEl({ view: 'dashboard' }, 'Dashboard');
+    dashboard.setAttribute('data-askable-scope', 'analytics');
+    const finance = makeEl({ tab: 'finance' }, 'Finance');
+    finance.setAttribute('data-askable-scope', 'analytics');
+    const revenue = makeEl({ metric: 'revenue', value: '$2.3M' }, 'Revenue card');
+    revenue.setAttribute('data-askable-scope', 'analytics');
+    dashboard.appendChild(finance);
+    finance.appendChild(revenue);
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    revenue.click();
+
+    expect((ctx as any).serializeFocus()).toEqual({
+      meta: { metric: 'revenue', value: '$2.3M' },
+      scope: 'analytics',
+      ancestors: [
+        { meta: { view: 'dashboard' }, scope: 'analytics', text: 'DashboardFinanceRevenue card' },
+        { meta: { tab: 'finance' }, scope: 'analytics', text: 'FinanceRevenue card' },
+      ],
+      text: 'Revenue card',
+      timestamp: expect.any(Number),
+    });
+    expect(JSON.parse(ctx.toPromptContext({ format: 'json', hierarchyDepth: 1 }))).toEqual({
+      meta: { metric: 'revenue', value: '$2.3M' },
+      scope: 'analytics',
+      ancestors: [
+        { meta: { tab: 'finance' }, scope: 'analytics', text: 'FinanceRevenue card' },
+      ],
+      text: 'Revenue card',
+      timestamp: expect.any(Number),
+    });
+
+    ctx.destroy();
+    dashboard.remove();
+  });
+
+  it('serializes pushed ancestor chains and applies hierarchy depth limits', () => {
+    const ctx = createAskableContext();
+
+    ctx.push({ metric: 'revenue', value: '$2.3M' }, 'Revenue card', {
+      scope: 'analytics',
+      ancestors: [
+        { meta: { view: 'dashboard' }, scope: 'analytics', text: 'Dashboard' },
+        { meta: { tab: 'finance' }, scope: 'analytics', text: 'Finance' },
+      ],
+    });
+
+    expect(ctx.toPromptContext()).toContain('view: dashboard > tab: finance > metric: revenue, value: $2.3M');
+    expect(ctx.toPromptContext({ hierarchyDepth: 1 })).toContain('tab: finance > metric: revenue, value: $2.3M');
+    expect((ctx as any).serializeFocus({ hierarchyDepth: 1 })).toEqual({
+      meta: { metric: 'revenue', value: '$2.3M' },
+      scope: 'analytics',
+      ancestors: [
+        { meta: { tab: 'finance' }, scope: 'analytics', text: 'Finance' },
+      ],
+      text: 'Revenue card',
+      timestamp: expect.any(Number),
+    });
+
+    ctx.destroy();
+  });
+
   it('serializeFocus() respects excludeKeys and keyOrder', () => {
     const el = makeEl({ z: 1, metric: 'churn', secret: 'x', value: '4.2%' }, 'Churn Rate');
     const ctx = createAskableContext();

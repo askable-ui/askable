@@ -7,11 +7,13 @@ import type {
   AskableEventHandler,
   AskableEventName,
   AskableFocus,
+  AskableFocusSegment,
   AskableObserveOptions,
   AskablePromptContextOptions,
   AskablePromptPreset,
   AskablePushOptions,
   AskableSerializedFocus,
+  AskableSerializedFocusSegment,
 } from './types.js';
 
 const PRESETS: Record<AskablePromptPreset, AskablePromptContextOptions> = {
@@ -64,7 +66,14 @@ export class AskableContextImpl implements AskableContext {
       ? this.sanitizeMetaFn(focus.meta)
       : focus.meta;
     const text = this.sanitizeTextFn ? this.sanitizeTextFn(focus.text) : focus.text;
-    return { ...focus, meta, text };
+    const ancestors = focus.ancestors?.map((segment) => ({
+      ...segment,
+      meta: this.sanitizeMetaFn && typeof segment.meta !== 'string'
+        ? this.sanitizeMetaFn(segment.meta)
+        : segment.meta,
+      text: this.sanitizeTextFn ? this.sanitizeTextFn(segment.text) : segment.text,
+    }));
+    return { ...focus, meta, ...(ancestors?.length ? { ancestors } : {}), text };
   }
 
   private matchesScope(focus: AskableFocus | null, scope?: string): focus is AskableFocus {
@@ -76,6 +85,85 @@ export class AskableContextImpl implements AskableContext {
   private filterByScope(focuses: AskableFocus[], scope?: string): AskableFocus[] {
     if (!scope) return focuses;
     return focuses.filter((focus) => this.matchesScope(focus, scope));
+  }
+
+  private resolveHierarchyElements(focus: AskableFocus, scope?: string): HTMLElement[] {
+    if (!focus.element) return [];
+
+    const visited = new Set<HTMLElement>([focus.element]);
+    const ancestors: HTMLElement[] = [];
+    let current: HTMLElement | null = focus.element;
+
+    while (current) {
+      const explicitParent = this.resolveExplicitHierarchyParent(current);
+      const parent: HTMLElement | null = explicitParent ?? current.parentElement?.closest('[data-askable]') ?? null;
+      if (!parent || visited.has(parent)) break;
+      visited.add(parent);
+      const parentFocus = buildFocus(parent, this.textExtractor);
+      if (parentFocus && this.matchesScope(parentFocus, scope)) {
+        ancestors.push(parent);
+      }
+      current = parent;
+    }
+
+    return ancestors.reverse();
+  }
+
+  private resolveExplicitHierarchyParent(el: HTMLElement): HTMLElement | null {
+    const selector = el.getAttribute('data-askable-parent')?.trim();
+    if (!selector) return null;
+    const rootNode = el.getRootNode();
+    const queryRoot = typeof (rootNode as ParentNode).querySelector === 'function'
+      ? rootNode as ParentNode
+      : document;
+    const candidate = queryRoot.querySelector(selector);
+    return candidate instanceof HTMLElement && candidate !== el && candidate.hasAttribute('data-askable')
+      ? candidate
+      : null;
+  }
+
+  private limitHierarchyDepth(elements: HTMLElement[], depth?: number): HTMLElement[] {
+    if (depth === undefined) return elements;
+    if (depth <= 0) return [];
+    return elements.slice(-depth);
+  }
+
+  private formatFocusMeta(meta: Record<string, unknown> | string): string {
+    return typeof meta === 'string'
+      ? meta
+      : Object.entries(meta).map(([k, v]) => `${k}: ${String(v)}`).join(', ');
+  }
+
+  private filterAncestorSegments(segments: AskableFocusSegment[] | undefined, scope?: string): AskableFocusSegment[] {
+    if (!segments || segments.length === 0) return [];
+    if (!scope) return segments;
+    return segments.filter((segment) => segment.scope === undefined || segment.scope === scope);
+  }
+
+  private limitAncestorSegments(segments: AskableFocusSegment[] | undefined, depth?: number): AskableFocusSegment[] {
+    if (!segments || segments.length === 0) return [];
+    if (depth === undefined) return segments;
+    if (depth <= 0) return [];
+    return segments.slice(-depth);
+  }
+
+  private serializeFocusSegment(
+    segment: AskableFocusSegment,
+    options?: AskablePromptContextOptions
+  ): AskableSerializedFocusSegment {
+    const resolved = this.resolveOptions(options);
+    const includeText = resolved.includeText ?? true;
+    const maxTextLength = resolved.maxTextLength;
+    const meta = typeof segment.meta === 'string'
+      ? segment.meta
+      : this.normalizeMeta(segment.meta, resolved);
+    const text = includeText ? this.normalizeText(segment.text, maxTextLength) : '';
+
+    return {
+      meta,
+      ...(segment.scope ? { scope: segment.scope } : {}),
+      ...(text ? { text } : {}),
+    };
   }
 
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void {
@@ -155,6 +243,7 @@ export class AskableContextImpl implements AskableContext {
       source: 'push',
       meta: sanitizedMeta,
       ...(options?.scope ? { scope: options.scope } : {}),
+      ...(options?.ancestors?.length ? { ancestors: options.ancestors } : {}),
       text: sanitizedText,
       timestamp: Date.now(),
     };
@@ -274,13 +363,27 @@ export class AskableContextImpl implements AskableContext {
 
     const textLabel = resolved.textLabel ?? 'value';
     const prefix = resolved.prefix ?? 'User is focused on:';
+    const ancestorSegments = focus?.ancestors?.length
+      ? this.limitAncestorSegments(this.filterAncestorSegments(focus.ancestors, resolved.scope), resolved.hierarchyDepth)
+      : focus
+        ? this.limitHierarchyDepth(this.resolveHierarchyElements(focus, resolved.scope), resolved.hierarchyDepth)
+          .map((element) => buildFocus(element, this.textExtractor))
+          .filter((item): item is AskableFocus => Boolean(item))
+          .map((item) => ({
+            meta: typeof item.meta === 'string' ? item.meta : this.normalizeMeta(item.meta, resolved),
+            ...(item.scope ? { scope: item.scope } : {}),
+            ...(item.text ? { text: this.normalizeText(item.text, resolved.maxTextLength) } : {}),
+          }))
+        : [];
+    const hierarchyPrefix = ancestorSegments
+      .map((segment) => this.formatFocusMeta(segment.meta))
+      .join(' > ');
 
-    const metaStr = typeof serialized.meta === 'string'
-      ? serialized.meta
-      : Object.entries(serialized.meta).map(([k, v]) => `${k}: ${String(v)}`).join(', ');
+    const metaStr = this.formatFocusMeta(serialized.meta);
+    const metaWithHierarchy = hierarchyPrefix ? `${hierarchyPrefix} > ${metaStr}` : metaStr;
 
     const parts: string[] = [prefix];
-    if (metaStr) parts.push(metaStr);
+    if (metaWithHierarchy) parts.push(metaWithHierarchy);
     if (serialized.text) parts.push(`${textLabel} "${serialized.text}"`);
 
     return parts.join(' — ');
@@ -294,12 +397,17 @@ export class AskableContextImpl implements AskableContext {
     const meta = typeof focus.meta === 'string'
       ? focus.meta
       : this.normalizeMeta(focus.meta, resolved);
+    const ancestors = this.limitAncestorSegments(
+      this.filterAncestorSegments(focus.ancestors, resolved.scope),
+      resolved.hierarchyDepth,
+    ).map((segment) => this.serializeFocusSegment(segment, resolved));
 
     const text = includeText ? this.normalizeText(focus.text, maxTextLength) : '';
 
     return {
       meta,
       ...(focus.scope ? { scope: focus.scope } : {}),
+      ...(ancestors.length ? { ancestors } : {}),
       ...(text ? { text } : {}),
       timestamp: focus.timestamp,
     };

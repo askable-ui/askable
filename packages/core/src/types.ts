@@ -8,6 +8,8 @@ export interface AskableFocus {
   meta: Record<string, unknown> | string;
   /** Optional category used to filter context for different agents/copilots. */
   scope?: string;
+  /** Optional ancestor chain from outermost to innermost parent annotation. */
+  ancestors?: AskableFocusSegment[];
   /** Trimmed textContent of the element */
   text: string;
   /** The DOM element (undefined when set via push()) */
@@ -76,6 +78,18 @@ export type AskablePromptFormat = 'natural' | 'json';
  */
 export type AskablePromptPreset = 'compact' | 'verbose' | 'json';
 
+export interface AskableFocusSegment {
+  meta: Record<string, unknown> | string;
+  scope?: string;
+  text: string;
+}
+
+export interface AskableSerializedFocusSegment {
+  meta: Record<string, unknown> | string;
+  scope?: string;
+  text?: string;
+}
+
 export interface AskablePromptContextOptions {
   /**
    * Apply a named preset as the default configuration.
@@ -88,6 +102,8 @@ export interface AskablePromptContextOptions {
   preset?: AskablePromptPreset;
   /** Optional scope/category filter. Unscoped entries are included in every scoped view. */
   scope?: string;
+  /** Number of ancestor levels to include, counting back from the immediate annotated parent. Defaults to the full chain. */
+  hierarchyDepth?: number;
   /** Output format. Defaults to natural language. */
   format?: AskablePromptFormat;
   /** Include extracted text in serialized output. Defaults to true. */
@@ -167,6 +183,7 @@ export interface AskableContextOptions {
 export interface AskableSerializedFocus {
   meta: Record<string, unknown> | string;
   scope?: string;
+  ancestors?: AskableSerializedFocusSegment[];
   text?: string;
   timestamp: number;
 }
@@ -174,6 +191,8 @@ export interface AskableSerializedFocus {
 export interface AskablePushOptions {
   /** Optional category used to filter context for different agents/copilots. */
   scope?: string;
+  /** Optional ancestor chain from outermost to innermost parent annotation. */
+  ancestors?: AskableFocusSegment[];
 }
 
 export interface AskableContextOutputOptions extends AskablePromptContextOptions {

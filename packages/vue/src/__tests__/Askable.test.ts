@@ -60,4 +60,23 @@ describe('Askable (Vue)', () => {
     const wrapper = track(mount(Askable, { props: { meta: { widget: 'revenue' }, scope: 'analytics' } }));
     expect(wrapper.attributes('data-askable-scope')).toBe('analytics');
   });
+
+  it('supports nested Askable wrappers that form a DOM hierarchy', () => {
+    const wrapper = track(mount({
+      components: { Askable },
+      template: `
+        <Askable :meta="{ view: 'dashboard' }">
+          <Askable :meta="{ tab: 'finance' }">
+            <Askable :meta="{ metric: 'revenue' }">Revenue Chart</Askable>
+          </Askable>
+        </Askable>
+      `,
+    }));
+
+    const nodes = wrapper.findAll('[data-askable]');
+    expect(nodes).toHaveLength(3);
+    expect(nodes[0].attributes('data-askable')).toBe(JSON.stringify({ view: 'dashboard' }));
+    expect(nodes[1].attributes('data-askable')).toBe(JSON.stringify({ tab: 'finance' }));
+    expect(nodes[2].attributes('data-askable')).toBe(JSON.stringify({ metric: 'revenue' }));
+  });
 });

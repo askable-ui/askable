@@ -60,6 +60,35 @@ You can nest `[data-askable]` elements. When a user interacts with a nested elem
 </section>
 ```
 
+When you serialize focus, Askable also preserves that structure in the hierarchy path:
+
+```ts
+ctx.toPromptContext();
+// → "User is focused on: — page: dashboard > widget: revenue-chart — value \"Revenue Chart\""
+```
+
+### Explicit hierarchy links
+
+If DOM nesting alone is not enough, point an element at its logical Askable parent with `data-askable-parent`:
+
+```html
+<section id="dashboard-root" data-askable='{"page":"dashboard"}'></section>
+<div id="finance-tab" data-askable='{"tab":"finance"}' data-askable-parent="#dashboard-root"></div>
+<button
+  data-askable='{"metric":"revenue","value":"$2.3M"}'
+  data-askable-parent="#finance-tab"
+>
+  Revenue card
+</button>
+```
+
+You can also limit how much ancestry is included when serializing:
+
+```ts
+ctx.toPromptContext({ hierarchyDepth: 1 });
+// → "User is focused on: — tab: finance > metric: revenue, value: $2.3M — value \"Revenue card\""
+```
+
 ### Target strategy
 
 The `targetStrategy` option passed to `observe()` controls how the winning element is chosen when nested `[data-askable]` elements are involved:

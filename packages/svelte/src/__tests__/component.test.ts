@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/svelte';
 import Askable from '../Askable.svelte';
 import AskableWithContent from './AskableWithContent.svelte';
+import AskableNested from './AskableNested.svelte';
 
 describe('Askable (Svelte)', () => {
   it('sets data-askable attribute with stringified object meta', () => {
@@ -41,5 +42,15 @@ describe('Askable (Svelte)', () => {
     const { container } = render(Askable, { props: { meta: { widget: 'revenue' }, scope: 'analytics' } });
     const el = container.firstElementChild as HTMLElement;
     expect(el.getAttribute('data-askable-scope')).toBe('analytics');
+  });
+
+  it('supports nested Askable wrappers that form a DOM hierarchy', () => {
+    const { container } = render(AskableNested);
+
+    const nodes = container.querySelectorAll('[data-askable]');
+    expect(nodes).toHaveLength(3);
+    expect(nodes[0].getAttribute('data-askable')).toBe(JSON.stringify({ view: 'dashboard' }));
+    expect(nodes[1].getAttribute('data-askable')).toBe(JSON.stringify({ tab: 'finance' }));
+    expect(nodes[2].getAttribute('data-askable')).toBe(JSON.stringify({ metric: 'revenue' }));
   });
 });
