@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "vitepress dev",
     "build": "vitepress build",
+    "build:versioned": "node ./scripts/build-versioned-docs.mjs",
+    "snapshot:current": "node ./scripts/snapshot-current-docs.mjs",
     "preview": "vitepress preview"
   },
   "devDependencies": {

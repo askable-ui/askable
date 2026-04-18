@@ -34,12 +34,9 @@ jobs:
         with:
           node-version: 20
 
-      - name: Build VitePress docs
-        run: npm install && npm run build
+      - name: Build versioned VitePress docs
+        run: npm ci && npm run build:versioned
         working-directory: site/docs
-
-      - name: Copy docs into www
-        run: cp -r site/docs/.vitepress/dist site/www/docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v6

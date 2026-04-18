@@ -10,6 +10,7 @@ packages/*/dist/
 site/docs/node_modules
 site/docs/.vitepress/dist
 site/docs/.vitepress/cache
+site/www/docs
 
 # Playwright
 /playwright-report/
