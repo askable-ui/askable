@@ -1,7 +1,31 @@
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitepress'
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const docsRoot = resolve(__dirname, '..')
+const versions = JSON.parse(readFileSync(resolve(docsRoot, 'versions.json'), 'utf8')) as {
+  current: { label: string; slug: string }
+  archived: Array<{ label: string; slug: string }>
+}
+const docsBase = process.env.ASKABLE_DOCS_BASE ?? '/docs/'
+const docsOrigin = process.env.ASKABLE_DOCS_SITE_ORIGIN ?? 'https://askable-ui.com'
+const currentVersion = versions.current
+const archivedVersions = versions.archived ?? []
+const latestDocsUrl = `${docsOrigin}/docs/`
+const versionedDocsUrl = (slug: string) => `${docsOrigin}/docs/${slug}/`
+const versionItems = [
+  { text: `Latest docs (${currentVersion.label})`, link: latestDocsUrl },
+  { text: `${currentVersion.label} docs`, link: versionedDocsUrl(currentVersion.slug) },
+  ...archivedVersions.map((version) => ({ text: version.label, link: versionedDocsUrl(version.slug) })),
+  { text: 'Migration guides', link: '/guide/migrations' },
+  { text: 'Changelog', link: 'https://github.com/askable-ui/askable/releases' },
+  { text: 'npm', link: 'https://www.npmjs.com/package/@askable-ui/core' },
+]
+
 export default defineConfig({
-  base: '/docs/',
+  base: docsBase,
   title: 'askable-ui',
   description: 'UI context your LLM can actually use. Annotate elements with data-askable and feed structured focus context into any AI assistant.',
   head: [
@@ -16,11 +40,8 @@ export default defineConfig({
       { text: 'API Reference', link: '/api/core', activeMatch: '/api/' },
       { text: 'Examples', link: '/examples/dashboard', activeMatch: '/examples/' },
       {
-        text: 'v0.5.0',
-        items: [
-          { text: 'Changelog', link: 'https://github.com/askable-ui/askable/releases' },
-          { text: 'npm', link: 'https://www.npmjs.com/package/@askable-ui/core' },
-        ],
+        text: currentVersion.label,
+        items: versionItems,
       },
     ],
 
@@ -50,6 +71,7 @@ export default defineConfig({
             { text: 'Focus & History', link: '/guide/focus-history' },
             { text: 'Ask AI Buttons (select())', link: '/guide/select' },
             { text: 'Prompt Serialization', link: '/guide/serialization' },
+            { text: 'Migration Guides', link: '/guide/migrations' },
             { text: 'SSR Safety', link: '/guide/ssr' },
             { text: 'Browser Support', link: '/guide/browser-support' },
           ],
@@ -84,6 +106,7 @@ export default defineConfig({
           text: 'Types',
           items: [
             { text: 'Type Reference', link: '/api/types' },
+            { text: 'Docs Versioning', link: '/api/versioning' },
           ],
         },
       ],

@@ -38,6 +38,8 @@ features:
 ---
 
 > Current npm release: **v0.5.0**.
+>
+> Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
 ## Quick look
 
