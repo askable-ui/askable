@@ -75,4 +75,46 @@ describe('Askable (React Native)', () => {
 
     ctx.destroy();
   });
+
+  it('supports nested Askable wrappers by pushing ancestor hierarchy', () => {
+    const ctx = createAskableContext();
+    const tree = TestRenderer.create(
+      <Askable ctx={ctx} meta={{ view: 'dashboard' }} text="Dashboard" scope="analytics">
+        <Askable ctx={ctx} meta={{ tab: 'finance' }} text="Finance" scope="analytics">
+          <Askable ctx={ctx} meta={{ metric: 'revenue' }} text="Revenue card" scope="analytics">
+            {React.createElement('Pressable', { testID: 'pressable' })}
+          </Askable>
+        </Askable>
+      </Askable>
+    );
+
+    const pressable = tree.root.findByProps({ testID: 'pressable' });
+
+    act(() => {
+      pressable.props.onPress();
+    });
+
+    expect(ctx.getFocus()).toMatchObject({
+      meta: { metric: 'revenue' },
+      text: 'Revenue card',
+      scope: 'analytics',
+      ancestors: [
+        { meta: { view: 'dashboard' }, scope: 'analytics', text: 'Dashboard' },
+        { meta: { tab: 'finance' }, scope: 'analytics', text: 'Finance' },
+      ],
+      source: 'push',
+    });
+    expect(ctx.toPromptContext()).toContain('view: dashboard > tab: finance > metric: revenue');
+    expect((ctx as any).serializeFocus({ hierarchyDepth: 1 })).toEqual({
+      meta: { metric: 'revenue' },
+      scope: 'analytics',
+      ancestors: [
+        { meta: { tab: 'finance' }, scope: 'analytics', text: 'Finance' },
+      ],
+      text: 'Revenue card',
+      timestamp: expect.any(Number),
+    });
+
+    ctx.destroy();
+  });
 });

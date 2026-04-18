@@ -60,4 +60,22 @@ describe('Askable', () => {
     const el = container.firstChild as HTMLElement;
     expect(el.getAttribute('data-askable-scope')).toBe('analytics');
   });
+
+  it('supports nested Askable wrappers that form a DOM hierarchy', () => {
+    const { container } = render(
+      <Askable meta={{ view: 'dashboard' }}>
+        <Askable meta={{ tab: 'finance' }}>
+          <Askable meta={{ metric: 'revenue' }}>Revenue Chart</Askable>
+        </Askable>
+      </Askable>
+    );
+
+    const outer = container.firstChild as HTMLElement;
+    const middle = outer.firstElementChild as HTMLElement;
+    const inner = middle.firstElementChild as HTMLElement;
+
+    expect(outer.getAttribute('data-askable')).toBe(JSON.stringify({ view: 'dashboard' }));
+    expect(middle.getAttribute('data-askable')).toBe(JSON.stringify({ tab: 'finance' }));
+    expect(inner.getAttribute('data-askable')).toBe(JSON.stringify({ metric: 'revenue' }));
+  });
 });

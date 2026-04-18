@@ -137,6 +137,7 @@ Options accepted by `toPromptContext()`, `toHistoryContext()`, and `serializeFoc
 interface AskablePromptContextOptions {
   preset?: AskablePromptPreset;    // Named shorthand. Individual options override it.
   scope?: string;                  // Optional category filter. Unscoped entries are included everywhere.
+  hierarchyDepth?: number;         // Limit ancestor levels included in hierarchical context.
   format?: AskablePromptFormat;    // 'natural' | 'json'. Default: 'natural'
   includeText?: boolean;           // Include element text. Default: true
   maxTextLength?: number;          // Truncate text to N chars
