@@ -18,34 +18,38 @@ npm run start
 
 ## Vercel deployment
 
-This example is deployed by GitHub Actions through `.github/workflows/deploy_analytics_dashboard_react.yml`.
+This example is deployed by Vercel's native GitHub integration.
 
-### What the workflow does
+### What shows up in GitHub
 
-- Pull requests touching `examples/analytics-dashboard-react/**` create a **Vercel preview deployment**.
-- The workflow posts the preview URL back onto the pull request.
-- Pushes to `main` that modify this example deploy the same app to the **production Vercel project**.
-- Forked pull requests do **not** get preview deployments because GitHub does not expose repository secrets to forked PR workflows.
+When the Vercel GitHub app is connected to this repository and project:
 
-### Required GitHub secrets
+- pull requests touching `examples/analytics-dashboard-react/**` get a **Preview deployment** from Vercel
+- GitHub shows a Vercel deployment/status check on the PR
+- the PR's checks and deployments UI link to the preview URL
+- merges to `main` trigger a new **Production deployment** in Vercel
 
-Configure these repository secrets before relying on the workflow:
+Vercel's GitHub integration documentation says it provides **Preview Deployment URLs** and comments on GitHub PR preview deployments.
 
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID_ANALYTICS_DASHBOARD_REACT`
+### Recommended Vercel project setup
 
-### Required Vercel project setup
-
-Create a dedicated Vercel project for this example and configure it with:
+Configure the Vercel project like this:
 
 - **Root Directory:** `examples/analytics-dashboard-react`
 - **Framework Preset:** Next.js
-- **Automatic Git deployments:** disabled
+- **Git provider:** GitHub
+- **Repository:** `askable-ui/askable`
 
-The workflow uses the Vercel CLI (`vercel pull`, `vercel build`, `vercel deploy --prebuilt`) so deploys stay CI-controlled and deterministic.
+### How to make previews visible in GitHub
+
+1. Install/connect the Vercel GitHub app for the repo.
+2. Make sure this Vercel project is linked to `askable-ui/askable`.
+3. Keep automatic Git deployments enabled for this project.
+4. Open or update a PR that changes `examples/analytics-dashboard-react/**`.
+
+After that, GitHub should show the Vercel deployment/check automatically, and the preview URL should be accessible from the PR.
 
 ### Notes
 
 - The example currently depends on the published `@askable-ui/react` package version from npm.
-- If you need Vercel previews to validate unpublished Askable package changes as well, pair this workflow with preview-package wiring in a follow-up change.
+- If you later want more custom PR behavior than native Vercel provides, we can add targeted GitHub automation on top, but native Vercel integration should be the single deployment authority.
