@@ -32,7 +32,7 @@ export default defineConfig({
     ['link', { rel: 'icon', href: 'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 32 32\'><rect width=\'32\' height=\'32\' rx=\'9\' fill=\'%23111317\'/><text x=\'16\' y=\'22\' font-family=\'system-ui,sans-serif\' font-size=\'18\' font-weight=\'900\' fill=\'white\' text-anchor=\'middle\'>✦</text></svg>' }],
   ],
   themeConfig: {
-    logo: { light: '/logo-light.svg', dark: '/logo-dark.svg', alt: 'askable-ui' },
+    logo: { src: '/avatar.png', alt: 'askable-ui' },
     siteTitle: 'askable-ui',
 
     nav: [

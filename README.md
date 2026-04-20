@@ -38,7 +38,7 @@
 </p>
 
 <p align="center">
-  <img src="site/www/demo.gif" alt="askable-ui demo" width="720" />
+  <video src="https://github.com/user-attachments/assets/1d849070-d486-471d-9fcb-ffafe90c485a" autoplay loop muted playsinline width="720"></video>
 </p>
 
 ---
