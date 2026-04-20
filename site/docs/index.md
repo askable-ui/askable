@@ -44,6 +44,21 @@ features:
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
+## Product video
+
+<div style="margin: 1.5rem 0 2rem;">
+  <video
+    controls
+    playsinline
+    preload="metadata"
+    poster="https://askable-ui.com/askable-ui-code-poster.jpg"
+    style="width: 100%; max-width: 960px; border-radius: 16px; box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18); background: #0f172a;"
+  >
+    <source src="https://askable-ui.com/askable-ui-code.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+</div>
+
 ## Quick look
 
 ::: code-group

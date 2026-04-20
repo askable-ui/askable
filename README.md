@@ -38,7 +38,13 @@
 </p>
 
 <p align="center">
-  <img src="site/www/demo.gif" alt="askable-ui demo" width="720" />
+  <a href="site/www/askable-ui-code.mp4" title="Open the askable-ui product video">
+    <img src="site/www/askable-ui-code-poster.jpg" alt="askable-ui product video" width="720" />
+  </a>
+</p>
+
+<p align="center">
+  <strong><a href="site/www/askable-ui-code.mp4">▶ Watch the product video</a></strong>
 </p>
 
 ---
