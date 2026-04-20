@@ -74,6 +74,28 @@ Renders any element (default: `div`) with a `data-askable` attribute. The `meta`
 - `as` — HTML tag to render (default: `"div"`)
 - All other props are forwarded to the underlying element
 
+### `AskableInspector(props?)`
+
+Declarative React wrapper around the core inspector.
+
+```tsx
+import { AskableInspector } from '@askable-ui/react';
+
+<AskableInspector events={['click']} />
+```
+
+Pass the same `events`, `name`, `viewport`, or `ctx` that your React app uses for `useAskable()` when the inspector should follow the same context.
+
+```tsx
+function DevInspector() {
+  useAskable({ events: ['click'] });
+
+  return process.env.NODE_ENV === 'development'
+    ? <AskableInspector events={['click']} position="bottom-left" />
+    : null;
+}
+```
+
 ### `useAskable(options?)`
 
 Returns reactive focus state from the shared global `AskableContext`.
