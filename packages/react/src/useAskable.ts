@@ -8,7 +8,7 @@ const globalRefCountByEvents = new Map<string, number>();
 
 function normalizeEvents(events?: AskableEvent[]): AskableEvent[] {
   const configured = events ?? DEFAULT_EVENTS;
-  return DEFAULT_EVENTS.filter((event, index) => configured.includes(event) && configured.indexOf(event) === index);
+  return DEFAULT_EVENTS.filter((event) => configured.includes(event));
 }
 
 function getEventsKey(events?: AskableEvent[]): string {

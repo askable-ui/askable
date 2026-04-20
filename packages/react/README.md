@@ -82,12 +82,16 @@ Returns reactive focus state from the shared global `AskableContext`.
 const { focus, promptContext, ctx } = useAskable();
 
 // Restrict which interactions trigger a context update
-const { focus, promptContext } = useAskable({ events: ['click'] });
-const { focus, promptContext } = useAskable({ events: ['click', 'focus'] });
+const { focus: clickFocus } = useAskable({ events: ['click'] });
+const { focus: hoverFocus } = useAskable({ events: ['hover'] });
+const { focus: focusOnly } = useAskable({ events: ['focus'] });
 ```
 
 **Options:**
+- `name?: string` — optional shared context name for region-specific context reuse
+- `viewport?: boolean` — enable viewport-aware context tracking for this hook's context
 - `events?: AskableEvent[]` — trigger events: `'click'`, `'hover'`, `'focus'`. Defaults to all three.
+- `ctx?: AskableContext` — provide a custom context instead of the shared singleton
 
 **Returns:**
 - `focus: AskableFocus | null` — current focus state
@@ -100,7 +104,19 @@ const { focus, promptContext } = useAskable({ events: ['click', 'focus'] });
   - `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
   - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
 
-The hook manages a shared singleton context per `events` configuration. Multiple `useAskable()` consumers with the same `events` reuse one observer lifecycle, while differing `events` configurations get isolated shared contexts of their own. Each shared context is automatically destroyed when its last consumer unmounts.
+The hook manages a shared singleton context per `name + events + viewport` configuration. Multiple `useAskable()` consumers with the same shared configuration reuse one observer lifecycle, while differing configurations get isolated shared contexts of their own. Each shared context is automatically destroyed when its last consumer unmounts.
+
+If you need isolation, create your own context and pass it through `ctx`:
+
+```tsx
+const panelCtx = createAskableContext();
+panelCtx.observe(panelEl, { events: ['hover'] });
+
+function AnalyticsPanelChat() {
+  const { promptContext } = useAskable({ ctx: panelCtx });
+  return <textarea defaultValue={promptContext} />;
+}
+```
 
 
 ### SSR note

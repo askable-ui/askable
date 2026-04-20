@@ -72,13 +72,53 @@ const { focus, promptContext, ctx } = useAskable();
 **Examples:**
 
 ```ts
-// Restrict trigger events
+// Click-only activation
 const { focus } = useAskable({ events: ['click'] });
 
-// Scoped context (multiple independent AI surfaces)
+// Hover-only activation
+const { focus: hoverFocus } = useAskable({ events: ['hover'] });
+
+// Focus-only activation
+const { focus: focusOnly } = useAskable({ events: ['focus'] });
+
+// Named shared context for one surface
+const { focus: chartFocus } = useAskable({
+  name: 'chart',
+  events: ['click', 'hover'],
+});
+
+// Custom context (multiple independent AI surfaces)
 import { createAskableContext } from '@askable-ui/core';
 const myCtx = createAskableContext();
-myCtx.observe(panelEl);
+myCtx.observe(panelEl, { events: ['hover'] });
 
-const { focus } = useAskable({ ctx: myCtx });
+const { focus: panelFocus } = useAskable({ ctx: myCtx });
+```
+
+### Shared vs custom contexts
+
+`useAskable()` has three common modes in React:
+
+- **Default shared context** — `useAskable()` with no `ctx` or `name` reuses one shared document observer for the same `events` + `viewport` configuration.
+- **Named shared context** — `useAskable({ name: 'chart' })` reuses a separate shared context for one UI region or surface.
+- **Custom context** — `useAskable({ ctx })` attaches to an explicitly created `AskableContext` that you observe/configure yourself.
+
+Use a shared context when multiple components on the same page should agree on the same focus/history. Provide a custom `ctx` when you need isolation, a custom root element, or different lifecycle control.
+
+```tsx
+function SharedChatInput() {
+  const { promptContext } = useAskable({ events: ['hover'] });
+  return <textarea defaultValue={promptContext} />;
+}
+
+function PrivatePanel({ panelEl }: { panelEl: HTMLElement }) {
+  const ctx = useMemo(() => {
+    const next = createAskableContext();
+    next.observe(panelEl, { events: ['click'] });
+    return next;
+  }, [panelEl]);
+
+  const { promptContext } = useAskable({ ctx });
+  return <textarea defaultValue={promptContext} />;
+}
 ```

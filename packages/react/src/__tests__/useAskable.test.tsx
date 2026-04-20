@@ -369,6 +369,88 @@ describe('useAskable', () => {
 
     clickView.unmount();
   });
+
+  it('updates shared hook-managed focus on hover-only events', async () => {
+    function HoverConsumer({ inspector = false }: { inspector?: boolean }) {
+      const { focus } = useAskable({ events: ['hover'], inspector });
+      return <span data-testid="hover-focus">{focus ? JSON.stringify(focus.meta) : 'null'}</span>;
+    }
+
+    const view = render(
+      <>
+        <div data-testid="hover-target" data-askable='{"widget":"hover-only"}'>
+          Hover only
+        </div>
+        <HoverConsumer />
+      </>
+    );
+    await flushMicrotasks();
+
+    act(() => {
+      screen.getByTestId('hover-target').dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('hover-focus').textContent).toContain('hover-only');
+    });
+
+    view.unmount();
+  });
+
+  it('updates shared hook-managed focus on focus-only events', async () => {
+    function FocusConsumer() {
+      const { focus } = useAskable({ events: ['focus'] });
+      return <span data-testid="focus-only-state">{focus ? JSON.stringify(focus.meta) : 'null'}</span>;
+    }
+
+    const view = render(
+      <>
+        <button data-testid="focus-only-target" data-askable='{"widget":"focus-only"}'>
+          Focus only
+        </button>
+        <FocusConsumer />
+      </>
+    );
+    await flushMicrotasks();
+
+    act(() => {
+      screen.getByTestId('focus-only-target').focus();
+      fireEvent.focus(screen.getByTestId('focus-only-target'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('focus-only-state').textContent).toContain('focus-only');
+    });
+
+    view.unmount();
+  });
+
+  it('keeps hover-only shared contexts working when inspector mode is enabled', async () => {
+    function HoverConsumer() {
+      const { focus } = useAskable({ events: ['hover'], inspector: true });
+      return <span data-testid="hover-focus-inspector">{focus ? JSON.stringify(focus.meta) : 'null'}</span>;
+    }
+
+    const view = render(
+      <>
+        <div data-testid="hover-target-inspector" data-askable='{"widget":"hover-inspector"}'>
+          Hover inspector
+        </div>
+        <HoverConsumer />
+      </>
+    );
+    await flushMicrotasks();
+
+    act(() => {
+      screen.getByTestId('hover-target-inspector').dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('hover-focus-inspector').textContent).toContain('hover-inspector');
+    });
+
+    view.unmount();
+  });
 });
 
 function ScopedView({
