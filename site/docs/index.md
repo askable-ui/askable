@@ -13,6 +13,9 @@ hero:
       text: Get Started
       link: /guide/getting-started
     - theme: alt
+      text: Live Demo
+      link: https://askable-mu.vercel.app/
+    - theme: alt
       text: API Reference
       link: /api/core
     - theme: alt

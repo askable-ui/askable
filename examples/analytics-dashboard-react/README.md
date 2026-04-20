@@ -2,6 +2,9 @@
 
 A runnable Next.js dashboard example showing how Askable can annotate complex product surfaces like metrics grids, charts, tables, and sidebars.
 
+- **Stable live URL:** [askable-mu.vercel.app](https://askable-mu.vercel.app/)
+- **Pull request previews:** surfaced automatically by Vercel on GitHub PRs for this project
+
 ## Local development
 
 ```bash

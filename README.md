@@ -33,7 +33,8 @@
   <a href="#works-with">Works with</a> &nbsp;·&nbsp;
   <a href="#features">Features</a> &nbsp;·&nbsp;
   <a href="#packages">Packages</a> &nbsp;·&nbsp;
-  <a href="https://askable-ui.com/docs/">Docs</a>
+  <a href="https://askable-ui.com/docs/">Docs</a> &nbsp;·&nbsp;
+  <a href="https://askable-mu.vercel.app/">Live Demo</a>
 </p>
 
 <p align="center">
@@ -233,6 +234,13 @@ ctx.on('focus', () => {
 ```
 
 </details>
+
+---
+
+## Live links
+
+- **Docs:** [askable-ui.com/docs](https://askable-ui.com/docs/)
+- **Analytics dashboard demo:** [askable-mu.vercel.app](https://askable-mu.vercel.app/)
 
 ---
 
