@@ -78,6 +78,9 @@ ctx.observe(document, { events: ['click', 'focus'] });
 // Debounce hover — wait until pointer settles
 ctx.observe(document, { hoverDebounce: 75 });
 
+// On touch/coarse-pointer devices, hover-only configs resolve from tap by default
+ctx.observe(document, { events: ['hover'] });
+
 // Throttle hover — at most one update per window
 ctx.observe(document, { hoverThrottle: 100 });
 ```
@@ -87,10 +90,10 @@ ctx.observe(document, { hoverThrottle: 100 });
 | Name | Type | Description |
 |---|---|---|
 | `root` | `HTMLElement \| Document` | Root element to observe |
-| `options.events` | `AskableEvent[]` | Trigger events. Default: `['click', 'hover', 'focus']` |
+| `options.events` | `AskableEvent[]` | Trigger events. Default: `['click', 'hover', 'focus']`. On touch/coarse-pointer devices, `hover` resolves from tap by default. |
 | `options.targetStrategy` | `AskableTargetStrategy` | Which element wins when nested `[data-askable]` elements are involved. Default: `'deepest'` |
-| `options.hoverDebounce` | `number` | Debounce delay in ms for hover events. Default: `0` |
-| `options.hoverThrottle` | `number` | Throttle window in ms for hover events. Default: `0` |
+| `options.hoverDebounce` | `number` | Debounce delay in ms for hover interactions. Default: `0` |
+| `options.hoverThrottle` | `number` | Throttle window in ms for hover interactions. Default: `0` |
 
 **`AskableTargetStrategy` values:**
 

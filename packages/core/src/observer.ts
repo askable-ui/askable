@@ -12,6 +12,37 @@ const EVENT_MAP: Record<AskableEvent, string> = {
   focus: 'focus',
 };
 
+function isTouchLikeEnvironment(): boolean {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+
+  if (typeof window.matchMedia === 'function') {
+    return window.matchMedia('(hover: none), (pointer: coarse)').matches;
+  }
+
+  return navigator.maxTouchPoints > 0;
+}
+
+function resolveDomEvents(events: AskableEvent[]): string[] {
+  const touchLike = isTouchLikeEnvironment();
+  const domEvents = new Set<string>();
+
+  for (const event of events) {
+    if (event === 'hover' && touchLike) {
+      domEvents.add('click');
+      continue;
+    }
+
+    domEvents.add(EVENT_MAP[event]);
+  }
+
+  return [...domEvents];
+}
+
+function isHoverInteraction(eventType: string, events: AskableEvent[]): boolean {
+  if (eventType === 'mouseenter') return true;
+  return eventType === 'click' && isTouchLikeEnvironment() && events.includes('hover') && !events.includes('click');
+}
+
 function isBrowser(): boolean {
   return (
     typeof window !== 'undefined' &&
@@ -145,6 +176,7 @@ export class Observer {
   private hoverThrottle = 0;
   private hoverTimer: ReturnType<typeof setTimeout> | null = null;
   private lastHoverTimestamp = 0;
+  private activeDomEvents: string[] = [];
 
   constructor(
     onFocus: FocusCallback,
@@ -167,6 +199,7 @@ export class Observer {
     if (this.root) this.unobserve();
     this.root = root;
     this.activeEvents = events;
+    this.activeDomEvents = resolveDomEvents(events);
     this.targetStrategy = targetStrategy;
     this.hoverDebounce = hoverDebounce;
     this.hoverThrottle = hoverThrottle;
@@ -210,6 +243,7 @@ export class Observer {
     this.boundElements.clear();
     this.metaCache = new WeakMap<HTMLElement, MetaCacheEntry>();
     this.root = null;
+    this.activeDomEvents = [];
     if (this.hoverTimer !== null) {
       clearTimeout(this.hoverTimer);
       this.hoverTimer = null;
@@ -255,7 +289,7 @@ export class Observer {
       }
     }
 
-    const isHover = event.type === 'mouseenter';
+    const isHover = isHoverInteraction(event.type, this.activeEvents);
 
     if (isHover && this.hoverDebounce > 0) {
       if (this.hoverTimer !== null) clearTimeout(this.hoverTimer);
@@ -279,7 +313,7 @@ export class Observer {
 
   private attach(el: HTMLElement): void {
     if (this.boundElements.has(el)) return;
-    this.activeEvents.forEach((e) => el.addEventListener(EVENT_MAP[e], this.handleInteraction));
+    this.activeDomEvents.forEach((eventName) => el.addEventListener(eventName, this.handleInteraction));
     this.boundElements.add(el);
     this.lifecycleCallbacks.onAttach?.(el);
   }
@@ -312,7 +346,7 @@ export class Observer {
   }
 
   private detach(el: HTMLElement): void {
-    this.activeEvents.forEach((e) => el.removeEventListener(EVENT_MAP[e], this.handleInteraction));
+    this.activeDomEvents.forEach((eventName) => el.removeEventListener(eventName, this.handleInteraction));
     this.boundElements.delete(el);
     this.metaCache.delete(el);
     this.lifecycleCallbacks.onDetach?.(el);

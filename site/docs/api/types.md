@@ -209,6 +209,8 @@ interface AskableContextOutputOptions extends AskablePromptContextOptions {
 type AskableEvent = 'click' | 'hover' | 'focus';
 ```
 
+`hover` maps to `mouseenter` on desktop/fine-pointer environments. On touch/coarse-pointer environments, hover-only observation resolves from tap by default.
+
 ---
 
 ## `AskablePromptFormat`
@@ -225,16 +227,16 @@ Options for `ctx.observe()`.
 
 ```ts
 interface AskableObserveOptions {
-  /** Which interaction types trigger context updates. Default: all three. */
+  /** Which interaction types trigger context updates. Default: all three. Touch/coarse-pointer devices resolve hover from tap by default. */
   events?: AskableEvent[];
   /**
-   * Debounce delay in ms for hover events.
+   * Debounce delay in ms for hover interactions.
    * When both hoverDebounce and hoverThrottle are set, debounce takes precedence.
    * Default: 0
    */
   hoverDebounce?: number;
   /**
-   * Throttle window in ms for hover events.
+   * Throttle window in ms for hover interactions.
    * Default: 0
    */
   hoverThrottle?: number;
