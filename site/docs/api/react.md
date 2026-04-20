@@ -107,8 +107,11 @@ const { focus, promptContext, ctx } = useAskable();
 **Examples:**
 
 ```ts
+// Basic usage
+const { focus, promptContext, ctx } = useAskable();
+
 // Click-only activation
-const { focus } = useAskable({ events: ['click'] });
+const { focus: clickFocus } = useAskable({ events: ['click'] });
 
 // Hover-only activation
 const { focus: hoverFocus } = useAskable({ events: ['hover'] });
@@ -122,6 +125,17 @@ const { focus: chartFocus } = useAskable({
   events: ['click', 'hover'],
 });
 
+// Private context options for one hook instance
+const privateAskable = useAskable({
+  maxHistory: 10,
+  sanitizeText: (text) => text.trim(),
+  sanitizeMeta: (meta) => {
+    const { internalId, ...safe } = meta;
+    return safe;
+  },
+  textExtractor: (el) => el.getAttribute('aria-label') ?? el.textContent ?? '',
+});
+
 // Custom context (multiple independent AI surfaces)
 import { createAskableContext } from '@askable-ui/core';
 const myCtx = createAskableContext();
@@ -129,6 +143,78 @@ myCtx.observe(panelEl, { events: ['hover'] });
 
 const { focus: panelFocus } = useAskable({ ctx: myCtx });
 ```
+
+### Practical option patterns
+
+#### Shared default hook
+
+```tsx
+function ChatInput() {
+  const { promptContext } = useAskable();
+  return <textarea defaultValue={promptContext} />;
+}
+```
+
+#### Private hook instance with sanitization
+
+When you pass context-creation options like `maxHistory`, `sanitizeMeta`, `sanitizeText`, or `textExtractor` without `name` or `ctx`, React creates a private context for that hook instance.
+
+```tsx
+function SafeSupportPanel() {
+  const { promptContext } = useAskable({
+    maxHistory: 5,
+    sanitizeMeta: ({ internalId, ...safe }) => safe,
+    sanitizeText: (text) => text.replace(/\s+/g, ' ').trim(),
+    textExtractor: (el) => el.getAttribute('data-askable-text') ?? el.textContent ?? '',
+  });
+
+  return <textarea defaultValue={promptContext} />;
+}
+```
+
+#### Pre-created custom context
+
+```tsx
+import { createAskableContext } from '@askable-ui/core';
+
+function AnalyticsPanel({ panelEl }: { panelEl: HTMLElement }) {
+  const ctx = useMemo(() => {
+    const next = createAskableContext({ maxHistory: 20 });
+    next.observe(panelEl, { events: ['click'] });
+    return next;
+  }, [panelEl]);
+
+  const { promptContext } = useAskable({ ctx });
+  return <textarea defaultValue={promptContext} />;
+}
+```
+
+#### Explicit "Ask AI" button flow with `ctx.select()`
+
+```tsx
+function RevenueCard() {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const { ctx } = useAskable({ events: ['click'] });
+
+  return (
+    <Askable ref={cardRef} meta={{ widget: 'revenue-card' }}>
+      <RevenueChart />
+      <button
+        onClick={() => {
+          if (cardRef.current) ctx.select(cardRef.current);
+          openChat();
+        }}
+      >
+        Ask AI
+      </button>
+    </Askable>
+  );
+}
+```
+
+#### Touch-device note
+
+On touch-like devices, Askable maps `hover` to tap/click by default. That means `useAskable({ events: ['hover'] })` still works on mobile-style environments, but the trigger comes from a tap rather than a pointer hover.
 
 ### Shared vs custom contexts
 
