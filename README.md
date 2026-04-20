@@ -258,6 +258,12 @@ ctx.on('focus', () => {
 
 ---
 
+## Using with coding agents
+
+[`AGENTS.md`](./AGENTS.md) contains copy-pasteable instructions for Claude, Cursor, Codex, and similar tools. Drop it into your project root and your coding agent will know how to integrate `askable-ui` correctly — annotation patterns, passive vs explicit flows, sanitization, and common mistakes.
+
+---
+
 ## Contributing
 
 PRs welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions.
