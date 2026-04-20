@@ -53,14 +53,18 @@ export interface AskableObserveOptions {
    */
   targetStrategy?: AskableTargetStrategy;
   /**
-   * Debounce delay in ms applied to hover (mouseenter) events.
+   * Debounce delay in ms applied to hover interactions.
+   * On desktop this means `mouseenter`; on touch/coarse-pointer devices, hover-only
+   * configurations resolve from tap by default.
    * Prevents rapid context switches when the user moves the cursor across many elements.
    * Defaults to 0 (no debounce).
    * When both hoverDebounce and hoverThrottle are provided, debounce takes precedence.
    */
   hoverDebounce?: number;
   /**
-   * Throttle window in ms applied to hover (mouseenter) events.
+   * Throttle window in ms applied to hover interactions.
+   * On desktop this means `mouseenter`; on touch/coarse-pointer devices, hover-only
+   * configurations resolve from tap by default.
    * Emits at most one hover focus update per window, which can be useful for large dashboards.
    * Defaults to 0 (no throttle).
    */

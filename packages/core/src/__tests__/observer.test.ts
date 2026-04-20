@@ -1,6 +1,36 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { Observer } from '../observer.js';
 
+const originalMatchMedia = window.matchMedia;
+const originalMaxTouchPoints = Object.getOwnPropertyDescriptor(Navigator.prototype, 'maxTouchPoints');
+
+function setTouchLikeEnvironment(touchLike: boolean): void {
+  Object.defineProperty(Navigator.prototype, 'maxTouchPoints', {
+    configurable: true,
+    value: touchLike ? 1 : 0,
+  });
+
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: touchLike && query === '(hover: none), (pointer: coarse)',
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })) as typeof window.matchMedia;
+}
+
+function restoreEnvironment(): void {
+  if (originalMaxTouchPoints) {
+    Object.defineProperty(Navigator.prototype, 'maxTouchPoints', originalMaxTouchPoints);
+  } else {
+    delete (Navigator.prototype as { maxTouchPoints?: number }).maxTouchPoints;
+  }
+  window.matchMedia = originalMatchMedia;
+}
+
 function makeEl(meta: object | string, text = ''): HTMLElement {
   const el = document.createElement('div');
   el.setAttribute('data-askable', typeof meta === 'string' ? meta : JSON.stringify(meta));
@@ -14,6 +44,7 @@ describe('Observer', () => {
   afterEach(() => {
     elements.forEach((el) => el.parentNode?.removeChild(el));
     elements.length = 0;
+    restoreEnvironment();
   });
 
   function attach(el: HTMLElement): HTMLElement {
@@ -128,12 +159,12 @@ describe('Observer', () => {
     obs.observe(document);
 
     await new Promise((r) => setTimeout(r, 0));
-    expect((obs as { boundElements: Set<HTMLElement> }).boundElements.size).toBe(3);
+    expect((obs as unknown as { boundElements: Set<HTMLElement> }).boundElements.size).toBe(3);
 
     parent.remove();
     await new Promise((r) => setTimeout(r, 0));
 
-    expect((obs as { boundElements: Set<HTMLElement> }).boundElements.size).toBe(0);
+    expect((obs as unknown as { boundElements: Set<HTMLElement> }).boundElements.size).toBe(0);
 
     child.click();
     grandchild.click();
@@ -403,6 +434,53 @@ describe('Observer', () => {
 
     await new Promise((r) => setTimeout(r, 50));
     expect(onFocus).toHaveBeenCalledOnce();
+
+    obs.unobserve();
+  });
+
+  it('maps hover to click on touch-like environments', () => {
+    setTouchLikeEnvironment(true);
+    const el = attach(makeEl({ id: 'touch-hover' }, 'Touch hover'));
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document, ['hover']);
+
+    el.click();
+
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'touch-hover' });
+
+    obs.unobserve();
+  });
+
+  it('dedupes click listeners when click and hover are both enabled on touch-like environments', () => {
+    setTouchLikeEnvironment(true);
+    const el = attach(makeEl({ id: 'touch-dedupe' }, 'Touch dedupe'));
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document, ['click', 'hover']);
+
+    el.click();
+
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'touch-dedupe' });
+
+    obs.unobserve();
+  });
+
+  it('preserves hover debounce semantics for hover-only touch interactions', async () => {
+    setTouchLikeEnvironment(true);
+    const el = attach(makeEl({ id: 'touch-debounce' }, 'Touch debounce'));
+    const onFocus = vi.fn();
+    const obs = new Observer(onFocus);
+    obs.observe(document, ['hover'], 40);
+
+    el.click();
+    expect(onFocus).not.toHaveBeenCalled();
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(onFocus).toHaveBeenCalledOnce();
+    expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'touch-debounce' });
 
     obs.unobserve();
   });
