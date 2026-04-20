@@ -67,20 +67,13 @@ createAskableInspector(ctx, {
 ```tsx
 // components/DevInspector.tsx
 'use client';
-import { useEffect } from 'react';
-import { createAskableInspector } from '@askable-ui/core';
-import { useAskable } from '@askable-ui/react';
+import { AskableInspector, useAskable } from '@askable-ui/react';
 
 export function DevInspector() {
-  const { ctx } = useAskable();
+  useAskable({ events: ['click'] });
 
-  useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
-    const inspector = createAskableInspector(ctx, { position: 'bottom-left' });
-    return () => inspector.destroy();
-  }, [ctx]);
-
-  return null;
+  if (process.env.NODE_ENV !== 'development') return null;
+  return <AskableInspector events={['click']} position="bottom-left" />;
 }
 ```
 
@@ -95,6 +88,20 @@ export default function Layout({ children }) {
       {process.env.NODE_ENV === 'development' && <DevInspector />}
     </>
   );
+}
+```
+
+If your React app uses a custom `ctx`, `name`, `events`, or `viewport` setting, pass the same values to `<AskableInspector />` so the panel follows the same context instead of falling back to the default click/hover/focus observer.
+
+```tsx
+const ctx = createAskableContext();
+ctx.observe(document, { events: ['click'] });
+
+function DevInspector() {
+  useAskable({ ctx });
+  return process.env.NODE_ENV === 'development'
+    ? <AskableInspector ctx={ctx} />
+    : null;
 }
 ```
 

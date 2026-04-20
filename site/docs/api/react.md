@@ -40,6 +40,41 @@ import { Askable } from '@askable-ui/react';
 | `ref` | `Ref<HTMLElement>` | — | Forwarded to the underlying element |
 | ...rest | | | All other props forwarded to the element |
 
+### `AskableInspector(props?)`
+
+Declarative React wrapper around `createAskableInspector()`.
+
+```tsx
+import { AskableInspector } from '@askable-ui/react';
+
+// Match a click-only shared React context
+<AskableInspector events={['click']} />
+```
+
+**Props:**
+- all core `AskableInspectorOptions` props such as `position`, `highlight`, and `promptOptions`
+- `ctx?: AskableContext` — reuse an explicit context
+- `name?: string` — match a named shared React context
+- `events?: AskableEvent[]` — match a shared React event configuration
+- `viewport?: boolean` — match a shared viewport-aware React context
+
+When you are already using `useAskable({ events: [...] })`, pass the same `events` (or the same `ctx`) to `<AskableInspector />` so the dev panel tracks the same context instead of silently falling back to the default click/hover/focus observer.
+
+```tsx
+function DashboardDevTools() {
+  useAskable({ events: ['click'] });
+
+  return (
+    <>
+      {/* app UI */}
+      {process.env.NODE_ENV === 'development' && (
+        <AskableInspector events={['click']} position="bottom-left" />
+      )}
+    </>
+  );
+}
+```
+
 ---
 
 ## `useAskable(options?)`
