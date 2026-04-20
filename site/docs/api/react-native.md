@@ -89,6 +89,27 @@ const { focus, promptContext, ctx } = useAskable();
 | `promptContext` | `string` | Natural-language context string for your LLM prompt |
 | `ctx` | `AskableContext` | Full context instance for `push()`, `clear()`, `toHistoryContext()`, etc. |
 
+### Inspector
+
+React Native does **not** use the floating browser overlay inspector. `createAskableInspector()` is DOM-based, so it is only relevant on web targets.
+
+For React Native development, the equivalent debugging pattern is to inspect `focus`, `promptContext`, and `ctx.toHistoryContext()` directly in your own debug UI or logs:
+
+```tsx
+function AskableDebugPanel() {
+  const { focus, promptContext } = useAskable();
+
+  return __DEV__ ? (
+    <View>
+      <Text>{focus ? JSON.stringify(focus.meta) : 'No focus yet'}</Text>
+      <Text>{promptContext}</Text>
+    </View>
+  ) : null;
+}
+```
+
+If you share a custom `ctx` across a screen, read from that same `ctx` in your debug panel so the mobile debugging surface reflects the same Askable context as your press/visibility helpers.
+
 ### Shared vs private/custom contexts
 
 React Native differs from the web adapters: `useAskable()` creates a **private** context per hook call unless you provide `ctx`.
