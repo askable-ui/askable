@@ -34,6 +34,7 @@
   <a href="#features">Features</a> &nbsp;·&nbsp;
   <a href="#packages">Packages</a> &nbsp;·&nbsp;
   <a href="https://askable-ui.com/docs/">Docs</a> &nbsp;·&nbsp;
+  <a href="https://askable-ui.com/docs/guide/agents">Agent Templates</a> &nbsp;·&nbsp;
   <a href="https://askable-mu.vercel.app/">Live Demo</a>
 </p>
 
@@ -135,6 +136,7 @@ askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it
 - **Viewport awareness** — `ctx.getVisibleElements()` / `ctx.toViewportContext()` for on-screen context
 - **Redaction hooks** — strip sensitive fields before data reaches serialization
 - **Inspector panel** — `<AskableInspector />` or `useAskable({ inspector: true })` for a live dev overlay
+- **Agent templates** — reusable `AGENTS.md` guidance and copy-paste prompts for coding-agent-driven adoption
 - **Lightweight core** — zero runtime dependencies
 
 ---
@@ -255,6 +257,12 @@ ctx.on('focus', () => {
 | [React](https://askable-ui.com/docs/guide/react) · [Vue](https://askable-ui.com/docs/guide/vue) · [Svelte](https://askable-ui.com/docs/guide/svelte) | Framework guides |
 | [CopilotKit integration](https://askable-ui.com/docs/guide/copilotkit) | Context-in-input pattern |
 | [API reference](https://askable-ui.com/docs/api/core) | Full type docs |
+
+---
+
+## Using with coding agents
+
+[`AGENTS.md`](./AGENTS.md) contains copy-pasteable instructions for Claude, Cursor, Codex, and similar tools. Drop it into your project root and your coding agent will know how to integrate `askable-ui` correctly — annotation patterns, passive vs explicit flows, sanitization, and common mistakes.
 
 ---
 
