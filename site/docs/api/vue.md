@@ -78,6 +78,35 @@ const { focus } = useAskable({ events: ['click'] });
 // {{ promptContext }} in template
 ```
 
+### Inspector
+
+Vue can mount the inspector through `useAskable({ inspector: ... })` so the panel follows the same composable-managed context.
+
+```ts
+const { focus } = useAskable({
+  events: ['click'],
+  inspector: {
+    position: 'bottom-left',
+  },
+});
+```
+
+Use this in development only. If you need a custom context, create it yourself and pass `ctx`:
+
+```ts
+import { createAskableContext } from '@askable-ui/core';
+
+const panelCtx = createAskableContext();
+panelCtx.observe(panelEl, { events: ['hover'] });
+
+const askable = useAskable({
+  ctx: panelCtx,
+  inspector: true,
+});
+```
+
+When combining custom `events` with the inspector, prefer `useAskable({ inspector: true, events: [...] })` so the dev panel and your Vue UI share the same context.
+
 ### Shared vs private/custom contexts
 
 Vue mirrors the React adapter's context model:

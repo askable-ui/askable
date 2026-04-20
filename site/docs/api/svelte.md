@@ -86,6 +86,35 @@ $: console.log($promptContext);
 const store = createAskableStore({ events: ['click'] });
 ```
 
+### Inspector
+
+Svelte can mount the inspector through `createAskableStore({ inspector: ... })`.
+
+```ts
+import { createAskableStore } from '@askable-ui/svelte';
+
+const askable = createAskableStore({
+  events: ['click'],
+  inspector: {
+    position: 'bottom-left',
+  },
+});
+```
+
+Because `createAskableStore()` creates a private context by default, the inspector automatically follows that store's context. If you want multiple components or stores to share one inspector/context, pass the same explicit `ctx` to each store:
+
+```ts
+import { createAskableContext } from '@askable-ui/core';
+
+const sharedCtx = createAskableContext();
+sharedCtx.observe(document, { events: ['hover'] });
+
+const chartStore = createAskableStore({ ctx: sharedCtx, inspector: true });
+const chatStore = createAskableStore({ ctx: sharedCtx });
+```
+
+Remember to call `destroy()` so the inspector panel is removed when the component/store is torn down.
+
 ### Shared vs private/custom contexts
 
 Svelte differs from the React/Vue adapters: `createAskableStore()` creates a **private** `AskableContext` per store by default.
