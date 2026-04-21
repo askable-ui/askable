@@ -160,7 +160,32 @@ export function buildFocus(
 }
 
 const ALL_EVENTS: AskableEvent[] = ['click', 'hover', 'focus'];
-const OBSERVED_ATTRIBUTES = ['data-askable', 'data-askable-text', 'data-askable-priority', 'data-askable-scope', 'data-askable-parent'] as const;
+const OBSERVED_ATTRIBUTES = ['data-askable', 'data-askable-text', 'data-askable-priority', 'data-askable-scope', 'data-askable-parent', 'data-askable-events'] as const;
+
+type AskableElementEventOverride = AskableEvent[] | 'manual' | null;
+
+function parseElementEventOverride(el: HTMLElement): AskableElementEventOverride {
+  const raw = el.getAttribute('data-askable-events');
+  if (raw === null) return null;
+
+  const normalized = raw.trim();
+  if (!normalized) return null;
+  if (normalized === 'manual') return 'manual';
+
+  const values = normalized
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value): value is AskableEvent => ALL_EVENTS.includes(value as AskableEvent));
+
+  return values.length > 0 ? ALL_EVENTS.filter((event) => values.includes(event)) : null;
+}
+
+function resolveInteractionEvent(eventType: string, activeEvents: AskableEvent[]): AskableEvent | null {
+  if (eventType === 'focus' && activeEvents.includes('focus')) return 'focus';
+  if (isHoverInteraction(eventType, activeEvents)) return 'hover';
+  if (eventType === 'click' && activeEvents.includes('click')) return 'click';
+  return null;
+}
 
 export class Observer {
   private root: HTMLElement | Document | null = null;
@@ -289,7 +314,14 @@ export class Observer {
       }
     }
 
-    const isHover = isHoverInteraction(event.type, this.activeEvents);
+    const interactionEvent = resolveInteractionEvent(event.type, this.activeEvents);
+    if (!interactionEvent) return;
+
+    const elementEventOverride = parseElementEventOverride(el);
+    if (elementEventOverride === 'manual') return;
+    if (elementEventOverride && !elementEventOverride.includes(interactionEvent)) return;
+
+    const isHover = interactionEvent === 'hover';
 
     if (isHover && this.hoverDebounce > 0) {
       if (this.hoverTimer !== null) clearTimeout(this.hoverTimer);

@@ -606,5 +606,58 @@ describe('Observer', () => {
 
       obs.unobserve();
     });
+
+    it('respects per-element manual activation overrides', () => {
+      const el = attach(makeEl({ id: 'manual-only' }, 'Manual only'));
+      el.setAttribute('data-askable-events', 'manual');
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document);
+
+      el.click();
+      el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+      el.focus();
+
+      expect(onFocus).not.toHaveBeenCalled();
+
+      obs.unobserve();
+    });
+
+    it('respects per-element hover-only activation overrides', () => {
+      const el = attach(makeEl({ id: 'hover-only-override' }, 'Hover only override'));
+      el.setAttribute('data-askable-events', 'hover');
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document);
+
+      el.click();
+      expect(onFocus).not.toHaveBeenCalled();
+
+      el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+      expect(onFocus).toHaveBeenCalledOnce();
+      expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'hover-only-override' });
+
+      obs.unobserve();
+    });
+
+    it('respects per-element click-only activation overrides', () => {
+      const el = attach(makeEl({ id: 'click-only-override' }, 'Click only override'));
+      el.setAttribute('data-askable-events', 'click');
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document);
+
+      el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+      expect(onFocus).not.toHaveBeenCalled();
+
+      el.click();
+      expect(onFocus).toHaveBeenCalledOnce();
+      expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'click-only-override' });
+
+      obs.unobserve();
+    });
   });
 });

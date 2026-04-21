@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { useEffect } from 'react';
 import { createAskableContext } from '@askable-ui/core';
 import type { AskableContext } from '@askable-ui/core';
+import { Askable } from '../Askable';
 import { useAskable } from '../useAskable';
 
 function Consumer({
@@ -368,6 +369,78 @@ describe('useAskable', () => {
     });
 
     clickView.unmount();
+  });
+
+  it('supports per-component activation overrides within one shared context', async () => {
+    function MixedActivationConsumer() {
+      const { focus, ctx } = useAskable();
+      return (
+        <>
+          <span data-testid="mixed-focus">{focus ? JSON.stringify(focus.meta) : 'null'}</span>
+          <button
+            data-testid="manual-trigger"
+            onClick={() => {
+              const el = document.querySelector('[data-testid="manual-card"]') as HTMLElement | null;
+              if (el) ctx.select(el);
+            }}
+          >
+            Ask AI
+          </button>
+        </>
+      );
+    }
+
+    const view = render(
+      <>
+        <Askable meta={{ widget: 'hover-card' }} events={['hover']} data-testid="hover-card">
+          Hover card
+        </Askable>
+        <Askable meta={{ widget: 'click-card' }} events={['click']} data-testid="click-card">
+          Click card
+        </Askable>
+        <Askable meta={{ widget: 'manual-card' }} events="manual" data-testid="manual-card">
+          Manual card
+        </Askable>
+        <MixedActivationConsumer />
+      </>
+    );
+    await flushMicrotasks();
+
+    act(() => {
+      screen.getByTestId('hover-card').dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mixed-focus').textContent).toContain('hover-card');
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('hover-card'));
+    });
+    expect(screen.getByTestId('mixed-focus').textContent).toContain('hover-card');
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('click-card'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mixed-focus').textContent).toContain('click-card');
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('manual-card'));
+    });
+    expect(screen.getByTestId('mixed-focus').textContent).toContain('click-card');
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('manual-trigger'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mixed-focus').textContent).toContain('manual-card');
+    });
+
+    view.unmount();
   });
 
   it('updates shared hook-managed focus on hover-only events', async () => {

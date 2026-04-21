@@ -61,6 +61,22 @@ describe('Askable', () => {
     expect(el.getAttribute('data-askable-scope')).toBe('analytics');
   });
 
+  it('sets data-askable-events when component-level activation events are provided', () => {
+    const { container } = render(
+      <Askable meta={{ widget: 'revenue' }} events={['hover', 'focus']}>Revenue Chart</Askable>
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.getAttribute('data-askable-events')).toBe('hover,focus');
+  });
+
+  it('supports a manual activation mode for explicit button-driven flows', () => {
+    const { container } = render(
+      <Askable meta={{ widget: 'revenue' }} events="manual">Revenue Chart</Askable>
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.getAttribute('data-askable-events')).toBe('manual');
+  });
+
   it('supports nested Askable wrappers that form a DOM hierarchy', () => {
     const { container } = render(
       <Askable meta={{ view: 'dashboard' }}>

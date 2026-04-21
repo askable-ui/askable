@@ -25,6 +25,14 @@ import { Askable } from '@askable-ui/react';
   <RevenueChart />
 </Askable>
 
+<Askable meta={{ metric: 'pipeline' }} events={['hover']}>
+  <PipelineChart />
+</Askable>
+
+<Askable meta={{ metric: 'revenue' }} events="manual">
+  <RevenueCard />
+</Askable>
+
 <Askable meta="main navigation" as="nav">
   <NavLinks />
 </Askable>
@@ -36,9 +44,38 @@ import { Askable } from '@askable-ui/react';
 |---|---|---|---|
 | `meta` | `Record<string, unknown> \| string` | — | Value for `data-askable` attribute |
 | `scope` | `string` | — | Optional category written to `data-askable-scope` for scoped prompt/history queries |
+| `events` | `AskableEvent[] \| 'manual'` | — | Optional per-component activation override. Use a subset like `['hover']`/`['click']` to narrow passive activation or `'manual'` to disable passive activation entirely |
 | `as` | `keyof JSX.IntrinsicElements` | `"div"` | HTML element to render |
 | `ref` | `Ref<HTMLElement>` | — | Forwarded to the underlying element |
 | ...rest | | | All other props forwarded to the element |
+
+Use `events` on `<Askable>` when one component should behave differently from the surrounding shared context. Typical patterns are hover-only cards, click-only cards, or fully manual cards that are activated through `ctx.select()`.
+
+```tsx
+function MixedDashboard() {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const { ctx } = useAskable();
+
+  return (
+    <>
+      <Askable meta={{ widget: 'pipeline' }} events={['hover']}>
+        <PipelineCard />
+      </Askable>
+
+      <Askable meta={{ widget: 'revenue' }} events={['click']}>
+        <RevenueCard />
+      </Askable>
+
+      <Askable ref={cardRef} meta={{ widget: 'account-summary' }} events="manual">
+        <AccountSummary />
+        <button onClick={() => cardRef.current && ctx.select(cardRef.current)}>
+          Ask AI
+        </button>
+      </Askable>
+    </>
+  );
+}
+```
 
 ### `AskableInspector(props?)`
 

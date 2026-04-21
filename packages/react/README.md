@@ -63,6 +63,10 @@ Renders any element (default: `div`) with a `data-askable` attribute. The `meta`
   <RevenueChart />
 </Askable>
 
+<Askable meta={{ widget: 'pipeline-chart' }} events={['hover']}>
+  <PipelineChart />
+</Askable>
+
 <Askable meta="main navigation" as="nav">
   <NavLinks />
 </Askable>
@@ -71,8 +75,37 @@ Renders any element (default: `div`) with a `data-askable` attribute. The `meta`
 **Props:**
 - `meta` — structured metadata attached to the element (`Record<string, unknown> | string`)
 - `scope` — optional category written to `data-askable-scope` for scoped prompt/history queries
+- `events` — optional per-component activation override (`AskableEvent[] | 'manual'`)
 - `as` — HTML tag to render (default: `"div"`)
 - All other props are forwarded to the underlying element
+
+Use `events` when one annotated component should be hover-only, click-only, or fully manual within the same page/context.
+
+```tsx
+function MixedDashboard() {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const { ctx } = useAskable();
+
+  return (
+    <>
+      <Askable meta={{ widget: 'pipeline' }} events={['hover']}>
+        <PipelineCard />
+      </Askable>
+
+      <Askable meta={{ widget: 'revenue' }} events={['click']}>
+        <RevenueCard />
+      </Askable>
+
+      <Askable ref={cardRef} meta={{ widget: 'account-summary' }} events="manual">
+        <AccountSummary />
+        <button onClick={() => cardRef.current && ctx.select(cardRef.current)}>
+          Ask AI
+        </button>
+      </Askable>
+    </>
+  );
+}
+```
 
 ### `AskableInspector(props?)`
 
