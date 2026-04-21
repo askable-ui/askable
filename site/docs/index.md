@@ -3,13 +3,16 @@ layout: home
 
 hero:
   name: "askable-ui"
-  text: "UI context your LLM can actually use"
-  tagline: Annotate any DOM element with data-askable and instantly turn what the user is looking at into structured, prompt-ready context.
+  text: "Give your AI copilot eyes"
+  tagline: Askable is the UI context layer that works on top of CopilotKit, Vercel AI SDK, and other LLM stacks. Annotate meaningful elements once, then send the user's real focus to your model.
   image:
     src: /avatar.png
     alt: askable-ui
   actions:
     - theme: brand
+      text: Start with CopilotKit
+      link: /guide/copilotkit
+    - theme: alt
       text: Get Started
       link: /guide/getting-started
     - theme: alt
@@ -37,10 +40,10 @@ features:
 
   - icon: 🔌
     title: Works with any LLM
-    details: toPromptContext() returns a plain string — drop it into OpenAI, Anthropic, Vercel AI SDK, CopilotKit, or any LLM pipeline. No vendor lock-in.
+    details: Start with CopilotKit when you want chat UI and actions, or drop Askable into Vercel AI SDK, OpenAI, Anthropic, and other model pipelines. Askable stays the context layer either way.
 ---
 
-> Current npm release: **v0.5.0**.
+> Current npm release: **v0.6.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -58,6 +61,15 @@ features:
     Your browser does not support the video tag.
   </video>
 </div>
+
+## Recommended path
+
+For the fastest route to a production UI copilot:
+
+- use **Askable** for UI context (`promptContext`, `ctx.toHistoryContext()`, `ctx.select()`)
+- use **CopilotKit** for chat UI, actions, and runtime orchestration
+
+Start here: [CopilotKit integration guide](/guide/copilotkit)
 
 ## Quick look
 
