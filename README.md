@@ -5,8 +5,8 @@
 <h1 align="center">askable-ui</h1>
 
 <p align="center">
-  <strong>Give your AI copilot eyes.</strong><br />
-  askable-ui is the UI context layer that works on top of CopilotKit, Vercel AI SDK, OpenAI, and other LLM stacks.
+  <strong>Two lines of code to give your LLM eyes.</strong><br />
+  One attribute. Zero prompt engineering. It knows exactly what the user sees.
 </p>
 
 <p align="center">
@@ -67,16 +67,6 @@ function Dashboard({ kpi }) {
 
 That's it. `promptContext` updates automatically as the user interacts. Pass it to any LLM.
 
-### Recommended starting point: CopilotKit + Askable
-
-If you want the fastest path to a production UI copilot, start with **CopilotKit for chat/actions** and **Askable for UI context**.
-
-- **Askable** gives the agent eyes via `promptContext`, `ctx.toHistoryContext()`, and `ctx.select()`
-- **CopilotKit** gives the agent hands via chat UI, runtime orchestration, and actions
-- Together they cover the full loop: what the user is looking at, plus what the agent can do about it
-
-See the full guide: [CopilotKit integration](https://askable-ui.com/docs/guide/copilotkit)
-
 ---
 
 ## Why
@@ -128,9 +118,7 @@ const result = await streamText({
 
 ## Works with
 
-**Recommended path** — CopilotKit + Askable for UI copilots that need both actions and live UI awareness
-
-**Other LLM SDKs** — Vercel AI SDK · OpenAI · Anthropic · LangChain · any SDK that accepts strings or structured context
+**LLM SDKs** — OpenAI · Anthropic · Vercel AI SDK · CopilotKit · LangChain · any SDK
 
 **Frameworks** — React · Vue 3 · Svelte · Vanilla JS · Next.js · Nuxt · SvelteKit
 
@@ -258,14 +246,6 @@ ctx.on('focus', () => {
 
 ---
 
-## Community
-
-- **GitHub Discussions:** [Share use cases, questions, and integration ideas](https://github.com/askable-ui/askable/discussions)
-- **Issues:** [Report bugs or request features](https://github.com/askable-ui/askable/issues)
-- **Contributing:** [PRs welcome](./CONTRIBUTING.md)
-
----
-
 ## Documentation
 
 **[askable-ui.com/docs](https://askable-ui.com/docs/)**
@@ -273,9 +253,9 @@ ctx.on('focus', () => {
 | Guide | |
 |---|---|
 | [Getting started](https://askable-ui.com/docs/guide/getting-started) | Install, observe, inject |
-| [CopilotKit integration](https://askable-ui.com/docs/guide/copilotkit) | Recommended path for full UI copilots |
 | [Annotating elements](https://askable-ui.com/docs/guide/annotating) | `data-askable`, nesting, priority |
 | [React](https://askable-ui.com/docs/guide/react) · [Vue](https://askable-ui.com/docs/guide/vue) · [Svelte](https://askable-ui.com/docs/guide/svelte) | Framework guides |
+| [CopilotKit integration](https://askable-ui.com/docs/guide/copilotkit) | Context-in-input pattern |
 | [API reference](https://askable-ui.com/docs/api/core) | Full type docs |
 
 ---
