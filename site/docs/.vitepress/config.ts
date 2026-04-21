@@ -51,6 +51,7 @@ export default defineConfig({
           text: 'Introduction',
           items: [
             { text: 'What is askable-ui?', link: '/guide/' },
+            { text: 'What’s New in v6.1.0', link: '/guide/whats-new' },
             { text: 'Getting Started', link: '/guide/getting-started' },
             { text: 'How It Works', link: '/guide/how-it-works' },
           ],

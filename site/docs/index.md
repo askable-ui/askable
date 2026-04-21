@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string — drop it into OpenAI, Anthropic, Vercel AI SDK, CopilotKit, or any LLM pipeline. No vendor lock-in.
 ---
 
-> Current npm release: **v0.5.0**.
+> Current npm release: **v6.1.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -58,6 +58,18 @@ features:
     Your browser does not support the video tag.
   </video>
 </div>
+
+## Latest in v6.1.0
+
+- `ctx.subscribe(callback, options?)` for debounced streaming context updates in `@askable-ui/core`
+- per-component React activation overrides with `events={['hover']}`, `events={['click']}`, or `events="manual"`
+- refreshed docs coverage for streaming AI SDK flows, CopilotKit, shared contexts, and inspector alignment
+
+Start here:
+
+- [What’s New in v6.1.0](/guide/whats-new)
+- [AI SDK integration patterns](/examples/ai-sdk)
+- [CopilotKit guide](/guide/copilotkit)
 
 ## Quick look
 

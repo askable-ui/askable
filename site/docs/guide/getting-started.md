@@ -2,7 +2,7 @@
 
 ## Pick your framework
 
-> Current npm release: **v0.5.0**.
+> Current npm release: **v6.1.0**.
 >
 > Latest docs live at `/docs/`. Version-specific docs are published at `/docs/<version>/` for breaking releases.
 
