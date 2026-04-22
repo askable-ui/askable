@@ -111,3 +111,9 @@ jobs:
           DIST_TAG: ${{ steps.dist-tag.outputs.tag }}
         run: npm publish --access public --provenance --tag "$DIST_TAG"
         working-directory: packages/react-native
+
+      - name: Publish create-askable-app
+        env:
+          DIST_TAG: ${{ steps.dist-tag.outputs.tag }}
+        run: npm publish --provenance --tag "$DIST_TAG"
+        working-directory: packages/create-askable-app

@@ -50,6 +50,15 @@
 npm install @askable-ui/react
 ```
 
+Want a runnable Askable + CopilotKit starter app instead?
+
+```bash
+npx create-askable-app my-app
+cd my-app
+npm install
+npm run dev
+```
+
 ```tsx
 import { Askable, useAskable } from '@askable-ui/react';
 
@@ -150,6 +159,7 @@ askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it
 | [`@askable-ui/react-native`](https://www.npmjs.com/package/@askable-ui/react-native) | [![npm](https://img.shields.io/npm/v/@askable-ui/react-native?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react-native) | React Native (initial press-driven adapter) |
 | [`@askable-ui/vue`](https://www.npmjs.com/package/@askable-ui/vue) | [![npm](https://img.shields.io/npm/v/@askable-ui/vue?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/vue) | Vue 3 |
 | [`@askable-ui/svelte`](https://www.npmjs.com/package/@askable-ui/svelte) | [![npm](https://img.shields.io/npm/v/@askable-ui/svelte?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/svelte) | Svelte 4 & 5 |
+| [`create-askable-app`](https://www.npmjs.com/package/create-askable-app) | npm package | React + Vite + CopilotKit starter scaffold |
 
 <details>
 <summary><strong>Framework quick starts</strong></summary>

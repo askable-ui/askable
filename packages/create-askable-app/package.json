@@ -1,0 +1,32 @@
+{
+  "name": "create-askable-app",
+  "version": "6.1.0",
+  "description": "Scaffold a React + Vite + CopilotKit + askable-ui starter app",
+  "type": "module",
+  "bin": {
+    "create-askable-app": "./bin/create-askable-app.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "template",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/askable-ui/askable.git",
+    "directory": "packages/create-askable-app"
+  },
+  "keywords": [
+    "askable",
+    "copilotkit",
+    "vite",
+    "react",
+    "scaffold"
+  ],
+  "homepage": "https://askable-ui.com",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test"
+  }
+}
