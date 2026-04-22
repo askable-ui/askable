@@ -225,6 +225,40 @@ ctx.clear();
 
 ---
 
+### `subscribe(callback, options?)`
+
+Subscribe to serialized context updates for streaming or long-running AI integrations. The callback receives the latest `ctx.toContext()` output plus the current `AskableFocus | null`. Returns an unsubscribe function.
+
+```ts
+const unsubscribe = ctx.subscribe((context, focus) => {
+  streamTransport.send({
+    type: 'ui-context',
+    context,
+    focusMeta: focus?.meta ?? null,
+  });
+}, {
+  history: 3,
+  debounce: 100,
+});
+
+// later
+unsubscribe();
+```
+
+**Options:**
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `history` | `number` | `0` | Number of history entries to include in the serialized `toContext()` output |
+| `debounce` | `number` | — | Debounce context emissions by N ms |
+| `currentLabel` | `string` | `'Current'` | Label for the current focus section |
+| `historyLabel` | `string` | `'Recent interactions'` | Label for the history section |
+| _...all `AskablePromptContextOptions`_ | | | Passed through to serialization |
+
+Use this when the model/runtime should stay in sync while the user keeps interacting, instead of only reading a one-time snapshot.
+
+---
+
 ### `toPromptContext(options?)`
 
 Serialize the current focus to a prompt-ready string. See [Prompt Serialization](/guide/serialization) for full option details.

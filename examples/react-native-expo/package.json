@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@askable-ui/core": "^0.5.0",
-    "@askable-ui/react-native": "^0.5.0",
+    "@askable-ui/core": "^6.1.0",
+    "@askable-ui/react-native": "^6.1.0",
     "@react-navigation/native": "^7.2.2",
     "@react-navigation/native-stack": "^7.6.2",
     "expo": "^55.0.15",

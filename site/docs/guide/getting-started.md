@@ -6,6 +6,19 @@
 >
 > Latest docs live at `/docs/`. Version-specific docs are published at `/docs/<version>/` for breaking releases.
 
+## Create a starter app
+
+If you want a runnable Askable + CopilotKit example instead of wiring everything by hand, start here:
+
+```bash
+npx create-askable-app my-app
+cd my-app
+npm install
+npm run dev
+```
+
+The scaffold gives you a React + Vite dashboard with `data-askable` annotations, `useAskable()` already connected, a CopilotKit sidebar, and a local `@copilotkit/runtime` server.
+
 ::: code-group
 
 ```bash [React]
