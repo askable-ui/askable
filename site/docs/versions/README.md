@@ -2,10 +2,10 @@
 
 This directory stores frozen **built** docs snapshots for archived major versions.
 
-The current release (`v0.6.1`) is built on every deploy and published to both:
+The current release (`v0.6.2`) is built on every deploy and published to both:
 
 - `/docs/` (latest stable)
-- `/docs/v0.6.1/` (version-specific URL)
+- `/docs/v0.6.2/` (version-specific URL)
 
 ## How it works
 
