@@ -104,12 +104,14 @@ describe('createAskableStore', () => {
     expect(latestFocus).not.toBeNull();
     expect((latestFocus as any).meta).toEqual({ scope: 'provided' });
 
-    unsub();
+    const firstFocus = latestFocus;
     // destroy() should not call ctx.destroy() when ctx is provided
     store.destroy();
-    el.click(); // scopedCtx should still be alive
-    expect((latestFocus as any).meta).toEqual({ scope: 'provided' });
+    scopedCtx.push({ scope: 'after-destroy' }, 'After destroy');
+    expect(latestFocus).toBe(firstFocus);
+    expect(scopedCtx.getFocus()?.meta).toEqual({ scope: 'after-destroy' });
 
+    unsub();
     scopedCtx.destroy();
   });
 });
