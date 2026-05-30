@@ -24,8 +24,11 @@ export function createAskableStore(options?: AskableStoreOptions) {
   }
 
   const _focus = writable<AskableFocus | null>(null);
-  ctx.on('focus', (f) => _focus.set(f));
-  ctx.on('clear', () => _focus.set(null));
+  const handleFocus = (focus: AskableFocus) => _focus.set(focus);
+  const handleClear = () => _focus.set(null);
+
+  ctx.on('focus', handleFocus);
+  ctx.on('clear', handleClear);
 
   const focus = readonly(_focus);
   const promptContext = derived(_focus, () => ctx.toPromptContext());
@@ -36,8 +39,14 @@ export function createAskableStore(options?: AskableStoreOptions) {
     inspectorHandle = createAskableInspector(ctx, inspectorOpts);
   }
 
+  let destroyed = false;
   function destroy() {
+    if (destroyed) return;
+    destroyed = true;
+
     inspectorHandle?.destroy();
+    ctx.off('focus', handleFocus);
+    ctx.off('clear', handleClear);
     if (!usesProvidedCtx) {
       ctx.destroy();
     }

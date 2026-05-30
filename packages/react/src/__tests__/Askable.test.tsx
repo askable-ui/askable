@@ -1,3 +1,4 @@
+import { createRef } from 'react';
 import { render } from '@testing-library/react';
 import { Askable } from '../Askable';
 
@@ -51,6 +52,16 @@ describe('Askable', () => {
     expect(el.id).toBe('chart-wrapper');
     expect(el.className).toBe('panel');
     expect(el.getAttribute('data-testid')).toBe('fwd');
+  });
+
+  it('forwards refs to the rendered element', () => {
+    const ref = createRef<HTMLElement>();
+    const meta = { widget: 'manual' };
+
+    render(<Askable ref={ref} meta={meta}>Manual</Askable>);
+
+    expect(ref.current).toBeInstanceOf(HTMLElement);
+    expect(ref.current?.getAttribute('data-askable')).toBe(JSON.stringify(meta));
   });
 
   it('sets data-askable-scope when scope is provided', () => {

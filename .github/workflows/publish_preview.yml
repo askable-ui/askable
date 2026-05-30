@@ -48,4 +48,4 @@ jobs:
         run: npm run build --workspaces --if-present
 
       - name: Publish preview packages
-        run: npx pkg-pr-new publish ./packages/core ./packages/react ./packages/vue ./packages/svelte
+        run: npx pkg-pr-new publish ./packages/core ./packages/react ./packages/vue ./packages/svelte ./packages/react-native ./packages/create-askable-app

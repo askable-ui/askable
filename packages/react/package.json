@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/react",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "React bindings for askable — LLM-aware UI context",
   "type": "module",
   "main": "./dist/index.js",
@@ -40,21 +40,17 @@
     "react-dom": ">=17.0.0"
   },
   "dependencies": {
-    "@askable-ui/core": "^0.6.1"
+    "@askable-ui/core": "^0.6.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",
-    "@testing-library/react": "^15.0.0",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
     "jsdom": "^29.0.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
-  },
-  "overrides": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
   }
 }
