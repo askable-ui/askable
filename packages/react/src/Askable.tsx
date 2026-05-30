@@ -10,19 +10,20 @@ type AskableProps<T extends AnyTag = 'div'> = {
   events?: AskableActivation;
   as?: T;
   children?: React.ReactNode;
-} & Omit<React.JSX.IntrinsicElements[T], 'children'>;
+} & Omit<React.JSX.IntrinsicElements[T], 'children' | 'ref'>;
 
-export function Askable<T extends AnyTag = 'div'>({
-  meta,
-  scope,
-  events,
-  as,
-  children,
-  ...props
-}: AskableProps<T>) {
+type AskableComponent = <T extends AnyTag = 'div'>(
+  props: AskableProps<T> & { ref?: React.Ref<HTMLElement> }
+) => React.ReactElement | null;
+
+const AskableImpl = <T extends AnyTag = 'div'>(
+  { meta, scope, events, as, children, ...props }: AskableProps<T>,
+  ref: React.Ref<HTMLElement>
+) => {
   const Tag = (as ?? 'div') as string;
   const dataAskable = typeof meta === 'string' ? meta : JSON.stringify(meta);
   const dataAskableEvents = Array.isArray(events) ? events.join(',') : events;
+
   return React.createElement(
     Tag,
     {
@@ -30,7 +31,10 @@ export function Askable<T extends AnyTag = 'div'>({
       ...(scope ? { 'data-askable-scope': scope } : {}),
       ...(dataAskableEvents ? { 'data-askable-events': dataAskableEvents } : {}),
       ...props,
+      ref,
     },
     children
   );
-}
+};
+
+export const Askable = React.forwardRef(AskableImpl) as AskableComponent;
