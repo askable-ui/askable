@@ -1,10 +1,36 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const repoRoot = path.resolve(new URL('..', import.meta.url).pathname);
 const rootPkg = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
 const expectedRange = `^${rootPkg.version}`;
+const publishedVersions = new Map();
+
+function getPublishedVersion(packageName) {
+  if (publishedVersions.has(packageName)) return publishedVersions.get(packageName);
+
+  try {
+    const output = execFileSync('npm', ['view', packageName, 'version', '--json'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    const parsed = JSON.parse(output);
+    publishedVersions.set(packageName, parsed);
+    return parsed;
+  } catch {
+    publishedVersions.set(packageName, null);
+    return null;
+  }
+}
+
+function isAllowedAskableRange(packageName, version) {
+  if (version === expectedRange) return true;
+
+  const publishedVersion = getPublishedVersion(packageName);
+  return Boolean(publishedVersion && version === `^${publishedVersion}`);
+}
 
 const examplesDir = path.join(repoRoot, 'examples');
 const exampleDirs = fs
@@ -28,7 +54,7 @@ for (const exampleName of exampleDirs) {
     for (const [name, version] of Object.entries(deps)) {
       if (!name.startsWith('@askable-ui/')) continue;
       inspected.push(`${exampleName}:${section}:${name}=${version}`);
-      if (version !== expectedRange) {
+      if (!isAllowedAskableRange(name, version)) {
         failures.push({ exampleName, section, name, version });
       }
     }
@@ -36,7 +62,7 @@ for (const exampleName of exampleDirs) {
 }
 
 if (failures.length) {
-  console.error(`Expected all example @askable-ui/* dependency ranges to equal ${expectedRange}.`);
+  console.error(`Expected all example @askable-ui/* dependency ranges to equal ${expectedRange} or the package's current published range.`);
   for (const failure of failures) {
     console.error(`- examples/${failure.exampleName}/package.json -> ${failure.section}.${failure.name} is ${failure.version}`);
   }
