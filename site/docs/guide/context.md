@@ -118,6 +118,9 @@ const capture = createAskableRegionCapture(ctx, {
   shape: 'lasso',
   intent: 'explain this selected chart segment',
   includeViewport: true,
+  theme: {
+    lassoStrokeWidth: 4,
+  },
   onCapture: (packet) => {
     sendToAgent(packet);
   },
@@ -129,7 +132,9 @@ capture.start();
 The resulting packet uses `capture.mode` of `region`, `circle`, or `lasso`,
 sets `privacy.consent` to `explicit`, and places the selected bounds on
 `target.bounds`. Lasso packets also include the freehand path in
-`target.metadata.points`.
+`target.metadata.points`. The default lasso overlay uses a solid gradient
+freehand stroke; pass `theme` to adjust overlay colors, selection fill/stroke,
+or lasso line styling.
 
 Framework apps can use wrapper APIs instead:
 

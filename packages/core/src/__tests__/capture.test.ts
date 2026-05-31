@@ -154,6 +154,80 @@ describe('createAskableRegionCapture', () => {
     ctx.destroy();
   });
 
+  it('uses the default AI lasso theme for lasso capture', () => {
+    const ctx = createAskableContext();
+    const capture = createAskableRegionCapture(ctx, {
+      shape: 'lasso',
+      once: false,
+    });
+
+    capture.start();
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 30, 45));
+
+    const lasso = overlay.querySelector('[data-askable-region-capture-selection="lasso"]')!;
+    const gradient = lasso.querySelector('linearGradient')!;
+    const polyline = lasso.querySelector('polyline')!;
+    const stops = Array.from(gradient.querySelectorAll('stop')).map((stop) => ({
+      offset: stop.getAttribute('offset'),
+      color: stop.getAttribute('stop-color'),
+    }));
+
+    expect(overlay.style.background).toBe('rgba(15, 23, 42, 0.08)');
+    expect(polyline.getAttribute('fill')).toBe('none');
+    expect(polyline.getAttribute('stroke')).toBe('url(#askable-region-capture-lasso-gradient)');
+    expect(polyline.getAttribute('stroke-width')).toBe('3');
+    expect(polyline.style.filter).toBe('drop-shadow(0 0 8px rgba(79,70,229,0.35))');
+    expect(stops).toEqual([
+      { offset: '0%', color: '#06b6d4' },
+      { offset: '38%', color: '#4f46e5' },
+      { offset: '70%', color: '#a855f7' },
+      { offset: '100%', color: '#22c55e' },
+    ]);
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
+  it('allows consumers to theme lasso capture styling', () => {
+    const ctx = createAskableContext();
+    const capture = createAskableRegionCapture(ctx, {
+      shape: 'lasso',
+      once: false,
+      theme: {
+        overlayBackground: 'rgba(0,0,0,0.2)',
+        lassoGradientStops: [
+          { offset: '0%', color: '#111111' },
+          { offset: '100%', color: '#eeeeee' },
+        ],
+        lassoStrokeWidth: 5,
+        lassoGlowColor: 'rgba(255,0,0,0.45)',
+        lassoGlowRadius: 14,
+      },
+    });
+
+    capture.start();
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 30, 45));
+
+    const lasso = overlay.querySelector('[data-askable-region-capture-selection="lasso"]')!;
+    const gradient = lasso.querySelector('linearGradient')!;
+    const polyline = lasso.querySelector('polyline')!;
+    const stops = Array.from(gradient.querySelectorAll('stop')).map((stop) => stop.getAttribute('stop-color'));
+
+    expect(overlay.style.background).toBe('rgba(0, 0, 0, 0.2)');
+    expect(polyline.getAttribute('stroke-width')).toBe('5');
+    expect(polyline.style.filter).toBe('drop-shadow(0 0 14px rgba(255,0,0,0.45))');
+    expect(stops).toEqual(['#111111', '#eeeeee']);
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
   it('cancels selections smaller than the minimum size', () => {
     const ctx = createAskableContext();
     const onCapture = vi.fn();

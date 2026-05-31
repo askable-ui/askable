@@ -1,16 +1,20 @@
-# What’s New in v0.11.0
+# What’s New in v0.11.1
 
-askable-ui v0.11.0 adds lasso capture, so users can freehand-select irregular
-areas of the page and send the shape to agents as structured Context packets.
+askable-ui v0.11.1 refines explicit selection capture, so users can freehand
+lasso irregular areas, keep selected text highlighted, and send richer page
+context to agents.
 
 ## Highlights
 
-### Freehand lasso Context packets
+### Freehand lasso selection
 
-`createAskableRegionCapture()` now accepts `shape: 'lasso'`. Lasso packets use
-`capture.mode: 'lasso'`, set explicit consent, include the selected bounds in
-`target.bounds`, and include the freehand point path in
-`target.metadata.points`.
+`createAskableRegionCapture()` supports `shape: 'lasso'`. Lasso packets use
+`capture.mode: 'lasso'`, set explicit consent, include selected bounds in
+`target.bounds`, and include the freehand point path in `target.metadata.points`.
+The overlay now renders as a solid gradient stroke instead of a dotted region,
+which makes it feel closer to a cursor-drawn visual selection.
+That gradient stroke is the library default, and apps can tune it with the
+`theme` option instead of rebuilding the overlay.
 
 ```ts
 import { createAskableContext, createAskableRegionCapture } from '@askable-ui/core';
@@ -22,6 +26,9 @@ const capture = createAskableRegionCapture(ctx, {
   shape: 'lasso',
   includeViewport: true,
   intent: 'answer using this freehand-selected region',
+  theme: {
+    lassoStrokeWidth: 4,
+  },
   onCapture: (packet) => sendToAgent(packet),
 });
 
@@ -47,13 +54,13 @@ Askable now covers four explicit user selection patterns:
 - lasso an irregular shape with `shape: 'lasso'`
 - highlight copy with `createAskableTextSelectionCapture()`
 
-All three produce the same versioned Context packet format for MCP bridges,
+All four produce the same versioned Context packet format for MCP bridges,
 browser tools, and agent runtimes.
 
 ### Starter and docs version alignment
 
-`npm create @askable-ui/app` now scaffolds projects pinned to `^0.11.0`, and the
-versioned docs have been advanced to `/docs/v0.11.0/`.
+`npm create @askable-ui/app` now scaffolds projects pinned to `^0.11.1`, and the
+versioned docs have been advanced to `/docs/v0.11.1/`.
 
 ## Recommended next step
 
@@ -65,7 +72,7 @@ If you are integrating Askable into an AI or agent runtime, start here:
 
 ## Version note
 
-The current published docs track **v0.11.0** at both:
+The current published docs track **v0.11.1** at both:
 
 - `/docs/`
-- `/docs/v0.11.0/`
+- `/docs/v0.11.1/`

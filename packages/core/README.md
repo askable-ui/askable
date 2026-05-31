@@ -57,6 +57,10 @@ const capture = createAskableRegionCapture(ctx, {
   shape: 'lasso',
   intent: 'explain this selected area',
   includeViewport: true,
+  theme: {
+    lassoStrokeWidth: 4,
+    lassoGlowRadius: 12,
+  },
   onCapture(packet) {
     sendToAgent(packet);
   },
@@ -68,6 +72,8 @@ capture.start();
 The packet uses `capture.mode` of `region`, `circle`, or `lasso`, marks consent
 as explicit, and includes the selected geometry in `target.bounds`. Lasso
 captures also include `target.metadata.points` for the freehand path.
+The built-in lasso overlay uses a solid gradient freehand stroke by default;
+pass `theme` to align the overlay with your app.
 
 ## Text Selection Capture
 

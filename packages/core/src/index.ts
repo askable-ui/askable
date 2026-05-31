@@ -29,10 +29,12 @@ export type {
 } from './inspector.js';
 export type {
   AskableRegionCaptureHandle,
+  AskableRegionCaptureGradientStop,
   AskableRegionCaptureOptions,
   AskableRegionCapturePoint,
   AskableRegionCaptureSelection,
   AskableRegionCaptureShape,
+  AskableRegionCaptureTheme,
 } from './capture.js';
 export type {
   AskableTextSelectionCaptureHandle,

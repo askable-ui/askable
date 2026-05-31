@@ -21,6 +21,16 @@ export function AskableInteractionToolbar() {
   const { ctx } = useAskable({ inspector: true })
   const [status, setStatus] = useState("Use a tool to send explicit page context to the chat.")
 
+  function pauseImplicitFocus() {
+    ctx.unobserve()
+  }
+
+  function resumeImplicitFocus() {
+    if (typeof document !== "undefined") {
+      ctx.observe(document, { events: ["click", "hover", "focus"] })
+    }
+  }
+
   const region = useAskableRegionCapture({
     ctx,
     includeViewport: true,
@@ -39,9 +49,11 @@ export function AskableInteractionToolbar() {
         label,
       )
       setStatus(label)
+      resumeImplicitFocus()
     },
     onCancel() {
       setStatus("Selection cancelled.")
+      resumeImplicitFocus()
     },
   })
 
@@ -60,19 +72,29 @@ export function AskableInteractionToolbar() {
         label,
       )
       setStatus(`Sent ${selection.text.length} selected characters to chat context.`)
+      resumeImplicitFocus()
+    },
+    onCancel() {
+      setStatus("Text selection cancelled.")
+      resumeImplicitFocus()
     },
   })
 
   const active = region.active || text.active
 
-  function captureText() {
-    const packet = text.captureNow({
+  function startTextSelection() {
+    pauseImplicitFocus()
+    text.start({
       dedupe: false,
+      once: true,
       intent: "answer using this highlighted text",
     })
-    if (!packet) {
-      setStatus("Highlight text on the page first, then send it as context.")
-    }
+    setStatus("Highlight text on the page to send it as explicit context.")
+  }
+
+  function startRegion(shape: "region" | "circle" | "lasso", intent: string) {
+    pauseImplicitFocus()
+    region.start({ shape, intent })
   }
 
   return (
@@ -81,7 +103,7 @@ export function AskableInteractionToolbar() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => region.start({ shape: "region", intent: "answer using this selected page region" })}
+          onClick={() => startRegion("region", "answer using this selected page region")}
         >
           <MousePointerClick className="h-3.5 w-3.5" />
           Region
@@ -89,7 +111,7 @@ export function AskableInteractionToolbar() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => region.start({ shape: "circle", intent: "answer using this circled area" })}
+          onClick={() => startRegion("circle", "answer using this circled area")}
         >
           <CircleIcon className="h-3.5 w-3.5" />
           Circle
@@ -97,14 +119,14 @@ export function AskableInteractionToolbar() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => region.start({ shape: "lasso", intent: "answer using this lassoed area" })}
+          onClick={() => startRegion("lasso", "answer using this lassoed area")}
         >
           <Pointer className="h-3.5 w-3.5" />
           Lasso
         </Button>
-        <Button variant="outline" size="sm" onClick={captureText}>
+        <Button variant="outline" size="sm" onClick={startTextSelection}>
           <MousePointer className="h-3.5 w-3.5" />
-          Send text
+          Text selection
         </Button>
         {active && (
           <Button
@@ -113,6 +135,7 @@ export function AskableInteractionToolbar() {
             onClick={() => {
               region.cancel()
               text.cancel()
+              resumeImplicitFocus()
             }}
           >
             <X className="h-3.5 w-3.5" />

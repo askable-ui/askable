@@ -296,6 +296,10 @@ function DashboardCapture() {
   const capture = useAskableRegionCapture({
     ctx,
     includeViewport: true,
+    theme: {
+      lassoStrokeWidth: 4,
+      lassoGlowRadius: 12,
+    },
     onCapture(packet) {
       sendToAgent(packet);
     },
@@ -325,6 +329,7 @@ function DashboardCapture() {
 | `shape` | `'region' \| 'circle' \| 'lasso'` | Default shape for `start()` |
 | `minSize` | `number` | Minimum accepted width/height in CSS pixels |
 | `once` | `boolean` | Remove the overlay after the first accepted capture |
+| `theme` | `Partial<AskableRegionCaptureTheme>` | Override overlay colors, selection fill/stroke, and lasso gradient/glow styling |
 | `onCapture` | `(packet, selection) => void` | Called when the user completes a selection |
 | `onCancel` | `() => void` | Called when selection is cancelled |
 | `ctx` | `AskableContext` | Reuse an existing context |

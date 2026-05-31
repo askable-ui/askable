@@ -221,6 +221,10 @@ function RegionTools() {
   const capture = useAskableRegionCapture({
     ctx,
     includeViewport: true,
+    theme: {
+      lassoStrokeWidth: 4,
+      lassoGlowRadius: 12,
+    },
     onCapture(packet) {
       sendToAgent(packet);
     },
@@ -242,6 +246,10 @@ function RegionTools() {
   );
 }
 ```
+
+The lasso overlay ships with a solid gradient freehand stroke. Pass `theme`
+through `useAskableRegionCapture()` to override the overlay, region/circle
+fill, or lasso gradient for your app.
 
 ### Text selection capture
 

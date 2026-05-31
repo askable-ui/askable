@@ -4,15 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>askable-ui — UI context your model can actually use</title>
-  <meta name="description" content="Mark any element with data-askable and turn visible UI state into usable LLM context. React, Vue, Svelte, or plain HTML." />
+  <meta name="description" content="Mark UI, regions, circles, lasso selections, and highlighted text as usable AI context. React, Vue, Svelte, or plain HTML." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://askable-ui.com/" />
   <meta property="og:title" content="askable-ui — UI context your model can actually use" />
-  <meta property="og:description" content="Mark any element with data-askable and turn visible UI state into usable LLM context. React, Vue, Svelte, or plain HTML." />
+  <meta property="og:description" content="Mark UI, regions, circles, lasso selections, and highlighted text as usable AI context. React, Vue, Svelte, or plain HTML." />
   <meta property="og:image" content="https://askable-ui.com/social.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="askable-ui — UI context your model can actually use" />
-  <meta name="twitter:description" content="One attribute. Real context. Your model knows what just caught their eye." />
+  <meta name="twitter:description" content="Element focus, region capture, lasso, circle, and selected text as context your model can use." />
   <meta name="twitter:image" content="https://askable-ui.com/social.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -192,6 +192,13 @@
     .install-cmd:hover { border-color: rgba(0,0,0,0.18); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.07); }
     .copy-icon { color: var(--ink-3); font-size: .75rem; }
     .hero-meta { display: flex; flex-wrap: wrap; gap: 1.25rem; font-size: .82rem; color: var(--ink-3); }
+    .hero-patterns { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.25rem; }
+    .hero-pattern-pill {
+      display: inline-flex; align-items: center; gap: .35rem;
+      border: 1px solid rgba(79,70,229,0.15); background: rgba(79,70,229,0.06);
+      color: #3730a3; border-radius: var(--radius-pill); padding: .36rem .7rem;
+      font-size: .75rem; font-weight: 700;
+    }
 
     /* HERO CARD */
     .hero-stage { position: relative; perspective: 1200px; }
@@ -285,17 +292,84 @@
     .insight-card h3 { font-size: 1.04rem; line-height: 1.22; letter-spacing: -.03em; font-weight: 700; margin-bottom: .45rem; }
     .insight-card p { color: var(--ink-2); font-size: .87rem; line-height: 1.62; }
 
+    /* PATTERNS */
+    .pattern-shell {
+      display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+      gap: 1rem; align-items: stretch; margin-top: 2.2rem;
+    }
+    .pattern-copy {
+      border-radius: var(--radius-lg); border: 1px solid var(--line); background: #fff;
+      padding: 1.7rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem;
+    }
+    .pattern-copy h3 { font-size: 1.65rem; line-height: 1.08; letter-spacing: -.045em; }
+    .pattern-copy p { color: var(--ink-2); font-size: .92rem; line-height: 1.65; }
+    .pattern-stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+    .pattern-card {
+      border-radius: 18px; border: 1px solid var(--line); background: #fff;
+      padding: 1rem; transition: transform .16s, border-color .16s, box-shadow .16s;
+    }
+    .pattern-card:hover { transform: translateY(-2px); border-color: rgba(79,70,229,0.18); box-shadow: 0 12px 30px rgba(0,0,0,0.055); }
+    .pattern-icon {
+      width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 12px; background: rgba(79,70,229,0.08); color: var(--accent);
+      font-weight: 850; margin-bottom: .7rem;
+    }
+    .pattern-card h4 { font-size: .96rem; letter-spacing: -.025em; margin-bottom: .35rem; }
+    .pattern-card p { color: var(--ink-2); font-size: .8rem; line-height: 1.55; }
+
     /* DEMO DECK */
     .deck { padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--line); background: #f9fafb; }
     .demo-controls { display: flex; flex-direction: column; align-items: center; gap: .75rem; margin-bottom: 1.35rem; }
     .demo-controls-row { display: flex; justify-content: center; align-items: center; gap: .6rem; flex-wrap: wrap; }
     .toggle-label { color: var(--ink-3); font-size: .82rem; }
     .toggle-group { display: inline-flex; gap: .22rem; padding: .22rem; border-radius: var(--radius-pill); background: #fff; border: 1px solid var(--line); box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .context-option-group { flex-wrap: wrap; justify-content: center; border-radius: 22px; }
     .toggle-btn { border: none; background: transparent; color: var(--ink-3); padding: .45rem .9rem; border-radius: var(--radius-pill); font-size: .82rem; font-weight: 600; cursor: pointer; transition: background .14s, color .14s; }
     .toggle-btn.active { color: var(--ink); background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
 
+    .context-tools { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .45rem; padding-top: .2rem; }
+    .tool-btn {
+      display: inline-flex; align-items: center; gap: .35rem;
+      border: 1px solid rgba(0,0,0,0.1); color: var(--ink-2); background: #fff;
+      border-radius: var(--radius-pill); font-size: .76rem; font-weight: 700;
+      padding: .48rem .82rem; cursor: pointer; transition: transform .13s, box-shadow .13s, border-color .13s;
+    }
+    .tool-btn:hover, .tool-btn.active { transform: translateY(-1px); border-color: rgba(79,70,229,0.24); box-shadow: 0 4px 12px rgba(79,70,229,0.09); color: var(--ink); }
+    .tool-hint { width: 100%; text-align: center; color: var(--ink-3); font-size: .75rem; min-height: 1.2rem; }
+
     .demo-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 336px); gap: 1.15rem; align-items: start; }
-    .dashboard { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+    .dashboard { position: relative; display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+    .selection-layer { position: absolute; inset: -.65rem; z-index: 9; pointer-events: none; border-radius: 28px; overflow: visible; }
+    .dashboard.selecting .selection-layer { pointer-events: auto; cursor: crosshair; }
+    .selection-layer::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      border: 1px dashed rgba(79,70,229,0.22); background: rgba(79,70,229,0.03);
+      opacity: 0; transition: opacity .12s;
+    }
+    .dashboard.selecting .selection-layer::before { opacity: 1; }
+    .selection-drawing {
+      position: absolute; border: 2px solid var(--accent); background: rgba(79,70,229,0.09);
+      box-shadow: 0 10px 28px rgba(79,70,229,0.12); pointer-events: none;
+    }
+    .selection-drawing.circle { border-radius: 999px; }
+    .selection-drawing.lasso { background: transparent; border: none; box-shadow: none; inset: 0; filter: drop-shadow(0 0 10px rgba(79,70,229,0.32)); }
+    .selection-drawing svg { position: absolute; inset: 0; overflow: visible; }
+    .selection-drawing path { fill: rgba(79,70,229,0.08); stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+    .selection-drawing.lasso path {
+      fill: none;
+      stroke: url(#lasso-gradient);
+      stroke-width: 3.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .selection-drawing.lasso .lasso-aura {
+      fill: none;
+      stroke: rgba(14,165,233,0.28);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: blur(1px);
+    }
     .kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
 
     .panel { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; min-width: 0; }
@@ -430,7 +504,8 @@
       .hero-card { position: relative; top: auto; }
       .demo-layout { grid-template-columns: 1fr; }
       .chat-sidebar { position: relative; top: auto; height: 480px; max-height: none; }
-      .insight-grid, .steps { grid-template-columns: 1fr 1fr; }
+      .insight-grid, .steps, .pattern-stack { grid-template-columns: 1fr 1fr; }
+      .pattern-shell { grid-template-columns: 1fr; }
       .pkg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
     }
     @media (max-width: 720px) {
@@ -439,7 +514,7 @@
       .page-shell { padding: 0 1rem 4rem; }
       .hero { padding-top: 3.5rem; }
       .lens-grid, .code-panel, .kpi-grid { grid-template-columns: 1fr; }
-      .insight-grid, .steps { grid-template-columns: 1fr; }
+      .insight-grid, .steps, .pattern-stack { grid-template-columns: 1fr; }
       .pkg-grid { grid-template-columns: 1fr !important; }
       .deck { padding: 1rem; border-radius: 24px; }
       .demo-controls-row { align-items: stretch; flex-wrap: wrap; }
@@ -498,6 +573,7 @@
     <a href="#" class="nav-logo"><span class="spark">✦</span> askable-ui</a>
     <div class="nav-links">
       <a href="#demo" class="nav-link">Demo</a>
+      <a href="#patterns" class="nav-link">Patterns</a>
       <a href="#how" class="nav-link">How it works</a>
       <a href="#packages" class="nav-link">Packages</a>
       <a href="#integrations" class="nav-link">Integrations</a>
@@ -509,13 +585,21 @@
   <main class="page-shell">
     <section class="hero">
       <div class="hero-copy">
-        <div class="eyebrow"><span class="spark">✦</span> One attribute. Real context.</div>
-        <h1>Your model knows what <em>just caught their eye.</em></h1>
+        <div class="eyebrow"><span class="spark">✦</span> Context for AI-native interfaces</div>
+        <h1>Your model knows what <em>the user means.</em></h1>
         <p>
-          Put <code>data-askable</code> on any meaningful element, observe once, then pass
-          <code>askable.toPromptContext()</code> at the AI boundary. The assistant gets the user's exact
-          visual focus — not a guess, the real thing.
+          Mark a clicked element, drawn region, circled anomaly, lassoed area, or highlighted text,
+          then pass <code>askable.toPromptContext()</code> or a structured Context packet at the AI boundary.
+          The assistant gets explicit user intent instead of guessing from the whole page.
         </p>
+        <div class="hero-patterns" aria-label="Supported interaction patterns">
+          <span class="hero-pattern-pill">Click</span>
+          <span class="hero-pattern-pill">Ask AI button</span>
+          <span class="hero-pattern-pill">Region</span>
+          <span class="hero-pattern-pill">Circle</span>
+          <span class="hero-pattern-pill">Lasso</span>
+          <span class="hero-pattern-pill">Selected text</span>
+        </div>
         <div class="hero-actions">
           <button class="install-cmd" id="install-copy" title="Click to copy" type="button">
             <span>npm install @askable-ui/react</span>
@@ -526,9 +610,9 @@
           <a href="https://github.com/askable-ui/askable" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
         <div class="hero-meta">
-          <span>One attribute</span>
+          <span>Element + visual context</span>
           <span>Zero framework lock-in</span>
-          <span>Lightweight core</span>
+          <span>MCP-ready packets</span>
           <span>React · Vue · Svelte · Vanilla JS</span>
         </div>
       </div>
@@ -571,9 +655,9 @@
                 </div>
               </div>
               <div class="mini-chat">
-                <div class="mini-chat-bubble">The assistant can read what's in focus without scraping your whole app.</div>
-                <div class="mini-chat-bubble user">Which account needs attention first?</div>
-                <div class="mini-chat-bubble">Globex. No login in 14 days, business plan, $5.2k MRR at risk.</div>
+                <div class="mini-chat-bubble">The assistant can read the element, area, or text the user explicitly selected.</div>
+                <div class="mini-chat-bubble user">What should I do about this circled account?</div>
+                <div class="mini-chat-bubble">Globex is at risk. No login in 14 days, $5.2k MRR exposed.</div>
               </div>
             </div>
             <div class="mini-code" id="mini-code">&lt;tr data-askable='{"company":"Globex Inc","status":"at_risk","last_login":"14 days ago"}'&gt;
@@ -595,40 +679,95 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
       </video>
     </section>
 
+    <section id="patterns" class="section">
+      <p class="section-label">Interaction patterns</p>
+      <h2 class="section-title">Not every question starts with a click.</h2>
+      <p class="section-sub">Askable gives users more ways to say “this is what I mean” without sending the entire page to the model.</p>
+      <div class="pattern-shell">
+        <article class="pattern-copy">
+          <div>
+            <h3>Context becomes an intentional user action.</h3>
+            <p>Use DOM focus for the common path, then add explicit tools for visual ambiguity: draw over a chart, circle an outlier, lasso an irregular area, or send the text the user highlighted.</p>
+          </div>
+          <pre class="step-code">region.start({ shape: 'lasso' });
+text.captureNow();
+ctx.push(meta, text);</pre>
+        </article>
+        <div class="pattern-stack">
+          <article class="pattern-card">
+            <div class="pattern-icon">↖</div>
+            <h4>Element focus</h4>
+            <p>Click, hover, keyboard focus, and Ask AI buttons bind context to existing widgets.</p>
+          </article>
+          <article class="pattern-card">
+            <div class="pattern-icon">□</div>
+            <h4>Region capture</h4>
+            <p>Drag a rectangular page area when the answer depends on a visible section.</p>
+          </article>
+          <article class="pattern-card">
+            <div class="pattern-icon">○</div>
+            <h4>Circle capture</h4>
+            <p>Circle an anomaly, data point, product defect, chart spike, or object on screen.</p>
+          </article>
+          <article class="pattern-card">
+            <div class="pattern-icon">⌁</div>
+            <h4>Lasso capture</h4>
+            <p>Freehand select irregular content that does not fit cleanly into a box.</p>
+          </article>
+          <article class="pattern-card">
+            <div class="pattern-icon">T</div>
+            <h4>Selected text</h4>
+            <p>Send highlighted copy without asking the model to infer which words matter.</p>
+          </article>
+          <article class="pattern-card">
+            <div class="pattern-icon">◇</div>
+            <h4>Context packets</h4>
+            <p>Move structured context through MCP bridges, browser surfaces, and agent runtimes.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section class="section">
       <div class="insight-grid">
         <article class="insight-card">
           <div class="insight-eyebrow">No page scraping</div>
-          <h3>Context follows attention, not the whole DOM</h3>
-          <p>Other approaches serialize the entire page or guess what matters. askable captures exactly the element the user is looking at — one attribute, one focus target.</p>
+          <h3>Context follows intent, not the whole DOM</h3>
+          <p>Other approaches serialize the entire page or guess what matters. askable captures exactly what the user marked: an element, area, shape, or text selection.</p>
         </article>
         <article class="insight-card">
           <div class="insight-eyebrow">Zero glue code</div>
           <h3>Your API data is already the metadata</h3>
-          <p>The same object that renders a row or card becomes model-ready context. No separate data pipeline, no prompt templates, no mapping layer.</p>
+          <p>The same object that renders a row or card becomes model-ready context, and explicit captures can add bounds, shape, text, and user intent.</p>
         </article>
         <article class="insight-card">
           <div class="insight-eyebrow">Any stack</div>
           <h3>Dashboards, forms, tables, support tools</h3>
-          <p>Works anywhere a user points, clicks, or hovers. React, Vue, Svelte, or plain HTML — same one-attribute pattern.</p>
+          <p>Works anywhere a user points, clicks, draws, circles, lassos, highlights, or hovers. React, Vue, Svelte, or plain HTML.</p>
         </article>
       </div>
     </section>
 
     <section id="demo" class="section">
       <p class="section-label">Live demo</p>
-      <h2 class="section-title">Focus the UI. Watch the prompt tighten.</h2>
-      <p class="section-sub">Click a KPI card or account row. The context panel updates in real time — that's what goes into your model.</p>
+      <h2 class="section-title">Select the UI. Watch the prompt tighten.</h2>
+      <p class="section-sub">Click a KPI, draw a region, circle a row, lasso a panel, or highlight text. The context panel updates in real time.</p>
 
       <div class="deck">
         <div class="demo-controls">
           <div class="demo-controls-row">
-            <span class="toggle-label">Trigger on:</span>
-            <div class="toggle-group">
+            <span class="toggle-label">Context option:</span>
+            <div class="toggle-group context-option-group">
               <button class="toggle-btn" data-mode="hover">Hover</button>
               <button class="toggle-btn active" data-mode="click">Click</button>
-              <button class="toggle-btn" data-mode="button">Button</button>
+              <button class="toggle-btn" data-mode="button">Ask button</button>
+              <button class="toggle-btn" data-tool="region" type="button">Region</button>
+              <button class="toggle-btn" data-tool="circle" type="button">Circle</button>
+              <button class="toggle-btn" data-tool="lasso" type="button">Lasso</button>
+              <button class="toggle-btn" id="send-selection" type="button">Text selection</button>
             </div>
+            <button class="tool-btn" id="cancel-tool" type="button" style="display:none">Cancel</button>
+            <div class="tool-hint" id="tool-hint">Use the tools to send explicit page context into the assistant.</div>
           </div>
           <div class="demo-controls-row">
             <span class="toggle-label">Format:</span>
@@ -636,7 +775,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
               <button class="toggle-btn active" data-format="natural">Natural</button>
               <button class="toggle-btn" data-format="json">JSON</button>
             </div>
-            <span class="toggle-label" style="margin-left:.5rem">Text:</span>
+            <span class="toggle-label" style="margin-left:.5rem">Include text:</span>
             <div class="toggle-group">
               <button class="toggle-btn active" data-text="on">On</button>
               <button class="toggle-btn" data-text="off">Off</button>
@@ -646,6 +785,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
 
         <div class="demo-layout">
           <div class="dashboard">
+            <div class="selection-layer" id="selection-layer" aria-hidden="true"></div>
             <div class="kpi-grid" id="kpi-grid"></div>
             <div class="panel">
               <div class="panel-header">Top Accounts <span>same data drives UI + AI context</span></div>
@@ -665,7 +805,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
             </div>
             <div class="chat-messages" id="chat-messages">
               <div class="msg ai">
-                <div class="msg-bubble">Click a KPI or account row to select it — I'll load the context into the input so you can ask me anything about it.</div>
+                <div class="msg-bubble">Click a KPI, draw a region, circle or lasso an area, or send highlighted text — I'll load that context into the input.</div>
                 <span class="msg-label">Assistant</span>
               </div>
             </div>
@@ -675,7 +815,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
               <button class="context-dismiss" id="context-dismiss">&times;</button>
             </div>
             <div class="chat-input-row">
-              <input class="chat-input" id="chat-input" type="text" placeholder="Select an element above, then ask anything…" />
+              <input class="chat-input" id="chat-input" type="text" placeholder="Select context above, then ask anything…" />
               <button class="chat-send" id="chat-send">↑</button>
             </div>
           </aside>
@@ -684,10 +824,10 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
         <div class="code-panel">
           <div class="code-block">
             <div class="code-block-header">
-              <span class="code-block-label">element in your UI</span>
-              <span>same rendered node, askable metadata attached</span>
+              <span class="code-block-label">context source</span>
+              <span>element metadata or explicit selection packet</span>
             </div>
-            <pre id="code-attr" class="empty">hover or click an element above…</pre>
+            <pre id="code-attr" class="empty">select context above…</pre>
           </div>
           <div class="code-block">
             <div class="code-block-header">
@@ -703,20 +843,20 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
     <section id="how" class="section">
       <p class="section-label">How it works</p>
       <h2 class="section-title">Three simple steps.</h2>
-      <p class="section-sub">No giant framework. No invasive serialization. Let the model borrow the user's focus.</p>
+      <p class="section-sub">No giant framework. No invasive serialization. Let the model borrow the user's explicit context.</p>
       <div class="steps">
         <article class="step">
           <div class="step-num">1</div>
-          <h3>Annotate</h3>
-          <p>Add <code>data-askable</code> wherever your UI already has meaning: rows, charts, KPIs, inputs, cards, timeline items.</p>
+          <h3>Annotate or capture</h3>
+          <p>Add <code>data-askable</code> wherever your UI already has meaning, then add tools for regions, circles, lasso selections, and highlighted text.</p>
           <pre class="step-code">&lt;div data-askable='{"metric":"MRR","value":"$128K"}'&gt;
   ...
 &lt;/div&gt;</pre>
         </article>
         <article class="step">
           <div class="step-num">2</div>
-          <h3>Observe</h3>
-          <p>Call <code>askable.observe(document)</code> once. askable tracks click, hover, or focus and adapts as the DOM changes.</p>
+          <h3>Observe intent</h3>
+          <p>Call <code>askable.observe(document)</code> once. askable tracks click, hover, focus, explicit selection, and semantic app events.</p>
           <pre class="step-code">askable.observe(document, {
   events: ['click']
 });</pre>
@@ -724,7 +864,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
         <article class="step">
           <div class="step-num">3</div>
           <h3>Inject</h3>
-          <p>At the AI boundary, send <code>askable.toPromptContext()</code>. The assistant now knows what the user is actually looking at.</p>
+          <p>At the AI boundary, send <code>askable.toPromptContext()</code> or a Context packet. The assistant now knows what the user actually meant.</p>
           <pre class="step-code">const context = askable.toPromptContext();
 // → "User is focused on: metric: MRR, value: $128K"</pre>
         </article>
@@ -880,20 +1020,29 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
       var f = { meta: parseMeta(raw), text: extractText(el), element: el, timestamp: Date.now() };
       this.focus = f; this.currentFocus = f; this.cbs.forEach(function(fn) { fn(f); });
     };
+    Ctx.prototype.push = function(meta, text, element) {
+      var f = { meta: meta, text: text || '', element: element || null, timestamp: Date.now() };
+      this.focus = f; this.currentFocus = f; this.cbs.forEach(function(fn) { fn(f); });
+    };
     Ctx.prototype.getFocus = function() { return this.focus; };
     Ctx.prototype.clear = function() { this.focus = null; this.currentFocus = null; };
     Ctx.prototype.toPromptContext = function(opts) {
-      var f = this.focus; if (!f) return 'No UI element is currently focused.';
+      var f = this.focus; if (!f) return 'No UI context is currently selected.';
       var fmt = (opts && opts.format) || 'natural';
       var inclText = (opts && opts.includeText === false) ? false : true;
       var m = f.meta;
+      function formatValue(value) {
+        if (value == null) return String(value);
+        if (typeof value === 'object') return JSON.stringify(value);
+        return String(value);
+      }
       if (fmt === 'json') {
         var out = { meta: m };
         if (inclText && f.text) out.text = f.text;
         out.timestamp = f.timestamp;
         return JSON.stringify(out, null, 2);
       }
-      var ms = typeof m === 'string' ? m : Object.keys(m).map(function(k) { return k + ': ' + m[k]; }).join(', ');
+      var ms = typeof m === 'string' ? m : Object.keys(m).map(function(k) { return k + ': ' + formatValue(m[k]); }).join(', ');
       var p = ['User is focused on:'];
       if (ms) p.push(ms);
       if (inclText && f.text) p.push('value "' + f.text + '"');
@@ -948,7 +1097,11 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
     var codeCtx = document.getElementById('code-ctx');
     var contextBar = document.getElementById('chat-context-bar');
     var contextChip = document.getElementById('context-chip');
+    var selectionLayer = document.getElementById('selection-layer');
+    var toolHint = document.getElementById('tool-hint');
+    var cancelTool = document.getElementById('cancel-tool');
     var activeEl = null; var typingTimer = null; var lastKey = null;
+    var activeTool = null; var drawingEl = null; var dragStart = null; var lassoPoints = []; var toolClearTimer = null; var textSelectionMode = false;
     var dashboard = document.querySelector('.dashboard');
     var promptOpts = { format: 'natural', includeText: true };
     function refreshCtxDisplay() {
@@ -967,7 +1120,8 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
     document.querySelectorAll('[data-mode]').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        document.querySelectorAll('[data-mode]').forEach(function(b) { b.classList.remove('active'); });
+        clearToolState();
+        document.querySelectorAll('[data-mode], [data-tool], #send-selection').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         var mode = btn.getAttribute('data-mode');
         lastKey = null; askable.unobserve();
@@ -992,6 +1146,249 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
         promptOpts.includeText = btn.getAttribute('data-text') === 'on';
         refreshCtxDisplay();
       });
+    });
+
+    function setToolHint(text) {
+      if (toolHint) toolHint.textContent = text;
+    }
+    function clearToolState() {
+      if (toolClearTimer) { clearTimeout(toolClearTimer); toolClearTimer = null; }
+      activeTool = null; dragStart = null; lassoPoints = []; textSelectionMode = false;
+      if (drawingEl) { drawingEl.remove(); drawingEl = null; }
+      if (dashboard) dashboard.classList.remove('selecting');
+      if (cancelTool) cancelTool.style.display = 'none';
+      document.querySelectorAll('[data-tool]').forEach(function(btn) { btn.classList.remove('active'); });
+      var textButton = document.getElementById('send-selection');
+      if (textButton) textButton.classList.remove('active');
+    }
+    function startTool(tool) {
+      clearToolState();
+      activeTool = tool;
+      askable.unobserve();
+      if (dashboard) dashboard.classList.remove('button-mode');
+      if (dashboard) dashboard.classList.add('selecting');
+      if (dashboard && dashboard.scrollIntoView) dashboard.scrollIntoView({ block: 'center', inline: 'nearest' });
+      if (cancelTool) cancelTool.style.display = 'inline-flex';
+      document.querySelectorAll('[data-mode], [data-tool], #send-selection').forEach(function(btn) { btn.classList.remove('active'); });
+      document.querySelectorAll('[data-tool]').forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-tool') === tool);
+      });
+      setToolHint(tool === 'region' ? 'Drag a box over the dashboard.' : tool === 'circle' ? 'Drag from the center to circle an area.' : 'Freehand drag around an irregular area.');
+    }
+    function layerPoint(e) {
+      var rect = selectionLayer.getBoundingClientRect();
+      return {
+        x: Math.max(0, Math.min(rect.width, e.clientX - rect.left)),
+        y: Math.max(0, Math.min(rect.height, e.clientY - rect.top)),
+        layerWidth: rect.width,
+        layerHeight: rect.height
+      };
+    }
+    function boundsFromPoints(a, b) {
+      return {
+        x: Math.round(Math.min(a.x, b.x)),
+        y: Math.round(Math.min(a.y, b.y)),
+        width: Math.round(Math.abs(b.x - a.x)),
+        height: Math.round(Math.abs(b.y - a.y))
+      };
+    }
+    function pointInBounds(point, bounds) {
+      return point.x >= bounds.x && point.x <= bounds.x + bounds.width && point.y >= bounds.y && point.y <= bounds.y + bounds.height;
+    }
+    function pointInPolygon(point, polygon) {
+      var inside = false;
+      for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        var xi = polygon[i].x, yi = polygon[i].y;
+        var xj = polygon[j].x, yj = polygon[j].y;
+        var intersect = ((yi > point.y) !== (yj > point.y)) &&
+          (point.x < (xj - xi) * (point.y - yi) / ((yj - yi) || 1) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+    function rectIntersects(a, b) {
+      return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+    }
+    function itemLabel(meta, text) {
+      if (meta && typeof meta === 'object') {
+        return meta.metric || meta.company || meta.widget || meta.table || meta.chart || text.slice(0, 42);
+      }
+      return String(meta || text).slice(0, 42);
+    }
+    function compactText(text) {
+      return text.replace(/\s+/g, ' ').trim().slice(0, 140);
+    }
+    function selectedDashboardItems(bounds, shape, radius) {
+      if (!selectionLayer || !dashboard) return [];
+      var layerRect = selectionLayer.getBoundingClientRect();
+      var selected = [];
+      dashboard.querySelectorAll('[data-askable]').forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        var relativeRect = {
+          x: rect.left - layerRect.left,
+          y: rect.top - layerRect.top,
+          width: rect.width,
+          height: rect.height
+        };
+        var center = {
+          x: relativeRect.x + relativeRect.width / 2,
+          y: relativeRect.y + relativeRect.height / 2
+        };
+        var selectedByShape = shape === 'lasso'
+          ? pointInPolygon(center, lassoPoints) || rectIntersects(relativeRect, bounds)
+          : shape === 'circle'
+            ? Math.sqrt(Math.pow(center.x - dragStart.x, 2) + Math.pow(center.y - dragStart.y, 2)) <= radius
+            : pointInBounds(center, bounds) || rectIntersects(relativeRect, bounds);
+        if (!selectedByShape) return;
+        var meta = parseMeta(el.getAttribute('data-askable') || '');
+        var text = compactText(extractText(el));
+        selected.push({
+          label: itemLabel(meta, text),
+          meta: meta,
+          text: text
+        });
+      });
+      return selected.slice(0, 8);
+    }
+    function selectionSummary(shape, items) {
+      if (!items.length) return shape + ' selection on dashboard. No annotated widgets were inside the selected area.';
+      return shape + ' selected ' + items.length + ' dashboard item' + (items.length === 1 ? '' : 's') + ':\n' +
+        items.map(function(item) { return '- ' + item.label + ': ' + item.text; }).join('\n');
+    }
+    function drawSelection(point) {
+      if (!selectionLayer || !dragStart) return;
+      if (!drawingEl) {
+        drawingEl = document.createElement('div');
+        drawingEl.className = 'selection-drawing ' + activeTool;
+        selectionLayer.appendChild(drawingEl);
+      }
+      if (activeTool === 'lasso') {
+        lassoPoints.push(point);
+        var path = lassoPoints.map(function(p, index) { return (index ? 'L' : 'M') + Math.round(p.x) + ' ' + Math.round(p.y); }).join(' ');
+        drawingEl.innerHTML = '<svg width="100%" height="100%" viewBox="0 0 ' + Math.round(point.layerWidth) + ' ' + Math.round(point.layerHeight) + '"><defs><linearGradient id="lasso-gradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#06b6d4"/><stop offset="38%" stop-color="#4f46e5"/><stop offset="70%" stop-color="#a855f7"/><stop offset="100%" stop-color="#22c55e"/></linearGradient></defs><path class="lasso-aura" d="' + path + '"></path><path d="' + path + '"></path></svg>';
+        return;
+      }
+      var b = boundsFromPoints(dragStart, point);
+      if (activeTool === 'circle') {
+        var radius = Math.max(8, Math.round(Math.sqrt(Math.pow(point.x - dragStart.x, 2) + Math.pow(point.y - dragStart.y, 2))));
+        drawingEl.style.left = Math.round(dragStart.x - radius) + 'px';
+        drawingEl.style.top = Math.round(dragStart.y - radius) + 'px';
+        drawingEl.style.width = radius * 2 + 'px';
+        drawingEl.style.height = radius * 2 + 'px';
+      } else {
+        drawingEl.style.left = b.x + 'px';
+        drawingEl.style.top = b.y + 'px';
+        drawingEl.style.width = Math.max(8, b.width) + 'px';
+        drawingEl.style.height = Math.max(8, b.height) + 'px';
+      }
+    }
+    function finishSelection(point) {
+      if (!activeTool || !dragStart) return;
+      var bounds = activeTool === 'lasso'
+        ? lassoPoints.reduce(function(acc, p) {
+            return {
+              x: Math.min(acc.x, p.x),
+              y: Math.min(acc.y, p.y),
+              maxX: Math.max(acc.maxX, p.x),
+              maxY: Math.max(acc.maxY, p.y)
+            };
+          }, { x: dragStart.x, y: dragStart.y, maxX: dragStart.x, maxY: dragStart.y })
+        : boundsFromPoints(dragStart, point);
+      if (bounds.maxX != null) {
+        bounds = { x: Math.round(bounds.x), y: Math.round(bounds.y), width: Math.round(bounds.maxX - bounds.x), height: Math.round(bounds.maxY - bounds.y) };
+      }
+      var radius = activeTool === 'circle' ? Math.round(Math.sqrt(Math.pow(point.x - dragStart.x, 2) + Math.pow(point.y - dragStart.y, 2))) : null;
+      if ((bounds.width < 8 || bounds.height < 8) && activeTool !== 'circle') {
+        setToolHint('Selection was too small. Try dragging a larger area.');
+        clearToolState();
+        return;
+      }
+      var selectedItems = selectedDashboardItems(bounds, activeTool, radius);
+      var meta = {
+        capture: activeTool,
+        shape: activeTool,
+        selectedItems: selectedItems.map(function(item) {
+          return {
+            label: item.label,
+            meta: item.meta
+          };
+        }),
+        selection: {
+          bounds: bounds,
+          ...(radius ? { radius: radius } : {}),
+          ...(activeTool === 'lasso' ? { pointCount: lassoPoints.length } : {})
+        },
+        consent: 'explicit'
+      };
+      askable.push(meta, selectionSummary(activeTool, selectedItems), dashboard);
+      setToolHint(activeTool + ' context sent to the assistant.');
+      toolClearTimer = setTimeout(clearToolState, 450);
+    }
+    document.querySelectorAll('[data-tool]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        startTool(btn.getAttribute('data-tool'));
+      });
+    });
+    if (cancelTool) {
+      cancelTool.addEventListener('click', function(e) {
+        e.stopPropagation();
+        clearToolState();
+        setToolHint('Selection cancelled.');
+      });
+    }
+    if (selectionLayer) {
+      selectionLayer.addEventListener('pointerdown', function(e) {
+        if (!activeTool) return;
+        e.preventDefault();
+        selectionLayer.setPointerCapture(e.pointerId);
+        dragStart = layerPoint(e);
+        lassoPoints = [dragStart];
+        drawSelection(dragStart);
+      });
+      selectionLayer.addEventListener('pointermove', function(e) {
+        if (!activeTool || !dragStart) return;
+        e.preventDefault();
+        drawSelection(layerPoint(e));
+      });
+      selectionLayer.addEventListener('pointerup', function(e) {
+        if (!activeTool || !dragStart) return;
+        e.preventDefault();
+        finishSelection(layerPoint(e));
+      });
+    }
+    document.getElementById('send-selection').addEventListener('click', function(e) {
+      e.stopPropagation();
+      clearToolState();
+      askable.unobserve();
+      if (dashboard) dashboard.classList.remove('button-mode');
+      if (dashboard && dashboard.scrollIntoView) dashboard.scrollIntoView({ block: 'center', inline: 'nearest' });
+      textSelectionMode = true;
+      document.querySelectorAll('[data-mode], [data-tool], #send-selection').forEach(function(btn) { btn.classList.remove('active'); });
+      e.currentTarget.classList.add('active');
+      askable.clear();
+      lastKey = null;
+      contextBar.style.display = 'none';
+      contextChip.textContent = '';
+      if (activeEl) activeEl.classList.remove('active');
+      activeEl = null;
+      codeAttr.textContent = 'highlight text in the demo, then release the mouse…';
+      codeCtx.textContent = 'waiting for selected text…';
+      codeAttr.classList.add('empty');
+      codeCtx.classList.add('empty');
+      chatInput.value = '';
+      chatInput.placeholder = 'Highlight text in the dashboard to send it as context…';
+      setToolHint('Highlight text in the demo. It will be sent when you release the mouse.');
+    });
+    document.addEventListener('mouseup', function() {
+      if (!textSelectionMode) return;
+      var text = window.getSelection ? String(window.getSelection()).trim() : '';
+      if (!text) {
+        setToolHint('Highlight text in the demo first, then send it as context.');
+        return;
+      }
+      askable.push({ capture: 'text-selection', length: text.length, consent: 'explicit' }, text, dashboard);
+      setToolHint('Highlighted text sent to the assistant.');
     });
     var responses = {
       revenue: 'MRR is up 12.4% to $128,400. Momentum looks healthy, likely expansion + retention working together.',
@@ -1022,6 +1419,10 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
       if (w === 'churn') return 'What is driving churn down?';
       if (w === 'arpu') return 'How can we improve ARPU?';
       if (w === 'nps') return 'What should we do with this NPS score?';
+      if (meta.capture === 'region') return 'What should I know about this selected area?';
+      if (meta.capture === 'circle') return 'What should I do about this circled area?';
+      if (meta.capture === 'lasso') return 'What stands out in this lassoed area?';
+      if (meta.capture === 'text-selection') return 'Use this selected text to answer my question.';
       if (w === 'account_row') {
         var s = meta.status;
         if (s === 'at_risk') return 'What is the recommended action for this account?';
@@ -1034,10 +1435,14 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
       var meta = focus.meta; var prompt = askable.toPromptContext(promptOpts); var key = JSON.stringify(meta);
       if (key === lastKey) return; lastKey = key;
       // Update code panels
-      var tag = focus.element.tagName.toLowerCase();
-      var inner = focus.element.innerHTML.trim().split('\n').map(function(l) { return '  ' + l; }).join('\n');
-      if (inner.length > 320) inner = inner.slice(0, 320) + '\n  ...';
-      codeAttr.textContent = '<' + tag + ' data-askable=\'' + JSON.stringify(meta) + '\'>\n' + inner + '\n</' + tag + '>';
+      if (meta && meta.capture) {
+        codeAttr.textContent = 'ctx.push(' + JSON.stringify(meta, null, 2) + ',\n  ' + JSON.stringify(focus.text || meta.capture + ' selection') + '\n);';
+      } else {
+        var tag = focus.element.tagName.toLowerCase();
+        var inner = focus.element.innerHTML.trim().split('\n').map(function(l) { return '  ' + l; }).join('\n');
+        if (inner.length > 320) inner = inner.slice(0, 320) + '\n  ...';
+        codeAttr.textContent = '<' + tag + ' data-askable=\'' + JSON.stringify(meta) + '\'>\n' + inner + '\n</' + tag + '>';
+      }
       codeAttr.classList.remove('empty');
       codeCtx.textContent = prompt; codeCtx.classList.remove('empty');
       // Show context bar — let user see what's loaded before sending
@@ -1046,20 +1451,18 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
       // Highlight active element
       if (activeEl) activeEl.classList.remove('active');
       activeEl = focus.element; activeEl.classList.add('active');
-      // Pre-fill input with a suggested question; focus the input so user can type
+      // Pre-fill without moving scroll; selection tools should stay under the pointer.
       var suggestion = suggestQuestion(meta);
       chatInput.value = suggestion;
-      chatInput.placeholder = 'Ask about this element, or type your own question…';
-      chatInput.focus();
-      chatInput.select();
+      chatInput.placeholder = 'Ask about this context, or type your own question…';
     });
     document.getElementById('context-dismiss').addEventListener('click', function() {
       contextBar.style.display = 'none'; contextChip.textContent = '';
       if (activeEl) activeEl.classList.remove('active');
       activeEl = null; lastKey = null; askable.clear();
       chatInput.value = '';
-      chatInput.placeholder = 'Select an element above, then ask anything…';
-      codeAttr.textContent = 'hover or click an element above…'; codeCtx.textContent = 'waiting for focus…';
+      chatInput.placeholder = 'Select context above, then ask anything…';
+      codeAttr.textContent = 'select context above…'; codeCtx.textContent = 'waiting for context…';
       codeAttr.classList.add('empty'); codeCtx.classList.add('empty');
     });
     function send() {
@@ -1067,7 +1470,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
       var focus = askable.getFocus();
       var meta = focus ? focus.meta : null;
       chatInput.value = '';
-      chatInput.placeholder = 'Select an element above, then ask anything…';
+      chatInput.placeholder = 'Select context above, then ask anything…';
       // Show user message, then context badge inline if context is loaded
       addMsg('user', text);
       if (focus) {
@@ -1081,7 +1484,15 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
         if (meta) {
           var w = meta.widget;
           // Context-aware canned responses
-          if (w === 'revenue') {
+          if (meta.capture === 'region') {
+            reply = 'This region selection is now explicit context. A real app would attach bounds plus any nearby semantic data, chart data, or screenshot reference.';
+          } else if (meta.capture === 'circle') {
+            reply = 'The circled area is treated as intentional context. This is useful for chart anomalies, visual defects, map locations, or one object in a dense UI.';
+          } else if (meta.capture === 'lasso') {
+            reply = 'The lassoed area gives the agent an irregular visual target. It can carry path points, bounds, and the surrounding UI state.';
+          } else if (meta.capture === 'text-selection') {
+            reply = 'I will answer using the highlighted text directly. Selected text context avoids guessing which copy on the page matters.';
+          } else if (w === 'revenue') {
             if (lower.indexOf('trend') !== -1 || lower.indexOf('why') !== -1 || lower.indexOf('driv') !== -1)
               reply = 'MRR grew 12.4% — likely a mix of new expansion + retention improving. Check if seat upgrades or plan changes account for the delta.';
             else reply = 'MRR is $128,400 — up 12.4%. Momentum looks healthy with expansion and retention both moving in the right direction.';
@@ -1104,7 +1515,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
                 meta.status === 'churned' ? 'Run a win-back sequence for ' + meta.company + '. 60-day window is still live. Offer a credit or a new POC.' :
                 meta.company + ' is growing — queue an upsell conversation for Business plan. Expansion signal is already showing.';
             else reply = r;
-          } else reply = 'I can see this element\'s context. Ask about trends, risk, or recommended actions.';
+          } else reply = 'I can see this context. Ask about trends, risk, or recommended actions.';
         } else if (lower.indexOf('risk') !== -1) {
           reply = 'Globex Inc is the top risk — no login for 14 days, $5.2k MRR at stake. Select their row for the full picture.';
         } else if (lower.indexOf('summar') !== -1 || lower.indexOf('overview') !== -1) {
@@ -1112,7 +1523,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
         } else if (lower.indexOf('upsell') !== -1) {
           reply = 'Umbrella Ltd is the cleanest upsell candidate — healthy status, expansion signal, Starter plan. Select their row for specifics.';
         } else {
-          reply = 'Select a KPI card or account row first — I\'ll load its context and give you a grounded answer.';
+          reply = 'Select a KPI, account row, region, lasso, circle, or highlighted text first — I\'ll load its context and give you a grounded answer.';
         }
         addMsg('ai', reply);
       }, 900);
