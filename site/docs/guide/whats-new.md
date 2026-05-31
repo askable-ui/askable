@@ -1,34 +1,36 @@
-# What’s New in v0.10.0
+# What’s New in v0.11.0
 
-askable-ui v0.10.0 adds first-class text selection capture, so highlighted page
-copy can be sent to agents as structured Context packets.
+askable-ui v0.11.0 adds lasso capture, so users can freehand-select irregular
+areas of the page and send the shape to agents as structured Context packets.
 
 ## Highlights
 
-### Highlighted text as Context packets
+### Freehand lasso Context packets
 
-`@askable-ui/core` now exports `createAskableTextSelectionCapture()` for
-capturing the current browser selection or listening to user selection changes.
-Packets use `capture.mode: 'text-selection'`, set explicit consent, and include
-the highlighted copy in `target.text`.
+`createAskableRegionCapture()` now accepts `shape: 'lasso'`. Lasso packets use
+`capture.mode: 'lasso'`, set explicit consent, include the selected bounds in
+`target.bounds`, and include the freehand point path in
+`target.metadata.points`.
 
 ```ts
-import { createAskableContext, createAskableTextSelectionCapture } from '@askable-ui/core';
+import { createAskableContext, createAskableRegionCapture } from '@askable-ui/core';
 
 const ctx = createAskableContext({ viewport: true });
 ctx.observe(document);
 
-const selection = createAskableTextSelectionCapture(ctx, {
+const capture = createAskableRegionCapture(ctx, {
+  shape: 'lasso',
   includeViewport: true,
-  intent: 'answer using the highlighted text',
+  intent: 'answer using this freehand-selected region',
   onCapture: (packet) => sendToAgent(packet),
 });
 
-selection.start();
+capture.start();
 ```
 
-Framework wrappers are available as `useAskableTextSelectionCapture()` for
-React and Vue, plus `createAskableTextSelectionCaptureStore()` for Svelte.
+Framework wrappers already expose the same `shape` override through
+`useAskableRegionCapture()` for React and Vue, plus
+`createAskableRegionCaptureStore()` for Svelte.
 
 Related docs:
 
@@ -36,12 +38,13 @@ Related docs:
 - [@askable-ui/core API](/api/core)
 - [@askable-ui/react API](/api/react)
 
-### Region, circle, and text capture together
+### Region, circle, lasso, and text capture together
 
-Askable now covers three explicit user selection patterns:
+Askable now covers four explicit user selection patterns:
 
 - draw a rectangle with `createAskableRegionCapture()`
 - circle something on screen with `shape: 'circle'`
+- lasso an irregular shape with `shape: 'lasso'`
 - highlight copy with `createAskableTextSelectionCapture()`
 
 All three produce the same versioned Context packet format for MCP bridges,
@@ -49,8 +52,8 @@ browser tools, and agent runtimes.
 
 ### Starter and docs version alignment
 
-`npm create @askable-ui/app` now scaffolds projects pinned to `^0.10.0`, and the
-versioned docs have been advanced to `/docs/v0.10.0/`.
+`npm create @askable-ui/app` now scaffolds projects pinned to `^0.11.0`, and the
+versioned docs have been advanced to `/docs/v0.11.0/`.
 
 ## Recommended next step
 
@@ -62,7 +65,7 @@ If you are integrating Askable into an AI or agent runtime, start here:
 
 ## Version note
 
-The current published docs track **v0.10.0** at both:
+The current published docs track **v0.11.0** at both:
 
 - `/docs/`
-- `/docs/v0.10.0/`
+- `/docs/v0.11.0/`

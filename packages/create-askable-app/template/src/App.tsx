@@ -100,7 +100,7 @@ export default function App() {
 
   useCopilotReadable(
     {
-      description: 'The last explicit region or circle the user selected on the page.',
+      description: 'The last explicit region, circle, or lasso the user selected on the page.',
       value: regionContext,
     },
     [regionContext],
@@ -146,6 +146,13 @@ export default function App() {
               onClick={() => regionCapture.start({ shape: 'circle', intent: 'explain this circled area' })}
             >
               Circle area
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => regionCapture.start({ shape: 'lasso', intent: 'explain this lassoed area' })}
+            >
+              Lasso area
             </button>
             {regionCapture.active && (
               <button type="button" className="secondary" onClick={regionCapture.cancel}>

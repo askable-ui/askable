@@ -30,6 +30,7 @@ export type {
 export type {
   AskableRegionCaptureHandle,
   AskableRegionCaptureOptions,
+  AskableRegionCapturePoint,
   AskableRegionCaptureSelection,
   AskableRegionCaptureShape,
 } from './capture.js';

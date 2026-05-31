@@ -42,10 +42,10 @@ const formPrompt = ctx.toPromptContext({ scope: 'form-helper' });
 ctx.destroy();
 ```
 
-## Region and Circle Capture
+## Region, Circle, and Lasso Capture
 
-Use `createAskableRegionCapture()` when the user should draw a page region and
-send it as structured context.
+Use `createAskableRegionCapture()` when the user should draw a page region,
+circle an area, or lasso a freehand shape and send it as structured context.
 
 ```ts
 import { createAskableContext, createAskableRegionCapture } from '@askable-ui/core';
@@ -54,7 +54,7 @@ const ctx = createAskableContext({ viewport: true });
 ctx.observe(document);
 
 const capture = createAskableRegionCapture(ctx, {
-  shape: 'circle',
+  shape: 'lasso',
   intent: 'explain this selected area',
   includeViewport: true,
   onCapture(packet) {
@@ -65,8 +65,9 @@ const capture = createAskableRegionCapture(ctx, {
 capture.start();
 ```
 
-The packet uses `capture.mode` of `region` or `circle`, marks consent as
-explicit, and includes the selected geometry in `target.bounds`.
+The packet uses `capture.mode` of `region`, `circle`, or `lasso`, marks consent
+as explicit, and includes the selected geometry in `target.bounds`. Lasso
+captures also include `target.metadata.points` for the freehand path.
 
 ## Text Selection Capture
 

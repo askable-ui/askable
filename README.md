@@ -145,7 +145,7 @@ askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it
 - **Conversation history** — `ctx.toHistoryContext(n)` for multi-turn context
 - **Viewport awareness** — `ctx.getVisibleElements()` / `ctx.toViewportContext()` for on-screen context
 - **Structured Context packets** — `ctx.toContextPacket()` for agent/MCP-ready page context
-- **Explicit capture tools** — region, circle, and highlighted text capture for user-selected context
+- **Explicit capture tools** — region, circle, lasso, and highlighted text capture for user-selected context
 - **Redaction hooks** — strip sensitive fields before data reaches serialization
 - **Inspector panel** — `<AskableInspector />` or `useAskable({ inspector: true })` for a live dev overlay
 - **Agent templates** — reusable `AGENTS.md` guidance and copy-paste prompts for coding-agent-driven adoption

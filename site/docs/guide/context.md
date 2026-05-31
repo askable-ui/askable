@@ -103,10 +103,10 @@ ctx.toContextPacket({
 });
 ```
 
-## Region and circle capture
+## Region, circle, and lasso capture
 
 For "send this part of the page" interactions, `@askable-ui/core` can mount a
-temporary drag overlay and emit a packet with region geometry:
+temporary drag overlay and emit a packet with selected geometry:
 
 ```ts
 import { createAskableContext, createAskableRegionCapture } from '@askable-ui/core';
@@ -115,7 +115,7 @@ const ctx = createAskableContext({ viewport: true });
 ctx.observe(document);
 
 const capture = createAskableRegionCapture(ctx, {
-  shape: 'circle',
+  shape: 'lasso',
   intent: 'explain this selected chart segment',
   includeViewport: true,
   onCapture: (packet) => {
@@ -126,9 +126,10 @@ const capture = createAskableRegionCapture(ctx, {
 capture.start();
 ```
 
-The resulting packet uses `capture.mode` of `region` or `circle`, sets
-`privacy.consent` to `explicit`, and places the selected bounds on
-`target.bounds`.
+The resulting packet uses `capture.mode` of `region`, `circle`, or `lasso`,
+sets `privacy.consent` to `explicit`, and places the selected bounds on
+`target.bounds`. Lasso packets also include the freehand path in
+`target.metadata.points`.
 
 Framework apps can use wrapper APIs instead:
 

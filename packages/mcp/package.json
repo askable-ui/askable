@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/mcp",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "MCP bridge for exposing Context packets to agents",
   "type": "module",
   "main": "./dist/index.js",
@@ -36,8 +36,8 @@
   "homepage": "https://askable-ui.com",
   "license": "MIT",
   "dependencies": {
-    "@askable-ui/context": "^0.10.0",
-    "@askable-ui/core": "^0.10.0",
+    "@askable-ui/context": "^0.11.0",
+    "@askable-ui/core": "^0.11.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.3"
   },

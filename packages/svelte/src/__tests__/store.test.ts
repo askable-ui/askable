@@ -251,6 +251,32 @@ describe('createAskableRegionCaptureStore', () => {
     capture.destroy();
   });
 
+  it('supports lasso capture overrides at start time', () => {
+    const capture = createAskableRegionCaptureStore();
+
+    capture.start({ shape: 'lasso' });
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 30, 45));
+    overlay.dispatchEvent(pointerEvent('pointermove', 70, 35));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 75));
+
+    expect(get(capture.lastPacket)?.capture).toMatchObject({ mode: 'lasso', gesture: 'lasso' });
+    expect(get(capture.lastSelection)).toMatchObject({
+      shape: 'lasso',
+      bounds: { x: 10, y: 20, width: 70, height: 55 },
+      points: [
+        { x: 10, y: 20 },
+        { x: 30, y: 45 },
+        { x: 70, y: 35 },
+        { x: 80, y: 75 },
+      ],
+    });
+
+    capture.destroy();
+  });
+
   it('cancels active capture from store state', () => {
     const capture = createAskableRegionCaptureStore();
 
