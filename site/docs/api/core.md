@@ -430,6 +430,48 @@ capture.start();
 
 ---
 
+## `createAskableTextSelectionCapture(ctx, options?)`
+
+Listens for highlighted browser text or reads the current selection on demand,
+then emits a structured Context packet with explicit consent metadata.
+
+```ts
+import { createAskableContext, createAskableTextSelectionCapture } from '@askable-ui/core';
+
+const ctx = createAskableContext({ viewport: true });
+ctx.observe(document);
+
+const selection = createAskableTextSelectionCapture(ctx, {
+  intent: 'answer using this highlighted text',
+  includeViewport: true,
+  onCapture: (packet, selected) => {
+    sendToAgent(packet);
+    console.log(selected.text);
+  },
+});
+
+selection.start();
+selection.captureNow();
+```
+
+**Options (`AskableTextSelectionCaptureOptions`):**
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `root` | `Document \| HTMLElement` | `document` | Selection root to accept |
+| `minLength` | `number` | `1` | Minimum selected text length |
+| `debounce` | `number` | `120` | Delay for `selectionchange` captures |
+| `once` | `boolean` | `false` | Stop listening after the first accepted capture |
+| `dedupe` | `boolean` | `true` | Ignore repeated captures of the same text/bounds |
+| `onCapture` | `(packet, selection) => void` | — | Called with the Context packet and selected text details |
+| `onCancel` | `() => void` | — | Called when active capture is cancelled |
+| _...most `AskableContextPacketOptions`_ | | | Passed through to `toContextPacket()` |
+
+**Returns:** `AskableTextSelectionCaptureHandle` — object with `start()`,
+`captureNow()`, `cancel()`, `destroy()`, and `isActive()` methods.
+
+---
+
 ## `createAskableInspector(ctx, options?)`
 
 Mount a floating inspector panel that shows the active focus, parsed metadata, and prompt output in real time. Designed for development and demos.

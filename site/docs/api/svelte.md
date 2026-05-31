@@ -196,3 +196,32 @@ onDestroy(capture.destroy);
 | `destroy` | `() => void` | Cancels capture and destroys the underlying store context |
 | `isActive` | `() => boolean` | Reads the current overlay state |
 | `ctx` | `AskableContext` | Store context instance |
+
+---
+
+## `createAskableTextSelectionCaptureStore(options?)`
+
+Factory that captures highlighted browser text and exposes the captured Context
+packet as Svelte stores.
+
+```ts
+import { createAskableTextSelectionCaptureStore } from '@askable-ui/svelte';
+
+const selection = createAskableTextSelectionCaptureStore({
+  includeViewport: true,
+  source: { app: 'dashboard' },
+  intent: 'answer using this highlighted text',
+});
+
+selection.start();
+selection.captureNow();
+selection.cancel();
+```
+
+Always call `destroy()` in `onDestroy`.
+
+**Options:** `root`, `minLength`, `debounce`, `once`, `dedupe`, `source`,
+`intent`, `ctx`, `events`, `onCapture`, and `onCancel`.
+
+**Returns:** `active`, `lastPacket`, `lastSelection`, `start(overrides?)`,
+`captureNow(overrides?)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.

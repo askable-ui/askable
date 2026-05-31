@@ -184,3 +184,30 @@ capture.cancel();
 | `destroy` | `() => void` | Cancels capture and removes overlay listeners |
 | `isActive` | `() => boolean` | Reads the current overlay state |
 | `ctx` | `AskableContext` | Shared or provided context instance |
+
+---
+
+## `useAskableTextSelectionCapture(options?)`
+
+Composable that captures highlighted browser text and emits a structured
+Context packet through the same `AskableContext`.
+
+```ts
+import { useAskableTextSelectionCapture } from '@askable-ui/vue';
+
+const selection = useAskableTextSelectionCapture({
+  includeViewport: true,
+  source: { app: 'dashboard' },
+  intent: 'answer using this highlighted text',
+});
+
+selection.start();
+selection.captureNow();
+selection.cancel();
+```
+
+**Options:** `root`, `minLength`, `debounce`, `once`, `dedupe`, `source`,
+`intent`, `ctx`, `name`, `events`, `onCapture`, and `onCancel`.
+
+**Returns:** `active`, `lastPacket`, `lastSelection`, `start(overrides?)`,
+`captureNow(overrides?)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.

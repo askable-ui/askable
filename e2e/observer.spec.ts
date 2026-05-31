@@ -247,6 +247,60 @@ test.describe('region capture', () => {
   });
 });
 
+test.describe('text selection capture', () => {
+  test('capturing highlighted text emits a structured Context packet', async ({ harness }) => {
+    const page = await harness(
+      `<p id="copy" data-askable-id="summary-copy">Revenue increased 18% this quarter.</p>`,
+      `
+      window.capturedPacket = null;
+      window.selectionCapture = AskableCore.createAskableTextSelectionCapture(window.ctx, {
+        source: { app: 'e2e' },
+        intent: 'explain selected text',
+        onCapture: (packet) => { window.capturedPacket = packet; },
+      });
+      `,
+    );
+
+    await page.evaluate(() => {
+      const el = document.getElementById('copy')!;
+      const node = el.firstChild!;
+      const range = document.createRange();
+      range.setStart(node, 0);
+      range.setEnd(node, 'Revenue increased'.length);
+      const selection = document.getSelection()!;
+      selection.removeAllRanges();
+      selection.addRange(range);
+      (window as any).selectionCapture.captureNow();
+    });
+
+    const packet = await page.evaluate(() => (window as any).capturedPacket);
+    expect(packet).toMatchObject({
+      protocol: 'askable.context',
+      source: { app: 'e2e' },
+      capture: {
+        mode: 'text-selection',
+        gesture: 'programmatic',
+        intent: 'explain selected text',
+      },
+      target: {
+        text: 'Revenue increased',
+        selector: '#copy',
+        metadata: {
+          kind: 'text-selection',
+          length: 'Revenue increased'.length,
+        },
+      },
+      privacy: {
+        consent: 'explicit',
+      },
+      provenance: {
+        producer: '@askable-ui/core',
+        method: 'dom',
+      },
+    });
+  });
+});
+
 test.describe('nested elements — deepest strategy (default)', () => {
   test('clicking nested inner element wins', async ({ harness }) => {
     const page = await harness(`

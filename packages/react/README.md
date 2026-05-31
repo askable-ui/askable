@@ -167,6 +167,7 @@ const { focus: focusOnly } = useAskable({ events: ['focus'] });
   - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
   - `ctx.toContextPacket()` — structured Context packet for agents and MCP bridges
 - `useAskableRegionCapture()` — explicit region/circle capture for visual page selection
+- `useAskableTextSelectionCapture()` — explicit highlighted text capture for page copy selection
 
 The hook manages a shared singleton context per `name + events + viewport` configuration. Multiple `useAskable()` consumers with the same shared configuration reuse one observer lifecycle, while differing configurations get isolated shared contexts of their own. Each shared context is automatically destroyed when its last consumer unmounts.
 
@@ -234,6 +235,33 @@ function RegionTools() {
         Circle area
       </button>
       {capture.active && <button onClick={capture.cancel}>Cancel</button>}
+    </>
+  );
+}
+```
+
+### Text selection capture
+
+Use `useAskableTextSelectionCapture()` when a user highlights text and sends
+that exact selection to an agent.
+
+```tsx
+import { useAskableTextSelectionCapture } from '@askable-ui/react';
+
+function SelectionTools() {
+  const selection = useAskableTextSelectionCapture({
+    includeViewport: true,
+    intent: 'answer using the highlighted text',
+    onCapture(packet) {
+      sendToAgent(packet);
+    },
+  });
+
+  return (
+    <>
+      <button onClick={() => selection.start()}>Watch selection</button>
+      <button onClick={() => selection.captureNow()}>Send selected text</button>
+      {selection.active && <button onClick={selection.cancel}>Cancel</button>}
     </>
   );
 }

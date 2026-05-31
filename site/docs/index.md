@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.9.0**.
+> Current npm release: **v0.10.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,16 +59,16 @@ features:
   </video>
 </div>
 
-## Latest in v0.9.0
+## Latest in v0.10.0
 
-- `createAskableMcpContextProvider()` for wiring existing Askable contexts into MCP servers
-- expanded MCP tool options for scoped, compact, JSON, and token-limited context
-- starter app dependency pins advanced to `^0.9.0`
-- continued support for region/circle capture, Context packets, and framework wrappers
+- `createAskableTextSelectionCapture()` for sending highlighted page text as Context packets
+- React, Vue, and Svelte wrappers for text selection capture
+- starter app dependency pins advanced to `^0.10.0`
+- continued support for region/circle capture, MCP Context packets, and framework wrappers
 
 Start here:
 
-- [What’s New in v0.9.0](/guide/whats-new)
+- [What’s New in v0.10.0](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [AI SDK integration patterns](/examples/ai-sdk)
 - [CopilotKit guide](/guide/copilotkit)

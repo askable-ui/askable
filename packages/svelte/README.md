@@ -106,6 +106,39 @@ Starts an explicit region or circle selection overlay and exposes the captured C
 
 The store includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
 
+### `createAskableTextSelectionCaptureStore(options?)`
+
+Captures highlighted browser text and exposes the captured Context packet as
+Svelte stores.
+
+```svelte
+<script lang="ts">
+  import { onDestroy } from 'svelte';
+  import { createAskableTextSelectionCaptureStore } from '@askable-ui/svelte';
+
+  const selection = createAskableTextSelectionCaptureStore({
+    includeViewport: true,
+    source: { app: 'analytics-dashboard' },
+    intent: 'answer using the highlighted text',
+  });
+  const { active, lastPacket } = selection;
+
+  onDestroy(selection.destroy);
+</script>
+
+<button on:click={() => selection.start()}>Watch selection</button>
+<button on:click={() => selection.captureNow()}>Send selected text</button>
+{#if $active}
+  <button on:click={selection.cancel}>Cancel</button>
+{/if}
+
+{#if $lastPacket}
+  <pre>{JSON.stringify($lastPacket, null, 2)}</pre>
+{/if}
+```
+
+The store includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`, `captureNow(overrides)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
+
 ### "Ask AI" button pattern
 
 Use `ctx.select()` to set context explicitly when a user clicks a button:

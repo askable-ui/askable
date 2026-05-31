@@ -1,5 +1,6 @@
 export { createAskableInspector } from './inspector.js';
 export { createAskableRegionCapture } from './capture.js';
+export { createAskableTextSelectionCapture } from './selection.js';
 export { a11yTextExtractor } from './a11y.js';
 export {
   WEB_CONTEXT_PROTOCOL,
@@ -16,6 +17,7 @@ export type {
   WebContextPacket,
   WebContextPrivacy,
   WebContextProvenance,
+  WebContextRect,
   WebContextSource,
   WebContextSurrounding,
   WebContextTarget,
@@ -31,6 +33,11 @@ export type {
   AskableRegionCaptureSelection,
   AskableRegionCaptureShape,
 } from './capture.js';
+export type {
+  AskableTextSelectionCaptureHandle,
+  AskableTextSelectionCaptureOptions,
+  AskableTextSelectionCaptureSelection,
+} from './selection.js';
 export type {
   AskableContext,
   AskableContextOptions,

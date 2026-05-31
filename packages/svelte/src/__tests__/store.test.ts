@@ -1,6 +1,10 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { get } from 'svelte/store';
-import { createAskableRegionCaptureStore, createAskableStore } from '../askable.js';
+import {
+  createAskableRegionCaptureStore,
+  createAskableStore,
+  createAskableTextSelectionCaptureStore,
+} from '../askable.js';
 
 function pointerEvent(type: string, x: number, y: number): PointerEvent {
   const event = new MouseEvent(type, {
@@ -14,6 +18,25 @@ function pointerEvent(type: string, x: number, y: number): PointerEvent {
   return event as PointerEvent;
 }
 
+function selectText(text: string, id = 'svelte-selection'): HTMLElement {
+  const el = document.createElement('p');
+  el.id = id;
+  el.textContent = text;
+  document.body.appendChild(el);
+
+  const range = document.createRange();
+  range.setStart(el.firstChild!, 0);
+  range.setEnd(el.firstChild!, text.length);
+  Object.defineProperty(range, 'getBoundingClientRect', {
+    value: () => ({ x: 10, y: 15, width: 120, height: 20 }),
+  });
+
+  const selection = document.getSelection()!;
+  selection.removeAllRanges();
+  selection.addRange(range);
+  return el;
+}
+
 describe('createAskableStore', () => {
   const elements: HTMLElement[] = [];
 
@@ -21,6 +44,8 @@ describe('createAskableStore', () => {
     elements.forEach((el) => el.parentNode?.removeChild(el));
     elements.length = 0;
     document.getElementById('askable-region-capture')?.remove();
+    document.getSelection()?.removeAllRanges();
+    document.querySelectorAll('#svelte-selection').forEach((el) => el.remove());
   });
 
   function makeEl(meta: object | string, text = ''): HTMLElement {
@@ -126,6 +151,44 @@ describe('createAskableStore', () => {
 
     unsub();
     scopedCtx.destroy();
+  });
+});
+
+describe('createAskableTextSelectionCaptureStore', () => {
+  afterEach(() => {
+    document.getSelection()?.removeAllRanges();
+    document.querySelectorAll('#svelte-selection').forEach((el) => el.remove());
+  });
+
+  it('captures the current browser selection', () => {
+    const capture = createAskableTextSelectionCaptureStore({
+      source: { app: 'svelte-test' },
+      intent: 'summarize selection',
+    });
+
+    selectText('Selected Svelte copy');
+    const packet = capture.captureNow();
+
+    expect(packet).toMatchObject({
+      source: { app: 'svelte-test' },
+      capture: {
+        mode: 'text-selection',
+        gesture: 'programmatic',
+        intent: 'summarize selection',
+      },
+      target: {
+        text: 'Selected Svelte copy',
+        selector: '#svelte-selection',
+      },
+      privacy: { consent: 'explicit' },
+    });
+    expect(get(capture.lastPacket)).toEqual(packet);
+    expect(get(capture.lastSelection)).toMatchObject({
+      text: 'Selected Svelte copy',
+      selector: '#svelte-selection',
+    });
+
+    capture.destroy();
   });
 });
 
