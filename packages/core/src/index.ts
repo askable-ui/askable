@@ -1,5 +1,24 @@
 export { createAskableInspector } from './inspector.js';
 export { a11yTextExtractor } from './a11y.js';
+export {
+  WEB_CONTEXT_PROTOCOL,
+  WEB_CONTEXT_VERSION,
+  createWebContextPacket,
+  isWebContextPacket,
+  webContextPacketSchema,
+} from '@askable-ui/context';
+export type {
+  CreateWebContextPacketOptions,
+  WebContextCapture,
+  WebContextCaptureMode,
+  WebContextGesture,
+  WebContextPacket,
+  WebContextPrivacy,
+  WebContextProvenance,
+  WebContextSource,
+  WebContextSurrounding,
+  WebContextTarget,
+} from '@askable-ui/context';
 export type {
   AskableInspectorHandle,
   AskableInspectorOptions,
@@ -9,6 +28,7 @@ export type {
   AskableContext,
   AskableContextOptions,
   AskableContextOutputOptions,
+  AskableContextPacketOptions,
   AskableContextSubscriber,
   AskableSubscribeOptions,
   AskableEvent,

@@ -51,7 +51,7 @@ export default defineConfig({
           text: 'Introduction',
           items: [
             { text: 'What is askable-ui?', link: '/guide/' },
-            { text: 'What’s New in v6.1.0', link: '/guide/whats-new' },
+            { text: 'What’s New in v0.7.0', link: '/guide/whats-new' },
             { text: 'Getting Started', link: '/guide/getting-started' },
             { text: 'How It Works', link: '/guide/how-it-works' },
           ],
@@ -72,6 +72,7 @@ export default defineConfig({
             { text: 'Focus & History', link: '/guide/focus-history' },
             { text: 'Ask AI Buttons (select())', link: '/guide/select' },
             { text: 'Prompt Serialization', link: '/guide/serialization' },
+            { text: 'Web Context Packets', link: '/guide/web-context' },
             { text: 'Migration Guides', link: '/guide/migrations' },
             { text: 'SSR Safety', link: '/guide/ssr' },
             { text: 'Browser Support', link: '/guide/browser-support' },
@@ -96,6 +97,8 @@ export default defineConfig({
           text: 'API Reference',
           items: [
             { text: '@askable-ui/core', link: '/api/core' },
+            { text: '@askable-ui/context', link: '/api/context' },
+            { text: '@askable-ui/mcp', link: '/api/mcp' },
             { text: '@askable-ui/react', link: '/api/react' },
             { text: '@askable-ui/react-native', link: '/api/react-native' },
             { text: '@askable-ui/vue', link: '/api/vue' },

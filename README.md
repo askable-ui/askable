@@ -144,6 +144,7 @@ askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it
 - **"Ask AI" button** — `ctx.select(element)` pins focus to any element programmatically
 - **Conversation history** — `ctx.toHistoryContext(n)` for multi-turn context
 - **Viewport awareness** — `ctx.getVisibleElements()` / `ctx.toViewportContext()` for on-screen context
+- **Structured web context packets** — `ctx.toContextPacket()` for agent/MCP-ready page context
 - **Redaction hooks** — strip sensitive fields before data reaches serialization
 - **Inspector panel** — `<AskableInspector />` or `useAskable({ inspector: true })` for a live dev overlay
 - **Agent templates** — reusable `AGENTS.md` guidance and copy-paste prompts for coding-agent-driven adoption
@@ -156,10 +157,12 @@ askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it
 | Package | Version | Use when |
 |---|---|---|
 | [`@askable-ui/core`](https://www.npmjs.com/package/@askable-ui/core) | [![npm](https://img.shields.io/npm/v/@askable-ui/core?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/core) | Vanilla JS, custom framework, or as a peer dep |
+| [`@askable-ui/context`](https://www.npmjs.com/package/@askable-ui/context) | npm package | Shared web context packet types, schema, and validators |
 | [`@askable-ui/react`](https://www.npmjs.com/package/@askable-ui/react) | [![npm](https://img.shields.io/npm/v/@askable-ui/react?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react) | React 18+ |
 | [`@askable-ui/react-native`](https://www.npmjs.com/package/@askable-ui/react-native) | [![npm](https://img.shields.io/npm/v/@askable-ui/react-native?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react-native) | React Native (initial press-driven adapter) |
 | [`@askable-ui/vue`](https://www.npmjs.com/package/@askable-ui/vue) | [![npm](https://img.shields.io/npm/v/@askable-ui/vue?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/vue) | Vue 3 |
 | [`@askable-ui/svelte`](https://www.npmjs.com/package/@askable-ui/svelte) | [![npm](https://img.shields.io/npm/v/@askable-ui/svelte?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/svelte) | Svelte 4 & 5 |
+| [`@askable-ui/mcp`](https://www.npmjs.com/package/@askable-ui/mcp) | npm package | MCP bridge for exposing web context packets to agents |
 | [`@askable-ui/create-app`](https://www.npmjs.com/package/@askable-ui/create-app) | npm package | React + Vite + CopilotKit starter scaffold |
 
 <details>

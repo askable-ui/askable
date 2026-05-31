@@ -1,7 +1,7 @@
 {
-  "name": "@askable-ui/core",
+  "name": "@askable-ui/context",
   "version": "0.7.0",
-  "description": "Framework-agnostic context tracker for LLM-aware UIs",
+  "description": "Open web context packet types and schema for AI-native interfaces",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,31 +17,25 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/askable-ui/askable.git",
-    "directory": "packages/core"
+    "url": "git+https://github.com/askable-ui/askable.git",
+    "directory": "packages/context"
   },
   "scripts": {
-    "prebuild": "npm run build -w @askable-ui/context",
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run",
-    "bench": "node bench/perf.mjs",
-    "bench:ci": "node bench/perf.mjs --budget"
+    "test": "vitest run --passWithNoTests"
   },
   "keywords": [
-    "llm",
+    "ai",
     "context",
-    "ui",
-    "accessibility",
-    "focus"
+    "web",
+    "mcp",
+    "selection",
+    "viewport"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",
-  "dependencies": {
-    "@askable-ui/context": "^0.7.0"
-  },
   "devDependencies": {
-    "jsdom": "^29.0.1",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   }

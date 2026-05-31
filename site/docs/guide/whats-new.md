@@ -1,87 +1,89 @@
-# What’s New in v0.6.3
+# What’s New in v0.7.0
 
-askable-ui v0.6.3 rolls up the most recent improvements across the core library, React bindings, and docs.
+askable-ui v0.7.0 starts the structured web context layer for agents, browser tools, and MCP bridges.
 
 ## Highlights
 
-### Streaming context subscriptions
+### Structured web context packets
 
-You can now subscribe to serialized Askable context updates directly from `@askable-ui/core`:
+`@askable-ui/core` now emits versioned web context packets:
 
 ```ts
-const unsubscribe = ctx.subscribe((context, focus) => {
-  streamTransport.send({ context, focus });
-}, {
-  history: 5,
-  debounce: 100,
+const packet = ctx.toContextPacket({
+  history: 3,
+  includeViewport: true,
+  source: { app: 'analytics-dashboard' },
 });
 ```
 
-This is especially useful for AI experiences that keep streaming while the user continues interacting with the UI.
+Packets preserve the same annotated metadata used by prompt serialization, but
+add source, capture, surrounding context, privacy, and provenance fields.
 
-Use it when you want to:
+Use packets when you want to:
 
-- keep Vercel AI SDK sessions aligned with live UI focus
-- update CopilotKit readable context during long-running agent responses
-- debounce rapid UI changes before forwarding them to your model/runtime
+- pass selected/focused UI context through MCP
+- store or validate context before forwarding it to a model
+- bridge app-authored context into browser extensions or agent runtimes
+- include viewport and history context without flattening everything to prose
 
 Related docs:
 
-- [AI SDK integration](/examples/ai-sdk)
-- [CopilotKit example](/examples/copilotkit)
+- [Web Context Packets](/guide/web-context)
 - [@askable-ui/core API](/api/core)
 
-### Per-component activation rules in React
+### New `@askable-ui/context` package
 
-React components can now override activation behavior per component with the `events` prop on `<Askable>`.
+The new context package provides the shared packet contract:
 
-```tsx
-<Askable meta={{ widget: 'revenue' }} events={['hover']}>
-  <RevenueCard />
-</Askable>
-
-<Askable meta={{ widget: 'account-row' }} events={['click']}>
-  <AccountRow />
-</Askable>
-
-<Askable meta={{ widget: 'details-panel' }} events="manual">
-  <Panel />
-</Askable>
+```ts
+import {
+  createWebContextPacket,
+  isWebContextPacket,
+  webContextPacketSchema,
+} from '@askable-ui/context';
 ```
 
-This makes mixed interaction patterns easier inside a single page or shared context:
+It is dependency-free and can be used by non-React runtimes, browser bridges,
+servers, or storage pipelines that need to understand the same packet shape.
 
-- hover-only summary cards
-- click-only rows in dense tables
-- fully manual "Ask AI about this" flows driven by `ctx.select()`
+### New `@askable-ui/mcp` package
 
-Related docs:
+`@askable-ui/mcp` creates an MCP server surface around a context provider:
 
-- [React API](/api/react)
-- [Ask AI button example](/examples/ask-ai-button)
+```ts
+const server = createAskableMcpServer({
+  provider: {
+    getContext: (options) => ctx.toContextPacket(options),
+  },
+});
+```
 
-### Better shared-context guidance
+The server registers tools for reading the current context, reading the schema,
+and formatting a packet for prompts. Transports are left to the host app so this
+can work with stdio, Streamable HTTP, or embedded browser runtimes.
 
-The recent docs updates also clarify how shared contexts behave across React, Vue, and the inspector tooling.
+### 0.7 release path
 
-That includes guidance for:
+All workspace packages have been bumped to `0.7.0`, and the publish workflow now
+publishes packages in dependency order:
 
-- named shared contexts
-- private vs shared contexts
-- matching inspector configuration to custom event/view settings
-- preserving hover-only and focus-only behavior in shared setups
+1. `@askable-ui/context`
+2. `@askable-ui/core`
+3. framework wrappers
+4. `@askable-ui/mcp`
+5. `@askable-ui/create-app`
 
 ## Recommended next step
 
-If you are integrating Askable into an AI copilot, start here:
+If you are integrating Askable into an AI or agent runtime, start here:
 
 1. [Getting Started](/guide/getting-started)
-2. [CopilotKit integration guide](/guide/copilotkit)
-3. [AI SDK integration patterns](/examples/ai-sdk)
+2. [Web Context Packets](/guide/web-context)
+3. [@askable-ui/mcp API](/api/mcp)
 
 ## Version note
 
-The current published docs track **v0.6.3** at both:
+The current published docs track **v0.7.0** at both:
 
 - `/docs/`
-- `/docs/v0.6.3/`
+- `/docs/v0.7.0/`

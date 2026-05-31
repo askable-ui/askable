@@ -333,6 +333,38 @@ ctx.toContext({ history: 3, currentLabel: 'Now', historyLabel: 'Before' });
 
 ---
 
+### `toContextPacket(options?)`
+
+Serialize the current UI state to a structured web context packet for agents,
+MCP bridges, browser extensions, or storage.
+
+```ts
+const packet = ctx.toContextPacket({
+  history: 3,
+  includeViewport: true,
+  source: { app: 'analytics-dashboard' },
+  privacy: { consent: 'explicit' },
+});
+```
+
+**Options (`AskableContextPacketOptions`):**
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `source` | `Partial<WebContextSource>` | inferred from browser | Override source metadata like app or route |
+| `mode` | `WebContextCaptureMode` | inferred | Capture mode for the packet |
+| `gesture` | `WebContextGesture` | inferred | Gesture that produced the context |
+| `intent` | `string` | — | Optional user intent attached to the capture |
+| `includeViewport` | `boolean` | `false` | Include currently visible annotated elements |
+| `history` | `number` | `0` | Include recent focus history |
+| `privacy` | `Partial<WebContextPrivacy>` | inferred | Redaction and consent metadata |
+| `provenance` | `Partial<WebContextProvenance>` | inferred | Producer and capture method metadata |
+| _...all `AskablePromptContextOptions`_ | | | Passed through to focus/metadata normalization |
+
+**Returns:** `WebContextPacket`
+
+---
+
 ### `serializeFocus(options?)`
 
 Returns structured focus data as `AskableSerializedFocus | null`. Same options as `toPromptContext()`.

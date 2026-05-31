@@ -244,6 +244,89 @@ describe('createAskableContext', () => {
     cleanup(el);
   });
 
+  it('toContextPacket() returns a structured web context packet for focused UI', () => {
+    const el = makeEl({ metric: 'revenue', value: '$2.3M' }, 'Revenue Chart');
+    el.setAttribute('aria-label', 'Revenue card');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    el.click();
+
+    expect(ctx.toContextPacket({ source: { app: 'analytics' }, history: 1 })).toMatchObject({
+      protocol: 'askable.web-context',
+      version: '0.1',
+      source: {
+        app: 'analytics',
+        timestamp: expect.any(String),
+      },
+      capture: {
+        mode: 'element-focus',
+        gesture: 'focus',
+      },
+      target: {
+        text: 'Revenue Chart',
+        label: 'Revenue card',
+        metadata: { metric: 'revenue', value: '$2.3M' },
+        selector: expect.any(String),
+        bounds: {
+          x: expect.any(Number),
+          y: expect.any(Number),
+          width: expect.any(Number),
+          height: expect.any(Number),
+        },
+      },
+      surrounding: {
+        history: [
+          expect.objectContaining({
+            text: 'Revenue Chart',
+            metadata: { metric: 'revenue', value: '$2.3M' },
+          }),
+        ],
+      },
+      privacy: {
+        redacted: false,
+        consent: 'implicit',
+      },
+      provenance: {
+        producer: '@askable-ui/core',
+        method: 'app',
+      },
+    });
+
+    ctx.destroy();
+    cleanup(el);
+  });
+
+  it('toContextPacket() includes privacy and viewport context when configured', () => {
+    const originalIntersectionObserver = globalThis.IntersectionObserver;
+    globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+
+    const first = makeEl({ widget: 'table', secret: 'remove' }, 'Table Secret');
+    const ctx = createAskableContext({
+      viewport: true,
+      sanitizeMeta: ({ secret: _secret, ...safe }) => safe,
+      sanitizeText: (text) => text.replace('Secret', '[redacted]'),
+    });
+    ctx.observe(document);
+
+    const observer = MockIntersectionObserver.instances[0];
+    observer.trigger([{ target: first, isIntersecting: true }]);
+    first.click();
+
+    const packet = ctx.toContextPacket({ includeViewport: true });
+    expect(packet.privacy.redacted).toBe(true);
+    expect(packet.target?.metadata).toEqual({ widget: 'table' });
+    expect(packet.target?.text).toBe('Table [redacted]');
+    expect(packet.surrounding?.visible?.[0]).toMatchObject({
+      metadata: { widget: 'table' },
+      text: 'Table [redacted]',
+    });
+
+    ctx.destroy();
+    cleanup(first);
+    globalThis.IntersectionObserver = originalIntersectionObserver;
+  });
+
   it('serializeFocus() respects includeText and maxTextLength', () => {
     const el = makeEl({ metric: 'churn' }, 'ABCDEFGHIJ');
     const ctx = createAskableContext();
