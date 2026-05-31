@@ -38,6 +38,19 @@ jobs:
           script: |
             const tag = process.env.RELEASE_TAG;
             const isPrerelease = process.env.IS_PRERELEASE === 'true';
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag,
+              });
+              core.notice(`Release ${tag} already exists; skipping.`);
+              return;
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
             await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
