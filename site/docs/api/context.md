@@ -2,7 +2,7 @@
 
 Shared packet types and schema for structured Context packets.
 
-The open specification lives at [askable-ui/context](https://github.com/askable-ui/context).
+The open specification lives at [askable-ui/context-standard](https://github.com/askable-ui/context-standard).
 
 ```bash
 npm install @askable-ui/context

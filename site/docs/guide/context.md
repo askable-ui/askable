@@ -4,7 +4,7 @@ Prompt strings are useful for simple chat integrations. Context packets are
 for agents, MCP bridges, browser extensions, and tools that need structured
 context instead of prose.
 
-The open specification lives at [askable-ui/context](https://github.com/askable-ui/context).
+The open specification lives at [askable-ui/context-standard](https://github.com/askable-ui/context-standard).
 
 ```ts
 const packet = ctx.toContextPacket({
