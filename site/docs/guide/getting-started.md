@@ -2,7 +2,7 @@
 
 ## Pick your framework
 
-> Current npm release: **v0.6.2**.
+> Current npm release: **v0.6.3**.
 >
 > Latest docs live at `/docs/`. Version-specific docs are published at `/docs/<version>/` for breaking releases.
 
@@ -11,7 +11,7 @@
 If you want a runnable Askable + CopilotKit example instead of wiring everything by hand, start here:
 
 ```bash
-npx create-askable-app my-app
+npm create @askable-ui/app my-app
 cd my-app
 npm install
 npm run dev
