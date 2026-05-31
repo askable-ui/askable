@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/create-app",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Scaffold a React + Vite + CopilotKit + askable-ui starter app",
   "type": "module",
   "bin": {

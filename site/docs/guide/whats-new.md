@@ -1,6 +1,6 @@
-# What’s New in v0.8.2
+# What’s New in v0.8.3
 
-askable-ui v0.8.2 expands explicit region and circle capture across the web
+askable-ui v0.8.3 expands explicit region and circle capture across the web
 framework adapters for "send this part of the page" agent workflows.
 
 ## Highlights
@@ -75,7 +75,7 @@ pushes the last selected page area into CopilotKit readable context.
 
 ### 0.8 release path
 
-All workspace packages have been bumped to `0.8.2`.
+All workspace packages have been bumped to `0.8.3`.
 
 ## Recommended next step
 
@@ -87,7 +87,7 @@ If you are integrating Askable into an AI or agent runtime, start here:
 
 ## Version note
 
-The current published docs track **v0.8.2** at both:
+The current published docs track **v0.8.3** at both:
 
 - `/docs/`
-- `/docs/v0.8.2/`
+- `/docs/v0.8.3/`

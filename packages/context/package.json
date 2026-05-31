@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/context",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Open Context packet types and schema for AI-native interfaces",
   "type": "module",
   "main": "./dist/index.js",
