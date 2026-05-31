@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { CopilotSidebar } from '@copilotkit/react-ui';
 import { useCopilotReadable } from '@copilotkit/react-core';
-import { useAskable, useAskableRegionCapture } from '@askable-ui/react';
+import { useAskable, useAskableRegionCapture, useAskableTextSelectionCapture } from '@askable-ui/react';
 
 type MetricCard = {
   id: string;
@@ -62,6 +62,7 @@ export default function App() {
   const { ctx, promptContext } = useAskable();
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
   const [regionContext, setRegionContext] = useState('No page region captured yet.');
+  const [textContext, setTextContext] = useState('No highlighted text captured yet.');
   const panelRefs = useRef<Record<string, HTMLElement | null>>({});
   const regionCapture = useAskableRegionCapture({
     ctx,
@@ -73,6 +74,32 @@ export default function App() {
         target: packet.target,
         selection,
       }, null, 2));
+      ctx.push(
+        {
+          capture: packet.capture.mode,
+          shape: selection.shape,
+          bounds: selection.bounds,
+        },
+        `${selection.shape} selection on the dashboard`,
+      );
+    },
+  });
+  const textCapture = useAskableTextSelectionCapture({
+    ctx,
+    source: { app: 'askable-starter' },
+    onCapture(packet, selection) {
+      setTextContext(JSON.stringify({
+        capture: packet.capture,
+        target: packet.target,
+        selection,
+      }, null, 2));
+      ctx.push(
+        {
+          capture: packet.capture.mode,
+          length: selection.text.length,
+        },
+        selection.text,
+      );
     },
   });
 
@@ -104,6 +131,14 @@ export default function App() {
       value: regionContext,
     },
     [regionContext],
+  );
+
+  useCopilotReadable(
+    {
+      description: 'The last highlighted text selection the user sent as Askable context.',
+      value: textContext,
+    },
+    [textContext],
   );
 
   function focusPanel(id: string) {
@@ -153,6 +188,21 @@ export default function App() {
               onClick={() => regionCapture.start({ shape: 'lasso', intent: 'explain this lassoed area' })}
             >
               Lasso area
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                const packet = textCapture.captureNow({
+                  dedupe: false,
+                  intent: 'answer using this highlighted text',
+                });
+                if (!packet) {
+                  setTextContext('Highlight text in a card, chart note, or table row before sending it as context.');
+                }
+              }}
+            >
+              Send selected text
             </button>
             {regionCapture.active && (
               <button type="button" className="secondary" onClick={regionCapture.cancel}>
@@ -235,6 +285,8 @@ export default function App() {
             <pre>{recentContext}</pre>
             <h3>Selected page region</h3>
             <pre>{regionContext}</pre>
+            <h3>Highlighted text</h3>
+            <pre>{textContext}</pre>
           </article>
         </section>
 

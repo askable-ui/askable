@@ -2,6 +2,16 @@
 
 A runnable Next.js dashboard example showing how Askable can annotate complex product surfaces like metrics grids, charts, tables, and sidebars.
 
+The live demo now exposes the main interaction patterns:
+
+- click or hover annotated cards and charts for implicit focus context
+- draw a rectangular region over the dashboard
+- circle one object or anomaly
+- lasso an irregular page area
+- highlight text in a table or card and send it to the chat sidebar
+
+Each pattern feeds the same Askable context that the sidebar reads.
+
 - **Stable live URL:** [askable-mu.vercel.app](https://askable-mu.vercel.app/)
 - **Pull request previews:** surfaced automatically by Vercel on GitHub PRs for this project
 

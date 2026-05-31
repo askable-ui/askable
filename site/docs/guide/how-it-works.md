@@ -3,18 +3,18 @@
 ## The data flow
 
 ```
-  DOM element          AskableContext           Your AI handler
-  ─────────────        ──────────────           ────────────────
-  data-askable ──►  MutationObserver  ──►  ctx.toPromptContext()
-  attribute         tracks all matching       returns a string
-                    elements, listens         ready for your LLM
-                    for click/hover/focus
+  UI interaction          AskableContext           Your AI handler
+  ──────────────          ──────────────           ────────────────
+  data-askable       ─►   current focus       ─►   ctx.toPromptContext()
+  ctx.select()       ─►   history             ─►   ctx.toContextPacket()
+  ctx.push()         ─►   visible elements    ─►   MCP / agent bridge
+  region/text tools  ─►   Context packet
 ```
 
-1. You annotate elements with `data-askable` (once, at build time).
+1. You annotate elements with `data-askable` or push semantic metadata from app code.
 2. `ctx.observe()` starts a `MutationObserver` on the root you give it. As elements enter or leave the DOM, the observer attaches and detaches event listeners automatically.
-3. When a user interacts with an annotated element, the context is updated — no re-renders, no state management required.
-4. Your AI handler calls `ctx.toPromptContext()` at request time and gets a plain string to inject into the system message.
+3. When a user interacts with an annotated element, presses an Ask AI button, highlights text, draws a region, circles an area, or lassos an irregular shape, the context is updated or emitted as a Context packet.
+4. Your AI handler calls `ctx.toPromptContext()` for prompt-ready text or `ctx.toContextPacket()` for structured agent/MCP transport.
 
 ## The Observer
 
@@ -55,6 +55,21 @@ User is focused on: — metric: mrr, value: $128k — value "Monthly Recurring R
 - Meta key-value pairs follow, formatted as `key: value, ...`.
 - The element's trimmed `textContent` is appended as `value "..."` (label is configurable).
 - See [Prompt Serialization](/guide/serialization) for all options including JSON output and token budgets.
+
+## Explicit selection tools
+
+Some user intent is not tied to one DOM element. Askable includes explicit capture tools for those cases:
+
+| Tool | Best for | Packet mode |
+| --- | --- | --- |
+| `ctx.select(element)` | Ask AI buttons and known widgets | `element-focus` |
+| `ctx.push(meta, text)` | App events, command palettes, generated summaries | `semantic` |
+| `createAskableRegionCapture(ctx)` | Dragging a rectangular page area | `region` |
+| `createAskableRegionCapture(ctx, { shape: 'circle' })` | Circling one object or anomaly | `circle` |
+| `createAskableRegionCapture(ctx, { shape: 'lasso' })` | Freehand irregular selections | `lasso` |
+| `createAskableTextSelectionCapture(ctx)` | Browser-highlighted copy | `text-selection` |
+
+Region, circle, lasso, and text capture mark `privacy.consent` as `explicit` because the user intentionally selected the context.
 
 ## Singleton vs. scoped contexts
 

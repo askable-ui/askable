@@ -1,0 +1,126 @@
+"use client"
+
+import { useState } from "react"
+import { CircleIcon, MousePointer, MousePointerClick, Pointer, X } from "lucide-react"
+import {
+  useAskable,
+  useAskableRegionCapture,
+  useAskableTextSelectionCapture,
+} from "@askable-ui/react"
+import { Button } from "@/components/ui/button"
+
+function round(value: number) {
+  return Math.round(value)
+}
+
+function boundsLabel(bounds: { x: number; y: number; width: number; height: number }) {
+  return `${round(bounds.width)}x${round(bounds.height)} at ${round(bounds.x)},${round(bounds.y)}`
+}
+
+export function AskableInteractionToolbar() {
+  const { ctx } = useAskable({ inspector: true })
+  const [status, setStatus] = useState("Use a tool to send explicit page context to the chat.")
+
+  const region = useAskableRegionCapture({
+    ctx,
+    includeViewport: true,
+    source: { app: "analytics-dashboard-demo" },
+    onCapture(packet, selection) {
+      const label = `${selection.shape} selection: ${boundsLabel(selection.bounds)}`
+      ctx.push(
+        {
+          capture: packet.capture.mode,
+          gesture: packet.capture.gesture ?? selection.shape,
+          shape: selection.shape,
+          bounds: selection.bounds,
+          ...(selection.radius ? { radius: round(selection.radius) } : {}),
+          ...(selection.points ? { points: selection.points.length } : {}),
+        },
+        label,
+      )
+      setStatus(label)
+    },
+    onCancel() {
+      setStatus("Selection cancelled.")
+    },
+  })
+
+  const text = useAskableTextSelectionCapture({
+    ctx,
+    source: { app: "analytics-dashboard-demo" },
+    onCapture(packet, selection) {
+      const label = `Highlighted text: ${selection.text}`
+      ctx.push(
+        {
+          capture: packet.capture.mode,
+          gesture: packet.capture.gesture ?? "programmatic",
+          length: selection.text.length,
+          ...(selection.bounds ? { bounds: selection.bounds } : {}),
+        },
+        label,
+      )
+      setStatus(`Sent ${selection.text.length} selected characters to chat context.`)
+    },
+  })
+
+  const active = region.active || text.active
+
+  function captureText() {
+    const packet = text.captureNow({
+      dedupe: false,
+      intent: "answer using this highlighted text",
+    })
+    if (!packet) {
+      setStatus("Highlight text on the page first, then send it as context.")
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border border-border bg-background/70 p-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => region.start({ shape: "region", intent: "answer using this selected page region" })}
+        >
+          <MousePointerClick className="h-3.5 w-3.5" />
+          Region
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => region.start({ shape: "circle", intent: "answer using this circled area" })}
+        >
+          <CircleIcon className="h-3.5 w-3.5" />
+          Circle
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => region.start({ shape: "lasso", intent: "answer using this lassoed area" })}
+        >
+          <Pointer className="h-3.5 w-3.5" />
+          Lasso
+        </Button>
+        <Button variant="outline" size="sm" onClick={captureText}>
+          <MousePointer className="h-3.5 w-3.5" />
+          Send text
+        </Button>
+        {active && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              region.cancel()
+              text.cancel()
+            }}
+          >
+            <X className="h-3.5 w-3.5" />
+            Cancel
+          </Button>
+        )}
+      </div>
+      <p className="text-xs leading-relaxed text-muted-foreground">{status}</p>
+    </div>
+  )
+}
