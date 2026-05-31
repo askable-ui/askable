@@ -1,81 +1,52 @@
-# What’s New in v0.8.3
+# What’s New in v0.9.0
 
-askable-ui v0.8.3 expands explicit region and circle capture across the web
-framework adapters for "send this part of the page" agent workflows.
+askable-ui v0.9.0 makes the MCP bridge easier to wire into agent runtimes by
+adding a first-class provider for existing Askable contexts.
 
 ## Highlights
 
-### Framework region and circle capture
+### First-class MCP context provider
 
-React exports `useAskableRegionCapture()`:
-
-```tsx
-const { ctx } = useAskable({ viewport: true });
-const capture = useAskableRegionCapture({
-  ctx,
-  shape: 'circle',
-  intent: 'explain this selected area',
-  includeViewport: true,
-  onCapture: (packet) => sendToAgent(packet),
-});
-
-capture.start({ shape: 'circle' });
-```
-
-Vue now exports the matching composable:
+`@askable-ui/mcp` now exports `createAskableMcpContextProvider()` so apps can
+publish the same context they already use in their UI directly through MCP
+tools and resources.
 
 ```ts
-const capture = useAskableRegionCapture({
-  includeViewport: true,
-  source: { app: 'dashboard' },
-});
+import { createAskableContext } from '@askable-ui/core';
+import { createAskableMcpContextProvider, createAskableMcpServer } from '@askable-ui/mcp';
 
-capture.start();
-capture.start({ shape: 'circle' });
+const ctx = createAskableContext({ viewport: true });
+ctx.observe(document);
+
+const server = createAskableMcpServer({
+  provider: createAskableMcpContextProvider(ctx, {
+    history: 3,
+    includeViewport: true,
+    source: { app: 'analytics-dashboard' },
+  }),
+});
 ```
 
-Svelte now exports a store-based helper:
-
-```ts
-const capture = createAskableRegionCaptureStore({
-  intent: 'explain this selected area',
-});
-
-capture.start({ shape: 'circle' });
-```
-
-Each wrapper mounts a temporary drag overlay and emits a Context packet with
-`capture.mode` set to `region` or `circle`, explicit consent metadata, and the
-selected geometry in `target.bounds`. They also expose `active`, `lastPacket`,
-`lastSelection`, `cancel()`, and `destroy()` for framework-native UI state.
-
-Use it when you want to:
-
-- let a user circle part of a chart, table, or canvas
-- send a visible page region to an agent
-- combine manual selection geometry with viewport and focus context
-- build screenshot or browser-extension capture flows on top of the same packet shape
+The provider adapts `ctx.toContextPacket()` for structured packet tools and
+`ctx.toContext()` for prompt-ready text tools. Callers can request prompt
+shaping options such as `scope`, `preset`, `format`, `includeText`,
+`maxTextLength`, `maxTokens`, `history`, and `includeViewport`.
 
 Related docs:
 
 - [Context Packets](/guide/context)
-- [@askable-ui/react API](/api/react)
-- [@askable-ui/vue API](/api/vue)
-- [@askable-ui/svelte API](/api/svelte)
+- [@askable-ui/mcp API](/api/mcp)
 
-### Browser-level capture coverage
+### Expanded MCP prompt controls
 
-The core capture path now has Playwright coverage that exercises real pointer
-drag selection in Chromium, Firefox, and WebKit through the bundled browser API.
+The MCP bridge now accepts the same common prompt controls as the core context
+serializer, so MCP clients can ask for compact, JSON, scoped, or text-limited
+context without each host app inventing its own tool contract.
 
-### Starter app capture controls
+### Starter and docs version alignment
 
-`npm create @askable-ui/app` now scaffolds region and circle capture buttons and
-pushes the last selected page area into CopilotKit readable context.
-
-### 0.8 release path
-
-All workspace packages have been bumped to `0.8.3`.
+`npm create @askable-ui/app` now scaffolds projects pinned to `^0.9.0`, and the
+versioned docs have been advanced to `/docs/v0.9.0/`.
 
 ## Recommended next step
 
@@ -87,7 +58,7 @@ If you are integrating Askable into an AI or agent runtime, start here:
 
 ## Version note
 
-The current published docs track **v0.8.3** at both:
+The current published docs track **v0.9.0** at both:
 
 - `/docs/`
-- `/docs/v0.8.3/`
+- `/docs/v0.9.0/`

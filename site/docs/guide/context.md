@@ -52,16 +52,17 @@ route context before sending it to a model.
 
 ## MCP bridge
 
-`@askable-ui/mcp` exposes packets through MCP tools and resources. The host
-application provides a context provider:
+`@askable-ui/mcp` exposes packets through MCP tools and resources. The built-in
+provider adapts an existing `AskableContext`:
 
 ```ts
-import { createAskableMcpServer } from '@askable-ui/mcp';
+import { createAskableMcpContextProvider, createAskableMcpServer } from '@askable-ui/mcp';
 
 const server = createAskableMcpServer({
-  provider: {
-    getContext: (options) => ctx.toContextPacket(options),
-  },
+  provider: createAskableMcpContextProvider(ctx, {
+    history: 3,
+    includeViewport: true,
+  }),
 });
 ```
 
