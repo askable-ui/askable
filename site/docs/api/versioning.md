@@ -7,14 +7,14 @@ askable-ui supports two kinds of docs URLs:
 
 ## Current version
 
-- Latest stable: `v0.8.3`
-- Versioned current docs URL: `/docs/v0.8.3/`
+- Latest stable: `v0.9.0`
+- Versioned current docs URL: `/docs/v0.9.0/`
 
 ## Archived versions
 
 No archived major versions yet.
 
-The current release is also published at `/docs/v0.8.3/` so version-specific links work before the first breaking release.
+The current release is also published at `/docs/v0.9.0/` so version-specific links work before the first breaking release.
 
 ## Breaking release workflow
 

@@ -2,16 +2,25 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { webContextPacketSchema } from '@askable-ui/context';
 import type { WebContextPacket } from '@askable-ui/context';
+import type {
+  AskableContext,
+  AskableContextOutputOptions,
+  AskableContextPacketOptions,
+  AskablePromptFormat,
+  AskablePromptPreset,
+} from '@askable-ui/core';
 
-export interface AskableMcpContextOptions {
-  history?: number;
-  includeViewport?: boolean;
-  intent?: string;
+export interface AskableMcpContextOptions extends AskableContextPacketOptions {
+  currentLabel?: string;
+  historyLabel?: string;
 }
 
 export interface AskableMcpContextProvider {
   getContext(options?: AskableMcpContextOptions): WebContextPacket | Promise<WebContextPacket>;
-  formatContextForPrompt?(packet: WebContextPacket): string | Promise<string>;
+  formatContextForPrompt?(
+    packet: WebContextPacket,
+    options?: AskableMcpContextOptions,
+  ): string | Promise<string>;
 }
 
 export interface AskableMcpServerOptions {
@@ -20,11 +29,38 @@ export interface AskableMcpServerOptions {
   provider: AskableMcpContextProvider;
 }
 
+export type AskableMcpSourceContext = Pick<AskableContext, 'toContextPacket' | 'toContext'>;
+
+export interface CreateAskableMcpContextProviderOptions extends AskableMcpContextOptions {}
+
 const contextOptionsShape = {
+  scope: z.string().optional(),
+  preset: z.enum(['compact', 'verbose', 'json']).optional(),
+  format: z.enum(['natural', 'json']).optional(),
+  includeText: z.boolean().optional(),
+  maxTextLength: z.number().int().min(0).max(100_000).optional(),
+  maxTokens: z.number().int().min(1).max(100_000).optional(),
+  hierarchyDepth: z.number().int().min(0).max(50).optional(),
   history: z.number().int().min(0).max(50).optional(),
   includeViewport: z.boolean().optional(),
   intent: z.string().optional(),
+  currentLabel: z.string().optional(),
+  historyLabel: z.string().optional(),
 };
+
+export function createAskableMcpContextProvider(
+  ctx: AskableMcpSourceContext,
+  defaults: CreateAskableMcpContextProviderOptions = {},
+): AskableMcpContextProvider {
+  return {
+    getContext(options) {
+      return ctx.toContextPacket(mergeContextOptions(defaults, options));
+    },
+    formatContextForPrompt(_packet, options) {
+      return ctx.toContext(toPromptOptions(mergeContextOptions(defaults, options)));
+    },
+  };
+}
 
 export function createAskableMcpServer(options: AskableMcpServerOptions): McpServer {
   const server = new McpServer({
@@ -100,7 +136,7 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
     async (args) => {
       const packet = await options.provider.getContext(args);
       const text = options.provider.formatContextForPrompt
-        ? await options.provider.formatContextForPrompt(packet)
+        ? await options.provider.formatContextForPrompt(packet, args)
         : defaultPromptFormatter(packet);
 
       return {
@@ -130,4 +166,43 @@ export function defaultPromptFormatter(packet: WebContextPacket): string {
   ];
 
   return parts.filter((part): part is string => Boolean(part)).join('\n');
+}
+
+function mergeContextOptions(
+  defaults: AskableMcpContextOptions,
+  options?: AskableMcpContextOptions,
+): AskableMcpContextOptions {
+  return {
+    ...defaults,
+    ...options,
+    ...(defaults.source || options?.source
+      ? { source: { ...defaults.source, ...options?.source } }
+      : {}),
+    ...(defaults.privacy || options?.privacy
+      ? { privacy: { ...defaults.privacy, ...options?.privacy } }
+      : {}),
+    ...(defaults.provenance || options?.provenance
+      ? { provenance: { ...defaults.provenance, ...options?.provenance } }
+      : {}),
+  };
+}
+
+function toPromptOptions(options: AskableMcpContextOptions): AskableContextOutputOptions {
+  const {
+    includeViewport: _includeViewport,
+    intent: _intent,
+    mode: _mode,
+    gesture: _gesture,
+    target: _target,
+    source: _source,
+    privacy: _privacy,
+    provenance: _provenance,
+    ...promptOptions
+  } = options;
+
+  return {
+    ...promptOptions,
+    ...(promptOptions.preset ? { preset: promptOptions.preset as AskablePromptPreset } : {}),
+    ...(promptOptions.format ? { format: promptOptions.format as AskablePromptFormat } : {}),
+  };
 }
