@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.10.0**.
+> Current npm release: **v0.11.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,16 +59,16 @@ features:
   </video>
 </div>
 
-## Latest in v0.10.0
+## Latest in v0.11.0
 
-- `createAskableTextSelectionCapture()` for sending highlighted page text as Context packets
-- React, Vue, and Svelte wrappers for text selection capture
-- starter app dependency pins advanced to `^0.10.0`
-- continued support for region/circle capture, MCP Context packets, and framework wrappers
+- lasso capture via `shape: 'lasso'` for freehand-selected page regions
+- point-path metadata on lasso Context packets
+- starter app dependency pins advanced to `^0.11.0`
+- continued support for region/circle/text capture, MCP Context packets, and framework wrappers
 
 Start here:
 
-- [What’s New in v0.10.0](/guide/whats-new)
+- [What’s New in v0.11.0](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [AI SDK integration patterns](/examples/ai-sdk)
 - [CopilotKit guide](/guide/copilotkit)

@@ -124,6 +124,49 @@ describe('useAskableRegionCapture (Vue)', () => {
     });
   });
 
+  it('supports lasso capture overrides at start time', async () => {
+    const Consumer = defineComponent({
+      name: 'LassoCaptureConsumer',
+      setup() {
+        const capture = useAskableRegionCapture();
+        const packet = computed(() => capture.lastPacket.value ? JSON.stringify(capture.lastPacket.value) : 'null');
+        return {
+          packet,
+          startLasso: () => capture.start({ shape: 'lasso' }),
+        };
+      },
+      template: `
+        <div>
+          <button type="button" @click="startLasso()">Lasso</button>
+          <span data-testid="packet">{{ packet }}</span>
+        </div>
+      `,
+    });
+
+    const wrapper = track(mount(Consumer, { attachTo: document.body }));
+    await flushAll();
+
+    await wrapper.find('button').trigger('click');
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 30, 45));
+    overlay.dispatchEvent(pointerEvent('pointermove', 70, 35));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 75));
+    await flushAll();
+
+    const packet = JSON.parse(wrapper.find('[data-testid="packet"]').text());
+    expect(packet.capture).toMatchObject({ mode: 'lasso', gesture: 'lasso' });
+    expect(packet.target).toMatchObject({
+      bounds: { x: 10, y: 20, width: 70, height: 55 },
+      metadata: {
+        shape: 'lasso',
+        pointCount: 4,
+      },
+    });
+    expect(packet.target.metadata.points).toHaveLength(4);
+  });
+
   it('cancels active capture from Vue state', async () => {
     const Consumer = defineComponent({
       name: 'CancelCaptureConsumer',

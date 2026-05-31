@@ -116,6 +116,50 @@ describe('useAskableRegionCapture', () => {
     });
   });
 
+  it('supports lasso capture overrides at start time', async () => {
+    function Consumer() {
+      const capture = useAskableRegionCapture();
+
+      return (
+        <div>
+          <button type="button" onClick={() => capture.start({ shape: 'lasso' })}>
+            Lasso
+          </button>
+          <span data-testid="packet">{capture.lastPacket ? JSON.stringify(capture.lastPacket) : 'null'}</span>
+        </div>
+      );
+    }
+
+    render(<Consumer />);
+
+    act(() => {
+      fireEvent.click(screen.getByText('Lasso'));
+    });
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    act(() => {
+      overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+      overlay.dispatchEvent(pointerEvent('pointermove', 30, 45));
+      overlay.dispatchEvent(pointerEvent('pointermove', 70, 35));
+      overlay.dispatchEvent(pointerEvent('pointerup', 80, 75));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('packet').textContent).not.toBe('null');
+    });
+
+    const packet = JSON.parse(screen.getByTestId('packet').textContent!);
+    expect(packet.capture).toMatchObject({ mode: 'lasso', gesture: 'lasso' });
+    expect(packet.target).toMatchObject({
+      bounds: { x: 10, y: 20, width: 70, height: 55 },
+      metadata: {
+        shape: 'lasso',
+        pointCount: 4,
+      },
+    });
+    expect(packet.target.metadata.points).toHaveLength(4);
+  });
+
   it('cancels the active overlay from React state', async () => {
     function Consumer() {
       const capture = useAskableRegionCapture();

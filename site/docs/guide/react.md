@@ -131,7 +131,7 @@ function MetricCard({ data }) {
 
 See [Ask AI Button](/examples/ask-ai-button) for a full working example.
 
-## Region and circle capture
+## Region, circle, and lasso capture
 
 For visual "send this part of the page" flows, use
 `useAskableRegionCapture()` with the same context that powers the rest of your
@@ -158,6 +158,9 @@ function RegionTools() {
       <button onClick={() => capture.start({ shape: 'circle' })}>
         Circle area
       </button>
+      <button onClick={() => capture.start({ shape: 'lasso' })}>
+        Lasso area
+      </button>
       {capture.active && <button onClick={capture.cancel}>Cancel</button>}
     </div>
   );
@@ -165,7 +168,8 @@ function RegionTools() {
 ```
 
 Region packets use `capture.mode: 'region'`; circle packets use
-`capture.mode: 'circle'` and include center/radius metadata.
+`capture.mode: 'circle'` and include center/radius metadata. Lasso packets use
+`capture.mode: 'lasso'` and include freehand path points.
 
 ## Text selection capture
 

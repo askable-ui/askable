@@ -73,7 +73,7 @@ The composable manages a shared singleton context per `events` configuration. Mu
 
 ### `useAskableRegionCapture(options?)`
 
-Starts an explicit region or circle selection overlay and emits a structured Context packet through the same `AskableContext`.
+Starts an explicit region, circle, or lasso selection overlay and emits a structured Context packet through the same `AskableContext`.
 
 ```vue
 <script setup lang="ts">
@@ -94,6 +94,7 @@ const selectedContext = computed(() =>
 <template>
   <button @click="capture.start()">Select region</button>
   <button @click="capture.start({ shape: 'circle' })">Circle area</button>
+  <button @click="capture.start({ shape: 'lasso' })">Lasso area</button>
   <button v-if="capture.active.value" @click="capture.cancel()">Cancel</button>
   <pre v-if="selectedContext">{{ selectedContext }}</pre>
 </template>

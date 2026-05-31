@@ -76,7 +76,7 @@ const { focus, promptContext, ctx, destroy } = createAskableStore({ events: ['cl
 
 ### `createAskableRegionCaptureStore(options?)`
 
-Starts an explicit region or circle selection overlay and exposes the captured Context packet as Svelte stores.
+Starts an explicit region, circle, or lasso selection overlay and exposes the captured Context packet as Svelte stores.
 
 ```svelte
 <script lang="ts">
@@ -95,6 +95,7 @@ Starts an explicit region or circle selection overlay and exposes the captured C
 
 <button on:click={() => capture.start()}>Select region</button>
 <button on:click={() => capture.start({ shape: 'circle' })}>Circle area</button>
+<button on:click={() => capture.start({ shape: 'lasso' })}>Lasso area</button>
 {#if $active}
   <button on:click={capture.cancel}>Cancel</button>
 {/if}

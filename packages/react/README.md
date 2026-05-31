@@ -166,7 +166,7 @@ const { focus: focusOnly } = useAskable({ events: ['focus'] });
   - `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
   - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
   - `ctx.toContextPacket()` — structured Context packet for agents and MCP bridges
-- `useAskableRegionCapture()` — explicit region/circle capture for visual page selection
+- `useAskableRegionCapture()` — explicit region/circle/lasso capture for visual page selection
 - `useAskableTextSelectionCapture()` — explicit highlighted text capture for page copy selection
 
 The hook manages a shared singleton context per `name + events + viewport` configuration. Multiple `useAskable()` consumers with the same shared configuration reuse one observer lifecycle, while differing configurations get isolated shared contexts of their own. Each shared context is automatically destroyed when its last consumer unmounts.
@@ -208,7 +208,7 @@ function RevenueCard({ data }) {
 }
 ```
 
-### Region and circle capture
+### Region, circle, and lasso capture
 
 Use `useAskableRegionCapture()` when a user should select an area of the page
 and send that geometry as structured context.
@@ -233,6 +233,9 @@ function RegionTools() {
       </button>
       <button onClick={() => capture.start({ shape: 'circle' })}>
         Circle area
+      </button>
+      <button onClick={() => capture.start({ shape: 'lasso' })}>
+        Lasso area
       </button>
       {capture.active && <button onClick={capture.cancel}>Cancel</button>}
     </>

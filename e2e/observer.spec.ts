@@ -245,6 +245,44 @@ test.describe('region capture', () => {
       },
     });
   });
+
+  test('dragging a lasso emits point path metadata', async ({ harness }) => {
+    const page = await harness(
+      `<div id="target" data-askable='{"widget":"chart"}' style="width:240px;height:120px">Chart</div>`,
+      `
+      window.capturedPacket = null;
+      window.regionCapture = AskableCore.createAskableRegionCapture(window.ctx, {
+        shape: 'lasso',
+        onCapture: (packet) => { window.capturedPacket = packet; },
+      });
+      window.regionCapture.start();
+      `,
+    );
+
+    await page.mouse.move(20, 30);
+    await page.mouse.down();
+    await page.mouse.move(45, 60);
+    await page.mouse.move(100, 50);
+    await page.mouse.up();
+
+    const packet = await page.evaluate(() => (window as any).capturedPacket);
+    expect(packet.capture).toMatchObject({
+      mode: 'lasso',
+      gesture: 'lasso',
+    });
+    expect(packet.target).toMatchObject({
+      bounds: { x: 20, y: 30, width: 80, height: 30 },
+      metadata: {
+        shape: 'lasso',
+        pointCount: 3,
+        points: [
+          { x: 20, y: 30 },
+          { x: 45, y: 60 },
+          { x: 100, y: 50 },
+        ],
+      },
+    });
+  });
 });
 
 test.describe('text selection capture', () => {

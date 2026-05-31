@@ -15,7 +15,7 @@ The generated app includes:
 
 - a small analytics dashboard annotated with `data-askable`
 - `useAskable()` pre-wired for hover + click focus tracking
-- region and circle capture buttons for explicit page-area context
+- region, circle, and lasso capture buttons for explicit page-area context
 - `useCopilotReadable()` pushing current and recent Askable context into CopilotKit
 - a local Express runtime wired to `@copilotkit/runtime`
 - a starter README and `.env.example`

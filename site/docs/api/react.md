@@ -285,7 +285,7 @@ function PrivatePanel({ panelEl }: { panelEl: HTMLElement }) {
 
 ## `useAskableRegionCapture(options?)`
 
-React hook for explicit region and circle capture. It mounts a temporary browser
+React hook for explicit region, circle, and lasso capture. It mounts a temporary browser
 overlay, tracks active state, and stores the last captured Context packet.
 
 ```tsx
@@ -309,6 +309,9 @@ function DashboardCapture() {
       <button onClick={() => capture.start({ shape: 'circle' })}>
         Circle area
       </button>
+      <button onClick={() => capture.start({ shape: 'lasso' })}>
+        Lasso area
+      </button>
       {capture.active && <button onClick={capture.cancel}>Cancel</button>}
     </>
   );
@@ -319,7 +322,7 @@ function DashboardCapture() {
 
 | Option | Type | Description |
 |---|---|---|
-| `shape` | `'region' \| 'circle'` | Default shape for `start()` |
+| `shape` | `'region' \| 'circle' \| 'lasso'` | Default shape for `start()` |
 | `minSize` | `number` | Minimum accepted width/height in CSS pixels |
 | `once` | `boolean` | Remove the overlay after the first accepted capture |
 | `onCapture` | `(packet, selection) => void` | Called when the user completes a selection |
@@ -335,7 +338,7 @@ function DashboardCapture() {
 | `ctx` | `AskableContext` | Context used for packet serialization |
 | `active` | `boolean` | Whether the overlay is currently active |
 | `lastPacket` | `WebContextPacket \| null` | Last captured packet |
-| `lastSelection` | `AskableRegionCaptureSelection \| null` | Last captured geometry |
+| `lastSelection` | `AskableRegionCaptureSelection \| null` | Last captured geometry; lasso includes point path metadata |
 | `start(overrides?)` | `function` | Start capture, optionally overriding shape/intent/etc. |
 | `cancel()` | `function` | Cancel the active overlay |
 | `destroy()` | `function` | Remove the overlay without firing cancel |

@@ -147,7 +147,7 @@ Use the private default for isolated widgets. Pass a shared `ctx` when multiple 
 
 ## `createAskableRegionCaptureStore(options?)`
 
-Factory that starts an explicit region or circle selection overlay and exposes the captured Context packet as Svelte stores.
+Factory that starts an explicit region, circle, or lasso selection overlay and exposes the captured Context packet as Svelte stores.
 
 ```ts
 import { createAskableRegionCaptureStore } from '@askable-ui/svelte';
@@ -160,6 +160,7 @@ const capture = createAskableRegionCaptureStore({
 
 capture.start();
 capture.start({ shape: 'circle' });
+capture.start({ shape: 'lasso' });
 capture.cancel();
 ```
 
@@ -175,13 +176,13 @@ onDestroy(capture.destroy);
 
 | Option | Type | Description |
 |---|---|---|
-| `shape` | `'region' \| 'circle'` | Initial capture shape. Default: `'region'` |
+| `shape` | `'region' \| 'circle' \| 'lasso'` | Initial capture shape. Default: `'region'` |
 | `includeViewport` | `boolean` | Include viewport metadata in the emitted Context packet |
 | `source` | `WebContextSource` | App/page source metadata attached to the packet |
 | `intent` | `string` | User intent attached to the capture |
 | `ctx` | `AskableContext` | Optional context to share with other Svelte stores/components |
 | `events` | `AskableEvent[]` | Observation events for the underlying store context |
-| `onCapture` | `(packet, selection) => void` | Called after a region or circle is accepted |
+| `onCapture` | `(packet, selection) => void` | Called after a region, circle, or lasso is accepted |
 | `onCancel` | `() => void` | Called after active capture is cancelled |
 
 **Returns:**
@@ -190,7 +191,7 @@ onDestroy(capture.destroy);
 |---|---|---|
 | `active` | `Readable<boolean>` | Whether the overlay is active |
 | `lastPacket` | `Readable<WebContextPacket \| null>` | Last captured Context packet |
-| `lastSelection` | `Readable<AskableRegionCaptureSelection \| null>` | Last raw region/circle selection geometry |
+| `lastSelection` | `Readable<AskableRegionCaptureSelection \| null>` | Last raw region/circle/lasso selection geometry |
 | `start` | `(overrides?) => void` | Starts capture, optionally overriding options for one capture |
 | `cancel` | `() => void` | Cancels the active overlay |
 | `destroy` | `() => void` | Cancels capture and destroys the underlying store context |

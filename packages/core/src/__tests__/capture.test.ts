@@ -105,6 +105,55 @@ describe('createAskableRegionCapture', () => {
     ctx.destroy();
   });
 
+  it('captures a lasso with point metadata', () => {
+    const ctx = createAskableContext();
+    const onCapture = vi.fn();
+    const capture = createAskableRegionCapture(ctx, {
+      shape: 'lasso',
+      onCapture,
+    });
+
+    capture.start();
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 30, 45));
+    overlay.dispatchEvent(pointerEvent('pointermove', 70, 35));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 75));
+
+    const [packet, selection] = onCapture.mock.calls[0];
+    expect(selection).toMatchObject({
+      shape: 'lasso',
+      bounds: { x: 10, y: 20, width: 70, height: 55 },
+      points: [
+        { x: 10, y: 20 },
+        { x: 30, y: 45 },
+        { x: 70, y: 35 },
+        { x: 80, y: 75 },
+      ],
+    });
+    expect(packet.capture).toMatchObject({
+      mode: 'lasso',
+      gesture: 'lasso',
+    });
+    expect(packet.target).toMatchObject({
+      bounds: { x: 10, y: 20, width: 70, height: 55 },
+      metadata: {
+        shape: 'lasso',
+        pointCount: 4,
+        points: [
+          { x: 10, y: 20 },
+          { x: 30, y: 45 },
+          { x: 70, y: 35 },
+          { x: 80, y: 75 },
+        ],
+      },
+    });
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
   it('cancels selections smaller than the minimum size', () => {
     const ctx = createAskableContext();
     const onCapture = vi.fn();

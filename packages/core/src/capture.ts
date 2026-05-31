@@ -9,13 +9,14 @@ import type {
   AskableContextPacketOptions,
 } from './types.js';
 
-export type AskableRegionCaptureShape = 'region' | 'circle';
+export type AskableRegionCaptureShape = 'region' | 'circle' | 'lasso';
 
 export interface AskableRegionCaptureSelection {
   shape: AskableRegionCaptureShape;
   bounds: WebContextRect;
   center?: { x: number; y: number };
   radius?: number;
+  points?: AskableRegionCapturePoint[];
   pointerType?: string;
   startedAt: string;
   endedAt: string;
@@ -28,7 +29,7 @@ export interface AskableRegionCaptureOptions extends Omit<AskableContextPacketOp
   minSize?: number;
   /** Remove the overlay after the first accepted capture. Defaults to true. */
   once?: boolean;
-  /** Called after a region/circle is accepted and serialized to a Context packet. */
+  /** Called after a region/circle/lasso is accepted and serialized to a Context packet. */
   onCapture?: (packet: WebContextPacket, selection: AskableRegionCaptureSelection) => void;
   /** Called when an active capture is cancelled. */
   onCancel?: () => void;
@@ -41,10 +42,12 @@ export interface AskableRegionCaptureHandle {
   isActive(): boolean;
 }
 
-interface Point {
+export interface AskableRegionCapturePoint {
   x: number;
   y: number;
 }
+
+type Point = AskableRegionCapturePoint;
 
 const OVERLAY_ID = 'askable-region-capture';
 const SELECTION_ATTR = 'data-askable-region-capture-selection';
@@ -64,7 +67,10 @@ export function createAskableRegionCapture(
 
   let overlay: HTMLDivElement | null = null;
   let selectionEl: HTMLDivElement | null = null;
+  let lassoSvg: SVGSVGElement | null = null;
+  let lassoPolyline: SVGPolylineElement | null = null;
   let startPoint: Point | null = null;
+  let lassoPoints: Point[] = [];
   let startedAt = '';
   let pointerType: string | undefined;
   let active = false;
@@ -82,7 +88,10 @@ export function createAskableRegionCapture(
     overlay?.remove();
     overlay = null;
     selectionEl = null;
+    lassoSvg = null;
+    lassoPolyline = null;
     startPoint = null;
+    lassoPoints = [];
     active = false;
   };
 
@@ -108,26 +117,54 @@ export function createAskableRegionCapture(
       'user-select:none',
     ].join(';');
 
-    selectionEl = document.createElement('div');
-    selectionEl.setAttribute(SELECTION_ATTR, shape);
-    selectionEl.style.cssText = [
-      'position:absolute',
-      'box-sizing:border-box',
-      'border:2px solid #2563eb',
-      'background:rgba(37,99,235,0.14)',
-      'box-shadow:0 0 0 9999px rgba(15,23,42,0.12)',
-      'pointer-events:none',
-      'display:none',
-    ].join(';');
-    if (shape === 'circle') selectionEl.style.borderRadius = '9999px';
+    if (shape === 'lasso') {
+      lassoSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      lassoSvg.setAttribute(SELECTION_ATTR, shape);
+      lassoSvg.style.cssText = [
+        'position:absolute',
+        'inset:0',
+        'width:100%',
+        'height:100%',
+        'pointer-events:none',
+        'display:none',
+      ].join(';');
 
-    overlay.appendChild(selectionEl);
+      lassoPolyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      lassoPolyline.setAttribute('fill', 'rgba(37,99,235,0.14)');
+      lassoPolyline.setAttribute('stroke', '#2563eb');
+      lassoPolyline.setAttribute('stroke-width', '2');
+      lassoPolyline.setAttribute('stroke-linejoin', 'round');
+      lassoPolyline.setAttribute('stroke-linecap', 'round');
+      lassoSvg.appendChild(lassoPolyline);
+      overlay.appendChild(lassoSvg);
+    } else {
+      selectionEl = document.createElement('div');
+      selectionEl.setAttribute(SELECTION_ATTR, shape);
+      selectionEl.style.cssText = [
+        'position:absolute',
+        'box-sizing:border-box',
+        'border:2px solid #2563eb',
+        'background:rgba(37,99,235,0.14)',
+        'box-shadow:0 0 0 9999px rgba(15,23,42,0.12)',
+        'pointer-events:none',
+        'display:none',
+      ].join(';');
+      if (shape === 'circle') selectionEl.style.borderRadius = '9999px';
+      overlay.appendChild(selectionEl);
+    }
+
     overlay.addEventListener('pointerdown', onPointerDown);
     overlay.addEventListener('pointermove', onPointerMove);
     overlay.addEventListener('pointerup', onPointerUp);
     overlay.addEventListener('pointercancel', onPointerCancel);
     document.addEventListener('keydown', onKeyDown);
     document.body.appendChild(overlay);
+  };
+
+  const updateLasso = (points: Point[]) => {
+    if (!lassoSvg || !lassoPolyline) return;
+    lassoSvg.style.display = 'block';
+    lassoPolyline.setAttribute('points', points.map((point) => `${point.x},${point.y}`).join(' '));
   };
 
   const updateSelection = (bounds: WebContextRect) => {
@@ -144,23 +181,39 @@ export function createAskableRegionCapture(
     event.preventDefault();
     pointerType = event.pointerType || undefined;
     startPoint = pointFromEvent(event);
+    lassoPoints = [startPoint];
     startedAt = new Date().toISOString();
     active = true;
-    selectionEl!.style.display = 'none';
+    if (selectionEl) selectionEl.style.display = 'none';
+    if (lassoSvg) lassoSvg.style.display = 'none';
     overlay?.setPointerCapture?.(event.pointerId);
   }
 
   function onPointerMove(event: PointerEvent) {
     if (!startPoint || !active) return;
     event.preventDefault();
-    updateSelection(boundsForShape(shape, startPoint, pointFromEvent(event)));
+    const point = pointFromEvent(event);
+    if (shape === 'lasso') {
+      appendLassoPoint(lassoPoints, point);
+      updateLasso(lassoPoints);
+      return;
+    }
+    updateSelection(boundsForShape(shape, startPoint, point));
   }
 
   function onPointerUp(event: PointerEvent) {
     if (!startPoint || !active) return;
     event.preventDefault();
     const endPoint = pointFromEvent(event);
-    const selection = createSelection(shape, startPoint, endPoint, pointerType, startedAt);
+    if (shape === 'lasso') appendLassoPoint(lassoPoints, endPoint);
+    const selection = createSelection(
+      shape,
+      startPoint,
+      endPoint,
+      pointerType,
+      startedAt,
+      shape === 'lasso' ? lassoPoints : undefined,
+    );
 
     if (selection.bounds.width < minSize || selection.bounds.height < minSize) {
       cancel();
@@ -177,6 +230,7 @@ export function createAskableRegionCapture(
           shape: selection.shape,
           ...(selection.center ? { center: selection.center } : {}),
           ...(selection.radius !== undefined ? { radius: selection.radius } : {}),
+          ...(selection.points ? { points: selection.points, pointCount: selection.points.length } : {}),
           ...(selection.pointerType ? { pointerType: selection.pointerType } : {}),
         },
       },
@@ -199,8 +253,10 @@ export function createAskableRegionCapture(
     }
 
     startPoint = null;
+    lassoPoints = [];
     active = false;
     if (selectionEl) selectionEl.style.display = 'none';
+    if (lassoSvg) lassoSvg.style.display = 'none';
   }
 
   function onPointerCancel() {
@@ -248,14 +304,42 @@ function boundsForShape(shape: AskableRegionCaptureShape, start: Point, end: Poi
   };
 }
 
+function boundsForPoints(points: Point[]): WebContextRect {
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  const maxX = Math.max(...xs);
+  const maxY = Math.max(...ys);
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+}
+
+function appendLassoPoint(points: Point[], point: Point): void {
+  const previous = points[points.length - 1];
+  if (!previous || distance(previous, point) >= 2) {
+    points.push(point);
+  }
+}
+
+function distance(a: Point, b: Point): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
 function createSelection(
   shape: AskableRegionCaptureShape,
   start: Point,
   end: Point,
   pointerType: string | undefined,
   startedAt: string,
+  points?: Point[],
 ): AskableRegionCaptureSelection {
-  const bounds = boundsForShape(shape, start, end);
+  const lassoPointsForSelection = points && points.length > 0 ? points : undefined;
+  const bounds = lassoPointsForSelection ? boundsForPoints(lassoPointsForSelection) : boundsForShape(shape, start, end);
   const endedAt = new Date().toISOString();
 
   if (shape === 'circle') {
@@ -277,6 +361,7 @@ function createSelection(
   return {
     shape,
     bounds,
+    ...(lassoPointsForSelection ? { points: lassoPointsForSelection } : {}),
     ...(pointerType ? { pointerType } : {}),
     startedAt,
     endedAt,
@@ -284,9 +369,11 @@ function createSelection(
 }
 
 function captureModeForShape(shape: AskableRegionCaptureShape): WebContextCaptureMode {
+  if (shape === 'lasso') return 'lasso';
   return shape === 'circle' ? 'circle' : 'region';
 }
 
 function gestureForShape(shape: AskableRegionCaptureShape): WebContextGesture {
+  if (shape === 'lasso') return 'lasso';
   return shape === 'circle' ? 'circle' : 'drag';
 }

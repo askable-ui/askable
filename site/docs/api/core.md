@@ -392,8 +392,8 @@ ctx.destroy();
 
 ## `createAskableRegionCapture(ctx, options?)`
 
-Mounts a temporary browser overlay that lets the user drag a rectangle or circle,
-then emits a structured Context packet with explicit consent metadata.
+Mounts a temporary browser overlay that lets the user drag a rectangle, circle,
+or lasso, then emits a structured Context packet with explicit consent metadata.
 
 ```ts
 import { createAskableContext, createAskableRegionCapture } from '@askable-ui/core';
@@ -402,7 +402,7 @@ const ctx = createAskableContext({ viewport: true });
 ctx.observe(document);
 
 const capture = createAskableRegionCapture(ctx, {
-  shape: 'circle',
+  shape: 'lasso',
   intent: 'explain this selected area',
   includeViewport: true,
   onCapture: (packet, selection) => {
@@ -418,7 +418,7 @@ capture.start();
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `shape` | `'region' \| 'circle'` | `'region'` | Shape produced by the drag gesture |
+| `shape` | `'region' \| 'circle' \| 'lasso'` | `'region'` | Shape produced by the drag gesture |
 | `minSize` | `number` | `6` | Minimum accepted width/height in CSS pixels |
 | `once` | `boolean` | `true` | Remove the overlay after the first accepted capture |
 | `onCapture` | `(packet, selection) => void` | — | Called with the Context packet and selection geometry |
