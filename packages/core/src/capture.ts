@@ -22,6 +22,30 @@ export interface AskableRegionCaptureSelection {
   endedAt: string;
 }
 
+export interface AskableRegionCaptureGradientStop {
+  offset: string;
+  color: string;
+}
+
+export interface AskableRegionCaptureTheme {
+  /** Full-page overlay color while a capture tool is active. */
+  overlayBackground: string;
+  /** Rectangular and circle selection border color. */
+  selectionStroke: string;
+  /** Rectangular and circle selection fill color. */
+  selectionFill: string;
+  /** Rectangular and circle page scrim outside the selected area. */
+  selectionScrim: string;
+  /** Lasso stroke gradient stops. Defaults to the Askable AI selection line. */
+  lassoGradientStops: readonly AskableRegionCaptureGradientStop[];
+  /** Lasso stroke width in CSS pixels. */
+  lassoStrokeWidth: number;
+  /** CSS color used for the lasso glow. */
+  lassoGlowColor: string;
+  /** Lasso glow radius in CSS pixels. */
+  lassoGlowRadius: number;
+}
+
 export interface AskableRegionCaptureOptions extends Omit<AskableContextPacketOptions, 'mode' | 'gesture' | 'target'> {
   /** Capture shape. Defaults to rectangular region selection. */
   shape?: AskableRegionCaptureShape;
@@ -29,6 +53,8 @@ export interface AskableRegionCaptureOptions extends Omit<AskableContextPacketOp
   minSize?: number;
   /** Remove the overlay after the first accepted capture. Defaults to true. */
   once?: boolean;
+  /** Visual theme for region, circle, and lasso capture overlays. */
+  theme?: Partial<AskableRegionCaptureTheme>;
   /** Called after a region/circle/lasso is accepted and serialized to a Context packet. */
   onCapture?: (packet: WebContextPacket, selection: AskableRegionCaptureSelection) => void;
   /** Called when an active capture is cancelled. */
@@ -51,6 +77,21 @@ type Point = AskableRegionCapturePoint;
 
 const OVERLAY_ID = 'askable-region-capture';
 const SELECTION_ATTR = 'data-askable-region-capture-selection';
+const DEFAULT_REGION_CAPTURE_THEME: AskableRegionCaptureTheme = {
+  overlayBackground: 'rgba(15,23,42,0.08)',
+  selectionStroke: '#2563eb',
+  selectionFill: 'rgba(37,99,235,0.14)',
+  selectionScrim: 'rgba(15,23,42,0.12)',
+  lassoGradientStops: [
+    { offset: '0%', color: '#06b6d4' },
+    { offset: '38%', color: '#4f46e5' },
+    { offset: '70%', color: '#a855f7' },
+    { offset: '100%', color: '#22c55e' },
+  ],
+  lassoStrokeWidth: 3,
+  lassoGlowColor: 'rgba(79,70,229,0.35)',
+  lassoGlowRadius: 8,
+};
 
 export function createAskableRegionCapture(
   ctx: AskableContext,
@@ -78,6 +119,7 @@ export function createAskableRegionCapture(
   const shape = options.shape ?? 'region';
   const minSize = options.minSize ?? 6;
   const once = options.once ?? true;
+  const theme = resolveRegionCaptureTheme(options.theme);
 
   const removeOverlay = () => {
     overlay?.removeEventListener('pointerdown', onPointerDown);
@@ -112,7 +154,7 @@ export function createAskableRegionCapture(
       'inset:0',
       'z-index:2147483647',
       'cursor:crosshair',
-      'background:rgba(15,23,42,0.08)',
+      `background:${theme.overlayBackground}`,
       'touch-action:none',
       'user-select:none',
     ].join(';');
@@ -129,12 +171,30 @@ export function createAskableRegionCapture(
         'display:none',
       ].join(';');
 
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+      const gradientId = 'askable-region-capture-lasso-gradient';
+      gradient.setAttribute('id', gradientId);
+      gradient.setAttribute('x1', '0%');
+      gradient.setAttribute('y1', '0%');
+      gradient.setAttribute('x2', '100%');
+      gradient.setAttribute('y2', '0%');
+      theme.lassoGradientStops.forEach(({ offset, color }) => {
+        const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop.setAttribute('offset', offset);
+        stop.setAttribute('stop-color', color);
+        gradient.appendChild(stop);
+      });
+      defs.appendChild(gradient);
+      lassoSvg.appendChild(defs);
+
       lassoPolyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-      lassoPolyline.setAttribute('fill', 'rgba(37,99,235,0.14)');
-      lassoPolyline.setAttribute('stroke', '#2563eb');
-      lassoPolyline.setAttribute('stroke-width', '2');
+      lassoPolyline.setAttribute('fill', 'none');
+      lassoPolyline.setAttribute('stroke', `url(#${gradientId})`);
+      lassoPolyline.setAttribute('stroke-width', String(theme.lassoStrokeWidth));
       lassoPolyline.setAttribute('stroke-linejoin', 'round');
       lassoPolyline.setAttribute('stroke-linecap', 'round');
+      lassoPolyline.style.filter = `drop-shadow(0 0 ${theme.lassoGlowRadius}px ${theme.lassoGlowColor})`;
       lassoSvg.appendChild(lassoPolyline);
       overlay.appendChild(lassoSvg);
     } else {
@@ -143,9 +203,9 @@ export function createAskableRegionCapture(
       selectionEl.style.cssText = [
         'position:absolute',
         'box-sizing:border-box',
-        'border:2px solid #2563eb',
-        'background:rgba(37,99,235,0.14)',
-        'box-shadow:0 0 0 9999px rgba(15,23,42,0.12)',
+        `border:2px solid ${theme.selectionStroke}`,
+        `background:${theme.selectionFill}`,
+        `box-shadow:0 0 0 9999px ${theme.selectionScrim}`,
         'pointer-events:none',
         'display:none',
       ].join(';');
@@ -274,6 +334,14 @@ export function createAskableRegionCapture(
     cancel,
     destroy: removeOverlay,
     isActive: () => active,
+  };
+}
+
+function resolveRegionCaptureTheme(theme?: Partial<AskableRegionCaptureTheme>): AskableRegionCaptureTheme {
+  return {
+    ...DEFAULT_REGION_CAPTURE_THEME,
+    ...theme,
+    lassoGradientStops: theme?.lassoGradientStops ?? DEFAULT_REGION_CAPTURE_THEME.lassoGradientStops,
   };
 }
 

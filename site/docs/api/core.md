@@ -405,6 +405,14 @@ const capture = createAskableRegionCapture(ctx, {
   shape: 'lasso',
   intent: 'explain this selected area',
   includeViewport: true,
+  theme: {
+    lassoStrokeWidth: 4,
+    lassoGradientStops: [
+      { offset: '0%', color: '#06b6d4' },
+      { offset: '70%', color: '#a855f7' },
+      { offset: '100%', color: '#22c55e' },
+    ],
+  },
   onCapture: (packet, selection) => {
     sendToAgent(packet);
     console.log(selection.bounds);
@@ -421,9 +429,14 @@ capture.start();
 | `shape` | `'region' \| 'circle' \| 'lasso'` | `'region'` | Shape produced by the drag gesture |
 | `minSize` | `number` | `6` | Minimum accepted width/height in CSS pixels |
 | `once` | `boolean` | `true` | Remove the overlay after the first accepted capture |
+| `theme` | `Partial<AskableRegionCaptureTheme>` | Askable default | Overlay colors, selection fill/stroke, and lasso gradient/glow styling |
 | `onCapture` | `(packet, selection) => void` | — | Called with the Context packet and selection geometry |
 | `onCancel` | `() => void` | — | Called when the capture is cancelled |
 | _...most `AskableContextPacketOptions`_ | | | Passed through to `toContextPacket()` |
+
+The default lasso theme is a solid gradient freehand stroke with a soft glow.
+Use `theme` when your app needs brand-specific capture styling without
+replacing the library overlay.
 
 **Returns:** `AskableRegionCaptureHandle` — object with `start()`, `cancel()`,
 `destroy()`, and `isActive()` methods.

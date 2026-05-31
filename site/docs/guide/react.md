@@ -145,6 +145,10 @@ function RegionTools() {
   const capture = useAskableRegionCapture({
     ctx,
     includeViewport: true,
+    theme: {
+      lassoStrokeWidth: 4,
+      lassoGlowRadius: 12,
+    },
     onCapture(packet) {
       sendToAgent(packet);
     },
@@ -170,6 +174,8 @@ function RegionTools() {
 Region packets use `capture.mode: 'region'`; circle packets use
 `capture.mode: 'circle'` and include center/radius metadata. Lasso packets use
 `capture.mode: 'lasso'` and include freehand path points.
+The default lasso overlay is a solid gradient freehand stroke; pass `theme`
+when you need brand-specific overlay colors or line styling.
 
 ## Text selection capture
 
