@@ -21,6 +21,7 @@
     "directory": "packages/core"
   },
   "scripts": {
+    "prebuild": "npm run build -w @askable-ui/context",
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
