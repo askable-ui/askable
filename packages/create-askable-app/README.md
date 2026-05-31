@@ -1,11 +1,11 @@
-# create-askable-app
+# @askable-ui/create-app
 
 Scaffold a runnable **React + Vite + CopilotKit + askable-ui** starter app.
 
 ## Usage
 
 ```bash
-npx create-askable-app my-app
+npm create @askable-ui/app my-app
 cd my-app
 npm install
 npm run dev

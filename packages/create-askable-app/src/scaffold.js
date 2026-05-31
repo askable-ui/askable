@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ASKABLE_VERSION = '0.6.2';
+const ASKABLE_VERSION = '0.6.3';
 const COPILOTKIT_VERSION = '1.56.2';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -56,7 +56,7 @@ export async function runCli(args) {
   const [projectArg] = args;
 
   if (!projectArg || projectArg === '--help' || projectArg === '-h') {
-    console.log(`create-askable-app\n\nUsage:\n  npx create-askable-app my-app\n`);
+    console.log(`create-askable-app\n\nUsage:\n  npm create @askable-ui/app my-app\n`);
     return;
   }
 
