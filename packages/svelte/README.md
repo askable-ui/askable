@@ -72,7 +72,64 @@ const { focus, promptContext, ctx, destroy } = createAskableStore({ events: ['cl
 - `ctx.getHistory(limit?)` — focus history, newest first
 - `ctx.toHistoryContext(limit?, options?)` — history as a prompt-ready string
 - `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
+- `ctx.toPromptContextAsync(options?)` — include async app-owned sources
 - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
+
+### `createAskableSourceStore(options?)`
+
+Use `createAskableSourceStore()` when the assistant needs data that is not fully
+rendered in the DOM: paginated tables, virtualized lists, documents, charts,
+maps, calendars, canvases, or custom product state. The store registers the
+source immediately and unregisters it when `destroy()` is called.
+
+```svelte
+<script lang="ts">
+  import { onDestroy } from 'svelte';
+  import { createAskableSourceStore } from '@askable-ui/svelte';
+
+  const accounts = createAskableSourceStore('accounts', {
+    kind: 'collection',
+    describe: 'Customer accounts matching the active filters',
+    getState: () => ({
+      filters,
+      sort,
+      page: table.getState().pagination.pageIndex + 1,
+      pageSize: table.getState().pagination.pageSize,
+      totalCount,
+    }),
+    resolve: async ({ mode, maxItems }) => {
+      if (mode === 'visible') return table.getRowModel().rows.map((row) => row.original);
+      return summarizeAccounts({ filters, sort, maxItems });
+    },
+    sanitize: (source) => ({
+      ...source,
+      data: redactAccountFields(source.data),
+    }),
+  });
+
+  onDestroy(accounts.destroy);
+
+  async function ask(question: string) {
+    const promptContext = await accounts.toPromptContext({
+      source: { mode: 'summary', maxItems: 20, timeoutMs: 750 },
+      sourceErrorMode: 'include',
+    });
+
+    return sendToAgent({ question, promptContext });
+  }
+
+  $: {
+    filters;
+    sort;
+    totalCount;
+    accounts.notifyChanged();
+  }
+</script>
+```
+
+Call `notifyChanged()` when source data changes without a DOM focus change,
+such as pagination, filters, selected rows, or query-cache updates. Async
+subscribers created with `ctx.subscribeAsync()` re-resolve matching sources.
 
 ### `createAskableRegionCaptureStore(options?)`
 
@@ -106,6 +163,9 @@ Starts an explicit region, circle, or lasso selection overlay and exposes the ca
 ```
 
 The store includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
+Pass `once: false` when the capture control should stay active for repeated
+region, circle, or lasso selections. The store keeps `active` true until
+`cancel()` or `destroy()` runs.
 
 ### `createAskableTextSelectionCaptureStore(options?)`
 

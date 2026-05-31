@@ -82,6 +82,7 @@ export interface WebContextSurrounding {
   nearby?: WebContextTarget[];
   visible?: WebContextTarget[];
   history?: WebContextTarget[];
+  sources?: WebContextTarget[];
 }
 
 export interface WebContextPrivacy {
@@ -180,6 +181,7 @@ export const webContextPacketSchema = {
         nearby: { type: 'array', items: { $ref: '#/$defs/target' } },
         visible: { type: 'array', items: { $ref: '#/$defs/target' } },
         history: { type: 'array', items: { $ref: '#/$defs/target' } },
+        sources: { type: 'array', items: { $ref: '#/$defs/target' } },
       },
     },
     privacy: {

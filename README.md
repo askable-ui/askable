@@ -158,13 +158,13 @@ askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it
 | Package | Version | Use when |
 |---|---|---|
 | [`@askable-ui/core`](https://www.npmjs.com/package/@askable-ui/core) | [![npm](https://img.shields.io/npm/v/@askable-ui/core?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/core) | Vanilla JS, custom framework, or as a peer dep |
-| [`@askable-ui/context`](https://www.npmjs.com/package/@askable-ui/context) | npm package | Shared Context packet types, schema, and validators |
+| [`@askable-ui/context`](https://www.npmjs.com/package/@askable-ui/context) | [![npm](https://img.shields.io/npm/v/@askable-ui/context?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/context) | Shared Context packet types, schema, and validators |
 | [`@askable-ui/react`](https://www.npmjs.com/package/@askable-ui/react) | [![npm](https://img.shields.io/npm/v/@askable-ui/react?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react) | React 18+ |
 | [`@askable-ui/react-native`](https://www.npmjs.com/package/@askable-ui/react-native) | [![npm](https://img.shields.io/npm/v/@askable-ui/react-native?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react-native) | React Native (initial press-driven adapter) |
 | [`@askable-ui/vue`](https://www.npmjs.com/package/@askable-ui/vue) | [![npm](https://img.shields.io/npm/v/@askable-ui/vue?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/vue) | Vue 3 |
 | [`@askable-ui/svelte`](https://www.npmjs.com/package/@askable-ui/svelte) | [![npm](https://img.shields.io/npm/v/@askable-ui/svelte?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/svelte) | Svelte 4 & 5 |
-| [`@askable-ui/mcp`](https://www.npmjs.com/package/@askable-ui/mcp) | npm package | MCP bridge for exposing Context packets to agents |
-| [`@askable-ui/create-app`](https://www.npmjs.com/package/@askable-ui/create-app) | npm package | React + Vite + CopilotKit starter scaffold |
+| [`@askable-ui/mcp`](https://www.npmjs.com/package/@askable-ui/mcp) | [![npm](https://img.shields.io/npm/v/@askable-ui/mcp?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/mcp) | MCP bridge for exposing Context packets to agents |
+| [`@askable-ui/create-app`](https://www.npmjs.com/package/@askable-ui/create-app) | [![npm](https://img.shields.io/npm/v/@askable-ui/create-app?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/create-app) | React + Vite + CopilotKit starter scaffold |
 
 <details>
 <summary><strong>Framework quick starts</strong></summary>

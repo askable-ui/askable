@@ -2,7 +2,7 @@
 
 ## Pick your framework
 
-> Current npm release: **v0.11.1**.
+> Current npm release: **v0.12.0**.
 >
 > Latest docs live at `/docs/`. Version-specific docs are published at `/docs/<version>/` for breaking releases.
 
@@ -144,23 +144,21 @@ ctx.observe(document);
 
 :::
 
-## Step 3 — Inject into your LLM call
+## Step 3 — Send context with the question
 
-Pass `promptContext` (or `ctx.toPromptContext()`) as a system message before any user question:
+Use `ctx.toAgentRequest()` when you want one JSON-ready payload containing the
+user question, prompt-ready context, current focus, and an optional Context
+packet:
 
 ```ts
 async function ask(userMessage: string) {
   const response = await fetch('/api/chat', {
     method: 'POST',
-    body: JSON.stringify({
-      messages: [
-        {
-          role: 'system',
-          content: `You are a helpful assistant.\nUI context: ${promptContext}`,
-        },
-        { role: 'user', content: userMessage },
-      ],
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(await ctx.toAgentRequest(userMessage, {
+      history: 3,
+      packet: true,
+    })),
   });
   return response.json();
 }

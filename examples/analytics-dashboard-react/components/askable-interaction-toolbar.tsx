@@ -61,7 +61,6 @@ export function AskableInteractionToolbar() {
     ctx,
     source: { app: "analytics-dashboard-demo" },
     onCapture(packet, selection) {
-      const label = `Highlighted text: ${selection.text}`
       ctx.push(
         {
           capture: packet.capture.mode,
@@ -69,7 +68,7 @@ export function AskableInteractionToolbar() {
           length: selection.text.length,
           ...(selection.bounds ? { bounds: selection.bounds } : {}),
         },
-        label,
+        selection.text,
       )
       setStatus(`Sent ${selection.text.length} selected characters to chat context.`)
       resumeImplicitFocus()

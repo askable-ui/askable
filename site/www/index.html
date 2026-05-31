@@ -93,18 +93,25 @@
     .nav-gh {
       display: inline-flex;
       align-items: center;
-      gap: .4rem;
-      padding: .42rem 1rem;
+      justify-content: center;
+      width: 2.05rem;
+      height: 2.05rem;
+      padding: 0;
       border-radius: var(--radius-pill);
       background: var(--ink);
       color: #fff;
-      font-size: .82rem;
-      font-weight: 600;
       text-decoration: none;
       margin-left: .5rem;
       transition: opacity .15s;
     }
     .nav-gh:hover { opacity: .82; }
+    .github-icon {
+      width: 1.05rem;
+      height: 1.05rem;
+      display: block;
+      fill: currentColor;
+      flex: none;
+    }
 
     /* BUTTONS */
     .btn {
@@ -126,6 +133,14 @@
     .btn-primary:hover { box-shadow: 0 6px 22px rgba(0,0,0,0.2); }
     .btn-secondary { background: rgba(0,0,0,0.04); color: var(--ink); border: 1px solid rgba(0,0,0,0.09); }
     .btn-secondary:hover { background: rgba(0,0,0,0.07); }
+    .btn-icon {
+      justify-content: center;
+      width: 2.95rem;
+      min-width: 2.95rem;
+      height: 2.95rem;
+      padding: 0;
+    }
+    .btn-icon .github-icon { width: 1.15rem; height: 1.15rem; }
 
     /* LAYOUT */
     .page-shell { max-width: 1280px; margin: 0 auto; padding: 0 2rem 8rem; }
@@ -319,14 +334,54 @@
 
     /* DEMO DECK */
     .deck { padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--line); background: #f9fafb; }
-    .demo-controls { display: flex; flex-direction: column; align-items: center; gap: .75rem; margin-bottom: 1.35rem; }
+    .demo-controls { display: grid; gap: .8rem; margin-bottom: 1.35rem; }
     .demo-controls-row { display: flex; justify-content: center; align-items: center; gap: .6rem; flex-wrap: wrap; }
     .toggle-label { color: var(--ink-3); font-size: .82rem; }
     .toggle-group { display: inline-flex; gap: .22rem; padding: .22rem; border-radius: var(--radius-pill); background: #fff; border: 1px solid var(--line); box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-    .context-option-group { flex-wrap: wrap; justify-content: center; border-radius: 22px; }
     .toggle-btn { border: none; background: transparent; color: var(--ink-3); padding: .45rem .9rem; border-radius: var(--radius-pill); font-size: .82rem; font-weight: 600; cursor: pointer; transition: background .14s, color .14s; }
     .toggle-btn.active { color: var(--ink); background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
 
+    .pattern-dock {
+      border: 1px solid var(--line); background: #fff; border-radius: 20px; padding: .72rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.045);
+    }
+    .pattern-dock-header {
+      display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+      padding: .08rem .18rem .62rem;
+    }
+    .pattern-dock-header span { color: var(--ink-3); font-size: .72rem; font-weight: 750; text-transform: uppercase; letter-spacing: .06em; }
+    .pattern-dock-header strong { font-size: .88rem; letter-spacing: -.02em; }
+    .pattern-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: .36rem; }
+    .pattern-option {
+      display: grid; grid-template-columns: 1.45rem minmax(0, 1fr); align-items: center; gap: .48rem;
+      border: 1px solid transparent; background: #f8fafc; color: var(--ink-2);
+      border-radius: 14px; padding: .55rem .62rem; cursor: pointer; text-align: left;
+      transition: transform .14s, box-shadow .14s, border-color .14s, background .14s;
+      min-width: 0;
+    }
+    .pattern-option:hover { transform: translateY(-1px); border-color: rgba(79,70,229,0.16); background: #fff; }
+    .pattern-option.active {
+      background: #fff; color: var(--ink); border-color: rgba(79,70,229,0.26);
+      box-shadow: 0 7px 18px rgba(79,70,229,0.1);
+    }
+    .pattern-glyph {
+      width: 1.45rem; height: 1.45rem; display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 10px; background: rgba(79,70,229,0.08); color: var(--accent);
+      font-size: .82rem; font-weight: 850;
+    }
+    .pattern-copy-mini { min-width: 0; display: grid; gap: .08rem; }
+    .pattern-copy-mini b { display: block; font-size: .78rem; line-height: 1.08; letter-spacing: -.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pattern-copy-mini small { display: block; color: var(--ink-3); font-size: .62rem; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pattern-status {
+      display: flex; align-items: center; gap: .55rem; margin-top: .58rem; padding: .5rem .58rem;
+      border: 1px solid rgba(0,0,0,0.06); background: #fbfcfe; border-radius: 14px;
+    }
+    .pattern-payload {
+      flex: 0 0 auto; max-width: 45%; border-radius: var(--radius-pill); padding: .22rem .5rem;
+      background: rgba(79,70,229,0.08); color: #3730a3; font-size: .68rem; font-weight: 800;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .output-controls { justify-content: flex-end; }
     .context-tools { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .45rem; padding-top: .2rem; }
     .tool-btn {
       display: inline-flex; align-items: center; gap: .35rem;
@@ -335,21 +390,25 @@
       padding: .48rem .82rem; cursor: pointer; transition: transform .13s, box-shadow .13s, border-color .13s;
     }
     .tool-btn:hover, .tool-btn.active { transform: translateY(-1px); border-color: rgba(79,70,229,0.24); box-shadow: 0 4px 12px rgba(79,70,229,0.09); color: var(--ink); }
-    .tool-hint { width: 100%; text-align: center; color: var(--ink-3); font-size: .75rem; min-height: 1.2rem; }
+    .tool-hint { flex: 1 1 auto; min-width: 11rem; color: var(--ink-3); font-size: .75rem; line-height: 1.35; }
 
     .demo-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 336px); gap: 1.15rem; align-items: start; }
     .dashboard { position: relative; display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
     .selection-layer { position: absolute; inset: -.65rem; z-index: 9; pointer-events: none; border-radius: 28px; overflow: visible; }
     .dashboard.selecting .selection-layer { pointer-events: auto; cursor: crosshair; }
+    .dashboard.selecting.lasso-active .selection-layer { cursor: none; }
     .selection-layer::before {
       content: ''; position: absolute; inset: 0; border-radius: inherit;
       border: 1px dashed rgba(79,70,229,0.22); background: rgba(79,70,229,0.03);
       opacity: 0; transition: opacity .12s;
     }
     .dashboard.selecting .selection-layer::before { opacity: 1; }
+    .dashboard.selecting.lasso-active .selection-layer::before {
+      opacity: 0;
+    }
     .selection-drawing {
       position: absolute; border: 2px solid var(--accent); background: rgba(79,70,229,0.09);
-      box-shadow: 0 10px 28px rgba(79,70,229,0.12); pointer-events: none;
+      box-shadow: 0 10px 28px rgba(79,70,229,0.12); pointer-events: none; z-index: 11;
     }
     .selection-drawing.circle { border-radius: 999px; }
     .selection-drawing.lasso { background: transparent; border: none; box-shadow: none; inset: 0; filter: drop-shadow(0 0 10px rgba(79,70,229,0.32)); }
@@ -364,11 +423,44 @@
     }
     .selection-drawing.lasso .lasso-aura {
       fill: none;
-      stroke: rgba(14,165,233,0.28);
-      stroke-width: 10;
+      stroke: rgba(124,58,237,0.16);
+      stroke-width: 8;
       stroke-linecap: round;
       stroke-linejoin: round;
       filter: blur(1px);
+    }
+    .ai-cursor-canvas {
+      position: absolute; inset: 0; z-index: 10;
+      width: 100%; height: 100%;
+      pointer-events: none; opacity: 0;
+      transition: opacity .12s ease;
+    }
+    .dashboard.lasso-active .ai-cursor-canvas { opacity: 1; }
+    .ai-cursor {
+      position: absolute; left: 0; top: 0; z-index: 12;
+      display: none; width: 1.95rem; height: 1.95rem;
+      transform: translate3d(0,0,0); pointer-events: none;
+      filter:
+        drop-shadow(0 2px 4px rgba(15,23,42,0.18))
+        drop-shadow(0 0 7px rgba(124,58,237,0.34));
+    }
+    .dashboard.lasso-active .ai-cursor { display: block; }
+    .ai-cursor-icon {
+      position: absolute; left: 50%; top: 50%;
+      display: block; width: 1.95rem; height: 1.95rem;
+      overflow: visible; transform: translate(-45%, -45%);
+    }
+    .ai-cursor-outline {
+      fill: none;
+      stroke: #a78bfa;
+      stroke-linejoin: round;
+      stroke-width: 4.6;
+    }
+    .ai-cursor-fill {
+      fill: #fff;
+      stroke: #7c3aed;
+      stroke-linejoin: round;
+      stroke-width: 1.2;
     }
     .kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
 
@@ -431,6 +523,13 @@
     .msg.user .msg-bubble { align-self: flex-end; background: var(--ink); color: #fff; border-color: transparent; }
     .msg.ai .msg-bubble { color: var(--ink); }
     .msg.ctx .msg-bubble { font-family: var(--mono); font-size: .69rem; background: transparent; border: none; padding: .1rem 0; color: var(--ink-3); }
+    .msg.ctx.text-context .msg-bubble {
+      font-family: var(--font); border: 1px solid rgba(124,58,237,0.16);
+      background: linear-gradient(180deg, rgba(124,58,237,0.08), rgba(79,70,229,0.04));
+      color: var(--ink); padding: .64rem .72rem; border-radius: 14px;
+    }
+    .msg-context-kicker { display: block; margin-bottom: .28rem; color: #6d28d9; font-size: .62rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .msg-context-quote { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; color: var(--ink-2); font-size: .76rem; line-height: 1.48; }
     .msg-label { font-size: .65rem; color: var(--ink-3); padding: 0 .2rem; }
     .msg.user .msg-label { align-self: flex-end; }
     .typing { display: inline-flex; gap: 4px; align-items: center; width: fit-content; padding: .62rem .78rem; border-radius: 14px; background: #f4f4f5; border: 1px solid rgba(0,0,0,0.07); }
@@ -438,10 +537,40 @@
     .typing span:nth-child(2) { animation-delay: .15s; } .typing span:nth-child(3) { animation-delay: .3s; }
     @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-4px)} }
     .chat-context-bar { display: flex; gap: .45rem; align-items: center; padding: .62rem .9rem; background: rgba(79,70,229,0.05); border-top: 1px solid rgba(79,70,229,0.12); }
+    .chat-context-bar.text-context { background: rgba(124,58,237,0.07); border-top-color: rgba(124,58,237,0.18); }
     .context-bar-label { font-size: .68rem; font-weight: 600; color: var(--accent); letter-spacing: .04em; text-transform: uppercase; flex-shrink: 0; }
+    .chat-context-bar.text-context .context-bar-label { color: #6d28d9; }
     .context-chip { flex: 1; font-family: var(--mono); font-size: .69rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .context-dismiss { border: none; background: none; color: var(--ink-3); cursor: pointer; font-size: .95rem; }
+    .selected-text-card {
+      margin: .72rem .78rem 0; padding: .72rem .78rem; border-radius: 14px;
+      border: 1px solid rgba(124,58,237,0.18);
+      background: linear-gradient(180deg, rgba(124,58,237,0.08), rgba(255,255,255,0.88));
+    }
+    .selected-text-card-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .44rem; }
+    .selected-text-card-title { display: flex; align-items: center; gap: .42rem; color: #5b21b6; font-size: .7rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+    .selected-text-card-title::before { content: '“'; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 999px; background: #6d28d9; color: #fff; font-size: .9rem; line-height: 1; }
+    .selected-text-card-state { color: var(--ink-3); font-size: .64rem; font-weight: 700; }
+    .selected-text-quote { margin: 0; color: var(--ink); font-size: .78rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .dashboard ::selection { background: rgba(124,58,237,0.24); color: var(--ink); }
+    .text-capture-mark {
+      position: absolute; pointer-events: none; z-index: 6; border-radius: 7px;
+      background: rgba(124,58,237,0.13); outline: 1px solid rgba(124,58,237,0.25);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.06), 0 8px 22px rgba(91,33,182,0.10);
+    }
+    .composer-suggestions {
+      display: flex; gap: .42rem; padding: .62rem .78rem 0; flex-wrap: wrap;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .question-chip {
+      border: 1px solid rgba(124,58,237,0.16); background: rgba(124,58,237,0.06);
+      color: #4c1d95; border-radius: var(--radius-pill);
+      padding: .34rem .58rem; font-size: .7rem; font-weight: 750;
+      cursor: pointer; transition: background .15s, border-color .15s, transform .15s;
+    }
+    .question-chip:hover { background: rgba(124,58,237,0.1); border-color: rgba(124,58,237,0.24); transform: translateY(-1px); }
     .chat-input-row { display: flex; gap: .5rem; padding: .78rem; border-top: 1px solid rgba(0,0,0,0.06); }
+    .composer-suggestions + .chat-input-row { border-top: none; }
     .chat-input { flex: 1; border-radius: var(--radius-pill); padding: .72rem 1rem; border: 1px solid rgba(0,0,0,0.1); background: #fff; font-size: .81rem; color: var(--ink); outline: none; font-family: var(--font); transition: border-color .15s, box-shadow .15s; }
     .chat-input:focus { border-color: rgba(79,70,229,0.28); box-shadow: 0 0 0 4px rgba(79,70,229,0.07); }
     .chat-send { width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--ink); color: #fff; cursor: pointer; font-size: .9rem; transition: opacity .15s; }
@@ -518,6 +647,13 @@
       .pkg-grid { grid-template-columns: 1fr !important; }
       .deck { padding: 1rem; border-radius: 24px; }
       .demo-controls-row { align-items: stretch; flex-wrap: wrap; }
+      .pattern-dock { padding: .62rem; border-radius: 18px; }
+      .pattern-dock-header { align-items: flex-start; flex-direction: column; gap: .2rem; }
+      .pattern-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pattern-option { grid-template-columns: 1.35rem minmax(0, 1fr); padding: .52rem; }
+      .pattern-status { align-items: flex-start; flex-direction: column; }
+      .pattern-payload { max-width: 100%; }
+      .tool-hint { min-width: 0; }
       .toggle-group { justify-content: stretch; }
       .toggle-btn { flex: 1 1 0; padding-inline: .65rem; }
       .panel { overflow: visible; }
@@ -578,7 +714,11 @@
       <a href="#packages" class="nav-link">Packages</a>
       <a href="#integrations" class="nav-link">Integrations</a>
       <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer" class="nav-link">Docs</a>
-      <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer" class="nav-gh">GitHub</a>
+      <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer" class="nav-gh" aria-label="GitHub repository" title="GitHub repository">
+        <svg class="github-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.49 0-.24-.01-1.05-.01-1.9-2.51.47-3.16-.63-3.36-1.21-.11-.3-.6-1.21-1.03-1.46-.35-.19-.85-.66-.01-.67.79-.01 1.35.74 1.54 1.05.9 1.55 2.34 1.11 2.91.85.09-.67.35-1.11.64-1.37-2.22-.26-4.55-1.14-4.55-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.71 0 0 .84-.28 2.75 1.05A9.28 9.28 0 0 1 12 6.98c.85 0 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.06.36.32.68.93.68 1.89 0 1.36-.01 2.46-.01 2.8 0 .27.18.59.69.49A10.12 10.12 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"/>
+        </svg>
+      </a>
     </div>
   </nav>
 
@@ -607,7 +747,11 @@
           </button>
           <a href="#demo" class="btn btn-primary">See it live</a>
           <a href="https://askable-ui.com/docs/" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Documentation</a>
-          <a href="https://github.com/askable-ui/askable" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a href="https://github.com/askable-ui/askable" class="btn btn-secondary btn-icon" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository" title="GitHub repository">
+            <svg class="github-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.49 0-.24-.01-1.05-.01-1.9-2.51.47-3.16-.63-3.36-1.21-.11-.3-.6-1.21-1.03-1.46-.35-.19-.85-.66-.01-.67.79-.01 1.35.74 1.54 1.05.9 1.55 2.34 1.11 2.91.85.09-.67.35-1.11.64-1.37-2.22-.26-4.55-1.14-4.55-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.71 0 0 .84-.28 2.75 1.05A9.28 9.28 0 0 1 12 6.98c.85 0 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.06.36.32.68.93.68 1.89 0 1.36-.01 2.46-.01 2.8 0 .27.18.59.69.49A10.12 10.12 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"/>
+            </svg>
+          </a>
         </div>
         <div class="hero-meta">
           <span>Element + visual context</span>
@@ -736,9 +880,9 @@ ctx.push(meta, text);</pre>
           <p>Other approaches serialize the entire page or guess what matters. askable captures exactly what the user marked: an element, area, shape, or text selection.</p>
         </article>
         <article class="insight-card">
-          <div class="insight-eyebrow">Zero glue code</div>
-          <h3>Your API data is already the metadata</h3>
-          <p>The same object that renders a row or card becomes model-ready context, and explicit captures can add bounds, shape, text, and user intent.</p>
+          <div class="insight-eyebrow">App-owned sources</div>
+          <h3>Use real state, not just visible DOM</h3>
+          <p>Register redacted, timeout-safe resolvers for paginated tables, documents, maps, charts, calendars, or custom state so prompts include the right data.</p>
         </article>
         <article class="insight-card">
           <div class="insight-eyebrow">Any stack</div>
@@ -755,37 +899,72 @@ ctx.push(meta, text);</pre>
 
       <div class="deck">
         <div class="demo-controls">
-          <div class="demo-controls-row">
-            <span class="toggle-label">Context option:</span>
-            <div class="toggle-group context-option-group">
-              <button class="toggle-btn" data-mode="hover">Hover</button>
-              <button class="toggle-btn active" data-mode="click">Click</button>
-              <button class="toggle-btn" data-mode="button">Ask button</button>
-              <button class="toggle-btn" data-tool="region" type="button">Region</button>
-              <button class="toggle-btn" data-tool="circle" type="button">Circle</button>
-              <button class="toggle-btn" data-tool="lasso" type="button">Lasso</button>
-              <button class="toggle-btn" id="send-selection" type="button">Text selection</button>
+          <div class="pattern-dock" aria-label="Interaction patterns">
+            <div class="pattern-dock-header">
+              <span>Interaction pattern</span>
+              <strong id="active-pattern-name">Click</strong>
             </div>
-            <button class="tool-btn" id="cancel-tool" type="button" style="display:none">Cancel</button>
-            <div class="tool-hint" id="tool-hint">Use the tools to send explicit page context into the assistant.</div>
+            <div class="pattern-grid">
+              <button class="pattern-option active" data-mode="click" data-pattern-title="Click" data-pattern-payload="Element metadata + text">
+                <span class="pattern-glyph">↖</span>
+                <span class="pattern-copy-mini"><b>Click</b><small>element focus</small></span>
+              </button>
+              <button class="pattern-option" data-mode="hover" data-pattern-title="Hover" data-pattern-payload="Hover focus">
+                <span class="pattern-glyph">•</span>
+                <span class="pattern-copy-mini"><b>Hover</b><small>ambient focus</small></span>
+              </button>
+              <button class="pattern-option" data-mode="button" data-pattern-title="Ask button" data-pattern-payload="Explicit widget context">
+                <span class="pattern-glyph">✦</span>
+                <span class="pattern-copy-mini"><b>Ask button</b><small>chosen widget</small></span>
+              </button>
+              <button class="pattern-option" data-tool="region" type="button" data-pattern-title="Region" data-pattern-payload="Bounds + selected items">
+                <span class="pattern-glyph">□</span>
+                <span class="pattern-copy-mini"><b>Region</b><small>boxed area</small></span>
+              </button>
+              <button class="pattern-option" data-tool="circle" type="button" data-pattern-title="Circle" data-pattern-payload="Radius + selected items">
+                <span class="pattern-glyph">○</span>
+                <span class="pattern-copy-mini"><b>Circle</b><small>visual target</small></span>
+              </button>
+              <button class="pattern-option" data-tool="lasso" type="button" data-pattern-title="Lasso" data-pattern-payload="Freehand path + selected items">
+                <span class="pattern-glyph">⌁</span>
+                <span class="pattern-copy-mini"><b>Lasso</b><small>AI pointer</small></span>
+              </button>
+              <button class="pattern-option" id="send-selection" type="button" data-pattern-title="Text selection" data-pattern-payload="Highlighted text">
+                <span class="pattern-glyph">T</span>
+                <span class="pattern-copy-mini"><b>Text</b><small>highlighted copy</small></span>
+              </button>
+            </div>
+            <div class="pattern-status">
+              <span class="pattern-payload" id="pattern-payload">Element metadata + text</span>
+              <div class="tool-hint" id="tool-hint">Click an annotated KPI or account row to load its context.</div>
+              <button class="tool-btn" id="cancel-tool" type="button" style="display:none">Cancel</button>
+            </div>
           </div>
-          <div class="demo-controls-row">
+          <div class="demo-controls-row output-controls">
             <span class="toggle-label">Format:</span>
             <div class="toggle-group">
               <button class="toggle-btn active" data-format="natural">Natural</button>
               <button class="toggle-btn" data-format="json">JSON</button>
             </div>
-            <span class="toggle-label" style="margin-left:.5rem">Include text:</span>
+            <span class="toggle-label" style="margin-left:.5rem">Prompt text:</span>
             <div class="toggle-group">
-              <button class="toggle-btn active" data-text="on">On</button>
-              <button class="toggle-btn" data-text="off">Off</button>
+              <button class="toggle-btn active" data-text="on" title="Include the selected UI text in the prompt context">Text + meta</button>
+              <button class="toggle-btn" data-text="off" title="Only include structured metadata, without visible UI text">Meta only</button>
             </div>
           </div>
         </div>
 
         <div class="demo-layout">
           <div class="dashboard">
-            <div class="selection-layer" id="selection-layer" aria-hidden="true"></div>
+            <div class="selection-layer" id="selection-layer" aria-hidden="true">
+              <canvas class="ai-cursor-canvas" id="ai-cursor-canvas"></canvas>
+              <div class="ai-cursor" id="ai-cursor">
+                <svg class="ai-cursor-icon" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+                  <path class="ai-cursor-outline" d="M5.4 4.5C4.6 4.1 3.8 4.9 4.2 5.7l6.6 17c.4 1 1.8 1.1 2.3.1l3.2-6.1c.1-.3.4-.5.8-.6l6.4-2.3c1-.4 1.1-1.8.2-2.3L5.4 4.5Z"></path>
+                  <path class="ai-cursor-fill" d="M5.4 4.5C4.6 4.1 3.8 4.9 4.2 5.7l6.6 17c.4 1 1.8 1.1 2.3.1l3.2-6.1c.1-.3.4-.5.8-.6l6.4-2.3c1-.4 1.1-1.8.2-2.3L5.4 4.5Z"></path>
+                </svg>
+              </div>
+            </div>
             <div class="kpi-grid" id="kpi-grid"></div>
             <div class="panel">
               <div class="panel-header">Top Accounts <span>same data drives UI + AI context</span></div>
@@ -810,10 +989,18 @@ ctx.push(meta, text);</pre>
               </div>
             </div>
             <div class="chat-context-bar" id="chat-context-bar" style="display:none">
-              <span class="context-bar-label">Context:</span>
+              <span class="context-bar-label" id="context-bar-label">Context:</span>
               <span class="context-chip" id="context-chip"></span>
               <button class="context-dismiss" id="context-dismiss">&times;</button>
             </div>
+            <div class="selected-text-card" id="selected-text-card" style="display:none">
+              <div class="selected-text-card-head">
+                <span class="selected-text-card-title">Selected text context</span>
+                <span class="selected-text-card-state">ready for chat</span>
+              </div>
+              <blockquote class="selected-text-quote" id="selected-text-preview"></blockquote>
+            </div>
+            <div class="composer-suggestions" id="composer-suggestions" style="display:none"></div>
             <div class="chat-input-row">
               <input class="chat-input" id="chat-input" type="text" placeholder="Select context above, then ask anything…" />
               <button class="chat-send" id="chat-send">↑</button>
@@ -864,8 +1051,10 @@ ctx.push(meta, text);</pre>
         <article class="step">
           <div class="step-num">3</div>
           <h3>Inject</h3>
-          <p>At the AI boundary, send <code>askable.toPromptContext()</code> or a Context packet. The assistant now knows what the user actually meant.</p>
-          <pre class="step-code">const context = askable.toPromptContext();
+          <p>At the AI boundary, send <code>askable.toPromptContext()</code>, resolve app sources, or emit a Context packet. The assistant now knows what the user actually meant.</p>
+          <pre class="step-code">const context = await askable.toPromptContextAsync({
+  sources: ['accounts']
+});
 // → "User is focused on: metric: MRR, value: $128K"</pre>
         </article>
       </div>
@@ -943,7 +1132,11 @@ ctx.push(meta, text);</pre>
         <p>Drop <code style="color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.1)">data-askable</code> on your most important element. Working context in under five minutes.</p>
         <div class="cta-actions">
           <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer" class="btn btn-inverse">Read the docs</a>
-          <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white">View on GitHub</a>
+          <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white btn-icon" aria-label="GitHub repository" title="GitHub repository">
+            <svg class="github-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.49 0-.24-.01-1.05-.01-1.9-2.51.47-3.16-.63-3.36-1.21-.11-.3-.6-1.21-1.03-1.46-.35-.19-.85-.66-.01-.67.79-.01 1.35.74 1.54 1.05.9 1.55 2.34 1.11 2.91.85.09-.67.35-1.11.64-1.37-2.22-.26-4.55-1.14-4.55-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.71 0 0 .84-.28 2.75 1.05A9.28 9.28 0 0 1 12 6.98c.85 0 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.06.36.32.68.93.68 1.89 0 1.36-.01 2.46-.01 2.8 0 .27.18.59.69.49A10.12 10.12 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"/>
+            </svg>
+          </a>
           <a href="https://www.npmjs.com/package/@askable-ui/core" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white">npm install</a>
         </div>
       </div>
@@ -965,7 +1158,28 @@ ctx.push(meta, text);</pre>
     var EVENT_MAP = { click: 'click', hover: 'mouseenter', focus: 'focus' };
     var ALL_EVENTS = ['click', 'hover', 'focus'];
     function parseMeta(raw) { try { return JSON.parse(raw); } catch (e) { return raw; } }
-    function extractText(el) { return (el.textContent || '').trim(); }
+    function extractText(el) {
+      var parts = [];
+      function visit(node) {
+        if (node.nodeType === 3) {
+          var value = node.nodeValue.replace(/\s+/g, ' ').trim();
+          if (value) parts.push(value);
+          return;
+        }
+        if (node.nodeType !== 1) return;
+        var element = node;
+        if (
+          element.matches('button, [role="button"], [aria-hidden="true"], [hidden], .ask-btn, .ask-btn-row, [data-label="Ask"]')
+        ) {
+          return;
+        }
+        var style = window.getComputedStyle ? window.getComputedStyle(element) : null;
+        if (style && (style.display === 'none' || style.visibility === 'hidden')) return;
+        Array.prototype.forEach.call(element.childNodes, visit);
+      }
+      visit(el);
+      return parts.join(' ').replace(/\s+/g, ' ').trim();
+    }
     function Observer(onFocus) {
       this.root = null; this.mo = null; this.els = []; this.evts = ALL_EVENTS;
       var self = this;
@@ -1096,12 +1310,22 @@ ctx.push(meta, text);</pre>
     var codeAttr = document.getElementById('code-attr');
     var codeCtx = document.getElementById('code-ctx');
     var contextBar = document.getElementById('chat-context-bar');
+    var contextBarLabel = document.getElementById('context-bar-label');
     var contextChip = document.getElementById('context-chip');
+    var selectedTextCard = document.getElementById('selected-text-card');
+    var selectedTextPreview = document.getElementById('selected-text-preview');
+    var composerSuggestions = document.getElementById('composer-suggestions');
     var selectionLayer = document.getElementById('selection-layer');
+    var aiCursor = document.getElementById('ai-cursor');
+    var aiCursorCanvas = document.getElementById('ai-cursor-canvas');
+    var aiCursorCtx = aiCursorCanvas ? aiCursorCanvas.getContext('2d') : null;
     var toolHint = document.getElementById('tool-hint');
+    var activePatternName = document.getElementById('active-pattern-name');
+    var patternPayload = document.getElementById('pattern-payload');
     var cancelTool = document.getElementById('cancel-tool');
     var activeEl = null; var typingTimer = null; var lastKey = null;
     var activeTool = null; var drawingEl = null; var dragStart = null; var lassoPoints = []; var toolClearTimer = null; var textSelectionMode = false;
+    var aiTrailPoints = []; var aiTrailFrame = null; var aiTrailDpr = 1; var aiTrailMaxPoints = 22;
     var dashboard = document.querySelector('.dashboard');
     var promptOpts = { format: 'natural', includeText: true };
     function refreshCtxDisplay() {
@@ -1127,6 +1351,7 @@ ctx.push(meta, text);</pre>
         lastKey = null; askable.unobserve();
         if (mode === 'button') { dashboard.classList.add('button-mode'); }
         else { dashboard.classList.remove('button-mode'); askable.observe(document, { events: mode === 'hover' ? ['hover'] : ['click'] }); }
+        setPatternState(btn, mode === 'hover' ? 'Move over an annotated widget to preview its context.' : mode === 'button' ? 'Use an Ask AI button to explicitly choose a widget.' : 'Click an annotated KPI or account row to load its context.');
       });
     });
     document.querySelectorAll('[data-format]').forEach(function(btn) {
@@ -1151,11 +1376,95 @@ ctx.push(meta, text);</pre>
     function setToolHint(text) {
       if (toolHint) toolHint.textContent = text;
     }
+    function setPatternState(btn, hint) {
+      if (!btn) return;
+      if (activePatternName) activePatternName.textContent = btn.getAttribute('data-pattern-title') || btn.textContent.trim();
+      if (patternPayload) patternPayload.textContent = btn.getAttribute('data-pattern-payload') || 'Context packet';
+      if (hint) setToolHint(hint);
+    }
+    function resizeAiTrail() {
+      if (!aiCursorCanvas || !selectionLayer || !aiCursorCtx) return;
+      var rect = selectionLayer.getBoundingClientRect();
+      aiTrailDpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      aiCursorCanvas.width = Math.max(1, Math.round(rect.width * aiTrailDpr));
+      aiCursorCanvas.height = Math.max(1, Math.round(rect.height * aiTrailDpr));
+      aiCursorCtx.setTransform(aiTrailDpr, 0, 0, aiTrailDpr, 0, 0);
+    }
+    function clearAiTrailCanvas() {
+      if (!aiCursorCanvas || !aiCursorCtx) return;
+      aiCursorCtx.setTransform(1, 0, 0, 1, 0, 0);
+      aiCursorCtx.clearRect(0, 0, aiCursorCanvas.width, aiCursorCanvas.height);
+      aiCursorCtx.setTransform(aiTrailDpr, 0, 0, aiTrailDpr, 0, 0);
+    }
+    function resetAiTrail() {
+      aiTrailPoints = [];
+      if (aiTrailFrame) {
+        cancelAnimationFrame(aiTrailFrame);
+        aiTrailFrame = null;
+      }
+      clearAiTrailCanvas();
+    }
+    function drawAiTrail() {
+      aiTrailFrame = null;
+      clearAiTrailCanvas();
+      if (activeTool !== 'lasso') {
+        aiTrailPoints = [];
+        return;
+      }
+      if (aiTrailPoints.length > 1 && aiCursorCtx) {
+        var start = aiTrailPoints[0];
+        var end = aiTrailPoints[aiTrailPoints.length - 1];
+        aiCursorCtx.beginPath();
+        aiCursorCtx.moveTo(start.x, start.y);
+        for (var i = 1; i < aiTrailPoints.length - 1; i++) {
+          var xc = (aiTrailPoints[i].x + aiTrailPoints[i + 1].x) / 2;
+          var yc = (aiTrailPoints[i].y + aiTrailPoints[i + 1].y) / 2;
+          aiCursorCtx.quadraticCurveTo(aiTrailPoints[i].x, aiTrailPoints[i].y, xc, yc);
+        }
+        var gradient = aiCursorCtx.createLinearGradient(start.x, start.y, end.x, end.y);
+        gradient.addColorStop(0, 'rgba(109, 40, 217, 0)');
+        gradient.addColorStop(0.48, 'rgba(124, 58, 237, 0.22)');
+        gradient.addColorStop(0.84, 'rgba(139, 92, 246, 0.38)');
+        gradient.addColorStop(1, 'rgba(167, 139, 250, 0.52)');
+        aiCursorCtx.strokeStyle = gradient;
+        aiCursorCtx.lineWidth = 9;
+        aiCursorCtx.lineCap = 'round';
+        aiCursorCtx.lineJoin = 'round';
+        aiCursorCtx.shadowBlur = 8;
+        aiCursorCtx.shadowColor = '#8b5cf6';
+        aiCursorCtx.stroke();
+        aiCursorCtx.shadowBlur = 0;
+        aiCursorCtx.strokeStyle = 'rgba(255,255,255,0.12)';
+        aiCursorCtx.lineWidth = 2;
+        aiCursorCtx.stroke();
+      }
+      if (aiTrailPoints.length) aiTrailPoints.shift();
+      if (aiTrailPoints.length) aiTrailFrame = requestAnimationFrame(drawAiTrail);
+    }
+    function addAiTrailPoint(point) {
+      if (activeTool !== 'lasso') return;
+      aiTrailPoints.push({ x: point.x + 9, y: point.y + 9 });
+      if (aiTrailPoints.length > aiTrailMaxPoints) aiTrailPoints.shift();
+      if (!aiTrailFrame) aiTrailFrame = requestAnimationFrame(drawAiTrail);
+    }
+    function restoreClickMode(hint) {
+      clearToolState();
+      askable.unobserve();
+      askable.observe(document, { events: ['click'] });
+      if (dashboard) dashboard.classList.remove('button-mode');
+      document.querySelectorAll('[data-mode], [data-tool], #send-selection').forEach(function(btn) { btn.classList.remove('active'); });
+      var clickButton = document.querySelector('[data-mode="click"]');
+      if (clickButton) clickButton.classList.add('active');
+      setPatternState(clickButton, hint || 'Click an annotated KPI or account row to load its context.');
+    }
     function clearToolState() {
       if (toolClearTimer) { clearTimeout(toolClearTimer); toolClearTimer = null; }
       activeTool = null; dragStart = null; lassoPoints = []; textSelectionMode = false;
+      clearSelectedTextPreview();
       if (drawingEl) { drawingEl.remove(); drawingEl = null; }
-      if (dashboard) dashboard.classList.remove('selecting');
+      resetAiTrail();
+      if (dashboard) dashboard.classList.remove('selecting', 'lasso-active');
+      if (aiCursor) aiCursor.style.display = '';
       if (cancelTool) cancelTool.style.display = 'none';
       document.querySelectorAll('[data-tool]').forEach(function(btn) { btn.classList.remove('active'); });
       var textButton = document.getElementById('send-selection');
@@ -1167,13 +1476,23 @@ ctx.push(meta, text);</pre>
       askable.unobserve();
       if (dashboard) dashboard.classList.remove('button-mode');
       if (dashboard) dashboard.classList.add('selecting');
+      if (dashboard) dashboard.classList.toggle('lasso-active', tool === 'lasso');
+      if (tool === 'lasso') {
+        resizeAiTrail();
+        resetAiTrail();
+      }
       if (dashboard && dashboard.scrollIntoView) dashboard.scrollIntoView({ block: 'center', inline: 'nearest' });
       if (cancelTool) cancelTool.style.display = 'inline-flex';
       document.querySelectorAll('[data-mode], [data-tool], #send-selection').forEach(function(btn) { btn.classList.remove('active'); });
       document.querySelectorAll('[data-tool]').forEach(function(btn) {
         btn.classList.toggle('active', btn.getAttribute('data-tool') === tool);
       });
-      setToolHint(tool === 'region' ? 'Drag a box over the dashboard.' : tool === 'circle' ? 'Drag from the center to circle an area.' : 'Freehand drag around an irregular area.');
+      setPatternState(document.querySelector('[data-tool="' + tool + '"]'), tool === 'region' ? 'Drag a box over the dashboard.' : tool === 'circle' ? 'Drag from the center to circle an area.' : 'Freehand drag with the AI cursor. Lasso stays active until you cancel.');
+    }
+    function updateAiCursor(point) {
+      if (!aiCursor || activeTool !== 'lasso') return;
+      aiCursor.style.transform = 'translate3d(' + Math.round(point.x + 2) + 'px,' + Math.round(point.y + 2) + 'px,0)';
+      addAiTrailPoint(point);
     }
     function layerPoint(e) {
       var rect = selectionLayer.getBoundingClientRect();
@@ -1265,7 +1584,7 @@ ctx.push(meta, text);</pre>
       if (activeTool === 'lasso') {
         lassoPoints.push(point);
         var path = lassoPoints.map(function(p, index) { return (index ? 'L' : 'M') + Math.round(p.x) + ' ' + Math.round(p.y); }).join(' ');
-        drawingEl.innerHTML = '<svg width="100%" height="100%" viewBox="0 0 ' + Math.round(point.layerWidth) + ' ' + Math.round(point.layerHeight) + '"><defs><linearGradient id="lasso-gradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#06b6d4"/><stop offset="38%" stop-color="#4f46e5"/><stop offset="70%" stop-color="#a855f7"/><stop offset="100%" stop-color="#22c55e"/></linearGradient></defs><path class="lasso-aura" d="' + path + '"></path><path d="' + path + '"></path></svg>';
+        drawingEl.innerHTML = '<svg width="100%" height="100%" viewBox="0 0 ' + Math.round(point.layerWidth) + ' ' + Math.round(point.layerHeight) + '"><defs><linearGradient id="lasso-gradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6d28d9"/><stop offset="46%" stop-color="#7c3aed"/><stop offset="78%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#a78bfa"/></linearGradient></defs><path class="lasso-aura" d="' + path + '"></path><path d="' + path + '"></path></svg>';
         return;
       }
       var b = boundsFromPoints(dragStart, point);
@@ -1300,7 +1619,13 @@ ctx.push(meta, text);</pre>
       var radius = activeTool === 'circle' ? Math.round(Math.sqrt(Math.pow(point.x - dragStart.x, 2) + Math.pow(point.y - dragStart.y, 2))) : null;
       if ((bounds.width < 8 || bounds.height < 8) && activeTool !== 'circle') {
         setToolHint('Selection was too small. Try dragging a larger area.');
-        clearToolState();
+        if (activeTool === 'lasso') {
+          if (drawingEl) { drawingEl.remove(); drawingEl = null; }
+          dragStart = null;
+          lassoPoints = [];
+        } else {
+          clearToolState();
+        }
         return;
       }
       var selectedItems = selectedDashboardItems(bounds, activeTool, radius);
@@ -1322,7 +1647,17 @@ ctx.push(meta, text);</pre>
       };
       askable.push(meta, selectionSummary(activeTool, selectedItems), dashboard);
       setToolHint(activeTool + ' context sent to the assistant.');
-      toolClearTimer = setTimeout(clearToolState, 450);
+      if (activeTool === 'lasso') {
+        toolClearTimer = setTimeout(function() {
+          if (drawingEl) { drawingEl.remove(); drawingEl = null; }
+          dragStart = null;
+          lassoPoints = [];
+          resetAiTrail();
+          setToolHint('Lasso context sent. Draw another lasso, or cancel to leave lasso mode.');
+        }, 450);
+      } else {
+        toolClearTimer = setTimeout(clearToolState, 450);
+      }
     }
     document.querySelectorAll('[data-tool]').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
@@ -1333,30 +1668,56 @@ ctx.push(meta, text);</pre>
     if (cancelTool) {
       cancelTool.addEventListener('click', function(e) {
         e.stopPropagation();
-        clearToolState();
-        setToolHint('Selection cancelled.');
+        restoreClickMode('Selection cancelled. Click an annotated KPI or account row to load context.');
       });
     }
     if (selectionLayer) {
       selectionLayer.addEventListener('pointerdown', function(e) {
         if (!activeTool) return;
         e.preventDefault();
+        if (toolClearTimer) { clearTimeout(toolClearTimer); toolClearTimer = null; }
+        if (drawingEl) { drawingEl.remove(); drawingEl = null; }
+        if (activeTool === 'lasso') {
+          resizeAiTrail();
+          resetAiTrail();
+        }
         selectionLayer.setPointerCapture(e.pointerId);
         dragStart = layerPoint(e);
+        updateAiCursor(dragStart);
         lassoPoints = [dragStart];
         drawSelection(dragStart);
       });
       selectionLayer.addEventListener('pointermove', function(e) {
-        if (!activeTool || !dragStart) return;
+        if (!activeTool) return;
         e.preventDefault();
-        drawSelection(layerPoint(e));
+        var point = layerPoint(e);
+        updateAiCursor(point);
+        if (!dragStart) return;
+        drawSelection(point);
       });
       selectionLayer.addEventListener('pointerup', function(e) {
         if (!activeTool || !dragStart) return;
         e.preventDefault();
-        finishSelection(layerPoint(e));
+        var point = layerPoint(e);
+        updateAiCursor(point);
+        finishSelection(point);
+      });
+      selectionLayer.addEventListener('pointerleave', function() {
+        if (aiCursor) aiCursor.style.display = 'none';
+        resetAiTrail();
+      });
+      selectionLayer.addEventListener('pointerenter', function(e) {
+        if (aiCursor) aiCursor.style.display = '';
+        if (activeTool === 'lasso') resizeAiTrail();
+        if (activeTool === 'lasso') updateAiCursor(layerPoint(e));
       });
     }
+    window.addEventListener('resize', function() {
+      if (activeTool === 'lasso') {
+        resizeAiTrail();
+        resetAiTrail();
+      }
+    });
     document.getElementById('send-selection').addEventListener('click', function(e) {
       e.stopPropagation();
       clearToolState();
@@ -1364,12 +1725,15 @@ ctx.push(meta, text);</pre>
       if (dashboard) dashboard.classList.remove('button-mode');
       if (dashboard && dashboard.scrollIntoView) dashboard.scrollIntoView({ block: 'center', inline: 'nearest' });
       textSelectionMode = true;
+      clearSelectedTextPreview();
       document.querySelectorAll('[data-mode], [data-tool], #send-selection').forEach(function(btn) { btn.classList.remove('active'); });
       e.currentTarget.classList.add('active');
+      setPatternState(e.currentTarget, 'Highlight text in the demo. It will be sent when you release the mouse.');
       askable.clear();
       lastKey = null;
       contextBar.style.display = 'none';
       contextChip.textContent = '';
+      hideQuestionSuggestions();
       if (activeEl) activeEl.classList.remove('active');
       activeEl = null;
       codeAttr.textContent = 'highlight text in the demo, then release the mouse…';
@@ -1382,13 +1746,17 @@ ctx.push(meta, text);</pre>
     });
     document.addEventListener('mouseup', function() {
       if (!textSelectionMode) return;
-      var text = window.getSelection ? String(window.getSelection()).trim() : '';
+      var sel = window.getSelection ? window.getSelection() : null;
+      var text = sel ? String(sel).trim() : '';
       if (!text) {
         setToolHint('Highlight text in the demo first, then send it as context.');
         return;
       }
+      var range = sel && sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
       askable.push({ capture: 'text-selection', length: text.length, consent: 'explicit' }, text, dashboard);
-      setToolHint('Highlighted text sent to the assistant.');
+      showTextCaptureMarks(range);
+      showSelectedTextPreview(text);
+      setToolHint('Highlighted text was sent as explicit chat context.');
     });
     var responses = {
       revenue: 'MRR is up 12.4% to $128,400. Momentum looks healthy, likely expansion + retention working together.',
@@ -1431,6 +1799,100 @@ ctx.push(meta, text);</pre>
       }
       return '';
     }
+    function questionOptions(meta) {
+      if (!meta || typeof meta !== 'object') return [];
+      if (meta.capture === 'text-selection') return ['Summarize this', 'Extract action items', 'Use this in my answer'];
+      if (meta.capture === 'lasso') return ['What stands out?', 'Summarize this area', 'What should I do next?'];
+      if (meta.capture === 'region') return ['Summarize this area', 'Find risks here', 'What changed?'];
+      if (meta.capture === 'circle') return ['Explain this point', 'Is this an issue?', 'What should I do?'];
+      if (meta.widget === 'account_row') {
+        if (meta.status === 'at_risk') return ['Recommended action', 'Why is this risky?', 'Draft next step'];
+        if (meta.status === 'churned') return ['Can we win back?', 'Explain churn', 'Draft follow-up'];
+        return ['Upsell candidate?', 'Summarize account', 'Draft QBR note'];
+      }
+      if (meta.widget === 'revenue') return ['Why is this trending?', 'Explain drivers', 'Forecast next month'];
+      if (meta.widget === 'churn') return ['What drove churn?', 'Find retention risks', 'Next action'];
+      if (meta.widget === 'arpu') return ['How improve ARPU?', 'Explain drop', 'Find plan mix issue'];
+      if (meta.widget === 'nps') return ['What should we do?', 'Summarize sentiment', 'Find expansion signal'];
+      return ['Summarize context', 'Find risks', 'Recommended action'];
+    }
+    function hideQuestionSuggestions() {
+      if (!composerSuggestions) return;
+      composerSuggestions.style.display = 'none';
+      composerSuggestions.innerHTML = '';
+    }
+    function clearSelectedTextPreview() {
+      if (selectedTextCard) selectedTextCard.style.display = 'none';
+      if (selectedTextPreview) selectedTextPreview.textContent = '';
+      if (contextBar) contextBar.classList.remove('text-context');
+      if (contextBarLabel) contextBarLabel.textContent = 'Context:';
+      document.querySelectorAll('.text-capture-mark').forEach(function(mark) { mark.remove(); });
+    }
+    function showSelectedTextPreview(text) {
+      if (!selectedTextCard || !selectedTextPreview) return;
+      selectedTextPreview.textContent = text;
+      selectedTextCard.style.display = 'block';
+      if (contextBar) contextBar.classList.add('text-context');
+      if (contextBarLabel) contextBarLabel.textContent = 'Selected text:';
+    }
+    function showTextCaptureMarks(range) {
+      if (!dashboard || !range) return;
+      document.querySelectorAll('.text-capture-mark').forEach(function(mark) { mark.remove(); });
+      var hostRect = dashboard.getBoundingClientRect();
+      Array.from(range.getClientRects()).forEach(function(rect) {
+        if (rect.width < 3 || rect.height < 3) return;
+        var mark = document.createElement('span');
+        mark.className = 'text-capture-mark';
+        mark.style.left = Math.max(0, rect.left - hostRect.left - 2) + 'px';
+        mark.style.top = Math.max(0, rect.top - hostRect.top - 1) + 'px';
+        mark.style.width = rect.width + 4 + 'px';
+        mark.style.height = rect.height + 2 + 'px';
+        dashboard.appendChild(mark);
+      });
+    }
+    function addContextMsg(focus) {
+      var meta = focus ? focus.meta : null;
+      if (meta && meta.capture === 'text-selection') {
+        var wrap = document.createElement('div');
+        wrap.className = 'msg ctx text-context';
+        var bubble = document.createElement('div');
+        bubble.className = 'msg-bubble';
+        var kicker = document.createElement('span');
+        kicker.className = 'msg-context-kicker';
+        kicker.textContent = 'Selected text sent as context';
+        var quote = document.createElement('span');
+        quote.className = 'msg-context-quote';
+        quote.textContent = '"' + focus.text + '"';
+        bubble.appendChild(kicker);
+        bubble.appendChild(quote);
+        wrap.appendChild(bubble);
+        messagesEl.appendChild(wrap);
+        scrollBottom();
+        return;
+      }
+      addMsg('ctx', 'Context: ' + askable.toPromptContext(promptOpts));
+    }
+    function showQuestionSuggestions(meta) {
+      if (!composerSuggestions) return;
+      var options = questionOptions(meta).slice(0, 3);
+      if (!options.length) {
+        hideQuestionSuggestions();
+        return;
+      }
+      composerSuggestions.innerHTML = '';
+      options.forEach(function(label) {
+        var chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'question-chip';
+        chip.textContent = label;
+        chip.addEventListener('click', function() {
+          chatInput.value = label;
+          chatInput.focus();
+        });
+        composerSuggestions.appendChild(chip);
+      });
+      composerSuggestions.style.display = 'flex';
+    }
     askable.on('focus', function(focus) {
       var meta = focus.meta; var prompt = askable.toPromptContext(promptOpts); var key = JSON.stringify(meta);
       if (key === lastKey) return; lastKey = key;
@@ -1448,18 +1910,24 @@ ctx.push(meta, text);</pre>
       // Show context bar — let user see what's loaded before sending
       contextBar.style.display = 'flex';
       contextChip.textContent = prompt;
+      if (meta && meta.capture === 'text-selection') showSelectedTextPreview(focus.text);
+      else clearSelectedTextPreview();
       // Highlight active element
       if (activeEl) activeEl.classList.remove('active');
-      activeEl = focus.element; activeEl.classList.add('active');
+      activeEl = focus.element;
+      if (activeEl) activeEl.classList.add('active');
       // Pre-fill without moving scroll; selection tools should stay under the pointer.
       var suggestion = suggestQuestion(meta);
       chatInput.value = suggestion;
       chatInput.placeholder = 'Ask about this context, or type your own question…';
+      showQuestionSuggestions(meta);
     });
     document.getElementById('context-dismiss').addEventListener('click', function() {
       contextBar.style.display = 'none'; contextChip.textContent = '';
+      clearSelectedTextPreview();
       if (activeEl) activeEl.classList.remove('active');
       activeEl = null; lastKey = null; askable.clear();
+      hideQuestionSuggestions();
       chatInput.value = '';
       chatInput.placeholder = 'Select context above, then ask anything…';
       codeAttr.textContent = 'select context above…'; codeCtx.textContent = 'waiting for context…';
@@ -1474,8 +1942,7 @@ ctx.push(meta, text);</pre>
       // Show user message, then context badge inline if context is loaded
       addMsg('user', text);
       if (focus) {
-        var ctxText = askable.toPromptContext(promptOpts);
-        addMsg('ctx', 'Context: ' + ctxText);
+        addContextMsg(focus);
       }
       clearTimeout(typingTimer); removeTyping(); showTyping();
       typingTimer = setTimeout(function() {
@@ -1491,7 +1958,7 @@ ctx.push(meta, text);</pre>
           } else if (meta.capture === 'lasso') {
             reply = 'The lassoed area gives the agent an irregular visual target. It can carry path points, bounds, and the surrounding UI state.';
           } else if (meta.capture === 'text-selection') {
-            reply = 'I will answer using the highlighted text directly. Selected text context avoids guessing which copy on the page matters.';
+            reply = 'I will answer from the selected text you attached. In a real chat request this text is sent as explicit context beside your question, so the model does not need to infer which copy on the page matters.';
           } else if (w === 'revenue') {
             if (lower.indexOf('trend') !== -1 || lower.indexOf('why') !== -1 || lower.indexOf('driv') !== -1)
               reply = 'MRR grew 12.4% — likely a mix of new expansion + retention improving. Check if seat upgrades or plan changes account for the delta.';

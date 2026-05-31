@@ -42,6 +42,76 @@ describe('createAskableMcpContextProvider', () => {
     });
   });
 
+  it('uses async packet and prompt methods when available', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'semantic' },
+      surrounding: {
+        sources: [
+          {
+            label: 'accounts',
+            role: 'collection',
+            metadata: { id: 'accounts', mode: 'summary', data: { total: 12 } },
+          },
+        ],
+      },
+    });
+    const ctx = {
+      toContextPacket: vi.fn(() => createWebContextPacket({ capture: { mode: 'element-focus' } })),
+      toContextPacketAsync: vi.fn(async () => packet),
+      toContext: vi.fn(() => 'Sync prompt'),
+      toContextAsync: vi.fn(async () => 'Async prompt with sources'),
+    } satisfies AskableMcpSourceContext;
+    const provider = createAskableMcpContextProvider(ctx, {
+      sources: [{ id: 'accounts', mode: 'summary', timeoutMs: 750 }],
+      sourceErrorMode: 'include',
+    });
+
+    await expect(Promise.resolve(provider.getContext({
+      sourceMode: 'summary',
+    }))).resolves.toBe(packet);
+    await expect(Promise.resolve(provider.formatContextForPrompt?.(packet, {
+      sourceLabel: 'App sources',
+    }))).resolves.toBe('Async prompt with sources');
+
+    expect(ctx.toContextPacketAsync).toHaveBeenCalledWith({
+      sources: [{ id: 'accounts', mode: 'summary', timeoutMs: 750 }],
+      sourceErrorMode: 'include',
+      sourceMode: 'summary',
+    });
+    expect(ctx.toContextPacket).not.toHaveBeenCalled();
+    expect(ctx.toContextAsync).toHaveBeenCalledWith({
+      sources: [{ id: 'accounts', mode: 'summary', timeoutMs: 750 }],
+      sourceErrorMode: 'include',
+      sourceLabel: 'App sources',
+    });
+    expect(ctx.toContext).not.toHaveBeenCalled();
+  });
+
+  it('removes source options when falling back to sync packet and prompt methods', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'element-focus' },
+    });
+    const ctx = {
+      toContextPacket: vi.fn(() => packet),
+      toContext: vi.fn(() => 'Sync prompt'),
+    } satisfies AskableMcpSourceContext;
+    const provider = createAskableMcpContextProvider(ctx, {
+      sources: ['accounts'],
+      sourceMode: 'summary',
+      sourceErrorMode: 'include',
+      sourceLabel: 'Sources',
+      currentLabel: 'Current UI',
+    });
+
+    await provider.getContext();
+    await provider.formatContextForPrompt?.(packet);
+
+    expect(ctx.toContextPacket).toHaveBeenCalledWith({});
+    expect(ctx.toContext).toHaveBeenCalledWith({
+      currentLabel: 'Current UI',
+    });
+  });
+
   it('formats prompt text from the source context with prompt-safe options', async () => {
     const packet = createWebContextPacket({
       capture: { mode: 'element-focus' },
@@ -92,6 +162,7 @@ describe('defaultPromptFormatter', () => {
       surrounding: {
         visible: [{ metadata: { metric: 'churn' }, text: 'Churn is 4.2%' }],
         history: [{ metadata: { metric: 'pipeline' }, text: 'Pipeline is $8.1M' }],
+        sources: [{ label: 'accounts', role: 'collection', metadata: { data: { total: 12 } } }],
       },
     });
 
@@ -104,6 +175,7 @@ describe('defaultPromptFormatter', () => {
       'Target metadata: {"metric":"revenue","delta":"+12%"}',
       'Visible context: [{"metadata":{"metric":"churn"},"text":"Churn is 4.2%"}]',
       'Recent context: [{"metadata":{"metric":"pipeline"},"text":"Pipeline is $8.1M"}]',
+      'Source context: [{"label":"accounts","role":"collection","metadata":{"data":{"total":12}}}]',
     ].join('\n'));
   });
 });

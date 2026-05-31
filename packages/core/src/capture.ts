@@ -77,19 +77,19 @@ type Point = AskableRegionCapturePoint;
 
 const OVERLAY_ID = 'askable-region-capture';
 const SELECTION_ATTR = 'data-askable-region-capture-selection';
-const DEFAULT_REGION_CAPTURE_THEME: AskableRegionCaptureTheme = {
+export const ASKABLE_REGION_CAPTURE_THEME: AskableRegionCaptureTheme = {
   overlayBackground: 'rgba(15,23,42,0.08)',
   selectionStroke: '#2563eb',
   selectionFill: 'rgba(37,99,235,0.14)',
   selectionScrim: 'rgba(15,23,42,0.12)',
   lassoGradientStops: [
-    { offset: '0%', color: '#06b6d4' },
-    { offset: '38%', color: '#4f46e5' },
-    { offset: '70%', color: '#a855f7' },
-    { offset: '100%', color: '#22c55e' },
+    { offset: '0%', color: '#6d28d9' },
+    { offset: '46%', color: '#7c3aed' },
+    { offset: '78%', color: '#8b5cf6' },
+    { offset: '100%', color: '#a78bfa' },
   ],
   lassoStrokeWidth: 3,
-  lassoGlowColor: 'rgba(79,70,229,0.35)',
+  lassoGlowColor: 'rgba(124,58,237,0.16)',
   lassoGlowRadius: 8,
 };
 
@@ -333,15 +333,15 @@ export function createAskableRegionCapture(
     },
     cancel,
     destroy: removeOverlay,
-    isActive: () => active,
+    isActive: () => Boolean(overlay),
   };
 }
 
 function resolveRegionCaptureTheme(theme?: Partial<AskableRegionCaptureTheme>): AskableRegionCaptureTheme {
   return {
-    ...DEFAULT_REGION_CAPTURE_THEME,
+    ...ASKABLE_REGION_CAPTURE_THEME,
     ...theme,
-    lassoGradientStops: theme?.lassoGradientStops ?? DEFAULT_REGION_CAPTURE_THEME.lassoGradientStops,
+    lassoGradientStops: theme?.lassoGradientStops ?? ASKABLE_REGION_CAPTURE_THEME.lassoGradientStops,
   };
 }
 

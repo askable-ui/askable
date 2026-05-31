@@ -67,9 +67,63 @@ const { focus, promptContext } = useAskable({ events: ['click'] });
 - `ctx.getHistory(limit?)` — focus history, newest first
 - `ctx.toHistoryContext(limit?, options?)` — history as a prompt-ready string
 - `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
+- `ctx.toPromptContextAsync(options?)` — include async app-owned sources
 - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
+- `useAskableSource()` — lifecycle-managed app-owned source registration
 
 The composable manages a shared singleton context per `events` configuration. Multiple `useAskable()` consumers with the same `events` reuse one observer lifecycle, while differing `events` configurations get isolated shared contexts of their own. Each shared context is automatically destroyed when its last consumer unmounts.
+
+### `useAskableSource(options?)`
+
+Use `useAskableSource()` when the assistant needs data that is not fully
+rendered in the DOM: paginated tables, virtualized lists, documents, charts,
+maps, calendars, canvases, or custom product state. The composable registers the
+source during setup, keeps reactive values current through your resolver
+closures, and unregisters automatically on unmount.
+
+```vue
+<script setup lang="ts">
+import { watch } from 'vue';
+import { useAskableSource } from '@askable-ui/vue';
+
+const accounts = useAskableSource('accounts', {
+  kind: 'collection',
+  describe: 'Customer accounts matching the active filters',
+  getState: () => ({
+    filters: filters.value,
+    sort: sort.value,
+    page: table.getState().pagination.pageIndex + 1,
+    pageSize: table.getState().pagination.pageSize,
+    totalCount: totalCount.value,
+  }),
+  resolve: async ({ mode, maxItems }) => {
+    if (mode === 'visible') return table.getRowModel().rows.map((row) => row.original);
+    return summarizeAccounts({ filters: filters.value, sort: sort.value, maxItems });
+  },
+  sanitize: (source) => ({
+    ...source,
+    data: redactAccountFields(source.data),
+  }),
+});
+
+async function ask(question: string) {
+  const promptContext = await accounts.toPromptContext({
+    source: { mode: 'summary', maxItems: 20, timeoutMs: 750 },
+    sourceErrorMode: 'include',
+  });
+
+  return sendToAgent({ question, promptContext });
+}
+
+watch([filters, sort, totalCount], () => {
+  accounts.notifyChanged();
+});
+</script>
+```
+
+Call `notifyChanged()` when source data changes without a DOM focus change,
+such as pagination, filters, selected rows, or query-cache updates. Async
+subscribers created with `ctx.subscribeAsync()` re-resolve matching sources.
 
 ### `useAskableRegionCapture(options?)`
 
@@ -101,6 +155,9 @@ const selectedContext = computed(() =>
 ```
 
 The result includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
+Pass `once: false` when the capture control should stay active for repeated
+region, circle, or lasso selections. The composable keeps `active` true until
+`cancel()` or `destroy()` runs.
 
 ### `useAskableTextSelectionCapture(options?)`
 

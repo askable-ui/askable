@@ -181,6 +181,84 @@ myCtx.observe(panelEl, { events: ['hover'] });
 const { focus: panelFocus } = useAskable({ ctx: myCtx });
 ```
 
+---
+
+## `useAskableSource(id, source, options?)`
+
+Lifecycle-managed registration for app-owned context sources. Use this when the
+assistant needs data that is not fully rendered in the DOM: paginated tables,
+virtualized lists, documents, charts, maps, calendars, canvases, file trees, or
+custom state.
+
+The hook registers the source after mount, keeps the latest resolver functions
+current across rerenders, and unregisters automatically on unmount.
+
+```tsx
+import { useEffect } from 'react';
+import { useAskableSource } from '@askable-ui/react';
+
+function AccountsContextSource({ table, filters, sort }) {
+  const accounts = useAskableSource('accounts', {
+    kind: 'collection',
+    describe: 'Customer accounts matching the active filters',
+    getState: () => ({
+      filters,
+      sort,
+      page: table.getState().pagination.pageIndex + 1,
+      pageSize: table.getState().pagination.pageSize,
+      totalCount: table.options.meta?.totalCount,
+    }),
+    resolve: async ({ mode, maxItems }) => {
+      if (mode === 'visible') return table.getRowModel().rows.map((row) => row.original);
+      return summarizeAccounts({ filters, sort, maxItems });
+    },
+    sanitize: (source) => ({
+      ...source,
+      data: redactAccountFields(source.data),
+    }),
+  });
+
+  async function ask(question: string) {
+    const promptContext = await accounts.toPromptContext({
+      source: { mode: 'summary', maxItems: 20, timeoutMs: 750 },
+      sourceErrorMode: 'include',
+    });
+
+    return sendToAgent({ question, promptContext });
+  }
+
+  useEffect(() => {
+    return table.onStateChange(() => {
+      accounts.notifyChanged();
+    });
+  }, [accounts.notifyChanged, table]);
+
+  return null;
+}
+```
+
+Call `notifyChanged()` when source data changes without a DOM focus change,
+such as pagination, filters, selected rows, or query-cache updates. Async
+subscribers created with `ctx.subscribeAsync()` re-resolve matching sources.
+
+**Options:**
+
+| Option | Type | Description |
+|---|---|---|
+| `enabled` | `boolean` | Register while true. Defaults to `true` |
+| `name` / `events` / `viewport` / `ctx` | same as `useAskable()` | Choose the context that owns the source |
+
+**Returns:**
+
+| Value | Type | Description |
+|---|---|---|
+| `ctx` | `AskableContext` | Context instance that owns the source |
+| `sourceId` | `string` | Trimmed registered source id |
+| `resolve(request?)` | `Promise<AskableResolvedContextSource>` | Resolve this source directly |
+| `toPromptContext(options?)` | `Promise<string>` | Serialize focus plus this source |
+| `notifyChanged()` | `() => void` | Re-resolve matching async subscribers after source data changes |
+| `unregister()` | `() => void` | Manually unregister before unmount when needed |
+
 ### Practical option patterns
 
 #### Shared default hook
@@ -348,6 +426,10 @@ function DashboardCapture() {
 | `cancel()` | `function` | Cancel the active overlay |
 | `destroy()` | `function` | Remove the overlay without firing cancel |
 | `isActive()` | `function` | Read active state from the live capture handle |
+
+For persistent capture tools, pass `once: false`. The overlay and `active` state
+stay on after each accepted capture until the user cancels or the component
+unmounts.
 
 ---
 

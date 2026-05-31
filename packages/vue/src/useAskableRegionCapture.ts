@@ -58,8 +58,12 @@ export function useAskableRegionCapture(
       onCapture(packet, selection) {
         lastPacket.value = packet;
         lastSelection.value = selection;
-        handle = null;
-        active.value = false;
+        if (currentOptions.once === false) {
+          active.value = true;
+        } else {
+          handle = null;
+          active.value = false;
+        }
         currentOptions.onCapture?.(packet, selection);
       },
       onCancel() {

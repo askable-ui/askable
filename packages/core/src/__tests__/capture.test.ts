@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { createAskableContext, createAskableRegionCapture } from '../index.js';
+import { ASKABLE_REGION_CAPTURE_THEME, createAskableContext, createAskableRegionCapture } from '../index.js';
 
 function pointerEvent(type: string, x: number, y: number): PointerEvent {
   const event = new MouseEvent(type, {
@@ -179,15 +179,42 @@ describe('createAskableRegionCapture', () => {
     expect(polyline.getAttribute('fill')).toBe('none');
     expect(polyline.getAttribute('stroke')).toBe('url(#askable-region-capture-lasso-gradient)');
     expect(polyline.getAttribute('stroke-width')).toBe('3');
-    expect(polyline.style.filter).toBe('drop-shadow(0 0 8px rgba(79,70,229,0.35))');
+    expect(polyline.style.filter).toBe('drop-shadow(0 0 8px rgba(124,58,237,0.16))');
     expect(stops).toEqual([
-      { offset: '0%', color: '#06b6d4' },
-      { offset: '38%', color: '#4f46e5' },
-      { offset: '70%', color: '#a855f7' },
-      { offset: '100%', color: '#22c55e' },
+      ...ASKABLE_REGION_CAPTURE_THEME.lassoGradientStops.map((stop) => ({
+        offset: stop.offset,
+        color: stop.color,
+      })),
     ]);
 
     capture.destroy();
+    ctx.destroy();
+  });
+
+  it('keeps repeated capture handles active when once is false', () => {
+    const ctx = createAskableContext();
+    const onCapture = vi.fn();
+    const capture = createAskableRegionCapture(ctx, {
+      once: false,
+      onCapture,
+    });
+
+    expect(capture.isActive()).toBe(false);
+
+    capture.start();
+    expect(capture.isActive()).toBe(true);
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 20, 30));
+    overlay.dispatchEvent(pointerEvent('pointermove', 80, 90));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 90));
+
+    expect(onCapture).toHaveBeenCalledTimes(1);
+    expect(document.getElementById('askable-region-capture')).toBe(overlay);
+    expect(capture.isActive()).toBe(true);
+
+    capture.destroy();
+    expect(capture.isActive()).toBe(false);
     ctx.destroy();
   });
 

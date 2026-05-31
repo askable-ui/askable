@@ -63,7 +63,12 @@ export function useAskableRegionCapture(
       onCapture(packet, selection) {
         setLastPacket(packet);
         setLastSelection(selection);
-        setActive(false);
+        if (currentOptions.once === false) {
+          setActive(true);
+        } else {
+          handleRef.current = null;
+          setActive(false);
+        }
         currentOptions.onCapture?.(packet, selection);
       },
       onCancel() {

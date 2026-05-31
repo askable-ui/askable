@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.11.1**.
+> Current npm release: **v0.12.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,11 +59,16 @@ features:
   </video>
 </div>
 
-## Latest in v0.11.1
+## Latest in v0.12.0
 
 - lasso capture via `shape: 'lasso'` for freehand-selected page regions
+- generic `registerSource()` resolvers plus source helper factories for app-owned context
+- React, Vue, and Svelte lifecycle helpers for resolver-backed app state
+- async prompt and packet serialization with `toPromptContextAsync()`, `toContextAsync()`, and `toContextPacketAsync()`
+- agent request packaging with `toAgentRequest()`
+- source-backed live subscriptions with `subscribeAsync()`
 - point-path metadata on lasso Context packets
-- starter app dependency pins advanced to `^0.11.1`
+- starter app dependency pins advanced to `^0.12.0`
 - continued support for region/circle/text capture, MCP Context packets, and framework wrappers
 
 ## Interaction patterns
@@ -84,7 +89,7 @@ Every pattern can produce a prompt string with `toPromptContext()` or a structur
 
 Start here:
 
-- [What’s New in v0.11.1](/guide/whats-new)
+- [What’s New in v0.12.0](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [React interaction patterns](/guide/react#region-circle-and-lasso-capture)
 - [AI SDK integration patterns](/examples/ai-sdk)

@@ -32,6 +32,8 @@ export type AskableEventMap = {
   focus: AskableFocus;
   /** Fires when clear() is called — focus has been reset to null */
   clear: null;
+  /** Fires when a registered app-owned context source may have changed. */
+  sourcechange: AskableContextSourceChange;
 };
 
 export type AskableEventName = keyof AskableEventMap;
@@ -141,6 +143,125 @@ export interface AskablePromptContextOptions {
   maxTokens?: number;
 }
 
+export type AskableContextSourceMode =
+  | 'state'
+  | 'visible'
+  | 'selected'
+  | 'summary'
+  | 'all'
+  | (string & {});
+
+export interface AskableContextSourceResolveRequest {
+  /** Registered source id. */
+  sourceId: string;
+  /** Requested slice of context. Defaults to "summary". */
+  mode: AskableContextSourceMode;
+  /** Current Askable focus, if any, so sources can resolve the user's active reference. */
+  focus: AskableFocus | null;
+  /** Optional app-defined selection payload, such as row ids, ranges, or canvas bounds. */
+  selection?: unknown;
+  /** Optional item cap for sources that can return many records. */
+  maxItems?: number;
+  /** Optional token budget for source-owned summaries. */
+  maxTokens?: number;
+  /** Optional timeout in ms for this source request. */
+  timeoutMs?: number;
+  /** Optional cancellation signal for async source work. */
+  signal?: AbortSignal;
+}
+
+export type AskableContextSourceErrorMode = 'include' | 'omit' | 'throw';
+
+export interface AskableContextSource {
+  /** Source category. Examples: "collection", "document", "chart", "map", "canvas", "custom". */
+  kind?: string;
+  /** Human-readable source description. */
+  describe?: string | (() => string | Promise<string>);
+  /** Current app state for this source, such as filters, sort, page, route, or viewport. */
+  getState?: () => unknown | Promise<unknown>;
+  /** Resolve app-owned context for the requested mode. */
+  resolve?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
+  /** Redact/transform this source before it is serialized. */
+  sanitize?: (source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>;
+}
+
+export interface AskableContextSourceHandle {
+  id: string;
+  notifyChanged(): void;
+  unregister(): void;
+}
+
+export interface AskableContextSourceInfo {
+  /** Registered source id. */
+  id: string;
+  /** Source category, when provided by the source. */
+  kind?: string;
+  /** Unix timestamp (ms) when this source id was last registered. */
+  registeredAt: number;
+  /** Unix timestamp (ms) when this source was last registered or notified as changed. */
+  updatedAt: number;
+}
+
+export interface AskableContextSourceChange {
+  /** Source id that changed. Omitted when all registered sources should be refreshed. */
+  id?: string;
+  /** Unix timestamp (ms) when the change was signalled. */
+  timestamp: number;
+}
+
+export interface AskableContextSourceRequest {
+  /** Registered source id. */
+  id: string;
+  /** Requested slice of context. Defaults to the top-level sourceMode, then "summary". */
+  mode?: AskableContextSourceMode;
+  /** Optional app-defined selection payload passed to the source resolver. */
+  selection?: unknown;
+  /** Optional item cap for sources that can return many records. */
+  maxItems?: number;
+  /** Optional token budget for source-owned summaries. */
+  maxTokens?: number;
+  /** Optional timeout in ms for this source request. */
+  timeoutMs?: number;
+  /** Optional cancellation signal for async source work. */
+  signal?: AbortSignal;
+}
+
+export type AskableContextSourceInclude = string | AskableContextSourceRequest;
+
+export interface AskableResolvedContextSource {
+  id: string;
+  kind?: string;
+  description?: string;
+  mode: AskableContextSourceMode;
+  state?: unknown;
+  data?: unknown;
+  error?: {
+    message: string;
+  };
+}
+
+export interface AskableAsyncPromptContextOptions extends AskablePromptContextOptions {
+  /** Sources to include. Use "all" for every registered source. */
+  sources?: 'all' | AskableContextSourceInclude[];
+  /** Default source mode when a source request omits mode. Defaults to "summary". */
+  sourceMode?: AskableContextSourceMode;
+  /** Heading used in natural-language output. Defaults to "Context sources". */
+  sourceLabel?: string;
+  /** How async prompt generation handles failed sources. Defaults to "include". */
+  sourceErrorMode?: AskableContextSourceErrorMode;
+}
+
+export interface AskableAsyncContextOutputOptions extends AskableContextOutputOptions {
+  /** Sources to include. Use "all" for every registered source. */
+  sources?: 'all' | AskableContextSourceInclude[];
+  /** Default source mode when a source request omits mode. Defaults to "summary". */
+  sourceMode?: AskableContextSourceMode;
+  /** Heading used in natural-language output. Defaults to "Context sources". */
+  sourceLabel?: string;
+  /** How async prompt generation handles failed sources. Defaults to "include". */
+  sourceErrorMode?: AskableContextSourceErrorMode;
+}
+
 /**
  * Options for creating an AskableContext.
  */
@@ -154,6 +275,27 @@ export interface AskableSubscribeOptions extends AskableContextOutputOptions {
 }
 
 export type AskableContextSubscriber = (context: string, focus: AskableFocus | null) => void;
+
+export interface AskableAsyncSubscribeOptions extends AskableAsyncContextOutputOptions {
+  /**
+   * Debounce delay in ms applied to subscription callbacks.
+   * Useful when source-backed context should not resolve on every rapid focus change.
+   * Defaults to 0 (no debounce).
+   */
+  debounce?: number;
+  /**
+   * Emit once immediately with the current context after the subscriber is registered.
+   * Defaults to false.
+   */
+  emitInitial?: boolean;
+  /** Called when async context resolution or the subscriber callback fails. */
+  onError?: (error: unknown) => void;
+}
+
+export type AskableAsyncContextSubscriber = (
+  context: string,
+  focus: AskableFocus | null
+) => void | Promise<void>;
 
 export interface AskableContextOptions {
   /**
@@ -194,6 +336,11 @@ export interface AskableContextOptions {
    * })
    */
   sanitizeText?: (text: string) => string;
+  /**
+   * Sanitize or redact resolved source context before it is serialized.
+   * Applied after source-level sanitizers.
+   */
+  sanitizeSource?: (source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>;
   /**
    * Maximum number of focus entries retained in history.
    * Oldest entries are evicted when the limit is exceeded.
@@ -250,6 +397,41 @@ export interface AskableContextPacketOptions extends AskablePromptContextOptions
   provenance?: Partial<WebContextProvenance>;
 }
 
+export interface AskableAsyncContextPacketOptions extends AskableContextPacketOptions {
+  /** Sources to include in `surrounding.sources`. Use "all" for every registered source. */
+  sources?: 'all' | AskableContextSourceInclude[];
+  /** Default source mode when a source request omits mode. Defaults to "summary". */
+  sourceMode?: AskableContextSourceMode;
+  /** How async packet generation handles failed sources. Defaults to "include". */
+  sourceErrorMode?: AskableContextSourceErrorMode;
+}
+
+export interface AskableAgentRequestOptions extends AskableAsyncContextOutputOptions {
+  /** Stable id for tracing this question through chat transports, logs, and agent runs. */
+  requestId?: string;
+  /** App-owned metadata copied into the request payload. */
+  metadata?: Record<string, unknown>;
+  /** Include a structured Context packet. Pass true, packet options, or an existing packet from a capture tool. */
+  packet?: boolean | AskableAsyncContextPacketOptions | WebContextPacket;
+}
+
+export interface AskableAgentRequest {
+  /** Stable id for tracing, when provided by the app. */
+  requestId?: string;
+  /** User-authored question or instruction. */
+  question: string;
+  /** Prompt-ready context string from `toContextAsync()`. */
+  context: string;
+  /** Serialized current focus at request creation time. */
+  focus: AskableSerializedFocus | null;
+  /** Structured Context packet when requested. */
+  packet?: WebContextPacket;
+  /** App-owned metadata copied from request options. */
+  metadata?: Record<string, unknown>;
+  /** Unix timestamp (ms) when the request payload was created. */
+  timestamp: number;
+}
+
 export interface AskableContext {
   /** Observe a DOM subtree for [data-askable] elements */
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void;
@@ -269,22 +451,44 @@ export interface AskableContext {
   select(element: HTMLElement): void;
   /** Set focus from data alone — no DOM element required. Ideal for virtualizing table libraries. */
   push(meta: Record<string, unknown> | string, text?: string, options?: AskablePushOptions): void;
+  /** Register an app-owned context source for data not fully represented in the DOM. */
+  registerSource(id: string, source: AskableContextSource): AskableContextSourceHandle;
+  /** Return true when a context source id is currently registered. */
+  hasSource(id: string): boolean;
+  /** List registered context sources without resolving their data. */
+  listSources(): AskableContextSourceInfo[];
+  /** Remove a registered context source. */
+  unregisterSource(id: string): boolean;
+  /** Notify async subscribers that one source, or all sources, should be re-resolved. */
+  notifySourceChanged(id?: string): void;
+  /** Resolve one registered source on demand. */
+  resolveSource(id: string, request?: Omit<AskableContextSourceRequest, 'id'>): Promise<AskableResolvedContextSource>;
   /** Reset the current focus to null and emit a 'clear' event */
   clear(): void;
   /** Serialize current focus to structured prompt-ready data */
   serializeFocus(options?: AskablePromptContextOptions): AskableSerializedFocus | null;
   /** Serialize current focus to a prompt-ready string */
   toPromptContext(options?: AskablePromptContextOptions): string;
+  /** Serialize current focus plus async app-owned sources to a prompt-ready string. */
+  toPromptContextAsync(options?: AskableAsyncPromptContextOptions): Promise<string>;
   /** Serialize focus history to a prompt-ready string (newest first). Optional limit caps the entries returned. */
   toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string;
   /** Serialize visible viewport elements to a prompt-ready string. */
   toViewportContext(options?: AskablePromptContextOptions): string;
   /** Combined current focus + history in a single prompt-ready string */
   toContext(options?: AskableContextOutputOptions): string;
+  /** Combined current focus + history + async app-owned sources in a single prompt-ready string. */
+  toContextAsync(options?: AskableAsyncContextOutputOptions): Promise<string>;
   /** Serialize current UI state to a structured Context packet for agents and MCP bridges. */
   toContextPacket(options?: AskableContextPacketOptions): WebContextPacket;
+  /** Serialize current UI state plus async app-owned sources to a structured Context packet. */
+  toContextPacketAsync(options?: AskableAsyncContextPacketOptions): Promise<WebContextPacket>;
+  /** Package a user question with source-backed context for chat or agent transports. */
+  toAgentRequest(question: string, options?: AskableAgentRequestOptions): Promise<AskableAgentRequest>;
   /** Subscribe to serialized context updates for streaming/chat integrations. Returns an unsubscribe function. */
   subscribe(callback: AskableContextSubscriber, options?: AskableSubscribeOptions): () => void;
+  /** Subscribe to source-backed serialized context updates. Stale async resolutions are ignored. */
+  subscribeAsync(callback: AskableAsyncContextSubscriber, options?: AskableAsyncSubscribeOptions): () => void;
   /** Clean up all listeners and observers */
   destroy(): void;
 }

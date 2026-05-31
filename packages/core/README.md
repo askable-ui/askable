@@ -48,7 +48,11 @@ Use `createAskableRegionCapture()` when the user should draw a page region,
 circle an area, or lasso a freehand shape and send it as structured context.
 
 ```ts
-import { createAskableContext, createAskableRegionCapture } from '@askable-ui/core';
+import {
+  ASKABLE_REGION_CAPTURE_THEME,
+  createAskableContext,
+  createAskableRegionCapture,
+} from '@askable-ui/core';
 
 const ctx = createAskableContext({ viewport: true });
 ctx.observe(document);
@@ -58,6 +62,7 @@ const capture = createAskableRegionCapture(ctx, {
   intent: 'explain this selected area',
   includeViewport: true,
   theme: {
+    ...ASKABLE_REGION_CAPTURE_THEME,
     lassoStrokeWidth: 4,
     lassoGlowRadius: 12,
   },
@@ -72,8 +77,10 @@ capture.start();
 The packet uses `capture.mode` of `region`, `circle`, or `lasso`, marks consent
 as explicit, and includes the selected geometry in `target.bounds`. Lasso
 captures also include `target.metadata.points` for the freehand path.
-The built-in lasso overlay uses a solid gradient freehand stroke by default;
-pass `theme` to align the overlay with your app.
+The built-in lasso overlay uses `ASKABLE_REGION_CAPTURE_THEME` by default; pass
+`theme` to override any overlay, selection, or lasso style for your app.
+Set `once: false` to keep the overlay mounted for repeated captures. The handle
+reports active until `cancel()` or `destroy()` runs.
 
 ## Text Selection Capture
 
@@ -238,6 +245,58 @@ ctx.toPromptContext({ maxTokens: 50 });
 | `textLabel` | `string` | `'value'` | Label for text field in natural format |
 | `maxTokens` | `number` | — | Approximate token budget. Uses a 4 chars/token estimate. Truncates output and appends `[truncated]` if exceeded. |
 
+#### `registerSource(id, source)`
+
+Register app-owned context that is not fully represented in the DOM: paginated
+tables, virtualized lists, documents, maps, charts, calendars, canvases, file
+trees, or custom product state.
+
+```ts
+import { createAskableCollectionSource } from '@askable-ui/core';
+
+const accountsSource = ctx.registerSource('accounts', createAskableCollectionSource({
+  describe: 'Customer accounts matching the active filters',
+  getState: () => ({ filters, sort, page, pageSize, totalCount }),
+  getVisibleItems: () => table.getVisibleRows(),
+  getSelectedItems: ({ selection }) => getAccountsByIds(selection),
+  getItems: () => accountStore.getAllMatching({ filters, sort }),
+  getSummary: ({ maxItems }) => summarizeAccounts({ filters, sort, maxItems }),
+  maxItems: 50,
+  sanitizeItem: redactAccountFields,
+  sanitize: (source) => ({
+    ...source,
+    state: redactFilterState(source.state),
+  }),
+}));
+
+const prompt = await ctx.toPromptContextAsync({
+  sources: [{ id: 'accounts', mode: 'all', maxItems: 20, timeoutMs: 750 }],
+  sourceErrorMode: 'include',
+});
+
+table.onStateChange(() => {
+  accountsSource.notifyChanged();
+});
+```
+
+Source resolvers let Askable capture what the user meant while your app supplies
+what it knows. Use `createAskableSource()` for arbitrary documents, charts,
+maps, canvases, and product state. Use `createAskableCollectionSource()` when a
+list, grid, table, board, or search result has more data than the DOM currently
+renders. Failed or timed-out sources are represented with a safe unavailable
+marker by default; use `sourceErrorMode: 'omit'` or `'throw'` for stricter
+runtimes.
+
+Call `handle.notifyChanged()` or `ctx.notifySourceChanged('accounts')` when
+filters, pagination, query data, or selected records change without a DOM focus
+change. Async subscribers re-resolve matching sources automatically. Stale
+handles from unmounted or replaced components cannot unregister or notify a
+newer source with the same id.
+
+Use `ctx.hasSource(id)` and `ctx.listSources()` to drive source pickers,
+diagnostics, or chat controls without resolving source data. `listSources()`
+returns each source id, optional kind, registration time, and last update time.
+
 #### `toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string`
 
 Serializes the focus history (newest first) into a prompt-ready string with numbered entries. Accepts the same `AskablePromptContextOptions` as `toPromptContext()`, including `maxTokens`. Returns `'No interaction history.'` when no interactions have occurred.
@@ -316,6 +375,62 @@ unsubscribe();
 ```
 
 Use `debounce` to coalesce rapid focus changes while a response is streaming.
+
+#### `toAgentRequest(question, options?): Promise<AskableAgentRequest>`
+
+Package a user question with source-backed context for chat and agent
+transports. The returned object is JSON-ready and includes the question,
+`toContextAsync()` output, serialized focus, optional Context packet, timestamp,
+and optional app metadata.
+
+```ts
+const request = await ctx.toAgentRequest('Why did this metric change?', {
+  requestId: crypto.randomUUID(),
+  history: 3,
+  sources: [{ id: 'accounts', mode: 'summary', timeoutMs: 750 }],
+  packet: true,
+  metadata: { route: '/dashboard' },
+});
+
+await fetch('/api/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(request),
+});
+```
+
+For "select first, then ask" flows, pass an existing `WebContextPacket` from a
+region, circle, lasso, or text selection capture as `packet`. Askable attaches
+that exact packet to the request while still generating the prompt-ready context
+string from the current focus and registered sources.
+
+#### `subscribeAsync(callback, options?): () => void`
+
+Subscribe to source-backed context updates. The callback receives
+`ctx.toContextAsync()` output, so registered app sources can be included in live
+chat or streaming transports.
+
+```ts
+const unsubscribe = ctx.subscribeAsync(async (context, focus) => {
+  await streamTransport.send({
+    type: 'ui-context',
+    context,
+    focusedMeta: focus?.meta ?? null,
+  });
+}, {
+  history: 3,
+  sources: [{ id: 'accounts', mode: 'summary', timeoutMs: 750 }],
+  debounce: 100,
+  onError(error) {
+    reportContextError(error);
+  },
+});
+```
+
+Async subscriptions rerun when focus changes, clear is called, or a matching
+source calls `notifyChanged()`. They ignore stale source results when a newer
+focus or source update happens before a previous resolver finishes. Use
+`emitInitial: true` to send the current context immediately after registration.
 
 #### `select(element: HTMLElement): void`
 
@@ -405,15 +520,12 @@ export function App() {
   const ctx = useAskable(handleFocus);
 
   async function askAssistant(question: string) {
-    const context = ctx.toPromptContext();
     const response = await fetch('/api/chat', {
       method: 'POST',
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: `UI context: ${context}` },
-          { role: 'user', content: question },
-        ],
-      }),
+      body: JSON.stringify(await ctx.toAgentRequest(question, {
+        history: 3,
+        packet: true,
+      })),
     });
     return response.json();
   }

@@ -155,10 +155,11 @@ export function LiveCopilotContext() {
   const [liveContext, setLiveContext] = useState(() => ctx.toContext({ history: 3 }));
 
   useEffect(() => {
-    return ctx.subscribe((context) => {
+    return ctx.subscribeAsync((context) => {
       setLiveContext(context);
     }, {
       history: 3,
+      sources: [{ id: 'accounts', mode: 'summary', timeoutMs: 750 }],
       debounce: 100,
     });
   }, [ctx]);

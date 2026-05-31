@@ -1,12 +1,15 @@
 // Svelte 4 — store-based API
 export {
   createAskableRegionCaptureStore,
+  createAskableSourceStore,
   createAskableStore,
   createAskableTextSelectionCaptureStore,
 } from './askable.js';
 export type {
   AskableRegionCaptureStore,
   AskableRegionCaptureStoreOptions,
+  AskableSourceStore,
+  AskableSourceStoreOptions,
   AskableStore,
   AskableStoreOptions,
   AskableTextSelectionCaptureStore,

@@ -1,7 +1,8 @@
 export { createAskableInspector } from './inspector.js';
-export { createAskableRegionCapture } from './capture.js';
+export { ASKABLE_REGION_CAPTURE_THEME, createAskableRegionCapture } from './capture.js';
 export { createAskableTextSelectionCapture } from './selection.js';
 export { a11yTextExtractor } from './a11y.js';
+export { createAskableCollectionSource, createAskableSource } from './sources.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -42,11 +43,33 @@ export type {
   AskableTextSelectionCaptureSelection,
 } from './selection.js';
 export type {
+  AskableCollectionSourceData,
+  AskableCreateCollectionSourceOptions,
+  AskableCreateSourceOptions,
+  AskableSourceValue,
+} from './sources.js';
+export type {
   AskableContext,
+  AskableAgentRequest,
+  AskableAgentRequestOptions,
+  AskableAsyncContextSubscriber,
+  AskableAsyncContextPacketOptions,
   AskableContextOptions,
   AskableContextOutputOptions,
   AskableContextPacketOptions,
+  AskableAsyncContextOutputOptions,
+  AskableAsyncPromptContextOptions,
   AskableContextSubscriber,
+  AskableContextSource,
+  AskableContextSourceChange,
+  AskableContextSourceErrorMode,
+  AskableContextSourceHandle,
+  AskableContextSourceInclude,
+  AskableContextSourceInfo,
+  AskableContextSourceMode,
+  AskableContextSourceRequest,
+  AskableContextSourceResolveRequest,
+  AskableAsyncSubscribeOptions,
   AskableSubscribeOptions,
   AskableEvent,
   AskableEventHandler,
@@ -60,6 +83,7 @@ export type {
   AskablePromptFormat,
   AskablePromptPreset,
   AskablePushOptions,
+  AskableResolvedContextSource,
   AskableSerializedFocus,
   AskableSerializedFocusSegment,
   AskableTargetStrategy,

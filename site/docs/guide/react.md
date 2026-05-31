@@ -22,6 +22,26 @@ function Dashboard({ data }) {
 }
 
 function ChatInput() {
+  const { ctx } = useAskable();
+
+  async function submit(question: string) {
+    await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(await ctx.toAgentRequest(question, {
+        history: 3,
+        packet: true,
+      })),
+    });
+  }
+}
+```
+
+For very small integrations you can still inject `promptContext` directly as a
+system message:
+
+```tsx
+function ChatInput() {
   const { promptContext } = useAskable();
 
   async function submit(question: string) {
@@ -174,8 +194,8 @@ function RegionTools() {
 Region packets use `capture.mode: 'region'`; circle packets use
 `capture.mode: 'circle'` and include center/radius metadata. Lasso packets use
 `capture.mode: 'lasso'` and include freehand path points.
-The default lasso overlay is a solid gradient freehand stroke; pass `theme`
-when you need brand-specific overlay colors or line styling.
+The default lasso overlay uses the core `ASKABLE_REGION_CAPTURE_THEME`; pass
+`theme` when you need brand-specific overlay colors or line styling.
 
 ## Text selection capture
 

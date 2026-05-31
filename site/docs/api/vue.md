@@ -140,6 +140,80 @@ const panel = useAskable({ ctx: panelCtx });
 
 ---
 
+## `useAskableSource(id, source, options?)`
+
+Lifecycle-managed registration for app-owned context sources. Use this when the
+assistant needs data that is not fully rendered in the DOM: paginated tables,
+virtualized lists, documents, charts, maps, calendars, canvases, file trees, or
+custom state.
+
+The composable registers the source during setup, keeps reactive values current
+through your resolver closures, and unregisters automatically on unmount.
+
+```vue
+<script setup lang="ts">
+import { watch } from 'vue';
+import { useAskableSource } from '@askable-ui/vue';
+
+const accounts = useAskableSource('accounts', {
+  kind: 'collection',
+  describe: 'Customer accounts matching the active filters',
+  getState: () => ({
+    filters: filters.value,
+    sort: sort.value,
+    page: table.getState().pagination.pageIndex + 1,
+    pageSize: table.getState().pagination.pageSize,
+    totalCount: totalCount.value,
+  }),
+  resolve: async ({ mode, maxItems }) => {
+    if (mode === 'visible') return table.getRowModel().rows.map((row) => row.original);
+    return summarizeAccounts({ filters: filters.value, sort: sort.value, maxItems });
+  },
+  sanitize: (source) => ({
+    ...source,
+    data: redactAccountFields(source.data),
+  }),
+});
+
+async function ask(question: string) {
+  const promptContext = await accounts.toPromptContext({
+    source: { mode: 'summary', maxItems: 20, timeoutMs: 750 },
+    sourceErrorMode: 'include',
+  });
+
+  return sendToAgent({ question, promptContext });
+}
+
+watch([filters, sort, totalCount], () => {
+  accounts.notifyChanged();
+});
+</script>
+```
+
+Call `notifyChanged()` when source data changes without a DOM focus change,
+such as pagination, filters, selected rows, or query-cache updates. Async
+subscribers created with `ctx.subscribeAsync()` re-resolve matching sources.
+
+**Options:**
+
+| Option | Type | Description |
+|---|---|---|
+| `enabled` | `boolean` | Register while true. Defaults to `true` |
+| `name` / `events` / `viewport` / `ctx` | same as `useAskable()` | Choose the context that owns the source |
+
+**Returns:**
+
+| Value | Type | Description |
+|---|---|---|
+| `ctx` | `AskableContext` | Context instance that owns the source |
+| `sourceId` | `string` | Trimmed registered source id |
+| `resolve(request?)` | `Promise<AskableResolvedContextSource>` | Resolve this source directly |
+| `toPromptContext(options?)` | `Promise<string>` | Serialize focus plus this source |
+| `notifyChanged()` | `() => void` | Re-resolve matching async subscribers after source data changes |
+| `unregister()` | `() => void` | Manually unregister before unmount when needed |
+
+---
+
 ## `useAskableRegionCapture(options?)`
 
 Composable that starts an explicit region, circle, or lasso selection overlay and emits a structured Context packet through the same `AskableContext`.
@@ -185,6 +259,10 @@ capture.cancel();
 | `destroy` | `() => void` | Cancels capture and removes overlay listeners |
 | `isActive` | `() => boolean` | Reads the current overlay state |
 | `ctx` | `AskableContext` | Shared or provided context instance |
+
+For persistent capture tools, pass `once: false`. The overlay and `active` ref
+stay on after each accepted capture until the user cancels or the composable is
+unmounted.
 
 ---
 

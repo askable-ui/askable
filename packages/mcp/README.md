@@ -23,9 +23,33 @@ const server = createAskableMcpServer({
 ```
 
 The built-in provider adapts `ctx.toContextPacket()` and `ctx.toContext()` to
-the MCP tools. Tool callers can request prompt shaping options such as `scope`,
-`preset`, `format`, `includeText`, `maxTextLength`, `maxTokens`, `history`, and
-`includeViewport`.
+the MCP tools. When available, it uses `ctx.toContextPacketAsync()` and
+`ctx.toContextAsync()` so registered app-owned sources are included in
+structured packets and prompt renderings. Tool callers can request prompt
+shaping options such as `scope`, `preset`, `format`, `includeText`,
+`maxTextLength`, `maxTokens`, `history`, `includeViewport`, and `sources`.
+
+```ts
+import { createAskableCollectionSource } from '@askable-ui/core';
+
+ctx.registerSource('accounts', createAskableCollectionSource({
+  describe: 'Accounts matching active filters',
+  getState: () => ({ filters, sort, totalCount }),
+  getVisibleItems: () => table.getVisibleRows(),
+  getItems: () => accountStore.getAllMatching({ filters, sort }),
+  getSummary: ({ maxItems }) => summarizeAccounts({ filters, sort, maxItems }),
+  sanitizeItem: redactAccountFields,
+}));
+
+const server = createAskableMcpServer({
+  provider: createAskableMcpContextProvider(ctx, {
+    history: 3,
+    includeViewport: true,
+    sources: [{ id: 'accounts', mode: 'all', maxItems: 25, timeoutMs: 750 }],
+    sourceErrorMode: 'include',
+  }),
+});
+```
 
 Transports are intentionally left to the host app so the same server factory can
 be used with stdio, Streamable HTTP, or an embedded web runtime.

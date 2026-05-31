@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Send, Sparkles, X, Maximize2, Minimize2, Eye } from "lucide-react"
+import { Send, Sparkles, X, Maximize2, Minimize2, Eye, Quote } from "lucide-react"
 import { useAskable } from "@askable-ui/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +15,8 @@ interface Message {
   timestamp: Date
   context?: string
   isContext?: boolean
+  contextKind?: "text" | "ui"
+  selectedText?: string
 }
 
 const initialMessages: Message[] = [
@@ -33,7 +35,9 @@ export function ChatSidebar() {
   const [isMinimized, setIsMinimized] = useState(false)
   const [showContext, setShowContext] = useState(true)
   
-  const { promptContext } = useAskable({ inspector: true });
+  const { promptContext, focus } = useAskable({ inspector: true })
+  const hasSelectedText = isTextSelectionMeta(focus?.meta)
+  const selectedText = hasSelectedText ? focus?.text ?? "" : ""
 
   const handleSend = () => {
     if (!input.trim()) return
@@ -44,6 +48,8 @@ export function ChatSidebar() {
       content: input,
       timestamp: new Date(),
       context: promptContext || undefined,
+      contextKind: hasSelectedText ? "text" : "ui",
+      selectedText,
     }
 
     setMessages((prev) => [...prev, userMessage])
@@ -56,6 +62,8 @@ export function ChatSidebar() {
         content: promptContext,
         timestamp: new Date(),
         isContext: true,
+        contextKind: hasSelectedText ? "text" : "ui",
+        selectedText,
       }
       setMessages((prev) => [...prev, assistantMessage])
     }
@@ -119,26 +127,43 @@ export function ChatSidebar() {
       {/* Context Panel - Main Feature Showcase */}
       <div className="border-b border-border">
         {promptContext ? (
-          <div className="bg-gradient-to-b from-emerald-500/10 to-emerald-500/5 p-4">
+          <div className={cn(
+            "p-4",
+            hasSelectedText
+              ? "bg-gradient-to-b from-violet-500/10 to-violet-500/5"
+              : "bg-gradient-to-b from-emerald-500/10 to-emerald-500/5"
+          )}>
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500">
-                  <Eye className="h-4 w-4 text-white" />
+                <div className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-full",
+                  hasSelectedText ? "bg-violet-500" : "bg-emerald-500"
+                )}>
+                  {hasSelectedText ? <Quote className="h-4 w-4 text-white" /> : <Eye className="h-4 w-4 text-white" />}
                 </div>
                 <div>
-                  <span className="text-sm font-semibold text-emerald-400">Context Captured</span>
-                  <p className="text-xs text-emerald-400/70">AI can see this element</p>
+                  <span className={cn("text-sm font-semibold", hasSelectedText ? "text-violet-400" : "text-emerald-400")}>
+                    {hasSelectedText ? "Selected Text Captured" : "Context Captured"}
+                  </span>
+                  <p className={cn("text-xs", hasSelectedText ? "text-violet-400/70" : "text-emerald-400/70")}>
+                    {hasSelectedText ? "This exact highlight will be sent to chat" : "AI can see this element"}
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowContext(!showContext)}
-                className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+                className={cn(
+                  "rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+                  hasSelectedText
+                    ? "border-violet-500/30 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20"
+                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                )}
               >
                 {showContext ? "Collapse" : "Expand"}
               </button>
             </div>
             {showContext && (
-              <ContextPanel content={promptContext} />
+              <ContextPanel content={promptContext} selectedText={selectedText} />
             )}
           </div>
         ) : (
@@ -176,13 +201,20 @@ export function ChatSidebar() {
               )}
               <div className="max-w-[85%]">
                 {message.context && message.role === "user" && (
-                  <div className="mb-1 flex items-center gap-1 text-xs text-chart-1">
-                    <Eye className="h-3 w-3" />
-                    <span>with context</span>
+                  <div className={cn(
+                    "mb-1 flex items-center gap-1 text-xs",
+                    message.contextKind === "text" ? "text-violet-400" : "text-chart-1"
+                  )}>
+                    {message.contextKind === "text" ? <Quote className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    <span>{message.contextKind === "text" ? "with selected text" : "with context"}</span>
                   </div>
                 )}
                 {message.isContext ? (
-                  <ContextCard content={message.content} />
+                  <ContextCard
+                    content={message.content}
+                    kind={message.contextKind ?? "ui"}
+                    selectedText={message.selectedText}
+                  />
                 ) : (
                   <div
                     className={cn(
@@ -247,6 +279,14 @@ function parseContext(content: string): Record<string, unknown> | string[] | nul
   return lines.length > 1 ? lines : null
 }
 
+function isTextSelectionMeta(meta: unknown) {
+  return Boolean(
+    meta &&
+      typeof meta === "object" &&
+      (meta as Record<string, unknown>).capture === "text-selection"
+  )
+}
+
 function renderContextValue(value: unknown, tone: "panel" | "card" = "panel") {
   if (value !== null && typeof value === "object") {
     return (
@@ -266,7 +306,28 @@ function renderContextValue(value: unknown, tone: "panel" | "card" = "panel") {
   return <span className="text-xs font-medium text-foreground break-words whitespace-pre-wrap">{String(value)}</span>
 }
 
-function ContextPanel({ content }: { content: string }) {
+function SelectedTextPreview({ text, tone = "panel" }: { text: string; tone?: "panel" | "card" }) {
+  return (
+    <div className={cn(
+      "rounded-lg border p-3",
+      tone === "panel"
+        ? "border-violet-500/20 bg-background/80"
+        : "border-violet-500/30 bg-violet-500/10"
+    )}>
+      <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-violet-400">
+        <Quote className="h-3.5 w-3.5" />
+        <span>Selected text passed to chat</span>
+      </div>
+      <blockquote className="text-xs leading-relaxed text-foreground break-words whitespace-pre-wrap">
+        {text}
+      </blockquote>
+    </div>
+  )
+}
+
+function ContextPanel({ content, selectedText }: { content: string; selectedText?: string }) {
+  if (selectedText) return <SelectedTextPreview text={selectedText} />
+
   const parsed = parseContext(content)
 
   if (parsed && !Array.isArray(parsed)) {
@@ -299,7 +360,17 @@ function ContextPanel({ content }: { content: string }) {
   )
 }
 
-function ContextCard({ content }: { content: string }) {
+function ContextCard({
+  content,
+  kind = "ui",
+  selectedText,
+}: {
+  content: string
+  kind?: "text" | "ui"
+  selectedText?: string
+}) {
+  if (kind === "text" && selectedText) return <SelectedTextPreview text={selectedText} tone="card" />
+
   const parsed = parseContext(content)
   const entries = parsed && !Array.isArray(parsed) ? Object.entries(parsed) : null
   const lines = Array.isArray(parsed) ? parsed : content.split(/\s*—\s*/).filter(Boolean)

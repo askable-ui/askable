@@ -1,6 +1,6 @@
 # Prompt Serialization
 
-`toPromptContext()`, `toHistoryContext()`, and `toContext()` accept an `AskablePromptContextOptions` object to control exactly how context is serialized.
+`toPromptContext()`, `toHistoryContext()`, and `toContext()` accept an `AskablePromptContextOptions` object to control exactly how context is serialized. Use `toPromptContextAsync()` or `toContextAsync()` when you also want to include registered app-owned context sources.
 
 ## Presets
 
@@ -111,6 +111,45 @@ This is especially useful for `toHistoryContext()` where multiple entries can ac
 ctx.toHistoryContext(10, { maxTokens: 300 });
 // History trimmed to fit ~1200 chars, with [truncated] marker if needed
 ```
+
+## App-owned sources
+
+DOM context only includes what is rendered. For paginated tables, virtualized
+lists, documents, maps, charts, calendars, canvases, or API-backed dashboards,
+register a source that resolves data from your application state.
+
+```ts
+import { createAskableCollectionSource } from '@askable-ui/core';
+
+ctx.registerSource('accounts', createAskableCollectionSource({
+  describe: 'Customer accounts matching the active filters',
+  getState: () => ({ filters, sort, page, pageSize, totalCount }),
+  getVisibleItems: () => table.getVisibleRows(),
+  getSelectedItems: ({ selection }) => getAccountsByIds(selection),
+  getItems: () => accountStore.getAllMatching({ filters, sort }),
+  getSummary: ({ maxItems }) => summarizeAccounts({ filters, sort, maxItems }),
+  sanitizeItem: redactAccountFields,
+  sanitize: (source) => ({
+    ...source,
+    state: redactFilterState(source.state),
+  }),
+}));
+
+const context = await ctx.toPromptContextAsync({
+  sources: [{ id: 'accounts', mode: 'all', maxItems: 20, timeoutMs: 750 }],
+  sourceErrorMode: 'include',
+});
+```
+
+This keeps Askable generic: interaction tools capture what the user meant, and
+source resolvers supply what the app knows. `createAskableCollectionSource()`
+is useful when the app owns more items than the DOM renders; `mode: 'all'`
+asks that source for the logical collection, while `maxItems` keeps prompt
+budgets explicit. Source output can be redacted with `sanitizeItem`, a
+source-level `sanitize` hook, or a context-level `sanitizeSource` hook. Failed
+or timed-out sources are represented with a safe unavailable marker by default;
+use `sourceErrorMode: 'omit'` or `'throw'` when your runtime needs stricter
+behavior.
 
 ## Custom labels
 
