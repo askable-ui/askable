@@ -82,38 +82,30 @@ jobs:
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Publish @askable-ui/core
+      - name: Publish packages
         env:
           DIST_TAG: ${{ steps.dist-tag.outputs.tag }}
-        run: npm publish --access public --provenance --tag "$DIST_TAG"
-        working-directory: packages/core
+        run: |
+          publish_package() {
+            local package_dir="$1"
+            local package_name
+            local package_version
 
-      - name: Publish @askable-ui/react
-        env:
-          DIST_TAG: ${{ steps.dist-tag.outputs.tag }}
-        run: npm publish --access public --provenance --tag "$DIST_TAG"
-        working-directory: packages/react
+            package_name=$(node -p "require('./${package_dir}/package.json').name")
+            package_version=$(node -p "require('./${package_dir}/package.json').version")
 
-      - name: Publish @askable-ui/vue
-        env:
-          DIST_TAG: ${{ steps.dist-tag.outputs.tag }}
-        run: npm publish --access public --provenance --tag "$DIST_TAG"
-        working-directory: packages/vue
+            if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
+              echo "${package_name}@${package_version} is already published; skipping."
+              return
+            fi
 
-      - name: Publish @askable-ui/svelte
-        env:
-          DIST_TAG: ${{ steps.dist-tag.outputs.tag }}
-        run: npm publish --access public --provenance --tag "$DIST_TAG"
-        working-directory: packages/svelte
+            echo "Publishing ${package_name}@${package_version}..."
+            (cd "$package_dir" && npm publish --access public --provenance --tag "$DIST_TAG")
+          }
 
-      - name: Publish @askable-ui/react-native
-        env:
-          DIST_TAG: ${{ steps.dist-tag.outputs.tag }}
-        run: npm publish --access public --provenance --tag "$DIST_TAG"
-        working-directory: packages/react-native
-
-      - name: Publish create-askable-app
-        env:
-          DIST_TAG: ${{ steps.dist-tag.outputs.tag }}
-        run: npm publish --provenance --tag "$DIST_TAG"
-        working-directory: packages/create-askable-app
+          publish_package packages/core
+          publish_package packages/react
+          publish_package packages/vue
+          publish_package packages/svelte
+          publish_package packages/react-native
+          publish_package packages/create-askable-app
