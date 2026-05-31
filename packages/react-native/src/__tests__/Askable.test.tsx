@@ -7,11 +7,15 @@ describe('Askable (React Native)', () => {
   it('injects onPress and preserves the child handler', () => {
     const ctx = createAskableContext();
     const onPress = vi.fn();
-    const tree = TestRenderer.create(
-      <Askable ctx={ctx} meta={{ widget: 'revenue' }} text="Revenue card">
-        {React.createElement('Pressable', { onPress, testID: 'pressable' })}
-      </Askable>
-    );
+    let tree!: TestRenderer.ReactTestRenderer;
+
+    act(() => {
+      tree = TestRenderer.create(
+        <Askable ctx={ctx} meta={{ widget: 'revenue' }} text="Revenue card">
+          {React.createElement('Pressable', { onPress, testID: 'pressable' })}
+        </Askable>
+      );
+    });
 
     const pressable = tree.root.findByProps({ testID: 'pressable' });
 
@@ -31,11 +35,15 @@ describe('Askable (React Native)', () => {
 
   it('supports onLongPress as a focus trigger', () => {
     const ctx = createAskableContext();
-    const tree = TestRenderer.create(
-      <Askable ctx={ctx} meta="details" text="Details sheet">
-        {React.createElement('Pressable', { testID: 'pressable' })}
-      </Askable>
-    );
+    let tree!: TestRenderer.ReactTestRenderer;
+
+    act(() => {
+      tree = TestRenderer.create(
+        <Askable ctx={ctx} meta="details" text="Details sheet">
+          {React.createElement('Pressable', { testID: 'pressable' })}
+        </Askable>
+      );
+    });
 
     const pressable = tree.root.findByProps({ testID: 'pressable' });
 
@@ -54,11 +62,15 @@ describe('Askable (React Native)', () => {
 
   it('pushes scoped focus when scope is provided', () => {
     const ctx = createAskableContext();
-    const tree = TestRenderer.create(
-      <Askable ctx={ctx} meta={{ widget: 'revenue' }} text="Revenue card" scope="analytics">
-        {React.createElement('Pressable', { testID: 'pressable' })}
-      </Askable>
-    );
+    let tree!: TestRenderer.ReactTestRenderer;
+
+    act(() => {
+      tree = TestRenderer.create(
+        <Askable ctx={ctx} meta={{ widget: 'revenue' }} text="Revenue card" scope="analytics">
+          {React.createElement('Pressable', { testID: 'pressable' })}
+        </Askable>
+      );
+    });
 
     const pressable = tree.root.findByProps({ testID: 'pressable' });
 
@@ -78,15 +90,19 @@ describe('Askable (React Native)', () => {
 
   it('supports nested Askable wrappers by pushing ancestor hierarchy', () => {
     const ctx = createAskableContext();
-    const tree = TestRenderer.create(
-      <Askable ctx={ctx} meta={{ view: 'dashboard' }} text="Dashboard" scope="analytics">
-        <Askable ctx={ctx} meta={{ tab: 'finance' }} text="Finance" scope="analytics">
-          <Askable ctx={ctx} meta={{ metric: 'revenue' }} text="Revenue card" scope="analytics">
-            {React.createElement('Pressable', { testID: 'pressable' })}
+    let tree!: TestRenderer.ReactTestRenderer;
+
+    act(() => {
+      tree = TestRenderer.create(
+        <Askable ctx={ctx} meta={{ view: 'dashboard' }} text="Dashboard" scope="analytics">
+          <Askable ctx={ctx} meta={{ tab: 'finance' }} text="Finance" scope="analytics">
+            <Askable ctx={ctx} meta={{ metric: 'revenue' }} text="Revenue card" scope="analytics">
+              {React.createElement('Pressable', { testID: 'pressable' })}
+            </Askable>
           </Askable>
         </Askable>
-      </Askable>
-    );
+      );
+    });
 
     const pressable = tree.root.findByProps({ testID: 'pressable' });
 

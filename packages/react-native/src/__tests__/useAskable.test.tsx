@@ -13,7 +13,10 @@ describe('useAskable (React Native)', () => {
       return null;
     }
 
-    TestRenderer.create(<Consumer />);
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
     expect(seenFocus).toBeNull();
   });
 
