@@ -129,7 +129,7 @@ The resulting packet uses `capture.mode` of `region` or `circle`, sets
 `privacy.consent` to `explicit`, and places the selected bounds on
 `target.bounds`.
 
-React apps can use the wrapper hook instead:
+Framework apps can use wrapper APIs instead:
 
 ```tsx
 import { useAskable, useAskableRegionCapture } from '@askable-ui/react';
@@ -137,6 +137,24 @@ import { useAskable, useAskableRegionCapture } from '@askable-ui/react';
 const { ctx } = useAskable({ viewport: true });
 const capture = useAskableRegionCapture({
   ctx,
+  includeViewport: true,
+  onCapture: (packet) => sendToAgent(packet),
+});
+```
+
+```ts
+import { useAskableRegionCapture } from '@askable-ui/vue';
+
+const capture = useAskableRegionCapture({
+  includeViewport: true,
+  onCapture: (packet) => sendToAgent(packet),
+});
+```
+
+```ts
+import { createAskableRegionCaptureStore } from '@askable-ui/svelte';
+
+const capture = createAskableRegionCaptureStore({
   includeViewport: true,
   onCapture: (packet) => sendToAgent(packet),
 });

@@ -1,6 +1,16 @@
 import { writable, derived, readonly } from 'svelte/store';
-import { createAskableContext, createAskableInspector } from '@askable-ui/core';
-import type { AskableEvent, AskableFocus, AskableContext, AskableInspectorOptions, AskableContextOptions } from '@askable-ui/core';
+import { createAskableContext, createAskableInspector, createAskableRegionCapture } from '@askable-ui/core';
+import type {
+  AskableEvent,
+  AskableFocus,
+  AskableContext,
+  AskableInspectorOptions,
+  AskableContextOptions,
+  AskableRegionCaptureHandle,
+  AskableRegionCaptureOptions,
+  AskableRegionCaptureSelection,
+  WebContextPacket,
+} from '@askable-ui/core';
 
 export interface AskableStoreOptions extends Pick<AskableContextOptions, 'name'> {
   events?: AskableEvent[];
@@ -13,6 +23,19 @@ export interface AskableStore {
   promptContext: ReturnType<typeof derived>;
   ctx: AskableContext;
   destroy: () => void;
+}
+
+export interface AskableRegionCaptureStoreOptions extends AskableStoreOptions, AskableRegionCaptureOptions {}
+
+export interface AskableRegionCaptureStore {
+  active: ReturnType<typeof readonly>;
+  lastPacket: ReturnType<typeof readonly>;
+  lastSelection: ReturnType<typeof readonly>;
+  ctx: AskableContext;
+  start: (overrides?: Partial<AskableRegionCaptureOptions>) => void;
+  cancel: () => void;
+  destroy: () => void;
+  isActive: () => boolean;
 }
 
 export function createAskableStore(options?: AskableStoreOptions) {
@@ -53,4 +76,75 @@ export function createAskableStore(options?: AskableStoreOptions) {
   }
 
   return { focus, promptContext, ctx, destroy };
+}
+
+export function createAskableRegionCaptureStore(
+  options: AskableRegionCaptureStoreOptions = {},
+): AskableRegionCaptureStore {
+  const { ctx, name, events, inspector, ...regionOptions } = options;
+  const askable = createAskableStore({ ctx, name, events, inspector });
+  const _active = writable(false);
+  const _lastPacket = writable<WebContextPacket | null>(null);
+  const _lastSelection = writable<AskableRegionCaptureSelection | null>(null);
+  let handle: AskableRegionCaptureHandle | null = null;
+
+  function destroyCapture() {
+    handle?.destroy();
+    handle = null;
+    _active.set(false);
+  }
+
+  function start(overrides?: Partial<AskableRegionCaptureOptions>) {
+    handle?.destroy();
+
+    const currentOptions = {
+      ...regionOptions,
+      ...overrides,
+    };
+
+    handle = createAskableRegionCapture(askable.ctx, {
+      ...currentOptions,
+      onCapture(packet, selection) {
+        _lastPacket.set(packet);
+        _lastSelection.set(selection);
+        handle = null;
+        _active.set(false);
+        currentOptions.onCapture?.(packet, selection);
+      },
+      onCancel() {
+        handle = null;
+        _active.set(false);
+        currentOptions.onCancel?.();
+      },
+    });
+
+    handle.start();
+    _active.set(true);
+  }
+
+  function cancel() {
+    handle?.cancel();
+    handle = null;
+    _active.set(false);
+  }
+
+  function destroy() {
+    destroyCapture();
+    askable.destroy();
+  }
+
+  function isActive() {
+    return handle?.isActive() ?? false;
+  }
+
+  return {
+    active: readonly(_active),
+    lastPacket: readonly(_lastPacket),
+    lastSelection: readonly(_lastSelection),
+    ctx: askable.ctx,
+    start,
+    cancel,
+    destroy,
+    isActive,
+  };
 }

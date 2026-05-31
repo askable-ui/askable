@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ASKABLE_VERSION = '0.8.1';
+const ASKABLE_VERSION = '0.8.2';
 const COPILOTKIT_VERSION = '1.59.2';
 
 const __filename = fileURLToPath(import.meta.url);
