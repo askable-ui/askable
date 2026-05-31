@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.2.15",
+    "jsdom": "^29.1.1",
     "react": "^19.2.6",
     "react-test-renderer": "^19.2.6",
     "typescript": "^6.0.3",
