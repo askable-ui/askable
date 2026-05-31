@@ -17,7 +17,7 @@ const packet = ctx.toContextPacket({
 The packet describes:
 
 - where the context came from: URL, title, app, route, timestamp
-- how the context was captured: focused element, semantic push, viewport, region, lasso, circle, or custom capture
+- how the context was captured: focused element, selected text, semantic push, viewport, region, lasso, circle, or custom capture
 - what the user is pointing at: text, role, label, selector, bounds, metadata, optional screenshots
 - surrounding context: ancestors, visible items, and recent interactions
 - privacy and provenance: redaction state, consent state, producer, and capture method
@@ -156,6 +156,60 @@ const capture = useAskableRegionCapture({
 import { createAskableRegionCaptureStore } from '@askable-ui/svelte';
 
 const capture = createAskableRegionCaptureStore({
+  includeViewport: true,
+  onCapture: (packet) => sendToAgent(packet),
+});
+```
+
+## Text selection capture
+
+Use text selection capture when the user highlights copy in the page and wants
+that exact selected range sent to an agent:
+
+```ts
+import { createAskableContext, createAskableTextSelectionCapture } from '@askable-ui/core';
+
+const ctx = createAskableContext({ viewport: true });
+ctx.observe(document);
+
+const selection = createAskableTextSelectionCapture(ctx, {
+  intent: 'answer using the highlighted text',
+  includeViewport: true,
+  onCapture: (packet) => {
+    sendToAgent(packet);
+  },
+});
+
+selection.start();
+```
+
+The resulting packet uses `capture.mode` of `text-selection`, sets
+`privacy.consent` to `explicit`, and places the selected text on `target.text`.
+
+Framework wrappers expose the same behavior:
+
+```tsx
+import { useAskableTextSelectionCapture } from '@askable-ui/react';
+
+const selection = useAskableTextSelectionCapture({
+  includeViewport: true,
+  onCapture: (packet) => sendToAgent(packet),
+});
+```
+
+```ts
+import { useAskableTextSelectionCapture } from '@askable-ui/vue';
+
+const selection = useAskableTextSelectionCapture({
+  includeViewport: true,
+  onCapture: (packet) => sendToAgent(packet),
+});
+```
+
+```ts
+import { createAskableTextSelectionCaptureStore } from '@askable-ui/svelte';
+
+const selection = createAskableTextSelectionCaptureStore({
   includeViewport: true,
   onCapture: (packet) => sendToAgent(packet),
 });

@@ -167,6 +167,35 @@ function RegionTools() {
 Region packets use `capture.mode: 'region'`; circle packets use
 `capture.mode: 'circle'` and include center/radius metadata.
 
+## Text selection capture
+
+For "send this highlighted copy" flows, use `useAskableTextSelectionCapture()`.
+
+```tsx
+import { useAskableTextSelectionCapture } from '@askable-ui/react';
+
+function TextSelectionTools() {
+  const selection = useAskableTextSelectionCapture({
+    includeViewport: true,
+    intent: 'answer using the highlighted text',
+    onCapture(packet) {
+      sendToAgent(packet);
+    },
+  });
+
+  return (
+    <div>
+      <button onClick={() => selection.start()}>Watch selection</button>
+      <button onClick={() => selection.captureNow()}>Send selected text</button>
+      {selection.active && <button onClick={selection.cancel}>Cancel</button>}
+    </div>
+  );
+}
+```
+
+Selection packets use `capture.mode: 'text-selection'` and include the
+highlighted text in `target.text`.
+
 ## History-aware context
 
 Feed multi-step interaction history into your LLM instead of just the current focus:

@@ -101,6 +101,37 @@ const selectedContext = computed(() =>
 
 The result includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
 
+### `useAskableTextSelectionCapture(options?)`
+
+Captures highlighted browser text and emits a structured Context packet through
+the same `AskableContext`.
+
+```vue
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useAskableTextSelectionCapture } from '@askable-ui/vue';
+
+const selection = useAskableTextSelectionCapture({
+  includeViewport: true,
+  source: { app: 'analytics-dashboard' },
+  intent: 'answer using the highlighted text',
+});
+
+const selectedContext = computed(() =>
+  selection.lastPacket.value ? JSON.stringify(selection.lastPacket.value, null, 2) : ''
+);
+</script>
+
+<template>
+  <button @click="selection.start()">Watch selection</button>
+  <button @click="selection.captureNow()">Send selected text</button>
+  <button v-if="selection.active.value" @click="selection.cancel()">Cancel</button>
+  <pre v-if="selectedContext">{{ selectedContext }}</pre>
+</template>
+```
+
+The result includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`, `captureNow(overrides)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
+
 ### "Ask AI" button pattern
 
 Use `ctx.select()` to set context explicitly when a user clicks a button:

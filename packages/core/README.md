@@ -68,6 +68,32 @@ capture.start();
 The packet uses `capture.mode` of `region` or `circle`, marks consent as
 explicit, and includes the selected geometry in `target.bounds`.
 
+## Text Selection Capture
+
+Use `createAskableTextSelectionCapture()` when the user should highlight page
+text and send that exact selected range as structured context.
+
+```ts
+import { createAskableContext, createAskableTextSelectionCapture } from '@askable-ui/core';
+
+const ctx = createAskableContext({ viewport: true });
+ctx.observe(document);
+
+const selection = createAskableTextSelectionCapture(ctx, {
+  intent: 'answer using this selected text',
+  includeViewport: true,
+  onCapture(packet) {
+    sendToAgent(packet);
+  },
+});
+
+selection.start();
+```
+
+The packet uses `capture.mode` of `text-selection`, marks consent as explicit,
+and includes the highlighted copy in `target.text`. Call `captureNow()` for
+button-driven flows where selection should be read on demand.
+
 ## API Reference
 
 ### `createAskableContext(): AskableContext`

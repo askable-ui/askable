@@ -340,3 +340,39 @@ function DashboardCapture() {
 | `cancel()` | `function` | Cancel the active overlay |
 | `destroy()` | `function` | Remove the overlay without firing cancel |
 | `isActive()` | `function` | Read active state from the live capture handle |
+
+---
+
+## `useAskableTextSelectionCapture(options?)`
+
+React hook for highlighted text capture. It can listen to browser selection
+changes or capture the current selection on demand.
+
+```tsx
+import { useAskableTextSelectionCapture } from '@askable-ui/react';
+
+function TextSelectionCapture() {
+  const selection = useAskableTextSelectionCapture({
+    includeViewport: true,
+    intent: 'answer using this highlighted text',
+    onCapture(packet) {
+      sendToAgent(packet);
+    },
+  });
+
+  return (
+    <>
+      <button onClick={() => selection.start()}>Watch selection</button>
+      <button onClick={() => selection.captureNow()}>Send selected text</button>
+      {selection.active && <button onClick={selection.cancel}>Cancel</button>}
+    </>
+  );
+}
+```
+
+**Options:** `root`, `minLength`, `debounce`, `once`, `dedupe`, `onCapture`,
+`onCancel`, `ctx`, and packet options such as `includeViewport`, `source`,
+`intent`, `privacy`, and `provenance`.
+
+**Returns:** `ctx`, `active`, `lastPacket`, `lastSelection`, `start(overrides?)`,
+`captureNow(overrides?)`, `cancel()`, `destroy()`, and `isActive()`.

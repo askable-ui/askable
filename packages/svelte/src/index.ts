@@ -1,10 +1,16 @@
 // Svelte 4 — store-based API
-export { createAskableRegionCaptureStore, createAskableStore } from './askable.js';
+export {
+  createAskableRegionCaptureStore,
+  createAskableStore,
+  createAskableTextSelectionCaptureStore,
+} from './askable.js';
 export type {
   AskableRegionCaptureStore,
   AskableRegionCaptureStoreOptions,
   AskableStore,
   AskableStoreOptions,
+  AskableTextSelectionCaptureStore,
+  AskableTextSelectionCaptureStoreOptions,
 } from './askable.js';
 
 // Svelte 5 runes-based API:
