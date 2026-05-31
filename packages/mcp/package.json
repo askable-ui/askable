@@ -1,7 +1,7 @@
 {
-  "name": "@askable-ui/core",
+  "name": "@askable-ui/mcp",
   "version": "0.7.0",
-  "description": "Framework-agnostic context tracker for LLM-aware UIs",
+  "description": "MCP bridge for exposing askable web context packets to agents",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,30 +17,29 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/askable-ui/askable.git",
-    "directory": "packages/core"
+    "url": "git+https://github.com/askable-ui/askable.git",
+    "directory": "packages/mcp"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run",
-    "bench": "node bench/perf.mjs",
-    "bench:ci": "node bench/perf.mjs --budget"
+    "test": "vitest run --passWithNoTests"
   },
   "keywords": [
-    "llm",
-    "context",
-    "ui",
-    "accessibility",
-    "focus"
+    "askable",
+    "mcp",
+    "web-context",
+    "ai",
+    "agent"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",
   "dependencies": {
-    "@askable-ui/context": "^0.7.0"
+    "@askable-ui/context": "^0.7.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "jsdom": "^29.0.1",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   }

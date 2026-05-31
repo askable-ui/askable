@@ -103,9 +103,11 @@ jobs:
             (cd "$package_dir" && npm publish --access public --provenance --tag "$DIST_TAG")
           }
 
+          publish_package packages/context
           publish_package packages/core
           publish_package packages/react
           publish_package packages/vue
           publish_package packages/svelte
           publish_package packages/react-native
+          publish_package packages/mcp
           publish_package packages/create-askable-app

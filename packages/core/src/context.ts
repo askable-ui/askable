@@ -1,9 +1,11 @@
+import { createWebContextPacket } from '@askable-ui/context';
 import { Emitter } from './emitter.js';
 import { buildFocus, Observer } from './observer.js';
 import type {
   AskableContext,
   AskableContextOptions,
   AskableContextOutputOptions,
+  AskableContextPacketOptions,
   AskableContextSubscriber,
   AskableEventHandler,
   AskableEventName,
@@ -17,6 +19,14 @@ import type {
   AskableSerializedFocusSegment,
   AskableSubscribeOptions,
 } from './types.js';
+import type {
+  WebContextCaptureMode,
+  WebContextGesture,
+  WebContextPacket,
+  WebContextRect,
+  WebContextSource,
+  WebContextTarget,
+} from '@askable-ui/context';
 
 const PRESETS: Record<AskablePromptPreset, AskablePromptContextOptions> = {
   compact: { includeText: false, format: 'natural' },
@@ -318,6 +328,46 @@ export class AskableContextImpl implements AskableContext {
     return this.applyTokenBudget(output, resolved.maxTokens);
   }
 
+  toContextPacket(options?: AskableContextPacketOptions): WebContextPacket {
+    const resolved = this.resolveOptions(options);
+    const currentFocus = this.matchesScope(this.currentFocus, resolved.scope) ? this.currentFocus : null;
+    const historyCount = options?.history ?? 0;
+    const history = historyCount > 0
+      ? this.filterByScope(this.getHistory(historyCount), resolved.scope).map((focus) => this.focusToTarget(focus, resolved))
+      : [];
+    const visible = options?.includeViewport
+      ? this.filterByScope(this.getVisibleElements(), resolved.scope).map((focus) => this.focusToTarget(focus, resolved))
+      : [];
+    const ancestors = currentFocus ? this.focusAncestorsToTargets(currentFocus, resolved) : [];
+
+    return createWebContextPacket({
+      source: this.resolvePacketSource(options?.source),
+      capture: {
+        mode: options?.mode ?? this.resolveCaptureMode(currentFocus),
+        gesture: options?.gesture ?? this.resolveGesture(currentFocus),
+        ...(options?.intent ? { intent: options.intent } : {}),
+      },
+      ...(currentFocus ? { target: this.focusToTarget(currentFocus, resolved) } : {}),
+      ...((ancestors.length > 0 || history.length > 0 || visible.length > 0) ? {
+        surrounding: {
+          ...(ancestors.length > 0 ? { ancestors } : {}),
+          ...(visible.length > 0 ? { visible } : {}),
+          ...(history.length > 0 ? { history } : {}),
+        },
+      } : {}),
+      privacy: {
+        redacted: Boolean(this.sanitizeMetaFn || this.sanitizeTextFn),
+        consent: 'implicit',
+        ...options?.privacy,
+      },
+      provenance: {
+        producer: '@askable-ui/core',
+        method: currentFocus?.source === 'push' ? 'manual' : 'app',
+        ...options?.provenance,
+      },
+    });
+  }
+
   subscribe(callback: AskableContextSubscriber, options?: AskableSubscribeOptions): () => void {
     const { debounce = 0, ...contextOptions } = options ?? {};
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -398,6 +448,100 @@ export class AskableContextImpl implements AskableContext {
     });
 
     return Object.fromEntries(ordered);
+  }
+
+  private focusToTarget(focus: AskableFocus, options?: AskablePromptContextOptions): WebContextTarget {
+    const serialized = this.serializeFocusFrom(focus, options);
+    const element = focus.element;
+    const target: WebContextTarget = {
+      metadata: serialized.meta,
+      ...(serialized.text ? { text: serialized.text } : {}),
+      ...(focus.scope ? { role: focus.scope } : {}),
+    };
+
+    if (element) {
+      const label = element.getAttribute('aria-label') ?? element.getAttribute('title') ?? undefined;
+      const role = element.getAttribute('role') ?? target.role;
+      const selector = this.buildElementSelector(element);
+      const bounds = this.getElementBounds(element);
+      if (label) target.label = label;
+      if (role) target.role = role;
+      if (selector) target.selector = selector;
+      if (bounds) target.bounds = bounds;
+    }
+
+    return target;
+  }
+
+  private focusAncestorsToTargets(focus: AskableFocus, options?: AskablePromptContextOptions): WebContextTarget[] {
+    const resolved = this.resolveOptions(options);
+    return this.limitAncestorSegments(
+      this.filterAncestorSegments(focus.ancestors, resolved.scope),
+      resolved.hierarchyDepth,
+    ).map((segment) => ({
+      metadata: typeof segment.meta === 'string' ? segment.meta : this.normalizeMeta(segment.meta, resolved),
+      ...(segment.scope ? { role: segment.scope } : {}),
+      ...(resolved.includeText ?? true ? { text: this.normalizeText(segment.text, resolved.maxTextLength) } : {}),
+    }));
+  }
+
+  private resolveCaptureMode(focus: AskableFocus | null): WebContextCaptureMode {
+    if (!focus) return 'full-page';
+    if (focus.source === 'push') return 'semantic';
+    return 'element-focus';
+  }
+
+  private resolveGesture(focus: AskableFocus | null): WebContextGesture | undefined {
+    if (!focus) return undefined;
+    if (focus.source === 'select' || focus.source === 'push') return 'programmatic';
+    return 'focus';
+  }
+
+  private resolvePacketSource(source?: Partial<WebContextSource>): Partial<WebContextSource> {
+    const inferred: Partial<WebContextSource> = {};
+    if (typeof document !== 'undefined') {
+      inferred.title = document.title || undefined;
+    }
+    if (typeof window !== 'undefined') {
+      inferred.url = window.location?.href;
+      inferred.route = window.location?.pathname;
+    }
+    return { ...inferred, ...source };
+  }
+
+  private getElementBounds(element: HTMLElement): WebContextRect | undefined {
+    if (typeof element.getBoundingClientRect !== 'function') return undefined;
+    const rect = element.getBoundingClientRect();
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    };
+  }
+
+  private buildElementSelector(element: HTMLElement): string | undefined {
+    if (element.id) return `#${this.escapeSelectorIdent(element.id)}`;
+    const askableId = element.getAttribute('data-askable-id')?.trim();
+    if (askableId) return `[data-askable-id="${this.escapeAttributeValue(askableId)}"]`;
+    if (element.hasAttribute('data-askable')) {
+      const sameTagAskables = Array.from(element.ownerDocument.querySelectorAll(element.tagName.toLowerCase()))
+        .filter((candidate) => candidate.hasAttribute('data-askable'));
+      const index = sameTagAskables.indexOf(element);
+      if (index >= 0) {
+        return `${element.tagName.toLowerCase()}[data-askable]:nth-of-type(${index + 1})`;
+      }
+    }
+    return undefined;
+  }
+
+  private escapeSelectorIdent(value: string): string {
+    const css = globalThis.CSS as { escape?: (value: string) => string } | undefined;
+    return css?.escape ? css.escape(value) : value.replace(/["'\\#.:,[\]>~+*()]/g, '\\$&');
+  }
+
+  private escapeAttributeValue(value: string): string {
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   }
 
   private normalizeText(text: string, maxTextLength?: number): string {

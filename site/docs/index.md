@@ -36,11 +36,11 @@ features:
     details: Configure which events trigger updates, filter or reorder metadata keys, set token budgets, track multi-step focus history, and use select() for explicit "Ask AI" button patterns.
 
   - icon: 🔌
-    title: Works with any LLM
-    details: toPromptContext() returns a plain string — drop it into OpenAI, Anthropic, Vercel AI SDK, CopilotKit, or any LLM pipeline. No vendor lock-in.
+    title: Works with agents and MCP
+    details: toPromptContext() returns a plain string, while toContextPacket() returns structured web context for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.6.3**.
+> Current npm release: **v0.7.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,15 +59,17 @@ features:
   </video>
 </div>
 
-## Latest in v0.6.3
+## Latest in v0.7.0
 
-- `ctx.subscribe(callback, options?)` for debounced streaming context updates in `@askable-ui/core`
-- per-component React activation overrides with `events={['hover']}`, `events={['click']}`, or `events="manual"`
-- refreshed docs coverage for streaming AI SDK flows, CopilotKit, shared contexts, and inspector alignment
+- `ctx.toContextPacket()` for structured web context packets in `@askable-ui/core`
+- new `@askable-ui/context` package with packet types, schema, and runtime guard
+- new `@askable-ui/mcp` package for exposing web context packets through MCP tools/resources
+- release workflow now publishes the context and MCP packages alongside the existing wrappers
 
 Start here:
 
-- [What’s New in v0.6.3](/guide/whats-new)
+- [What’s New in v0.7.0](/guide/whats-new)
+- [Web Context Packets](/guide/web-context)
 - [AI SDK integration patterns](/examples/ai-sdk)
 - [CopilotKit guide](/guide/copilotkit)
 

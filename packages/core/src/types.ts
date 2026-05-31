@@ -1,3 +1,12 @@
+import type {
+  WebContextCaptureMode,
+  WebContextGesture,
+  WebContextPacket,
+  WebContextPrivacy,
+  WebContextProvenance,
+  WebContextSource,
+} from '@askable-ui/context';
+
 /** How focus was initiated */
 export type AskableFocusSource = 'dom' | 'select' | 'push';
 
@@ -219,6 +228,25 @@ export interface AskableContextOutputOptions extends AskablePromptContextOptions
   historyLabel?: string;
 }
 
+export interface AskableContextPacketOptions extends AskablePromptContextOptions {
+  /** Override source metadata such as app or route. URL/title/timestamp are inferred in the browser. */
+  source?: Partial<WebContextSource>;
+  /** Override the capture mode. Defaults to element-focus when focused, otherwise full-page. */
+  mode?: WebContextCaptureMode;
+  /** User gesture that produced the packet. Inferred from focus source when possible. */
+  gesture?: WebContextGesture;
+  /** Optional user intent attached to this capture. */
+  intent?: string;
+  /** Include visible annotated elements in the packet. Requires context viewport mode. */
+  includeViewport?: boolean;
+  /** Number of history entries to include. Defaults to 0. */
+  history?: number;
+  /** Privacy metadata for downstream agents and MCP clients. */
+  privacy?: Partial<WebContextPrivacy>;
+  /** Provenance metadata for downstream agents and MCP clients. */
+  provenance?: Partial<WebContextProvenance>;
+}
+
 export interface AskableContext {
   /** Observe a DOM subtree for [data-askable] elements */
   observe(root: HTMLElement | Document, options?: AskableObserveOptions): void;
@@ -250,6 +278,8 @@ export interface AskableContext {
   toViewportContext(options?: AskablePromptContextOptions): string;
   /** Combined current focus + history in a single prompt-ready string */
   toContext(options?: AskableContextOutputOptions): string;
+  /** Serialize current UI state to a structured web context packet for agents and MCP bridges. */
+  toContextPacket(options?: AskableContextPacketOptions): WebContextPacket;
   /** Subscribe to serialized context updates for streaming/chat integrations. Returns an unsubscribe function. */
   subscribe(callback: AskableContextSubscriber, options?: AskableSubscribeOptions): () => void;
   /** Clean up all listeners and observers */
