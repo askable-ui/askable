@@ -1,8 +1,10 @@
-# Web Context Packets
+# Context Packets
 
-Prompt strings are useful for simple chat integrations. Web context packets are
+Prompt strings are useful for simple chat integrations. Context packets are
 for agents, MCP bridges, browser extensions, and tools that need structured
 context instead of prose.
+
+The open specification lives at [askable-ui/context](https://github.com/askable-ui/context).
 
 ```ts
 const packet = ctx.toContextPacket({
@@ -33,7 +35,7 @@ ctx.toPromptContext();
 
 ```json
 {
-  "protocol": "askable.web-context",
+  "protocol": "askable.context",
   "version": "0.1",
   "capture": { "mode": "element-focus", "gesture": "focus" },
   "target": {
@@ -67,7 +69,7 @@ The server registers:
 
 | Name | Kind | Purpose |
 |---|---|---|
-| `web-context://schema` | Resource | JSON Schema for web context packets |
+| `context://schema` | Resource | JSON Schema for Context packets |
 | `get_current_context` | Tool | Returns the current structured packet |
 | `get_context_schema` | Tool | Returns the packet schema |
 | `format_context_for_prompt` | Tool | Returns a prompt-ready rendering |

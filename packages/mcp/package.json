@@ -1,7 +1,7 @@
 {
   "name": "@askable-ui/mcp",
-  "version": "0.7.0",
-  "description": "MCP bridge for exposing askable web context packets to agents",
+  "version": "0.7.1",
+  "description": "MCP bridge for exposing Context packets to agents",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,14 +29,14 @@
   "keywords": [
     "askable",
     "mcp",
-    "web-context",
+    "context",
     "ai",
     "agent"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",
   "dependencies": {
-    "@askable-ui/context": "^0.7.0",
+    "@askable-ui/context": "^0.7.1",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.3"
   },

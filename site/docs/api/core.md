@@ -335,7 +335,7 @@ ctx.toContext({ history: 3, currentLabel: 'Now', historyLabel: 'Before' });
 
 ### `toContextPacket(options?)`
 
-Serialize the current UI state to a structured web context packet for agents,
+Serialize the current UI state to a structured Context packet for agents,
 MCP bridges, browser extensions, or storage.
 
 ```ts

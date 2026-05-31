@@ -1,6 +1,6 @@
 # @askable-ui/mcp
 
-MCP bridge for exposing web context packets to agents.
+MCP bridge for exposing Context packets to agents.
 
 ```bash
 npm install @askable-ui/mcp
@@ -18,7 +18,7 @@ const server = createAskableMcpServer({
 
 ## `createAskableMcpServer(options)`
 
-Creates an MCP server with tools/resources for reading structured web context.
+Creates an MCP server with tools/resources for reading structured Context packets.
 
 | Option | Type | Description |
 |---|---|---|
@@ -31,7 +31,7 @@ Creates an MCP server with tools/resources for reading structured web context.
 
 | Name | Kind | Description |
 |---|---|---|
-| `web-context://schema` | Resource | JSON Schema for packets |
+| `context://schema` | Resource | JSON Schema for packets |
 | `get_current_context` | Tool | Returns the current packet as JSON |
 | `get_context_schema` | Tool | Returns the packet JSON Schema |
 | `format_context_for_prompt` | Tool | Returns prompt-ready text |

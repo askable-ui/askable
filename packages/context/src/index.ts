@@ -1,4 +1,4 @@
-export const WEB_CONTEXT_PROTOCOL = 'askable.web-context';
+export const WEB_CONTEXT_PROTOCOL = 'askable.context';
 export const WEB_CONTEXT_VERSION = '0.1';
 
 export type WebContextJson =
@@ -117,8 +117,8 @@ export interface CreateWebContextPacketOptions {
 
 export const webContextPacketSchema = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
-  $id: 'https://askable-ui.com/schemas/web-context-packet-0.1.schema.json',
-  title: 'Askable Web Context Packet',
+  $id: 'https://askable-ui.com/schemas/context-packet-0.1.schema.json',
+  title: 'Context Packet',
   type: 'object',
   required: ['protocol', 'version', 'source', 'capture', 'privacy', 'provenance'],
   additionalProperties: false,

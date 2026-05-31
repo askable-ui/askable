@@ -278,7 +278,7 @@ export interface AskableContext {
   toViewportContext(options?: AskablePromptContextOptions): string;
   /** Combined current focus + history in a single prompt-ready string */
   toContext(options?: AskableContextOutputOptions): string;
-  /** Serialize current UI state to a structured web context packet for agents and MCP bridges. */
+  /** Serialize current UI state to a structured Context packet for agents and MCP bridges. */
   toContextPacket(options?: AskableContextPacketOptions): WebContextPacket;
   /** Subscribe to serialized context updates for streaming/chat integrations. Returns an unsubscribe function. */
   subscribe(callback: AskableContextSubscriber, options?: AskableSubscribeOptions): () => void;

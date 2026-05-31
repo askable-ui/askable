@@ -28,16 +28,16 @@ const contextOptionsShape = {
 
 export function createAskableMcpServer(options: AskableMcpServerOptions): McpServer {
   const server = new McpServer({
-    name: options.name ?? 'askable-web-context',
+    name: options.name ?? 'askable-context',
     version: options.version ?? '0.1.0',
   });
 
   server.registerResource(
-    'web-context-schema',
-    'web-context://schema',
+    'context-schema',
+    'context://schema',
     {
-      title: 'Web context packet schema',
-      description: 'JSON Schema for askable web context packets.',
+      title: 'Context packet schema',
+      description: 'JSON Schema for Context packets.',
       mimeType: 'application/schema+json',
     },
     async (uri) => ({
@@ -54,8 +54,8 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
   server.registerTool(
     'get_current_context',
     {
-      title: 'Get current web context',
-      description: 'Return the current selected, focused, or visible web context packet.',
+      title: 'Get current Context packet',
+      description: 'Return the current selected, focused, or visible Context packet.',
       inputSchema: contextOptionsShape,
     },
     async (args) => {
@@ -75,8 +75,8 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
   server.registerTool(
     'get_context_schema',
     {
-      title: 'Get web context schema',
-      description: 'Return the JSON Schema for packets emitted by askable web context runtimes.',
+      title: 'Get Context schema',
+      description: 'Return the JSON Schema for packets emitted by Context runtimes.',
       inputSchema: {},
     },
     async () => ({
@@ -94,7 +94,7 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
     'format_context_for_prompt',
     {
       title: 'Format current context for a prompt',
-      description: 'Return a prompt-ready text rendering of the current web context packet.',
+      description: 'Return a prompt-ready text rendering of the current Context packet.',
       inputSchema: contextOptionsShape,
     },
     async (args) => {

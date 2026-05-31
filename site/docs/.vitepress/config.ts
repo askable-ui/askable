@@ -72,7 +72,7 @@ export default defineConfig({
             { text: 'Focus & History', link: '/guide/focus-history' },
             { text: 'Ask AI Buttons (select())', link: '/guide/select' },
             { text: 'Prompt Serialization', link: '/guide/serialization' },
-            { text: 'Web Context Packets', link: '/guide/web-context' },
+            { text: 'Context Packets', link: '/guide/context' },
             { text: 'Migration Guides', link: '/guide/migrations' },
             { text: 'SSR Safety', link: '/guide/ssr' },
             { text: 'Browser Support', link: '/guide/browser-support' },
