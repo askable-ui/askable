@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/vue",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Vue 3 bindings for askable — LLM-aware UI context",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/askable-ui/askable.git",
+    "url": "git+https://github.com/askable-ui/askable.git",
     "directory": "packages/vue"
   },
   "scripts": {
@@ -39,7 +39,7 @@
     "vue": "^3.0.0"
   },
   "dependencies": {
-    "@askable-ui/core": "^0.7.1"
+    "@askable-ui/core": "^0.8.0"
   },
   "devDependencies": {
     "@askable-ui/core": "*",

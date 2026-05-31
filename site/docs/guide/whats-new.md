@@ -1,39 +1,61 @@
-# What’s New in v0.7.1
+# What’s New in v0.8.0
 
-askable-ui v0.7.1 aligns the structured Context packet identity with the new open spec repo.
+askable-ui v0.8.0 adds explicit region and circle capture for "send this part
+of the page" agent workflows.
 
 ## Highlights
 
-### Structured Context packets
+### Region and circle capture
 
-`@askable-ui/core` now emits versioned Context packets:
+`@askable-ui/core` now exports `createAskableRegionCapture()`:
 
 ```ts
-const packet = ctx.toContextPacket({
-  history: 3,
+const capture = createAskableRegionCapture(ctx, {
+  shape: 'circle',
+  intent: 'explain this selected area',
   includeViewport: true,
-  source: { app: 'analytics-dashboard' },
+  onCapture: (packet) => sendToAgent(packet),
 });
+
+capture.start();
 ```
 
-Packets preserve the same annotated metadata used by prompt serialization, but
-add source, capture, surrounding context, privacy, and provenance fields.
+The helper mounts a temporary drag overlay and emits a Context packet with
+`capture.mode` set to `region` or `circle`, explicit consent metadata, and the
+selected geometry in `target.bounds`.
 
-Use packets when you want to:
+Use it when you want to:
 
-- pass selected/focused UI context through MCP
-- store or validate context before forwarding it to a model
-- bridge app-authored context into browser extensions or agent runtimes
-- include viewport and history context without flattening everything to prose
+- let a user circle part of a chart, table, or canvas
+- send a visible page region to an agent
+- combine manual selection geometry with viewport and focus context
+- build screenshot or browser-extension capture flows on top of the same packet shape
 
 Related docs:
 
 - [Context Packets](/guide/context)
 - [@askable-ui/core API](/api/core)
 
-### New `@askable-ui/context` package
+### Packet target overrides
 
-The new context package provides the shared packet contract:
+`ctx.toContextPacket()` now accepts an explicit `target`, so custom capture
+tools can set bounds or metadata without pretending the current DOM focus is the
+selected object.
+
+```ts
+ctx.toContextPacket({
+  mode: 'region',
+  gesture: 'drag',
+  target: {
+    bounds: { x: 24, y: 48, width: 320, height: 180 },
+    metadata: { shape: 'region' },
+  },
+});
+```
+
+### Existing Context package
+
+`@askable-ui/context` continues to provide the shared packet contract:
 
 ```ts
 import {
@@ -46,7 +68,7 @@ import {
 It is dependency-free and backed by the public [askable-ui/context](https://github.com/askable-ui/context) spec repo. It can be used by non-React runtimes, browser bridges,
 servers, or storage pipelines that need to understand the same packet shape.
 
-### New `@askable-ui/mcp` package
+### MCP bridge
 
 `@askable-ui/mcp` creates an MCP server surface around a context provider:
 
@@ -62,9 +84,9 @@ The server registers tools for reading the current context, reading the schema,
 and formatting a packet for prompts. Transports are left to the host app so this
 can work with stdio, Streamable HTTP, or embedded browser runtimes.
 
-### 0.7 release path
+### 0.8 release path
 
-All workspace packages have been bumped to `0.7.1`, and the publish workflow now
+All workspace packages have been bumped to `0.8.0`, and the publish workflow now
 publishes packages in dependency order:
 
 1. `@askable-ui/context`
@@ -83,7 +105,7 @@ If you are integrating Askable into an AI or agent runtime, start here:
 
 ## Version note
 
-The current published docs track **v0.7.1** at both:
+The current published docs track **v0.8.0** at both:
 
 - `/docs/`
-- `/docs/v0.7.1/`
+- `/docs/v0.8.0/`

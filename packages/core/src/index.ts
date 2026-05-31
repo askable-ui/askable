@@ -1,4 +1,5 @@
 export { createAskableInspector } from './inspector.js';
+export { createAskableRegionCapture } from './capture.js';
 export { a11yTextExtractor } from './a11y.js';
 export {
   WEB_CONTEXT_PROTOCOL,
@@ -24,6 +25,12 @@ export type {
   AskableInspectorOptions,
   AskableInspectorPosition,
 } from './inspector.js';
+export type {
+  AskableRegionCaptureHandle,
+  AskableRegionCaptureOptions,
+  AskableRegionCaptureSelection,
+  AskableRegionCaptureShape,
+} from './capture.js';
 export type {
   AskableContext,
   AskableContextOptions,

@@ -101,3 +101,30 @@ ctx.toContextPacket({
   provenance: { producer: 'my-browser-extension', method: 'extension' },
 });
 ```
+
+## Region and circle capture
+
+For "send this part of the page" interactions, `@askable-ui/core` can mount a
+temporary drag overlay and emit a packet with region geometry:
+
+```ts
+import { createAskableContext, createAskableRegionCapture } from '@askable-ui/core';
+
+const ctx = createAskableContext({ viewport: true });
+ctx.observe(document);
+
+const capture = createAskableRegionCapture(ctx, {
+  shape: 'circle',
+  intent: 'explain this selected chart segment',
+  includeViewport: true,
+  onCapture: (packet) => {
+    sendToAgent(packet);
+  },
+});
+
+capture.start();
+```
+
+The resulting packet uses `capture.mode` of `region` or `circle`, sets
+`privacy.consent` to `explicit`, and places the selected bounds on
+`target.bounds`.

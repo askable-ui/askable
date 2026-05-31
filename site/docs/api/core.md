@@ -354,6 +354,7 @@ const packet = ctx.toContextPacket({
 | `source` | `Partial<WebContextSource>` | inferred from browser | Override source metadata like app or route |
 | `mode` | `WebContextCaptureMode` | inferred | Capture mode for the packet |
 | `gesture` | `WebContextGesture` | inferred | Gesture that produced the context |
+| `target` | `WebContextTarget` | inferred from focus | Override the packet target for region, circle, lasso, or custom captures |
 | `intent` | `string` | — | Optional user intent attached to the capture |
 | `includeViewport` | `boolean` | `false` | Include currently visible annotated elements |
 | `history` | `number` | `0` | Include recent focus history |
@@ -386,6 +387,46 @@ ctx.destroy();
 ```
 
 ---
+
+---
+
+## `createAskableRegionCapture(ctx, options?)`
+
+Mounts a temporary browser overlay that lets the user drag a rectangle or circle,
+then emits a structured Context packet with explicit consent metadata.
+
+```ts
+import { createAskableContext, createAskableRegionCapture } from '@askable-ui/core';
+
+const ctx = createAskableContext({ viewport: true });
+ctx.observe(document);
+
+const capture = createAskableRegionCapture(ctx, {
+  shape: 'circle',
+  intent: 'explain this selected area',
+  includeViewport: true,
+  onCapture: (packet, selection) => {
+    sendToAgent(packet);
+    console.log(selection.bounds);
+  },
+});
+
+capture.start();
+```
+
+**Options (`AskableRegionCaptureOptions`):**
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `shape` | `'region' \| 'circle'` | `'region'` | Shape produced by the drag gesture |
+| `minSize` | `number` | `6` | Minimum accepted width/height in CSS pixels |
+| `once` | `boolean` | `true` | Remove the overlay after the first accepted capture |
+| `onCapture` | `(packet, selection) => void` | — | Called with the Context packet and selection geometry |
+| `onCancel` | `() => void` | — | Called when the capture is cancelled |
+| _...most `AskableContextPacketOptions`_ | | | Passed through to `toContextPacket()` |
+
+**Returns:** `AskableRegionCaptureHandle` — object with `start()`, `cancel()`,
+`destroy()`, and `isActive()` methods.
 
 ---
 

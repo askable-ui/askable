@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/core",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Framework-agnostic context tracker for LLM-aware UIs",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/askable-ui/askable.git",
+    "url": "git+https://github.com/askable-ui/askable.git",
     "directory": "packages/core"
   },
   "scripts": {
@@ -38,7 +38,7 @@
   "homepage": "https://askable-ui.com",
   "license": "MIT",
   "dependencies": {
-    "@askable-ui/context": "^0.7.1"
+    "@askable-ui/context": "^0.8.0"
   },
   "devDependencies": {
     "jsdom": "^29.0.1",
