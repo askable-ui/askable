@@ -1,13 +1,13 @@
-# What’s New in v0.8.1
+# What’s New in v0.8.2
 
-askable-ui v0.8.1 adds React and starter-app support for explicit region and
-circle capture in "send this part of the page" agent workflows.
+askable-ui v0.8.2 expands explicit region and circle capture across the web
+framework adapters for "send this part of the page" agent workflows.
 
 ## Highlights
 
-### React region and circle capture
+### Framework region and circle capture
 
-`@askable-ui/react` now exports `useAskableRegionCapture()`:
+React exports `useAskableRegionCapture()`:
 
 ```tsx
 const { ctx } = useAskable({ viewport: true });
@@ -22,10 +22,32 @@ const capture = useAskableRegionCapture({
 capture.start({ shape: 'circle' });
 ```
 
-The hook mounts a temporary drag overlay and emits a Context packet with
+Vue now exports the matching composable:
+
+```ts
+const capture = useAskableRegionCapture({
+  includeViewport: true,
+  source: { app: 'dashboard' },
+});
+
+capture.start();
+capture.start({ shape: 'circle' });
+```
+
+Svelte now exports a store-based helper:
+
+```ts
+const capture = createAskableRegionCaptureStore({
+  intent: 'explain this selected area',
+});
+
+capture.start({ shape: 'circle' });
+```
+
+Each wrapper mounts a temporary drag overlay and emits a Context packet with
 `capture.mode` set to `region` or `circle`, explicit consent metadata, and the
-selected geometry in `target.bounds`. It also exposes `active`, `lastPacket`,
-`lastSelection`, `cancel()`, and `destroy()` for React UI state.
+selected geometry in `target.bounds`. They also expose `active`, `lastPacket`,
+`lastSelection`, `cancel()`, and `destroy()` for framework-native UI state.
 
 Use it when you want to:
 
@@ -38,6 +60,8 @@ Related docs:
 
 - [Context Packets](/guide/context)
 - [@askable-ui/react API](/api/react)
+- [@askable-ui/vue API](/api/vue)
+- [@askable-ui/svelte API](/api/svelte)
 
 ### Browser-level capture coverage
 
@@ -51,7 +75,7 @@ pushes the last selected page area into CopilotKit readable context.
 
 ### 0.8 release path
 
-All workspace packages have been bumped to `0.8.1`.
+All workspace packages have been bumped to `0.8.2`.
 
 ## Recommended next step
 
@@ -63,7 +87,7 @@ If you are integrating Askable into an AI or agent runtime, start here:
 
 ## Version note
 
-The current published docs track **v0.8.1** at both:
+The current published docs track **v0.8.2** at both:
 
 - `/docs/`
-- `/docs/v0.8.1/`
+- `/docs/v0.8.2/`

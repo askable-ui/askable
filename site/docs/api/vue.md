@@ -137,3 +137,50 @@ panelCtx.observe(panelEl, { events: ['click'] });
 
 const panel = useAskable({ ctx: panelCtx });
 ```
+
+---
+
+## `useAskableRegionCapture(options?)`
+
+Composable that starts an explicit region or circle selection overlay and emits a structured Context packet through the same `AskableContext`.
+
+```ts
+import { useAskableRegionCapture } from '@askable-ui/vue';
+
+const capture = useAskableRegionCapture({
+  includeViewport: true,
+  source: { app: 'dashboard' },
+  intent: 'answer with this selected area as context',
+});
+
+capture.start();
+capture.start({ shape: 'circle' });
+capture.cancel();
+```
+
+**Options:**
+
+| Option | Type | Description |
+|---|---|---|
+| `shape` | `'region' \| 'circle'` | Initial capture shape. Default: `'region'` |
+| `includeViewport` | `boolean` | Include viewport metadata in the emitted Context packet |
+| `source` | `WebContextSource` | App/page source metadata attached to the packet |
+| `intent` | `string` | User intent attached to the capture |
+| `ctx` | `AskableContext` | Optional context to share with other Vue consumers |
+| `name` | `string` | Optional shared context name when `ctx` is not provided |
+| `events` | `AskableEvent[]` | Observation events for the underlying `useAskable()` context |
+| `onCapture` | `(packet, selection) => void` | Called after a region or circle is accepted |
+| `onCancel` | `() => void` | Called after active capture is cancelled |
+
+**Returns:**
+
+| Value | Type | Description |
+|---|---|---|
+| `active` | `Ref<boolean>` | Whether the overlay is active |
+| `lastPacket` | `ShallowRef<WebContextPacket \| null>` | Last captured Context packet |
+| `lastSelection` | `ShallowRef<AskableRegionCaptureSelection \| null>` | Last raw region/circle selection geometry |
+| `start` | `(overrides?) => void` | Starts capture, optionally overriding options for one capture |
+| `cancel` | `() => void` | Cancels the active overlay |
+| `destroy` | `() => void` | Cancels capture and removes overlay listeners |
+| `isActive` | `() => boolean` | Reads the current overlay state |
+| `ctx` | `AskableContext` | Shared or provided context instance |

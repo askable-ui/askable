@@ -1,6 +1,18 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { get } from 'svelte/store';
-import { createAskableStore } from '../askable.js';
+import { createAskableRegionCaptureStore, createAskableStore } from '../askable.js';
+
+function pointerEvent(type: string, x: number, y: number): PointerEvent {
+  const event = new MouseEvent(type, {
+    bubbles: true,
+    button: 0,
+    clientX: x,
+    clientY: y,
+  });
+  Object.defineProperty(event, 'pointerId', { value: 1 });
+  Object.defineProperty(event, 'pointerType', { value: 'mouse' });
+  return event as PointerEvent;
+}
 
 describe('createAskableStore', () => {
   const elements: HTMLElement[] = [];
@@ -8,6 +20,7 @@ describe('createAskableStore', () => {
   afterEach(() => {
     elements.forEach((el) => el.parentNode?.removeChild(el));
     elements.length = 0;
+    document.getElementById('askable-region-capture')?.remove();
   });
 
   function makeEl(meta: object | string, text = ''): HTMLElement {
@@ -113,5 +126,79 @@ describe('createAskableStore', () => {
 
     unsub();
     scopedCtx.destroy();
+  });
+});
+
+describe('createAskableRegionCaptureStore', () => {
+  afterEach(() => {
+    document.getElementById('askable-region-capture')?.remove();
+  });
+
+  it('starts capture and exposes the captured packet', () => {
+    const capture = createAskableRegionCaptureStore({
+      source: { app: 'svelte-test' },
+      intent: 'explain selected area',
+    });
+
+    capture.start();
+    expect(get(capture.active)).toBe(true);
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 20, 30));
+    overlay.dispatchEvent(pointerEvent('pointermove', 80, 90));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 90));
+
+    expect(get(capture.active)).toBe(false);
+    expect(get(capture.lastPacket)).toMatchObject({
+      protocol: 'askable.context',
+      source: { app: 'svelte-test' },
+      capture: {
+        mode: 'region',
+        gesture: 'drag',
+        intent: 'explain selected area',
+      },
+      target: {
+        bounds: { x: 20, y: 30, width: 60, height: 60 },
+        metadata: { shape: 'region', pointerType: 'mouse' },
+      },
+      privacy: { consent: 'explicit' },
+    });
+
+    capture.destroy();
+  });
+
+  it('supports circle capture overrides at start time', () => {
+    const capture = createAskableRegionCaptureStore();
+
+    capture.start({ shape: 'circle' });
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 50, 80));
+    overlay.dispatchEvent(pointerEvent('pointerup', 50, 80));
+
+    expect(get(capture.lastPacket)?.capture).toMatchObject({ mode: 'circle', gesture: 'circle' });
+    expect(get(capture.lastSelection)).toMatchObject({
+      shape: 'circle',
+      bounds: { x: 0, y: 20, width: 60, height: 60 },
+      center: { x: 30, y: 50 },
+      radius: 30,
+    });
+
+    capture.destroy();
+  });
+
+  it('cancels active capture from store state', () => {
+    const capture = createAskableRegionCaptureStore();
+
+    capture.start();
+    expect(get(capture.active)).toBe(true);
+
+    capture.cancel();
+
+    expect(get(capture.active)).toBe(false);
+    expect(document.getElementById('askable-region-capture')).toBeNull();
+
+    capture.destroy();
   });
 });

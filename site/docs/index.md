@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.8.1**.
+> Current npm release: **v0.8.2**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,16 +59,17 @@ features:
   </video>
 </div>
 
-## Latest in v0.8.1
+## Latest in v0.8.2
 
 - `useAskableRegionCapture()` for React region and circle context selection
+- `useAskableRegionCapture()` for Vue and `createAskableRegionCaptureStore()` for Svelte
 - starter app region/circle buttons wired into CopilotKit readable context
 - full browser e2e coverage for core region and circle packet capture
 - continued support for Context packets, MCP tools/resources, and framework wrappers
 
 Start here:
 
-- [What’s New in v0.8.1](/guide/whats-new)
+- [What’s New in v0.8.2](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [AI SDK integration patterns](/examples/ai-sdk)
 - [CopilotKit guide](/guide/copilotkit)

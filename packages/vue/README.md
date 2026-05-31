@@ -71,6 +71,36 @@ const { focus, promptContext } = useAskable({ events: ['click'] });
 
 The composable manages a shared singleton context per `events` configuration. Multiple `useAskable()` consumers with the same `events` reuse one observer lifecycle, while differing `events` configurations get isolated shared contexts of their own. Each shared context is automatically destroyed when its last consumer unmounts.
 
+### `useAskableRegionCapture(options?)`
+
+Starts an explicit region or circle selection overlay and emits a structured Context packet through the same `AskableContext`.
+
+```vue
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useAskableRegionCapture } from '@askable-ui/vue';
+
+const capture = useAskableRegionCapture({
+  includeViewport: true,
+  source: { app: 'analytics-dashboard' },
+  intent: 'answer with this selected area as context',
+});
+
+const selectedContext = computed(() =>
+  capture.lastPacket.value ? JSON.stringify(capture.lastPacket.value, null, 2) : ''
+);
+</script>
+
+<template>
+  <button @click="capture.start()">Select region</button>
+  <button @click="capture.start({ shape: 'circle' })">Circle area</button>
+  <button v-if="capture.active.value" @click="capture.cancel()">Cancel</button>
+  <pre v-if="selectedContext">{{ selectedContext }}</pre>
+</template>
+```
+
+The result includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
+
 ### "Ask AI" button pattern
 
 Use `ctx.select()` to set context explicitly when a user clicks a button:

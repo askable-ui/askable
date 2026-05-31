@@ -74,6 +74,38 @@ const { focus, promptContext, ctx, destroy } = createAskableStore({ events: ['cl
 - `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
 - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
 
+### `createAskableRegionCaptureStore(options?)`
+
+Starts an explicit region or circle selection overlay and exposes the captured Context packet as Svelte stores.
+
+```svelte
+<script lang="ts">
+  import { onDestroy } from 'svelte';
+  import { createAskableRegionCaptureStore } from '@askable-ui/svelte';
+
+  const capture = createAskableRegionCaptureStore({
+    includeViewport: true,
+    source: { app: 'analytics-dashboard' },
+    intent: 'answer with this selected area as context',
+  });
+  const { active, lastPacket } = capture;
+
+  onDestroy(capture.destroy);
+</script>
+
+<button on:click={() => capture.start()}>Select region</button>
+<button on:click={() => capture.start({ shape: 'circle' })}>Circle area</button>
+{#if $active}
+  <button on:click={capture.cancel}>Cancel</button>
+{/if}
+
+{#if $lastPacket}
+  <pre>{JSON.stringify($lastPacket, null, 2)}</pre>
+{/if}
+```
+
+The store includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
+
 ### "Ask AI" button pattern
 
 Use `ctx.select()` to set context explicitly when a user clicks a button:
