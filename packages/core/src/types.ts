@@ -5,6 +5,7 @@ import type {
   WebContextPrivacy,
   WebContextProvenance,
   WebContextSource,
+  WebContextTarget,
 } from '@askable-ui/context';
 
 /** How focus was initiated */
@@ -235,6 +236,8 @@ export interface AskableContextPacketOptions extends AskablePromptContextOptions
   mode?: WebContextCaptureMode;
   /** User gesture that produced the packet. Inferred from focus source when possible. */
   gesture?: WebContextGesture;
+  /** Override the packet target. Useful for region, lasso, circle, and other explicit captures. */
+  target?: WebContextTarget;
   /** Optional user intent attached to this capture. */
   intent?: string;
   /** Include visible annotated elements in the packet. Requires context viewport mode. */

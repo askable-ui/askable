@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.7.1**.
+> Current npm release: **v0.8.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,16 +59,16 @@ features:
   </video>
 </div>
 
-## Latest in v0.7.1
+## Latest in v0.8.0
 
-- `ctx.toContextPacket()` for structured Context packets in `@askable-ui/core`
-- new `@askable-ui/context` package with packet types, schema, and runtime guard
-- new `@askable-ui/mcp` package for exposing Context packets through MCP tools/resources
-- release workflow now publishes the context and MCP packages alongside the existing wrappers
+- `createAskableRegionCapture()` for user-drawn region and circle context
+- `ctx.toContextPacket({ target })` for custom capture targets
+- normalized package repository metadata for cleaner npm publishes
+- continued support for Context packets, MCP tools/resources, and framework wrappers
 
 Start here:
 
-- [What’s New in v0.7.1](/guide/whats-new)
+- [What’s New in v0.8.0](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [AI SDK integration patterns](/examples/ai-sdk)
 - [CopilotKit guide](/guide/copilotkit)

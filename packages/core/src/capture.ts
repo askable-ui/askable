@@ -1,0 +1,292 @@
+import type {
+  WebContextCaptureMode,
+  WebContextGesture,
+  WebContextPacket,
+  WebContextRect,
+} from '@askable-ui/context';
+import type {
+  AskableContext,
+  AskableContextPacketOptions,
+} from './types.js';
+
+export type AskableRegionCaptureShape = 'region' | 'circle';
+
+export interface AskableRegionCaptureSelection {
+  shape: AskableRegionCaptureShape;
+  bounds: WebContextRect;
+  center?: { x: number; y: number };
+  radius?: number;
+  pointerType?: string;
+  startedAt: string;
+  endedAt: string;
+}
+
+export interface AskableRegionCaptureOptions extends Omit<AskableContextPacketOptions, 'mode' | 'gesture' | 'target'> {
+  /** Capture shape. Defaults to rectangular region selection. */
+  shape?: AskableRegionCaptureShape;
+  /** Minimum width/height in CSS pixels before a selection is accepted. Defaults to 6. */
+  minSize?: number;
+  /** Remove the overlay after the first accepted capture. Defaults to true. */
+  once?: boolean;
+  /** Called after a region/circle is accepted and serialized to a Context packet. */
+  onCapture?: (packet: WebContextPacket, selection: AskableRegionCaptureSelection) => void;
+  /** Called when an active capture is cancelled. */
+  onCancel?: () => void;
+}
+
+export interface AskableRegionCaptureHandle {
+  start(): void;
+  cancel(): void;
+  destroy(): void;
+  isActive(): boolean;
+}
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+const OVERLAY_ID = 'askable-region-capture';
+const SELECTION_ATTR = 'data-askable-region-capture-selection';
+
+export function createAskableRegionCapture(
+  ctx: AskableContext,
+  options: AskableRegionCaptureOptions = {},
+): AskableRegionCaptureHandle {
+  if (typeof document === 'undefined') {
+    return {
+      start: () => undefined,
+      cancel: () => undefined,
+      destroy: () => undefined,
+      isActive: () => false,
+    };
+  }
+
+  let overlay: HTMLDivElement | null = null;
+  let selectionEl: HTMLDivElement | null = null;
+  let startPoint: Point | null = null;
+  let startedAt = '';
+  let pointerType: string | undefined;
+  let active = false;
+
+  const shape = options.shape ?? 'region';
+  const minSize = options.minSize ?? 6;
+  const once = options.once ?? true;
+
+  const removeOverlay = () => {
+    overlay?.removeEventListener('pointerdown', onPointerDown);
+    overlay?.removeEventListener('pointermove', onPointerMove);
+    overlay?.removeEventListener('pointerup', onPointerUp);
+    overlay?.removeEventListener('pointercancel', onPointerCancel);
+    document.removeEventListener('keydown', onKeyDown);
+    overlay?.remove();
+    overlay = null;
+    selectionEl = null;
+    startPoint = null;
+    active = false;
+  };
+
+  const cancel = () => {
+    const wasActive = Boolean(overlay);
+    removeOverlay();
+    if (wasActive) options.onCancel?.();
+  };
+
+  const ensureOverlay = () => {
+    document.getElementById(OVERLAY_ID)?.remove();
+
+    overlay = document.createElement('div');
+    overlay.id = OVERLAY_ID;
+    overlay.setAttribute('aria-label', 'Context region capture');
+    overlay.style.cssText = [
+      'position:fixed',
+      'inset:0',
+      'z-index:2147483647',
+      'cursor:crosshair',
+      'background:rgba(15,23,42,0.08)',
+      'touch-action:none',
+      'user-select:none',
+    ].join(';');
+
+    selectionEl = document.createElement('div');
+    selectionEl.setAttribute(SELECTION_ATTR, shape);
+    selectionEl.style.cssText = [
+      'position:absolute',
+      'box-sizing:border-box',
+      'border:2px solid #2563eb',
+      'background:rgba(37,99,235,0.14)',
+      'box-shadow:0 0 0 9999px rgba(15,23,42,0.12)',
+      'pointer-events:none',
+      'display:none',
+    ].join(';');
+    if (shape === 'circle') selectionEl.style.borderRadius = '9999px';
+
+    overlay.appendChild(selectionEl);
+    overlay.addEventListener('pointerdown', onPointerDown);
+    overlay.addEventListener('pointermove', onPointerMove);
+    overlay.addEventListener('pointerup', onPointerUp);
+    overlay.addEventListener('pointercancel', onPointerCancel);
+    document.addEventListener('keydown', onKeyDown);
+    document.body.appendChild(overlay);
+  };
+
+  const updateSelection = (bounds: WebContextRect) => {
+    if (!selectionEl) return;
+    selectionEl.style.display = 'block';
+    selectionEl.style.left = `${bounds.x}px`;
+    selectionEl.style.top = `${bounds.y}px`;
+    selectionEl.style.width = `${bounds.width}px`;
+    selectionEl.style.height = `${bounds.height}px`;
+  };
+
+  function onPointerDown(event: PointerEvent) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    pointerType = event.pointerType || undefined;
+    startPoint = pointFromEvent(event);
+    startedAt = new Date().toISOString();
+    active = true;
+    selectionEl!.style.display = 'none';
+    overlay?.setPointerCapture?.(event.pointerId);
+  }
+
+  function onPointerMove(event: PointerEvent) {
+    if (!startPoint || !active) return;
+    event.preventDefault();
+    updateSelection(boundsForShape(shape, startPoint, pointFromEvent(event)));
+  }
+
+  function onPointerUp(event: PointerEvent) {
+    if (!startPoint || !active) return;
+    event.preventDefault();
+    const endPoint = pointFromEvent(event);
+    const selection = createSelection(shape, startPoint, endPoint, pointerType, startedAt);
+
+    if (selection.bounds.width < minSize || selection.bounds.height < minSize) {
+      cancel();
+      return;
+    }
+
+    const packet = ctx.toContextPacket({
+      ...options,
+      mode: captureModeForShape(shape),
+      gesture: gestureForShape(shape),
+      target: {
+        bounds: selection.bounds,
+        metadata: {
+          shape: selection.shape,
+          ...(selection.center ? { center: selection.center } : {}),
+          ...(selection.radius !== undefined ? { radius: selection.radius } : {}),
+          ...(selection.pointerType ? { pointerType: selection.pointerType } : {}),
+        },
+      },
+      privacy: {
+        consent: 'explicit',
+        ...options.privacy,
+      },
+      provenance: {
+        producer: '@askable-ui/core',
+        method: 'app',
+        ...options.provenance,
+      },
+    });
+
+    options.onCapture?.(packet, selection);
+
+    if (once) {
+      removeOverlay();
+      return;
+    }
+
+    startPoint = null;
+    active = false;
+    if (selectionEl) selectionEl.style.display = 'none';
+  }
+
+  function onPointerCancel() {
+    cancel();
+  }
+
+  function onKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Escape') cancel();
+  }
+
+  return {
+    start() {
+      ensureOverlay();
+    },
+    cancel,
+    destroy: removeOverlay,
+    isActive: () => active,
+  };
+}
+
+function pointFromEvent(event: PointerEvent): Point {
+  return { x: event.clientX, y: event.clientY };
+}
+
+function boundsForShape(shape: AskableRegionCaptureShape, start: Point, end: Point): WebContextRect {
+  if (shape === 'circle') {
+    const center = {
+      x: (start.x + end.x) / 2,
+      y: (start.y + end.y) / 2,
+    };
+    const radius = Math.max(Math.abs(end.x - start.x), Math.abs(end.y - start.y)) / 2;
+    return {
+      x: center.x - radius,
+      y: center.y - radius,
+      width: radius * 2,
+      height: radius * 2,
+    };
+  }
+
+  return {
+    x: Math.min(start.x, end.x),
+    y: Math.min(start.y, end.y),
+    width: Math.abs(end.x - start.x),
+    height: Math.abs(end.y - start.y),
+  };
+}
+
+function createSelection(
+  shape: AskableRegionCaptureShape,
+  start: Point,
+  end: Point,
+  pointerType: string | undefined,
+  startedAt: string,
+): AskableRegionCaptureSelection {
+  const bounds = boundsForShape(shape, start, end);
+  const endedAt = new Date().toISOString();
+
+  if (shape === 'circle') {
+    const center = {
+      x: bounds.x + bounds.width / 2,
+      y: bounds.y + bounds.height / 2,
+    };
+    return {
+      shape,
+      bounds,
+      center,
+      radius: bounds.width / 2,
+      ...(pointerType ? { pointerType } : {}),
+      startedAt,
+      endedAt,
+    };
+  }
+
+  return {
+    shape,
+    bounds,
+    ...(pointerType ? { pointerType } : {}),
+    startedAt,
+    endedAt,
+  };
+}
+
+function captureModeForShape(shape: AskableRegionCaptureShape): WebContextCaptureMode {
+  return shape === 'circle' ? 'circle' : 'region';
+}
+
+function gestureForShape(shape: AskableRegionCaptureShape): WebContextGesture {
+  return shape === 'circle' ? 'circle' : 'drag';
+}

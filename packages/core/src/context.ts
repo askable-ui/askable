@@ -340,6 +340,8 @@ export class AskableContextImpl implements AskableContext {
       : [];
     const ancestors = currentFocus ? this.focusAncestorsToTargets(currentFocus, resolved) : [];
 
+    const target = options?.target ?? (currentFocus ? this.focusToTarget(currentFocus, resolved) : undefined);
+
     return createWebContextPacket({
       source: this.resolvePacketSource(options?.source),
       capture: {
@@ -347,7 +349,7 @@ export class AskableContextImpl implements AskableContext {
         gesture: options?.gesture ?? this.resolveGesture(currentFocus),
         ...(options?.intent ? { intent: options.intent } : {}),
       },
-      ...(currentFocus ? { target: this.focusToTarget(currentFocus, resolved) } : {}),
+      ...(target ? { target } : {}),
       ...((ancestors.length > 0 || history.length > 0 || visible.length > 0) ? {
         surrounding: {
           ...(ancestors.length > 0 ? { ancestors } : {}),
