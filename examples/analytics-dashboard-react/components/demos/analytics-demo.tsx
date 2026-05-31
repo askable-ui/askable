@@ -79,7 +79,7 @@ export function AnalyticsDemo() {
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-foreground">Analytics Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Click any metric or chart to give the AI context about what you&apos;re viewing
+            Click a metric, draw over a chart, circle an anomaly, lasso an irregular area, or send highlighted table text as AI context
           </p>
         </div>
 

@@ -32,8 +32,8 @@ features:
     details: First-class hooks and components for React, React Native, Vue, and Svelte. Web bindings are reactive and SSR-safe; React Native ships a focused press-driven adapter on top of @askable-ui/core.
 
   - icon: 🎯
-    title: Precision control
-    details: Configure which events trigger updates, filter or reorder metadata keys, set token budgets, track multi-step focus history, and use select() for explicit "Ask AI" button patterns.
+    title: Multiple interaction patterns
+    details: Capture implicit focus, explicit Ask AI buttons, highlighted text, rectangular regions, circles, and freehand lasso selections as one structured context model.
 
   - icon: 🔌
     title: Works with agents and MCP
@@ -66,10 +66,27 @@ features:
 - starter app dependency pins advanced to `^0.11.0`
 - continued support for region/circle/text capture, MCP Context packets, and framework wrappers
 
+## Interaction patterns
+
+Askable can capture context at different levels of user intent:
+
+| Pattern | Use it when | API |
+| --- | --- | --- |
+| Element focus | The user clicks, hovers, or tabs into annotated UI | `data-askable`, `ctx.observe()` |
+| Ask AI button | A known widget should be selected before opening chat | `ctx.select(element)` |
+| App event | Your code already knows the semantic object | `ctx.push(meta, text)` |
+| Region | The user wants to mark a rectangular area | `createAskableRegionCapture()` |
+| Circle | The user wants to point at an anomaly or object | `shape: 'circle'` |
+| Lasso | The user wants to freehand-select an irregular area | `shape: 'lasso'` |
+| Highlighted text | The user wants to send selected copy | `createAskableTextSelectionCapture()` |
+
+Every pattern can produce a prompt string with `toPromptContext()` or a structured Context packet with `toContextPacket()`.
+
 Start here:
 
 - [What’s New in v0.11.0](/guide/whats-new)
 - [Context Packets](/guide/context)
+- [React interaction patterns](/guide/react#region-circle-and-lasso-capture)
 - [AI SDK integration patterns](/examples/ai-sdk)
 - [CopilotKit guide](/guide/copilotkit)
 

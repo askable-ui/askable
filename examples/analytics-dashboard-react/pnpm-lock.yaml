@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@askable-ui/react':
-        specifier: ^0.6.1
-        version: 0.6.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: ^0.11.0
+        version: 0.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.72.1(react@19.2.6))
@@ -193,11 +193,14 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
-  '@askable-ui/core@0.6.1':
-    resolution: {integrity: sha512-8L+lZQb2t2/qUsF0MWA0gh7autmtUgzvgHdtpLcBTP6mmJNjQ4cvwkj9Z/15FKBiVTWHKFi/NwzoGLFsGcIoIA==}
+  '@askable-ui/context@0.11.0':
+    resolution: {integrity: sha512-IC0THMXbESyACSxTmtSt10KC9KZFoDy5oBhm4vDAlZojjN797Hqot4GWO2DJEjaN8EkofU+aeLhS/2YMm34cug==}
 
-  '@askable-ui/react@0.6.1':
-    resolution: {integrity: sha512-Yn2jWQDBg79kAoCeSgRjbQzxUiAQCwAvY65Tjv65ePTswxAG2YjkRFF9FNYvpvQvdHl3NXPShy7U0sxO9PXrkg==}
+  '@askable-ui/core@0.11.0':
+    resolution: {integrity: sha512-d/JaH+ghlEI8k6hlK23rKqp0UcCOLSABAaysbWNjOzJnWoSC8uzhZYqQgYhgaQU3KGGx9OlKMYNUtq4tuWUcmg==}
+
+  '@askable-ui/react@0.11.0':
+    resolution: {integrity: sha512-Bnu/W3okP5WqY1coRdM/NzuN0wnh0yg7CWpUTvXTIGapi/AOiJXpb6LUxU2wef0dd/M56VhjCWtL5YCl28yMeA==}
     peerDependencies:
       react: '>=17.0.0'
       react-dom: '>=17.0.0'
@@ -1771,11 +1774,15 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@askable-ui/core@0.6.1': {}
+  '@askable-ui/context@0.11.0': {}
 
-  '@askable-ui/react@0.6.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@askable-ui/core@0.11.0':
     dependencies:
-      '@askable-ui/core': 0.6.1
+      '@askable-ui/context': 0.11.0
+
+  '@askable-ui/react@0.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+    dependencies:
+      '@askable-ui/core': 0.11.0
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 

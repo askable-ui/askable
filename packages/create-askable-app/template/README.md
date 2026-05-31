@@ -36,9 +36,11 @@ If `OPENAI_API_KEY` is blank, the runtime still starts so the dashboard loads, b
 2. `useAskable()` observes the page and produces prompt-ready context like:
    - current focus
    - recent interaction history
-3. `useCopilotReadable()` forwards those Askable strings into CopilotKit.
-4. CopilotKit sends the chat request to the local runtime at `/api/copilotkit`.
-5. The runtime calls the LLM and answers with the current dashboard context already attached.
+3. `useAskableRegionCapture()` adds region, circle, and lasso tools for visual page selection.
+4. `useAskableTextSelectionCapture()` lets the user highlight text and send it as context.
+5. `useCopilotReadable()` forwards those Askable strings and packets into CopilotKit.
+6. CopilotKit sends the chat request to the local runtime at `/api/copilotkit`.
+7. The runtime calls the LLM and answers with the current dashboard context already attached.
 
 ## Starter structure
 

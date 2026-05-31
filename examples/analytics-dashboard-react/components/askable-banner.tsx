@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { MousePointer, MousePointerClick, Pointer, X, Info } from "lucide-react"
+import { AskableInteractionToolbar } from "@/components/askable-interaction-toolbar"
 import { Button } from "@/components/ui/button"
 
 interface AskableBannerProps {
@@ -15,8 +16,8 @@ export function AskableBanner({ className }: AskableBannerProps) {
 
   return (
     <div className={`border-b border-border bg-gradient-to-r from-chart-1/5 via-transparent to-chart-3/5 ${className}`}>
-      <div className="flex items-center justify-between gap-4 px-4 py-3">
-        <div className="flex flex-1 items-center gap-6">
+      <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-1 flex-col gap-3 xl:flex-row xl:items-center xl:gap-6">
           <div className="flex items-center gap-2">
             <Info className="h-4 w-4 text-chart-1" />
             <span className="text-sm font-medium text-foreground">askable-ui enabled</span>
@@ -43,10 +44,12 @@ export function AskableBanner({ className }: AskableBannerProps) {
             </div>
           </div>
 
-          <div className="hidden items-center gap-2 rounded-full bg-secondary/50 px-3 py-1 text-xs text-muted-foreground lg:flex">
+          <div className="hidden items-center gap-2 rounded-full bg-secondary/50 px-3 py-1 text-xs text-muted-foreground 2xl:flex">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
-            <span>Selected elements appear in chat sidebar</span>
+            <span>Elements and explicit selections appear in chat sidebar</span>
           </div>
+
+          <AskableInteractionToolbar />
         </div>
 
         <Button

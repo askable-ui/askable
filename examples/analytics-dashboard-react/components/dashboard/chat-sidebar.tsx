@@ -21,7 +21,7 @@ const initialMessages: Message[] = [
   {
     id: "1",
     role: "assistant",
-    content: "Hi! I am your AI assistant powered by askable-ui. Click on any element to give me context about what you&apos;re looking at, then ask me questions!",
+    content: "Hi! I am your AI assistant powered by askable-ui. Click an element, draw a region, circle or lasso an area, or send highlighted text to give me context.",
     timestamp: new Date(Date.now() - 60000),
   },
 ]
@@ -149,7 +149,7 @@ export function ChatSidebar() {
               </div>
               <div>
                 <span className="text-sm font-medium text-muted-foreground">No Element Selected</span>
-                <p className="text-xs text-muted-foreground/70">Click any card or metric to capture context</p>
+                <p className="text-xs text-muted-foreground/70">Click a card, draw a region, lasso an area, or send highlighted text</p>
               </div>
             </div>
           </div>

@@ -8,8 +8,9 @@ The pattern:
 
 1. Annotate each dashboard widget with `data-askable` metadata
 2. Track active focus with `useAskable` / `useAskable()` / `createAskableStore()`
-3. Inject `promptContext` into every AI request
-4. Optionally inject `historyContext` for a conversation-aware assistant
+3. Add explicit tools for Ask AI buttons, region/circle/lasso capture, and highlighted text when the user needs more precise context than a single widget
+4. Inject `promptContext` into every AI request
+5. Optionally inject `historyContext` or structured Context packets for a conversation-aware assistant
 
 ::: code-group
 
@@ -17,7 +18,12 @@ The pattern:
 // components/Dashboard.tsx
 'use client';
 import { useRef, useState } from 'react';
-import { Askable, useAskable } from '@askable-ui/react';
+import {
+  Askable,
+  useAskable,
+  useAskableRegionCapture,
+  useAskableTextSelectionCapture,
+} from '@askable-ui/react';
 import { useChat } from 'ai/react';
 
 const widgets = [
@@ -30,6 +36,22 @@ export function Dashboard() {
   const { ctx, promptContext } = useAskable();
   const [chatOpen, setChatOpen] = useState(false);
   const refs = useRef<Record<string, HTMLElement | null>>({});
+  const region = useAskableRegionCapture({
+    ctx,
+    includeViewport: true,
+    onCapture(packet, selection) {
+      ctx.push(
+        { capture: packet.capture.mode, shape: selection.shape, bounds: selection.bounds },
+        `${selection.shape} selection on the dashboard`
+      );
+    },
+  });
+  const text = useAskableTextSelectionCapture({
+    ctx,
+    onCapture(packet, selection) {
+      ctx.push({ capture: packet.capture.mode, length: selection.text.length }, selection.text);
+    },
+  });
 
   // Include last 5 interactions so the AI can answer follow-up questions
   const historyContext = ctx.toHistoryContext(5);
@@ -63,6 +85,13 @@ export function Dashboard() {
             </button>
           </Askable>
         ))}
+      </div>
+
+      <div className="selection-tools">
+        <button onClick={() => region.start({ shape: 'region' })}>Select region</button>
+        <button onClick={() => region.start({ shape: 'circle' })}>Circle anomaly</button>
+        <button onClick={() => region.start({ shape: 'lasso' })}>Lasso area</button>
+        <button onClick={() => text.captureNow({ dedupe: false })}>Send selected text</button>
       </div>
 
       {chatOpen && (
