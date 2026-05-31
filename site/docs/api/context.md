@@ -1,6 +1,8 @@
 # @askable-ui/context
 
-Shared packet types and schema for structured web context.
+Shared packet types and schema for structured Context packets.
+
+The open specification lives at [askable-ui/context](https://github.com/askable-ui/context).
 
 ```bash
 npm install @askable-ui/context
@@ -55,7 +57,7 @@ JSON.stringify(webContextPacketSchema, null, 2);
 
 | Field | Description |
 |---|---|
-| `protocol` | Stable protocol identifier, currently `askable.web-context` |
+| `protocol` | Stable protocol identifier, currently `askable.context` |
 | `version` | Packet version, currently `0.1` |
 | `source` | URL, title, app, route, and timestamp |
 | `capture` | Capture mode, gesture, and optional user intent |

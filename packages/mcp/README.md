@@ -1,6 +1,6 @@
 # @askable-ui/mcp
 
-MCP bridge for exposing structured web context packets to AI agents.
+MCP bridge for exposing structured Context packets to AI agents.
 
 Host applications provide a context provider. The package registers MCP tools
 that return the current packet, the packet schema, and a prompt-ready text

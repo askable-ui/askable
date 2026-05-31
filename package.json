@@ -1,6 +1,6 @@
 {
   "name": "askable",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
-    "esbuild": "^0.28.0"
+    "esbuild": "^0.28.0",
+    "vite": "^8.0.14"
   }
 }

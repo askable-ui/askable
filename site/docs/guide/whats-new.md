@@ -1,12 +1,12 @@
-# What’s New in v0.7.0
+# What’s New in v0.7.1
 
-askable-ui v0.7.0 starts the structured web context layer for agents, browser tools, and MCP bridges.
+askable-ui v0.7.1 aligns the structured Context packet identity with the new open spec repo.
 
 ## Highlights
 
-### Structured web context packets
+### Structured Context packets
 
-`@askable-ui/core` now emits versioned web context packets:
+`@askable-ui/core` now emits versioned Context packets:
 
 ```ts
 const packet = ctx.toContextPacket({
@@ -28,7 +28,7 @@ Use packets when you want to:
 
 Related docs:
 
-- [Web Context Packets](/guide/web-context)
+- [Context Packets](/guide/context)
 - [@askable-ui/core API](/api/core)
 
 ### New `@askable-ui/context` package
@@ -43,7 +43,7 @@ import {
 } from '@askable-ui/context';
 ```
 
-It is dependency-free and can be used by non-React runtimes, browser bridges,
+It is dependency-free and backed by the public [askable-ui/context](https://github.com/askable-ui/context) spec repo. It can be used by non-React runtimes, browser bridges,
 servers, or storage pipelines that need to understand the same packet shape.
 
 ### New `@askable-ui/mcp` package
@@ -64,7 +64,7 @@ can work with stdio, Streamable HTTP, or embedded browser runtimes.
 
 ### 0.7 release path
 
-All workspace packages have been bumped to `0.7.0`, and the publish workflow now
+All workspace packages have been bumped to `0.7.1`, and the publish workflow now
 publishes packages in dependency order:
 
 1. `@askable-ui/context`
@@ -78,12 +78,12 @@ publishes packages in dependency order:
 If you are integrating Askable into an AI or agent runtime, start here:
 
 1. [Getting Started](/guide/getting-started)
-2. [Web Context Packets](/guide/web-context)
+2. [Context Packets](/guide/context)
 3. [@askable-ui/mcp API](/api/mcp)
 
 ## Version note
 
-The current published docs track **v0.7.0** at both:
+The current published docs track **v0.7.1** at both:
 
 - `/docs/`
-- `/docs/v0.7.0/`
+- `/docs/v0.7.1/`

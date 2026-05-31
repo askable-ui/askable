@@ -37,10 +37,10 @@ features:
 
   - icon: 🔌
     title: Works with agents and MCP
-    details: toPromptContext() returns a plain string, while toContextPacket() returns structured web context for MCP bridges, browser tools, and agent runtimes.
+    details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.7.0**.
+> Current npm release: **v0.7.1**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,17 +59,17 @@ features:
   </video>
 </div>
 
-## Latest in v0.7.0
+## Latest in v0.7.1
 
-- `ctx.toContextPacket()` for structured web context packets in `@askable-ui/core`
+- `ctx.toContextPacket()` for structured Context packets in `@askable-ui/core`
 - new `@askable-ui/context` package with packet types, schema, and runtime guard
-- new `@askable-ui/mcp` package for exposing web context packets through MCP tools/resources
+- new `@askable-ui/mcp` package for exposing Context packets through MCP tools/resources
 - release workflow now publishes the context and MCP packages alongside the existing wrappers
 
 Start here:
 
-- [What’s New in v0.7.0](/guide/whats-new)
-- [Web Context Packets](/guide/web-context)
+- [What’s New in v0.7.1](/guide/whats-new)
+- [Context Packets](/guide/context)
 - [AI SDK integration patterns](/examples/ai-sdk)
 - [CopilotKit guide](/guide/copilotkit)
 

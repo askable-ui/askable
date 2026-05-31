@@ -244,7 +244,7 @@ describe('createAskableContext', () => {
     cleanup(el);
   });
 
-  it('toContextPacket() returns a structured web context packet for focused UI', () => {
+  it('toContextPacket() returns a structured Context packet for focused UI', () => {
     const el = makeEl({ metric: 'revenue', value: '$2.3M' }, 'Revenue Chart');
     el.setAttribute('aria-label', 'Revenue card');
     const ctx = createAskableContext();
@@ -253,7 +253,7 @@ describe('createAskableContext', () => {
     el.click();
 
     expect(ctx.toContextPacket({ source: { app: 'analytics' }, history: 1 })).toMatchObject({
-      protocol: 'askable.web-context',
+      protocol: 'askable.context',
       version: '0.1',
       source: {
         app: 'analytics',
