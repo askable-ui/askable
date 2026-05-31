@@ -280,3 +280,63 @@ function PrivatePanel({ panelEl }: { panelEl: HTMLElement }) {
   return <textarea defaultValue={promptContext} />;
 }
 ```
+
+---
+
+## `useAskableRegionCapture(options?)`
+
+React hook for explicit region and circle capture. It mounts a temporary browser
+overlay, tracks active state, and stores the last captured Context packet.
+
+```tsx
+import { useAskable, useAskableRegionCapture } from '@askable-ui/react';
+
+function DashboardCapture() {
+  const { ctx } = useAskable({ viewport: true });
+  const capture = useAskableRegionCapture({
+    ctx,
+    includeViewport: true,
+    onCapture(packet) {
+      sendToAgent(packet);
+    },
+  });
+
+  return (
+    <>
+      <button onClick={() => capture.start({ shape: 'region' })}>
+        Select region
+      </button>
+      <button onClick={() => capture.start({ shape: 'circle' })}>
+        Circle area
+      </button>
+      {capture.active && <button onClick={capture.cancel}>Cancel</button>}
+    </>
+  );
+}
+```
+
+**Options:**
+
+| Option | Type | Description |
+|---|---|---|
+| `shape` | `'region' \| 'circle'` | Default shape for `start()` |
+| `minSize` | `number` | Minimum accepted width/height in CSS pixels |
+| `once` | `boolean` | Remove the overlay after the first accepted capture |
+| `onCapture` | `(packet, selection) => void` | Called when the user completes a selection |
+| `onCancel` | `() => void` | Called when selection is cancelled |
+| `ctx` | `AskableContext` | Reuse an existing context |
+| `includeViewport` | `boolean` | Include visible annotated elements in the emitted packet |
+| `source`, `intent`, `privacy`, `provenance` | context packet options | Passed through to packet serialization |
+
+**Returns:**
+
+| Value | Type | Description |
+|---|---|---|
+| `ctx` | `AskableContext` | Context used for packet serialization |
+| `active` | `boolean` | Whether the overlay is currently active |
+| `lastPacket` | `WebContextPacket \| null` | Last captured packet |
+| `lastSelection` | `AskableRegionCaptureSelection \| null` | Last captured geometry |
+| `start(overrides?)` | `function` | Start capture, optionally overriding shape/intent/etc. |
+| `cancel()` | `function` | Cancel the active overlay |
+| `destroy()` | `function` | Remove the overlay without firing cancel |
+| `isActive()` | `function` | Read active state from the live capture handle |

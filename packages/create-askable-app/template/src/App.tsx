@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { CopilotSidebar } from '@copilotkit/react-ui';
 import { useCopilotReadable } from '@copilotkit/react-core';
-import { useAskable } from '@askable-ui/react';
+import { useAskable, useAskableRegionCapture } from '@askable-ui/react';
 
 type MetricCard = {
   id: string;
@@ -61,7 +61,20 @@ function askableMeta(meta: Record<string, string>) {
 export default function App() {
   const { ctx, promptContext } = useAskable();
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
+  const [regionContext, setRegionContext] = useState('No page region captured yet.');
   const panelRefs = useRef<Record<string, HTMLElement | null>>({});
+  const regionCapture = useAskableRegionCapture({
+    ctx,
+    includeViewport: true,
+    source: { app: 'askable-starter' },
+    onCapture(packet, selection) {
+      setRegionContext(JSON.stringify({
+        capture: packet.capture,
+        target: packet.target,
+        selection,
+      }, null, 2));
+    },
+  });
 
   const currentContext = promptContext || 'No panel selected yet. Hover or click a KPI card or deal row to feed Askable context into CopilotKit.';
   const recentContext = useMemo(() => {
@@ -83,6 +96,14 @@ export default function App() {
       value: recentContext,
     },
     [recentContext],
+  );
+
+  useCopilotReadable(
+    {
+      description: 'The last explicit region or circle the user selected on the page.',
+      value: regionContext,
+    },
+    [regionContext],
   );
 
   function focusPanel(id: string) {
@@ -112,6 +133,25 @@ export default function App() {
             <button type="button" className="secondary" onClick={() => focusPanel('northstar')}>
               Ask about Northstar
             </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => regionCapture.start({ shape: 'region', intent: 'explain this selected page region' })}
+            >
+              Select region
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => regionCapture.start({ shape: 'circle', intent: 'explain this circled area' })}
+            >
+              Circle area
+            </button>
+            {regionCapture.active && (
+              <button type="button" className="secondary" onClick={regionCapture.cancel}>
+                Cancel selection
+              </button>
+            )}
           </div>
         </section>
 
@@ -186,6 +226,8 @@ export default function App() {
             <pre>{currentContext}</pre>
             <h3>Recent focus history</h3>
             <pre>{recentContext}</pre>
+            <h3>Selected page region</h3>
+            <pre>{regionContext}</pre>
           </article>
         </section>
 
