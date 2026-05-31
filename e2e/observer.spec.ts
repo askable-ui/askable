@@ -173,6 +173,80 @@ test.describe('keyboard focus tracking', () => {
   });
 });
 
+test.describe('region capture', () => {
+  test('dragging a region emits a structured Context packet', async ({ harness }) => {
+    const page = await harness(
+      `<div id="target" data-askable='{"widget":"chart"}' style="width:240px;height:120px">Chart</div>`,
+      `
+      window.capturedPacket = null;
+      window.regionCapture = AskableCore.createAskableRegionCapture(window.ctx, {
+        source: { app: 'e2e' },
+        intent: 'explain selected region',
+        onCapture: (packet) => { window.capturedPacket = packet; },
+      });
+      window.regionCapture.start();
+      `,
+    );
+
+    await page.mouse.move(20, 30);
+    await page.mouse.down();
+    await page.mouse.move(100, 110);
+    await page.mouse.up();
+
+    const packet = await page.evaluate(() => (window as any).capturedPacket);
+    expect(packet).toMatchObject({
+      protocol: 'askable.context',
+      source: { app: 'e2e' },
+      capture: {
+        mode: 'region',
+        gesture: 'drag',
+        intent: 'explain selected region',
+      },
+      target: {
+        bounds: { x: 20, y: 30, width: 80, height: 80 },
+        metadata: { shape: 'region' },
+      },
+      privacy: {
+        consent: 'explicit',
+      },
+    });
+    expect(packet.target.metadata.pointerType).toBe('mouse');
+  });
+
+  test('dragging a circle emits center and radius metadata', async ({ harness }) => {
+    const page = await harness(
+      `<div id="target" data-askable='{"widget":"chart"}' style="width:240px;height:120px">Chart</div>`,
+      `
+      window.capturedPacket = null;
+      window.regionCapture = AskableCore.createAskableRegionCapture(window.ctx, {
+        shape: 'circle',
+        onCapture: (packet) => { window.capturedPacket = packet; },
+      });
+      window.regionCapture.start();
+      `,
+    );
+
+    await page.mouse.move(20, 30);
+    await page.mouse.down();
+    await page.mouse.move(100, 70);
+    await page.mouse.up();
+
+    const packet = await page.evaluate(() => (window as any).capturedPacket);
+    expect(packet.capture).toMatchObject({
+      mode: 'circle',
+      gesture: 'circle',
+    });
+    expect(packet.target).toMatchObject({
+      bounds: { x: 20, y: 10, width: 80, height: 80 },
+      metadata: {
+        shape: 'circle',
+        center: { x: 60, y: 50 },
+        radius: 40,
+      },
+    });
+  });
+});
+
 test.describe('nested elements — deepest strategy (default)', () => {
   test('clicking nested inner element wins', async ({ harness }) => {
     const page = await harness(`

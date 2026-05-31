@@ -131,6 +131,42 @@ function MetricCard({ data }) {
 
 See [Ask AI Button](/examples/ask-ai-button) for a full working example.
 
+## Region and circle capture
+
+For visual "send this part of the page" flows, use
+`useAskableRegionCapture()` with the same context that powers the rest of your
+React UI.
+
+```tsx
+import { useAskable, useAskableRegionCapture } from '@askable-ui/react';
+
+function RegionTools() {
+  const { ctx } = useAskable({ viewport: true });
+  const capture = useAskableRegionCapture({
+    ctx,
+    includeViewport: true,
+    onCapture(packet) {
+      sendToAgent(packet);
+    },
+  });
+
+  return (
+    <div>
+      <button onClick={() => capture.start({ shape: 'region' })}>
+        Select region
+      </button>
+      <button onClick={() => capture.start({ shape: 'circle' })}>
+        Circle area
+      </button>
+      {capture.active && <button onClick={capture.cancel}>Cancel</button>}
+    </div>
+  );
+}
+```
+
+Region packets use `capture.mode: 'region'`; circle packets use
+`capture.mode: 'circle'` and include center/radius metadata.
+
 ## History-aware context
 
 Feed multi-step interaction history into your LLM instead of just the current focus:

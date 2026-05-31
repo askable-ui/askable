@@ -11,7 +11,7 @@ npm install @askable-ui/react @askable-ui/core
 ## Quick Start
 
 ```tsx
-import { Askable, useAskable } from '@askable-ui/react';
+import { Askable, useAskable, useAskableRegionCapture } from '@askable-ui/react';
 
 // Wrap any element to make it LLM-aware
 function Dashboard() {
@@ -24,7 +24,11 @@ function Dashboard() {
 
 // Access focus context anywhere in your tree
 function AIChatInput() {
-  const { focus, promptContext } = useAskable();
+  const { focus, promptContext, ctx } = useAskable();
+  const capture = useAskableRegionCapture({
+    ctx,
+    onCapture: (packet) => sendToAgent(packet),
+  });
 
   async function handleSubmit(question: string) {
     const res = await fetch('/api/chat', {
@@ -41,6 +45,9 @@ function AIChatInput() {
 
   return (
     <div>
+      <button onClick={() => capture.start({ shape: 'circle' })}>
+        Circle context
+      </button>
       {focus && <p>Asking about: {JSON.stringify(focus.meta)}</p>}
       <input onKeyDown={(e) => e.key === 'Enter' && handleSubmit(e.currentTarget.value)} />
     </div>
@@ -158,6 +165,8 @@ const { focus: focusOnly } = useAskable({ events: ['focus'] });
   - `ctx.toHistoryContext(limit?, options?)` — history as a prompt-ready string
   - `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
   - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
+  - `ctx.toContextPacket()` — structured Context packet for agents and MCP bridges
+- `useAskableRegionCapture()` — explicit region/circle capture for visual page selection
 
 The hook manages a shared singleton context per `name + events + viewport` configuration. Multiple `useAskable()` consumers with the same shared configuration reuse one observer lifecycle, while differing configurations get isolated shared contexts of their own. Each shared context is automatically destroyed when its last consumer unmounts.
 
@@ -194,6 +203,38 @@ function RevenueCard({ data }) {
         Ask AI ✦
       </button>
     </Askable>
+  );
+}
+```
+
+### Region and circle capture
+
+Use `useAskableRegionCapture()` when a user should select an area of the page
+and send that geometry as structured context.
+
+```tsx
+import { useAskable, useAskableRegionCapture } from '@askable-ui/react';
+
+function RegionTools() {
+  const { ctx } = useAskable({ viewport: true });
+  const capture = useAskableRegionCapture({
+    ctx,
+    includeViewport: true,
+    onCapture(packet) {
+      sendToAgent(packet);
+    },
+  });
+
+  return (
+    <>
+      <button onClick={() => capture.start({ shape: 'region' })}>
+        Select region
+      </button>
+      <button onClick={() => capture.start({ shape: 'circle' })}>
+        Circle area
+      </button>
+      {capture.active && <button onClick={capture.cancel}>Cancel</button>}
+    </>
   );
 }
 ```
