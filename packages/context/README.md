@@ -7,7 +7,7 @@ exports a JSON Schema, and includes helpers for constructing and identifying
 packets. Capture runtimes such as `@askable-ui/core`, browser extensions, and
 MCP bridges can all emit the same packet format.
 
-The open specification lives at https://github.com/askable-ui/context.
+The open specification lives at https://github.com/askable-ui/context-standard.
 
 ```ts
 import { createWebContextPacket } from '@askable-ui/context';
