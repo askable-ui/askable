@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CopilotSidebar } from '@copilotkit/react-ui';
 import { useCopilotReadable } from '@copilotkit/react-core';
-import { useAskable, useAskableRegionCapture, useAskableTextSelectionCapture } from '@askable-ui/react';
+import { useAskable, useAskableRegionCapture, useAskableSource, useAskableTextSelectionCapture } from '@askable-ui/react';
 
 type MetricCard = {
   id: string;
@@ -58,12 +58,64 @@ function askableMeta(meta: Record<string, string>) {
   return JSON.stringify(meta);
 }
 
+function dealValue(deal: Deal) {
+  return Number(deal.value.replace(/[^0-9]/g, '')) * 1000;
+}
+
+function formatCurrency(value: number) {
+  return `$${Math.round(value / 1000)}k`;
+}
+
 export default function App() {
   const { ctx, promptContext } = useAskable();
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
   const [regionContext, setRegionContext] = useState('No page region captured yet.');
   const [textContext, setTextContext] = useState('No highlighted text captured yet.');
+  const [dealSourceContext, setDealSourceContext] = useState('Deal source context will appear after the starter registers the app-owned source.');
   const panelRefs = useRef<Record<string, HTMLElement | null>>({});
+  const selectedDeal = deals.find((deal) => deal.id === selectedPanel) ?? null;
+  const dealSource = useAskableSource('deals', {
+    kind: 'collection',
+    describe: 'Full priority deal list, including app-owned data beyond the selected DOM row.',
+    getState: () => ({
+      totalDeals: deals.length,
+      selectedDealId: selectedDeal?.id ?? null,
+      visibleRows: deals.length,
+    }),
+    resolve: ({ mode, maxItems }) => {
+      const totalValue = deals.reduce((sum, deal) => sum + dealValue(deal), 0);
+      const largestDeal = deals.reduce((largest, deal) => (
+        dealValue(deal) > dealValue(largest) ? deal : largest
+      ), deals[0]);
+
+      if (mode === 'selected') {
+        return {
+          mode,
+          item: selectedDeal,
+        };
+      }
+
+      if (mode === 'all') {
+        const cap = maxItems ?? deals.length;
+        const items = deals.slice(0, cap);
+        return {
+          mode,
+          items,
+          totalCount: deals.length,
+          returnedCount: items.length,
+          truncated: items.length < deals.length,
+        };
+      }
+
+      return {
+        mode: 'summary',
+        totalDeals: deals.length,
+        totalPipeline: formatCurrency(totalValue),
+        largestDeal: `${largestDeal.company} (${largestDeal.value})`,
+        selectedDeal: selectedDeal ? `${selectedDeal.company} in ${selectedDeal.stage}` : null,
+      };
+    },
+  }, { ctx });
   const regionCapture = useAskableRegionCapture({
     ctx,
     includeViewport: true,
@@ -108,6 +160,24 @@ export default function App() {
     const history = ctx.toHistoryContext(4);
     return history || 'Recent UI history will appear here after a few interactions.';
   }, [ctx, promptContext]);
+  const { notifyChanged: notifyDealsChanged, toPromptContext: toDealPromptContext } = dealSource;
+
+  useEffect(() => {
+    let active = true;
+    notifyDealsChanged();
+    toDealPromptContext({
+      source: { mode: 'summary', timeoutMs: 750 },
+      sourceErrorMode: 'include',
+    }).then((context) => {
+      if (active) setDealSourceContext(context);
+    }).catch(() => {
+      if (active) setDealSourceContext('Deal source context is unavailable.');
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [notifyDealsChanged, promptContext, selectedPanel, toDealPromptContext]);
 
   useCopilotReadable(
     {
@@ -141,6 +211,14 @@ export default function App() {
     [textContext],
   );
 
+  useCopilotReadable(
+    {
+      description: 'App-owned deal source context, including full pipeline data beyond the selected DOM row.',
+      value: dealSourceContext,
+    },
+    [dealSourceContext],
+  );
+
   function focusPanel(id: string) {
     const panel = panelRefs.current[id];
     if (!panel) return;
@@ -156,9 +234,10 @@ export default function App() {
             <p className="eyebrow">askable-ui + CopilotKit starter</p>
             <h1>Ship a UI-aware copilot in one scaffold.</h1>
             <p className="hero-copy">
-              Hover or click any panel to update Askable context. CopilotKit receives the current focus and recent history via
+              Hover or click any panel to update Askable context. CopilotKit receives the current focus, recent history,
+              and an app-owned deal source via
               <code> useCopilotReadable() </code>
-              so the assistant can answer about exactly what the user sees.
+              so the assistant can answer about what the user selected and what the app knows.
             </p>
           </div>
           <div className="hero-actions">
@@ -287,6 +366,8 @@ export default function App() {
             <pre>{regionContext}</pre>
             <h3>Highlighted text</h3>
             <pre>{textContext}</pre>
+            <h3>App-owned deal source</h3>
+            <pre>{dealSourceContext}</pre>
           </article>
         </section>
 

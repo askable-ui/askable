@@ -15,6 +15,7 @@ The generated app includes:
 
 - a small analytics dashboard annotated with `data-askable`
 - `useAskable()` pre-wired for hover + click focus tracking
+- a `useAskableSource()` example that exposes full deal data beyond the selected row
 - region, circle, and lasso capture buttons for explicit page-area context
 - highlighted-text capture for "use this copy" prompts
 - `useCopilotReadable()` pushing current and recent Askable context into CopilotKit
