@@ -167,6 +167,46 @@ describe('useAskableRegionCapture (Vue)', () => {
     expect(packet.target.metadata.points).toHaveLength(4);
   });
 
+  it('keeps Vue state active after capture when once is false', async () => {
+    const Consumer = defineComponent({
+      name: 'RepeatedCaptureConsumer',
+      setup() {
+        const capture = useAskableRegionCapture({ once: false });
+        const packet = computed(() => capture.lastPacket.value ? JSON.stringify(capture.lastPacket.value) : 'null');
+        return {
+          active: capture.active,
+          packet,
+          start: capture.start,
+        };
+      },
+      template: `
+        <div>
+          <button type="button" @click="start()">Start</button>
+          <span data-testid="active">{{ String(active) }}</span>
+          <span data-testid="packet">{{ packet }}</span>
+        </div>
+      `,
+    });
+
+    const wrapper = track(mount(Consumer, { attachTo: document.body }));
+    await flushAll();
+
+    await wrapper.find('button').trigger('click');
+    await nextTick();
+
+    expect(wrapper.find('[data-testid="active"]').text()).toBe('true');
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 20, 30));
+    overlay.dispatchEvent(pointerEvent('pointermove', 80, 90));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 90));
+    await flushAll();
+
+    expect(wrapper.find('[data-testid="packet"]').text()).not.toBe('null');
+    expect(wrapper.find('[data-testid="active"]').text()).toBe('true');
+    expect(document.getElementById('askable-region-capture')).toBe(overlay);
+  });
+
   it('cancels active capture from Vue state', async () => {
     const Consumer = defineComponent({
       name: 'CancelCaptureConsumer',

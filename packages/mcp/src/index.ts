@@ -3,16 +3,21 @@ import { z } from 'zod';
 import { webContextPacketSchema } from '@askable-ui/context';
 import type { WebContextPacket } from '@askable-ui/context';
 import type {
+  AskableAsyncContextOutputOptions,
+  AskableAsyncContextPacketOptions,
   AskableContext,
   AskableContextOutputOptions,
-  AskableContextPacketOptions,
+  AskableContextSourceErrorMode,
+  AskableContextSourceInclude,
+  AskableContextSourceMode,
   AskablePromptFormat,
   AskablePromptPreset,
 } from '@askable-ui/core';
 
-export interface AskableMcpContextOptions extends AskableContextPacketOptions {
+export interface AskableMcpContextOptions extends AskableAsyncContextPacketOptions {
   currentLabel?: string;
   historyLabel?: string;
+  sourceLabel?: string;
 }
 
 export interface AskableMcpContextProvider {
@@ -29,7 +34,8 @@ export interface AskableMcpServerOptions {
   provider: AskableMcpContextProvider;
 }
 
-export type AskableMcpSourceContext = Pick<AskableContext, 'toContextPacket' | 'toContext'>;
+export type AskableMcpSourceContext = Pick<AskableContext, 'toContextPacket' | 'toContext'> &
+  Partial<Pick<AskableContext, 'toContextPacketAsync' | 'toContextAsync'>>;
 
 export interface CreateAskableMcpContextProviderOptions extends AskableMcpContextOptions {}
 
@@ -46,6 +52,22 @@ const contextOptionsShape = {
   intent: z.string().optional(),
   currentLabel: z.string().optional(),
   historyLabel: z.string().optional(),
+  sourceMode: z.string().optional(),
+  sourceErrorMode: z.enum(['include', 'omit', 'throw']).optional(),
+  sourceLabel: z.string().optional(),
+  sources: z.union([
+    z.literal('all'),
+    z.array(z.union([
+      z.string(),
+      z.object({
+        id: z.string(),
+        mode: z.string().optional(),
+        maxItems: z.number().int().min(0).max(100_000).optional(),
+        maxTokens: z.number().int().min(1).max(100_000).optional(),
+        timeoutMs: z.number().int().min(0).max(60_000).optional(),
+      }).passthrough(),
+    ])),
+  ]).optional(),
 };
 
 export function createAskableMcpContextProvider(
@@ -54,10 +76,16 @@ export function createAskableMcpContextProvider(
 ): AskableMcpContextProvider {
   return {
     getContext(options) {
-      return ctx.toContextPacket(mergeContextOptions(defaults, options));
+      const merged = mergeContextOptions(defaults, options);
+      return ctx.toContextPacketAsync
+        ? ctx.toContextPacketAsync(merged)
+        : ctx.toContextPacket(toPacketOptions(merged));
     },
     formatContextForPrompt(_packet, options) {
-      return ctx.toContext(toPromptOptions(mergeContextOptions(defaults, options)));
+      const merged = mergeContextOptions(defaults, options);
+      return ctx.toContextAsync
+        ? ctx.toContextAsync(toAsyncPromptOptions(merged))
+        : ctx.toContext(toPromptOptions(merged));
     },
   };
 }
@@ -163,6 +191,7 @@ export function defaultPromptFormatter(packet: WebContextPacket): string {
     packet.target?.metadata ? `Target metadata: ${JSON.stringify(packet.target.metadata)}` : undefined,
     packet.surrounding?.visible?.length ? `Visible context: ${JSON.stringify(packet.surrounding.visible)}` : undefined,
     packet.surrounding?.history?.length ? `Recent context: ${JSON.stringify(packet.surrounding.history)}` : undefined,
+    packet.surrounding?.sources?.length ? `Source context: ${JSON.stringify(packet.surrounding.sources)}` : undefined,
   ];
 
   return parts.filter((part): part is string => Boolean(part)).join('\n');
@@ -195,6 +224,10 @@ function toPromptOptions(options: AskableMcpContextOptions): AskableContextOutpu
     gesture: _gesture,
     target: _target,
     source: _source,
+    sources: _sources,
+    sourceMode: _sourceMode,
+    sourceErrorMode: _sourceErrorMode,
+    sourceLabel: _sourceLabel,
     privacy: _privacy,
     provenance: _provenance,
     ...promptOptions
@@ -205,4 +238,29 @@ function toPromptOptions(options: AskableMcpContextOptions): AskableContextOutpu
     ...(promptOptions.preset ? { preset: promptOptions.preset as AskablePromptPreset } : {}),
     ...(promptOptions.format ? { format: promptOptions.format as AskablePromptFormat } : {}),
   };
+}
+
+function toAsyncPromptOptions(options: AskableMcpContextOptions): AskableAsyncContextOutputOptions {
+  const promptOptions = toPromptOptions(options) as AskableAsyncContextOutputOptions;
+  return {
+    ...promptOptions,
+    ...(options.sources ? { sources: options.sources as 'all' | AskableContextSourceInclude[] } : {}),
+    ...(options.sourceMode ? { sourceMode: options.sourceMode as AskableContextSourceMode } : {}),
+    ...(options.sourceErrorMode ? { sourceErrorMode: options.sourceErrorMode as AskableContextSourceErrorMode } : {}),
+    ...(options.sourceLabel ? { sourceLabel: options.sourceLabel } : {}),
+  };
+}
+
+function toPacketOptions(options: AskableMcpContextOptions): AskableMcpContextOptions {
+  const {
+    sources: _sources,
+    sourceMode: _sourceMode,
+    sourceErrorMode: _sourceErrorMode,
+    sourceLabel: _sourceLabel,
+    currentLabel: _currentLabel,
+    historyLabel: _historyLabel,
+    ...packetOptions
+  } = options;
+
+  return packetOptions;
 }

@@ -160,6 +160,46 @@ describe('useAskableRegionCapture', () => {
     expect(packet.target.metadata.points).toHaveLength(4);
   });
 
+  it('keeps React state active after capture when once is false', async () => {
+    function Consumer() {
+      const capture = useAskableRegionCapture({ once: false });
+
+      return (
+        <div>
+          <button type="button" onClick={() => capture.start()}>
+            Start
+          </button>
+          <span data-testid="active">{String(capture.active)}</span>
+          <span data-testid="is-active">{String(capture.isActive())}</span>
+          <span data-testid="packet">{capture.lastPacket ? JSON.stringify(capture.lastPacket) : 'null'}</span>
+        </div>
+      );
+    }
+
+    render(<Consumer />);
+
+    act(() => {
+      fireEvent.click(screen.getByText('Start'));
+    });
+
+    expect(screen.getByTestId('active').textContent).toBe('true');
+    expect(screen.getByTestId('is-active').textContent).toBe('true');
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    act(() => {
+      overlay.dispatchEvent(pointerEvent('pointerdown', 20, 30));
+      overlay.dispatchEvent(pointerEvent('pointermove', 80, 90));
+      overlay.dispatchEvent(pointerEvent('pointerup', 80, 90));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('packet').textContent).not.toBe('null');
+      expect(screen.getByTestId('active').textContent).toBe('true');
+      expect(screen.getByTestId('is-active').textContent).toBe('true');
+    });
+    expect(document.getElementById('askable-region-capture')).toBe(overlay);
+  });
+
   it('cancels the active overlay from React state', async () => {
     function Consumer() {
       const capture = useAskableRegionCapture();

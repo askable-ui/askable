@@ -1,12 +1,25 @@
-import { createWebContextPacket } from '@askable-ui/context';
+import { createWebContextPacket, isWebContextPacket } from '@askable-ui/context';
 import { Emitter } from './emitter.js';
 import { buildFocus, Observer } from './observer.js';
 import type {
   AskableContext,
+  AskableAgentRequest,
+  AskableAgentRequestOptions,
+  AskableAsyncContextSubscriber,
+  AskableAsyncContextPacketOptions,
   AskableContextOptions,
   AskableContextOutputOptions,
   AskableContextPacketOptions,
+  AskableAsyncContextOutputOptions,
+  AskableAsyncPromptContextOptions,
   AskableContextSubscriber,
+  AskableContextSource,
+  AskableContextSourceHandle,
+  AskableContextSourceInclude,
+  AskableContextSourceInfo,
+  AskableContextSourceMode,
+  AskableContextSourceRequest,
+  AskableContextSourceChange,
   AskableEventHandler,
   AskableEventName,
   AskableFocus,
@@ -15,8 +28,10 @@ import type {
   AskablePromptContextOptions,
   AskablePromptPreset,
   AskablePushOptions,
+  AskableResolvedContextSource,
   AskableSerializedFocus,
   AskableSerializedFocusSegment,
+  AskableAsyncSubscribeOptions,
   AskableSubscribeOptions,
 } from './types.js';
 import type {
@@ -36,6 +51,13 @@ const PRESETS: Record<AskablePromptPreset, AskablePromptContextOptions> = {
 
 const DEFAULT_MAX_HISTORY = 50;
 
+type AskableContextSourceEntry = {
+  source: AskableContextSource;
+  token: symbol;
+  registeredAt: number;
+  updatedAt: number;
+};
+
 export class AskableContextImpl implements AskableContext {
   private emitter = new Emitter();
   private observer: Observer;
@@ -45,15 +67,18 @@ export class AskableContextImpl implements AskableContext {
   private intersectionObserver: IntersectionObserver | null = null;
   private viewportEnabled: boolean;
   private maxHistory: number;
+  private sources = new Map<string, AskableContextSourceEntry>();
   private textExtractor: ((el: HTMLElement) => string) | undefined;
   private sanitizeMetaFn: ((meta: Record<string, unknown>) => Record<string, unknown>) | undefined;
   private sanitizeTextFn: ((text: string) => string) | undefined;
+  private sanitizeSourceFn: ((source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>) | undefined;
   private subscriptions = new Set<() => void>();
 
   constructor(options?: AskableContextOptions) {
     this.textExtractor = options?.textExtractor;
     this.sanitizeMetaFn = options?.sanitizeMeta;
     this.sanitizeTextFn = options?.sanitizeText;
+    this.sanitizeSourceFn = options?.sanitizeSource;
     this.viewportEnabled = options?.viewport ?? false;
     this.maxHistory = options?.maxHistory ?? DEFAULT_MAX_HISTORY;
     this.observer = new Observer((rawFocus) => {
@@ -268,6 +293,121 @@ export class AskableContextImpl implements AskableContext {
     this.emitter.emit('focus', focus);
   }
 
+  registerSource(id: string, source: AskableContextSource): AskableContextSourceHandle {
+    const normalizedId = id.trim();
+    if (!normalizedId) {
+      throw new Error('Askable context source id must be a non-empty string.');
+    }
+    const token = Symbol(normalizedId);
+    const now = Date.now();
+    this.sources.set(normalizedId, {
+      source,
+      token,
+      registeredAt: now,
+      updatedAt: now,
+    });
+    this.notifySourceChanged(normalizedId);
+    return {
+      id: normalizedId,
+      notifyChanged: () => {
+        this.notifySourceHandleChanged(normalizedId, token);
+      },
+      unregister: () => {
+        this.unregisterSourceHandle(normalizedId, token);
+      },
+    };
+  }
+
+  hasSource(id: string): boolean {
+    return this.sources.has(id.trim());
+  }
+
+  listSources(): AskableContextSourceInfo[] {
+    return Array.from(this.sources.entries()).map(([id, entry]) => ({
+      id,
+      ...(entry.source.kind ? { kind: entry.source.kind } : {}),
+      registeredAt: entry.registeredAt,
+      updatedAt: entry.updatedAt,
+    }));
+  }
+
+  unregisterSource(id: string): boolean {
+    const normalizedId = id.trim();
+    const deleted = this.sources.delete(normalizedId);
+    if (deleted) this.notifySourceChanged(normalizedId);
+    return deleted;
+  }
+
+  private unregisterSourceHandle(id: string, token: symbol): boolean {
+    const entry = this.sources.get(id);
+    if (!entry || entry.token !== token) return false;
+    this.sources.delete(id);
+    this.notifySourceChanged(id);
+    return true;
+  }
+
+  private notifySourceHandleChanged(id: string, token: symbol): void {
+    const entry = this.sources.get(id);
+    if (entry?.token !== token) return;
+    this.notifySourceChanged(id);
+  }
+
+  notifySourceChanged(id?: string): void {
+    const normalizedId = id?.trim();
+    const timestamp = Date.now();
+    if (normalizedId) {
+      const entry = this.sources.get(normalizedId);
+      if (entry) entry.updatedAt = timestamp;
+    } else {
+      this.sources.forEach((entry) => {
+        entry.updatedAt = timestamp;
+      });
+    }
+    this.emitter.emit('sourcechange', {
+      ...(normalizedId ? { id: normalizedId } : {}),
+      timestamp,
+    });
+  }
+
+  async resolveSource(
+    id: string,
+    request?: Omit<AskableContextSourceRequest, 'id'>
+  ): Promise<AskableResolvedContextSource> {
+    const sourceId = id.trim();
+    const entry = this.sources.get(sourceId);
+    if (!entry) {
+      throw new Error(`Askable context source "${sourceId}" is not registered.`);
+    }
+    const { source } = entry;
+
+    const mode = request?.mode ?? 'summary';
+    const signal = request?.signal;
+    const [description, state, data] = await Promise.all([
+      this.runSourceTask(() => this.resolveSourceDescription(source), request?.timeoutMs, signal),
+      source.getState ? this.runSourceTask(() => source.getState!(), request?.timeoutMs, signal) : undefined,
+      source.resolve ? this.runSourceTask(() => source.resolve!({
+          sourceId,
+          mode,
+          focus: this.currentFocus,
+          selection: request?.selection,
+          maxItems: request?.maxItems,
+          maxTokens: request?.maxTokens,
+          timeoutMs: request?.timeoutMs,
+          signal,
+        }), request?.timeoutMs, signal) : undefined,
+    ]);
+
+    const resolved: AskableResolvedContextSource = {
+      id: sourceId,
+      ...(source.kind ? { kind: source.kind } : {}),
+      ...(description ? { description } : {}),
+      mode,
+      ...(state !== undefined ? { state } : {}),
+      ...(data !== undefined ? { data } : {}),
+    };
+    return this.applySourceSanitizers(resolved, source);
+  }
+
   clear(): void {
     this.currentFocus = null;
     this.emitter.emit('clear', null);
@@ -284,6 +424,16 @@ export class AskableContextImpl implements AskableContext {
     const focus = this.matchesScope(this.currentFocus, resolved.scope) ? this.currentFocus : null;
     const output = this.buildPromptString(focus, resolved);
     return this.applyTokenBudget(output, resolved.maxTokens);
+  }
+
+  async toPromptContextAsync(options?: AskableAsyncPromptContextOptions): Promise<string> {
+    const resolved = this.resolveOptions(options);
+    const { maxTokens, ...baseOptions } = resolved;
+    const base = this.toPromptContext(baseOptions);
+    const sources = await this.resolveIncludedSources(options);
+    if (sources.length === 0) return this.applyTokenBudget(base, maxTokens);
+    const output = this.appendSourcesToOutput(base, sources, resolved, options?.sourceLabel);
+    return this.applyTokenBudget(output, maxTokens);
   }
 
   toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string {
@@ -328,6 +478,16 @@ export class AskableContextImpl implements AskableContext {
     return this.applyTokenBudget(output, resolved.maxTokens);
   }
 
+  async toContextAsync(options?: AskableAsyncContextOutputOptions): Promise<string> {
+    const resolved = this.resolveOptions(options);
+    const { sources: _sources, sourceMode: _sourceMode, sourceLabel, maxTokens, ...contextOptions } = options ?? {};
+    const base = this.toContext(contextOptions);
+    const sources = await this.resolveIncludedSources(options);
+    if (sources.length === 0) return this.applyTokenBudget(base, maxTokens);
+    const output = this.appendSourcesToOutput(base, sources, resolved, sourceLabel);
+    return this.applyTokenBudget(output, maxTokens);
+  }
+
   toContextPacket(options?: AskableContextPacketOptions): WebContextPacket {
     const resolved = this.resolveOptions(options);
     const currentFocus = this.matchesScope(this.currentFocus, resolved.scope) ? this.currentFocus : null;
@@ -368,6 +528,51 @@ export class AskableContextImpl implements AskableContext {
         ...options?.provenance,
       },
     });
+  }
+
+  async toContextPacketAsync(options?: AskableAsyncContextPacketOptions): Promise<WebContextPacket> {
+    const { sources: _sources, sourceMode: _sourceMode, sourceErrorMode: _sourceErrorMode, ...packetOptions } = options ?? {};
+    const packet = this.toContextPacket(packetOptions);
+    const sources = await this.resolveIncludedSources(options);
+    if (sources.length === 0) return packet;
+
+    return {
+      ...packet,
+      surrounding: {
+        ...packet.surrounding,
+        sources: sources.map((source) => this.sourceToTarget(source)),
+      },
+    };
+  }
+
+  async toAgentRequest(question: string, options?: AskableAgentRequestOptions): Promise<AskableAgentRequest> {
+    const {
+      requestId,
+      metadata,
+      packet: packetOption,
+      ...contextOptions
+    } = options ?? {};
+    const context = await this.toContextAsync(contextOptions);
+    let packet: WebContextPacket | undefined;
+    if (packetOption) {
+      if (packetOption === true) {
+        packet = await this.toContextPacketAsync(this.agentRequestOptionsToPacketOptions(contextOptions));
+      } else if (isWebContextPacket(packetOption)) {
+        packet = packetOption;
+      } else {
+        packet = await this.toContextPacketAsync(packetOption);
+      }
+    }
+
+    return {
+      ...(requestId ? { requestId } : {}),
+      question,
+      context,
+      focus: this.serializeFocus(contextOptions),
+      ...(packet ? { packet } : {}),
+      ...(metadata ? { metadata } : {}),
+      timestamp: Date.now(),
+    };
   }
 
   subscribe(callback: AskableContextSubscriber, options?: AskableSubscribeOptions): () => void {
@@ -420,6 +625,82 @@ export class AskableContextImpl implements AskableContext {
     return unsubscribe;
   }
 
+  subscribeAsync(callback: AskableAsyncContextSubscriber, options?: AskableAsyncSubscribeOptions): () => void {
+    const {
+      debounce = 0,
+      emitInitial = false,
+      onError,
+      ...contextOptions
+    } = options ?? {};
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let active = true;
+    let version = 0;
+
+    const reportError = (error: unknown, scheduledVersion: number) => {
+      if (!active || scheduledVersion !== version) return;
+      onError?.(error);
+    };
+
+    const emitContext = async (scheduledVersion: number) => {
+      if (!active) return;
+      try {
+        const focus = this.currentFocus;
+        const scopedFocus = this.matchesScope(focus, contextOptions.scope) ? focus : null;
+        const context = await this.toContextAsync(contextOptions);
+        if (!active || scheduledVersion !== version) return;
+        await callback(context, scopedFocus);
+      } catch (error) {
+        reportError(error, scheduledVersion);
+      }
+    };
+
+    const schedule = () => {
+      if (!active) return;
+      version += 1;
+      const scheduledVersion = version;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      if (debounce > 0) {
+        timer = setTimeout(() => {
+          timer = null;
+          void emitContext(scheduledVersion);
+        }, debounce);
+        return;
+      }
+      void emitContext(scheduledVersion);
+    };
+
+    const onFocus = () => schedule();
+    const onClear = () => schedule();
+    const onSourceChange = (change: AskableContextSourceChange) => {
+      if (this.shouldRefreshSources(contextOptions.sources, change.id)) schedule();
+    };
+
+    this.on('focus', onFocus);
+    this.on('clear', onClear);
+    this.on('sourcechange', onSourceChange);
+    if (emitInitial) schedule();
+
+    const unsubscribe = () => {
+      if (!active) return;
+      active = false;
+      version += 1;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      this.off('focus', onFocus);
+      this.off('clear', onClear);
+      this.off('sourcechange', onSourceChange);
+      this.subscriptions.delete(unsubscribe);
+    };
+
+    this.subscriptions.add(unsubscribe);
+    return unsubscribe;
+  }
+
   destroy(): void {
     this.unobserve();
     this.subscriptions.forEach((unsubscribe) => unsubscribe());
@@ -428,6 +709,166 @@ export class AskableContextImpl implements AskableContext {
     this.currentFocus = null;
     this.history = [];
     this.visibleElements.clear();
+    this.sources.clear();
+  }
+
+  private async resolveSourceDescription(source: AskableContextSource): Promise<string | undefined> {
+    if (!source.describe) return undefined;
+    return typeof source.describe === 'function' ? source.describe() : source.describe;
+  }
+
+  private async runSourceTask<T>(
+    task: () => T | Promise<T>,
+    timeoutMs?: number,
+    signal?: AbortSignal
+  ): Promise<T> {
+    if (signal?.aborted) {
+      throw new Error('Context source request aborted.');
+    }
+
+    const value = Promise.resolve().then(task);
+    if (timeoutMs === undefined) return value;
+
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error('Context source timed out.'));
+      }, Math.max(0, timeoutMs));
+
+      const abort = () => {
+        clearTimeout(timer);
+        reject(new Error('Context source request aborted.'));
+      };
+
+      signal?.addEventListener('abort', abort, { once: true });
+      value.then(
+        (result) => {
+          clearTimeout(timer);
+          signal?.removeEventListener('abort', abort);
+          resolve(result);
+        },
+        (error) => {
+          clearTimeout(timer);
+          signal?.removeEventListener('abort', abort);
+          reject(error);
+        },
+      );
+    });
+  }
+
+  private async applySourceSanitizers(
+    resolved: AskableResolvedContextSource,
+    source: AskableContextSource
+  ): Promise<AskableResolvedContextSource> {
+    const sourceSanitized = source.sanitize ? await source.sanitize(resolved) : resolved;
+    return this.sanitizeSourceFn ? this.sanitizeSourceFn(sourceSanitized) : sourceSanitized;
+  }
+
+  private normalizeSourceRequest(
+    include: AskableContextSourceInclude,
+    defaultMode: AskableContextSourceMode
+  ): AskableContextSourceRequest {
+    return typeof include === 'string'
+      ? { id: include, mode: defaultMode }
+      : { ...include, mode: include.mode ?? defaultMode };
+  }
+
+  private shouldRefreshSources(
+    includes: 'all' | AskableContextSourceInclude[] | undefined,
+    changedId?: string
+  ): boolean {
+    if (!includes) return false;
+    if (!changedId) return true;
+    if (includes === 'all') return true;
+    return includes.some((include) => (
+      typeof include === 'string'
+        ? include.trim() === changedId
+        : include.id.trim() === changedId
+    ));
+  }
+
+  private async resolveIncludedSources(
+    options?: AskableAsyncPromptContextOptions | AskableAsyncContextOutputOptions
+  ): Promise<AskableResolvedContextSource[]> {
+    const includes = options?.sources;
+    if (!includes) return [];
+    const defaultMode = options.sourceMode ?? 'summary';
+    const requests = includes === 'all'
+      ? Array.from(this.sources.keys()).map((id) => ({ id, mode: defaultMode }))
+      : includes.map((include) => this.normalizeSourceRequest(include, defaultMode));
+
+    const errorMode = options.sourceErrorMode ?? 'include';
+    const resolved = await Promise.all(requests.map(({ id, ...request }) => (
+      this.resolveSource(id, request).catch((error) => {
+        if (errorMode === 'throw') throw error;
+        if (errorMode === 'omit') return null;
+        return this.buildSourceError(id, request.mode ?? defaultMode);
+      })
+    )));
+
+    return resolved.filter((source): source is AskableResolvedContextSource => Boolean(source));
+  }
+
+  private buildSourceError(
+    id: string,
+    mode: AskableContextSourceMode
+  ): AskableResolvedContextSource {
+    return {
+      id,
+      mode,
+      error: {
+        message: 'Context source unavailable.',
+      },
+    };
+  }
+
+  private appendSourcesToOutput(
+    base: string,
+    sources: AskableResolvedContextSource[],
+    options: AskablePromptContextOptions,
+    label = 'Context sources'
+  ): string {
+    if ((options.format ?? 'natural') === 'json') {
+      return JSON.stringify({
+        focus: this.safeParseJson(base),
+        sources,
+      });
+    }
+
+    const sourceOutput = sources
+      .map((source, index) => `[${index + 1}] ${this.formatResolvedSource(source)}`)
+      .join('\n');
+    return `${base}\n\n${label}:\n${sourceOutput}`;
+  }
+
+  private formatResolvedSource(source: AskableResolvedContextSource): string {
+    const heading = [
+      source.id,
+      source.kind ? `kind: ${source.kind}` : '',
+      `mode: ${source.mode}`,
+      source.description ? `description: ${source.description}` : '',
+    ].filter(Boolean).join(' — ');
+    const parts = [heading];
+    if (source.state !== undefined) parts.push(`state ${this.stringifySourceValue(source.state)}`);
+    if (source.data !== undefined) parts.push(`data ${this.stringifySourceValue(source.data)}`);
+    if (source.error) parts.push(`error "${source.error.message}"`);
+    return parts.join(' — ');
+  }
+
+  private stringifySourceValue(value: unknown): string {
+    if (typeof value === 'string') return `"${value}"`;
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  private safeParseJson(value: string): unknown {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
   }
 
   private normalizeMeta(
@@ -485,6 +926,33 @@ export class AskableContextImpl implements AskableContext {
       ...(segment.scope ? { role: segment.scope } : {}),
       ...(resolved.includeText ?? true ? { text: this.normalizeText(segment.text, resolved.maxTextLength) } : {}),
     }));
+  }
+
+  private sourceToTarget(source: AskableResolvedContextSource): WebContextTarget {
+    return {
+      label: source.id,
+      ...(source.kind ? { role: source.kind } : {}),
+      ...(source.description ? { text: source.description } : {}),
+      metadata: {
+        id: source.id,
+        mode: source.mode,
+        ...(source.state !== undefined ? { state: source.state } : {}),
+        ...(source.data !== undefined ? { data: source.data } : {}),
+        ...(source.error ? { error: source.error } : {}),
+      },
+    };
+  }
+
+  private agentRequestOptionsToPacketOptions(
+    options: AskableAsyncContextOutputOptions
+  ): AskableAsyncContextPacketOptions {
+    const {
+      currentLabel: _currentLabel,
+      historyLabel: _historyLabel,
+      sourceLabel: _sourceLabel,
+      ...packetOptions
+    } = options;
+    return packetOptions;
   }
 
   private resolveCaptureMode(focus: AskableFocus | null): WebContextCaptureMode {

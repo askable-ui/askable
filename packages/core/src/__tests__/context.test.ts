@@ -85,6 +85,8 @@ describe('createAskableContext', () => {
     expect(typeof (ctx as any).serializeFocus).toBe('function');
     expect(typeof (ctx as any).getVisibleElements).toBe('function');
     expect(typeof (ctx as any).toViewportContext).toBe('function');
+    expect(typeof ctx.hasSource).toBe('function');
+    expect(typeof ctx.listSources).toBe('function');
     expect(typeof ctx.subscribe).toBe('function');
     expect(typeof ctx.destroy).toBe('function');
     ctx.destroy();
@@ -165,6 +167,266 @@ describe('createAskableContext', () => {
     ctx.destroy();
     cleanup(first);
     cleanup(second);
+  });
+
+  it('subscribes to source-backed async context updates', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', {
+      kind: 'collection',
+      getState: () => ({ filter: 'enterprise' }),
+      resolve: ({ mode }) => ({ mode, totalMatching: 12 }),
+    });
+
+    const received = new Promise<[string, unknown]>((resolve) => {
+      ctx.subscribeAsync((context, focus) => {
+        resolve([context, focus?.meta]);
+      }, {
+        history: 1,
+        sources: ['accounts'],
+      });
+    });
+
+    ctx.push({ widget: 'accounts-table' }, 'Accounts');
+
+    const [context, meta] = await received;
+    expect(context).toContain('Current: User is focused on: — widget: accounts-table');
+    expect(context).toContain('Context sources');
+    expect(context).toContain('"filter":"enterprise"');
+    expect(context).toContain('"totalMatching":12');
+    expect(meta).toEqual({ widget: 'accounts-table' });
+
+    ctx.destroy();
+  });
+
+  it('refreshes async subscriptions when a registered source changes', async () => {
+    const ctx = createAskableContext();
+    ctx.push({ widget: 'accounts-table' }, 'Accounts');
+    let totalMatching = 12;
+    const handle = ctx.registerSource('accounts', {
+      kind: 'collection',
+      resolve: ({ mode }) => ({ mode, totalMatching }),
+    });
+
+    const received: string[] = [];
+    const receivedSecond = new Promise<void>((resolve) => {
+      ctx.subscribeAsync((context) => {
+        received.push(context);
+        if (context.includes('"totalMatching":24')) resolve();
+      }, {
+        emitInitial: true,
+        sources: ['accounts'],
+      });
+    });
+
+    await vi.waitFor(() => expect(received[0]).toContain('"totalMatching":12'));
+    totalMatching = 24;
+    handle.notifyChanged();
+
+    await receivedSecond;
+    expect(received).toHaveLength(2);
+    expect(received[1]).toContain('widget: accounts-table');
+    expect(received[1]).toContain('"totalMatching":24');
+
+    ctx.destroy();
+  });
+
+  it('does not refresh async subscriptions for unrelated source changes', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', {
+      resolve: () => ({ totalMatching: 12 }),
+    });
+    const calendar = ctx.registerSource('calendar', {
+      resolve: () => ({ events: 3 }),
+    });
+    const received: string[] = [];
+
+    ctx.subscribeAsync((context) => {
+      received.push(context);
+    }, {
+      emitInitial: true,
+      sources: ['accounts'],
+    });
+
+    await vi.waitFor(() => expect(received).toHaveLength(1));
+    calendar.notifyChanged();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(received).toHaveLength(1);
+    expect(received[0]).toContain('accounts');
+    expect(received[0]).not.toContain('calendar');
+
+    ctx.destroy();
+  });
+
+  it('ignores stale async source results after a newer focus update', async () => {
+    const ctx = createAskableContext();
+    let resolveFirst: ((value: unknown) => void) | undefined;
+    ctx.registerSource('active-panel', {
+      resolve: ({ focus }) => {
+        const widget = typeof focus?.meta === 'object' ? focus.meta.widget : undefined;
+        if (widget === 'first') {
+          return new Promise((resolve) => {
+            resolveFirst = resolve;
+          }).then(() => ({ widget }));
+        }
+        return { widget };
+      },
+    });
+
+    const received: string[] = [];
+    const receivedSecond = new Promise<void>((resolve) => {
+      ctx.subscribeAsync((context) => {
+        received.push(context);
+        if (context.includes('"widget":"second"')) resolve();
+      }, {
+        sources: ['active-panel'],
+      });
+    });
+
+    ctx.push({ widget: 'first' }, 'First panel');
+    ctx.push({ widget: 'second' }, 'Second panel');
+
+    await receivedSecond;
+    resolveFirst?.({});
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(received).toHaveLength(1);
+    expect(received[0]).toContain('widget: second');
+    expect(received[0]).toContain('"widget":"second"');
+
+    ctx.destroy();
+  });
+
+  it('reports async subscription errors without calling the subscriber', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', {
+      resolve: () => {
+        throw new Error('resolver failed');
+      },
+    });
+
+    const onContext = vi.fn();
+    const error = new Promise<unknown>((resolve) => {
+      ctx.subscribeAsync(onContext, {
+        sources: ['accounts'],
+        sourceErrorMode: 'throw',
+        onError: resolve,
+      });
+    });
+
+    ctx.push({ widget: 'accounts-table' }, 'Accounts');
+
+    await expect(error).resolves.toBeInstanceOf(Error);
+    expect(onContext).not.toHaveBeenCalled();
+
+    ctx.destroy();
+  });
+
+  it('packages a user question with source-backed context for agent requests', async () => {
+    const ctx = createAskableContext();
+    ctx.push({ widget: 'accounts-table', debug: 'internal' }, 'Accounts');
+    ctx.registerSource('accounts', {
+      kind: 'collection',
+      getState: () => ({ filter: 'enterprise' }),
+      resolve: ({ mode }) => ({ mode, totalMatching: 12 }),
+    });
+
+    const request = await ctx.toAgentRequest('Which accounts need follow-up?', {
+      requestId: 'req_123',
+      metadata: { route: '/accounts' },
+      history: 1,
+      sources: ['accounts'],
+      excludeKeys: ['debug'],
+      packet: true,
+    });
+
+    expect(request.requestId).toBe('req_123');
+    expect(request.question).toBe('Which accounts need follow-up?');
+    expect(request.context).toContain('Current: User is focused on: — widget: accounts-table');
+    expect(request.context).toContain('Context sources');
+    expect(request.context).toContain('"totalMatching":12');
+    expect(request.context).not.toContain('internal');
+    expect(request.focus?.meta).toEqual({ widget: 'accounts-table' });
+    expect(request.packet?.target?.metadata).toEqual({ widget: 'accounts-table' });
+    expect(request.packet?.surrounding?.sources?.[0]).toMatchObject({
+      label: 'accounts',
+      role: 'collection',
+      metadata: {
+        id: 'accounts',
+        mode: 'summary',
+        state: { filter: 'enterprise' },
+        data: { mode: 'summary', totalMatching: 12 },
+      },
+    });
+    expect(request.metadata).toEqual({ route: '/accounts' });
+    expect(typeof request.timestamp).toBe('number');
+
+    ctx.destroy();
+  });
+
+  it('allows explicit packet options in agent request payloads', async () => {
+    const ctx = createAskableContext();
+    ctx.push({ widget: 'chart' }, 'Revenue');
+    ctx.registerSource('chart-data', {
+      resolve: () => ({ points: 12 }),
+    });
+
+    const request = await ctx.toAgentRequest('Explain this chart', {
+      sources: ['chart-data'],
+      packet: {
+        intent: 'inspect chart',
+        includeText: false,
+        sources: ['chart-data'],
+        privacy: { consent: 'explicit' },
+      },
+    });
+
+    expect(request.context).toContain('Context sources');
+    expect(request.packet?.capture.intent).toBe('inspect chart');
+    expect(request.packet?.privacy.consent).toBe('explicit');
+    expect(request.packet?.target?.text).toBeUndefined();
+    expect(request.packet?.surrounding?.sources?.[0].metadata).toMatchObject({
+      id: 'chart-data',
+      data: { points: 12 },
+    });
+
+    ctx.destroy();
+  });
+
+  it('accepts an existing capture packet in agent request payloads', async () => {
+    const ctx = createAskableContext();
+    ctx.push({ capture: 'lasso' }, 'lasso selected 1 dashboard item');
+    const packet = ctx.toContextPacket({
+      mode: 'lasso',
+      gesture: 'drag',
+      intent: 'ask about selected accounts',
+      target: {
+        label: 'lasso selection',
+        text: 'Acme Corp',
+        bounds: { x: 10, y: 20, width: 120, height: 80 },
+        metadata: {
+          selectedItems: [{ company: 'Acme Corp', mrr: '$8,400' }],
+        },
+      },
+      privacy: { consent: 'explicit' },
+    });
+
+    const request = await ctx.toAgentRequest('Why is this account healthy?', {
+      packet,
+      metadata: { source: 'selection-composer' },
+    });
+
+    expect(request.packet).toBe(packet);
+    expect(request.packet?.capture.mode).toBe('lasso');
+    expect(request.packet?.capture.intent).toBe('ask about selected accounts');
+    expect(request.packet?.target?.metadata).toEqual({
+      selectedItems: [{ company: 'Acme Corp', mrr: '$8,400' }],
+    });
+    expect(request.context).toContain('lasso selected 1 dashboard item');
+    expect(request.metadata).toEqual({ source: 'selection-composer' });
+
+    ctx.destroy();
   });
 
   it('getFocus() returns null before any interaction', () => {
@@ -1284,6 +1546,350 @@ describe('createAskableContext', () => {
       const focus = ctx.getFocus();
       expect((focus!.meta as Record<string, unknown>).secret).toBeUndefined();
       expect(focus!.text).toBe('HELLO');
+
+      ctx.destroy();
+    });
+  });
+
+  describe('context sources', () => {
+    it('registers and resolves app-owned source context', async () => {
+      const ctx = createAskableContext();
+      const handle = ctx.registerSource('accounts', {
+        kind: 'collection',
+        describe: 'Customer accounts',
+        getState: () => ({ page: 2, pageSize: 25, totalCount: 80 }),
+        resolve: ({ mode, maxItems }) => ({
+          mode,
+          rows: [{ company: 'Acme Corp', mrr: '$8,400' }].slice(0, maxItems),
+          summary: { atRisk: 4 },
+        }),
+      });
+
+      const resolved = await ctx.resolveSource('accounts', { mode: 'visible', maxItems: 1 });
+
+      expect(handle.id).toBe('accounts');
+      expect(resolved).toEqual({
+        id: 'accounts',
+        kind: 'collection',
+        description: 'Customer accounts',
+        mode: 'visible',
+        state: { page: 2, pageSize: 25, totalCount: 80 },
+        data: {
+          mode: 'visible',
+          rows: [{ company: 'Acme Corp', mrr: '$8,400' }],
+          summary: { atRisk: 4 },
+        },
+      });
+
+      ctx.destroy();
+    });
+
+    it('includes selected sources in async prompt context', async () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'accounts-table' }, 'Accounts');
+      ctx.registerSource('accounts', {
+        kind: 'collection',
+        getState: () => ({ filter: 'at_risk' }),
+        resolve: ({ focus, mode }) => ({
+          mode,
+          focusedWidget: typeof focus?.meta === 'object' ? focus.meta.widget : undefined,
+          totalMatching: 12,
+        }),
+      });
+
+      const prompt = await ctx.toPromptContextAsync({
+        sources: [{ id: 'accounts', mode: 'summary' }],
+      });
+
+      expect(prompt).toContain('User is focused on');
+      expect(prompt).toContain('Context sources');
+      expect(prompt).toContain('accounts');
+      expect(prompt).toContain('"filter":"at_risk"');
+      expect(prompt).toContain('"focusedWidget":"accounts-table"');
+
+      ctx.destroy();
+    });
+
+    it('includes all registered sources when requested', async () => {
+      const ctx = createAskableContext();
+      ctx.registerSource('accounts', { resolve: () => ({ count: 2 }) });
+      ctx.registerSource('calendar', { resolve: () => ({ events: 3 }) });
+
+      const prompt = await ctx.toPromptContextAsync({ sources: 'all' });
+
+      expect(prompt).toContain('accounts');
+      expect(prompt).toContain('calendar');
+      expect(prompt).toContain('"count":2');
+      expect(prompt).toContain('"events":3');
+
+      ctx.destroy();
+    });
+
+    it('lists registered sources without resolving source data', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-06-01T12:00:00Z'));
+      const ctx = createAskableContext();
+      const resolve = vi.fn(() => ({ count: 2 }));
+
+      ctx.registerSource('accounts', { kind: 'collection', resolve });
+
+      expect(ctx.hasSource(' accounts ')).toBe(true);
+      expect(ctx.hasSource('calendar')).toBe(false);
+      expect(ctx.listSources()).toEqual([{
+        id: 'accounts',
+        kind: 'collection',
+        registeredAt: Date.parse('2026-06-01T12:00:00Z'),
+        updatedAt: Date.parse('2026-06-01T12:00:00Z'),
+      }]);
+      expect(resolve).not.toHaveBeenCalled();
+
+      vi.setSystemTime(new Date('2026-06-01T12:00:02Z'));
+      ctx.notifySourceChanged('accounts');
+
+      expect(ctx.listSources()[0]).toEqual({
+        id: 'accounts',
+        kind: 'collection',
+        registeredAt: Date.parse('2026-06-01T12:00:00Z'),
+        updatedAt: Date.parse('2026-06-01T12:00:02Z'),
+      });
+
+      ctx.destroy();
+    });
+
+    it('wraps focus and sources in JSON async prompt context', async () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'chart' }, 'Revenue');
+      ctx.registerSource('chart-data', {
+        kind: 'chart',
+        resolve: () => ({ series: ['MRR'], points: 12 }),
+      });
+
+      const prompt = await ctx.toPromptContextAsync({
+        format: 'json',
+        sources: ['chart-data'],
+      });
+      const parsed = JSON.parse(prompt);
+
+      expect(parsed.focus.meta).toEqual({ widget: 'chart' });
+      expect(parsed.sources[0]).toEqual({
+        id: 'chart-data',
+        kind: 'chart',
+        mode: 'summary',
+        data: { series: ['MRR'], points: 12 },
+      });
+
+      ctx.destroy();
+    });
+
+    it('includes sources in async Context packets', async () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'accounts-table' }, 'Accounts');
+      ctx.registerSource('accounts', {
+        kind: 'collection',
+        describe: 'Accounts matching active filters',
+        getState: () => ({ filter: 'at_risk' }),
+        resolve: ({ mode }) => ({ mode, totalMatching: 12 }),
+      });
+
+      const packet = await ctx.toContextPacketAsync({
+        sources: [{ id: 'accounts', mode: 'summary' }],
+        history: 1,
+      });
+
+      expect(packet.capture.mode).toBe('semantic');
+      expect(packet.target?.metadata).toEqual({ widget: 'accounts-table' });
+      expect(packet.surrounding?.sources?.[0]).toEqual({
+        label: 'accounts',
+        role: 'collection',
+        text: 'Accounts matching active filters',
+        metadata: {
+          id: 'accounts',
+          mode: 'summary',
+          state: { filter: 'at_risk' },
+          data: { mode: 'summary', totalMatching: 12 },
+        },
+      });
+
+      ctx.destroy();
+    });
+
+    it('includes safe source errors in async Context packets by default', async () => {
+      const ctx = createAskableContext();
+      ctx.registerSource('accounts', {
+        resolve: () => {
+          throw new Error('api key leaked');
+        },
+      });
+
+      const packet = await ctx.toContextPacketAsync({ sources: ['accounts'] });
+
+      expect(packet.surrounding?.sources?.[0]).toEqual({
+        label: 'accounts',
+        metadata: {
+          id: 'accounts',
+          mode: 'summary',
+          error: { message: 'Context source unavailable.' },
+        },
+      });
+      expect(JSON.stringify(packet)).not.toContain('api key leaked');
+
+      ctx.destroy();
+    });
+
+    it('unregisters sources', async () => {
+      const ctx = createAskableContext();
+      const handle = ctx.registerSource('accounts', { resolve: () => ({ count: 1 }) });
+
+      handle.unregister();
+
+      await expect(ctx.resolveSource('accounts')).rejects.toThrow('not registered');
+      expect(ctx.unregisterSource('accounts')).toBe(false);
+
+      ctx.destroy();
+    });
+
+    it('does not let stale source handles unregister replacement sources', async () => {
+      const ctx = createAskableContext();
+      const first = ctx.registerSource('accounts', { resolve: () => ({ version: 1 }) });
+      const second = ctx.registerSource('accounts', { resolve: () => ({ version: 2 }) });
+
+      first.unregister();
+
+      await expect(ctx.resolveSource('accounts')).resolves.toMatchObject({
+        data: { version: 2 },
+      });
+
+      second.unregister();
+
+      await expect(ctx.resolveSource('accounts')).rejects.toThrow('not registered');
+
+      ctx.destroy();
+    });
+
+    it('ignores stale source handle notifications after replacement', () => {
+      const ctx = createAskableContext();
+      const changedIds: string[] = [];
+      ctx.on('sourcechange', (change) => {
+        changedIds.push(change.id ?? '*');
+      });
+      const first = ctx.registerSource('accounts', { resolve: () => ({ version: 1 }) });
+      changedIds.length = 0;
+      ctx.registerSource('accounts', { resolve: () => ({ version: 2 }) });
+      changedIds.length = 0;
+
+      first.notifyChanged();
+
+      expect(changedIds).toEqual([]);
+
+      ctx.notifySourceChanged('accounts');
+
+      expect(changedIds).toEqual(['accounts']);
+
+      ctx.destroy();
+    });
+
+    it('still allows app-level unregister by source id', async () => {
+      const ctx = createAskableContext();
+      const handle = ctx.registerSource('accounts', { resolve: () => ({ count: 1 }) });
+
+      expect(ctx.unregisterSource('accounts')).toBe(true);
+      handle.notifyChanged();
+
+      await expect(ctx.resolveSource('accounts')).rejects.toThrow('not registered');
+
+      ctx.destroy();
+    });
+
+    it('applies source-level and context-level sanitizers', async () => {
+      const ctx = createAskableContext({
+        sanitizeSource: (source) => ({
+          ...source,
+          state: { safeState: true },
+        }),
+      });
+      ctx.registerSource('accounts', {
+        getState: () => ({ token: 'secret-token' }),
+        resolve: () => ({ rows: [{ company: 'Acme', ssn: '123-45-6789' }] }),
+        sanitize: (source) => ({
+          ...source,
+          data: { rows: [{ company: 'Acme' }] },
+        }),
+      });
+
+      const resolved = await ctx.resolveSource('accounts');
+
+      expect(resolved.state).toEqual({ safeState: true });
+      expect(resolved.data).toEqual({ rows: [{ company: 'Acme' }] });
+      expect(JSON.stringify(resolved)).not.toContain('secret-token');
+      expect(JSON.stringify(resolved)).not.toContain('123-45-6789');
+
+      ctx.destroy();
+    });
+
+    it('includes a safe source error by default during async prompt serialization', async () => {
+      const ctx = createAskableContext();
+      ctx.registerSource('accounts', {
+        resolve: () => {
+          throw new Error('database password leaked');
+        },
+      });
+
+      const prompt = await ctx.toPromptContextAsync({ sources: ['accounts'] });
+
+      expect(prompt).toContain('accounts');
+      expect(prompt).toContain('Context source unavailable.');
+      expect(prompt).not.toContain('database password leaked');
+
+      ctx.destroy();
+    });
+
+    it('can omit failed sources during async prompt serialization', async () => {
+      const ctx = createAskableContext();
+      ctx.registerSource('accounts', {
+        resolve: () => {
+          throw new Error('failed');
+        },
+      });
+
+      const prompt = await ctx.toPromptContextAsync({
+        sources: ['accounts'],
+        sourceErrorMode: 'omit',
+      });
+
+      expect(prompt).not.toContain('Context sources');
+      expect(prompt).not.toContain('accounts');
+
+      ctx.destroy();
+    });
+
+    it('can throw failed sources during async prompt serialization', async () => {
+      const ctx = createAskableContext();
+      ctx.registerSource('accounts', {
+        resolve: () => {
+          throw new Error('failed');
+        },
+      });
+
+      await expect(ctx.toPromptContextAsync({
+        sources: ['accounts'],
+        sourceErrorMode: 'throw',
+      })).rejects.toThrow('failed');
+
+      ctx.destroy();
+    });
+
+    it('times out slow source requests', async () => {
+      const ctx = createAskableContext();
+      ctx.registerSource('accounts', {
+        resolve: () => new Promise(() => undefined),
+      });
+
+      const prompt = await ctx.toPromptContextAsync({
+        sources: [{ id: 'accounts', timeoutMs: 0 }],
+      });
+
+      expect(prompt).toContain('accounts');
+      expect(prompt).toContain('Context source unavailable.');
 
       ctx.destroy();
     });

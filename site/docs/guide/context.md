@@ -12,6 +12,11 @@ const packet = ctx.toContextPacket({
   includeViewport: true,
   source: { app: 'analytics-dashboard' },
 });
+
+const packetWithSources = await ctx.toContextPacketAsync({
+  source: { app: 'analytics-dashboard' },
+  sources: [{ id: 'accounts', mode: 'summary', maxItems: 20 }],
+});
 ```
 
 The packet describes:
@@ -19,7 +24,7 @@ The packet describes:
 - where the context came from: URL, title, app, route, timestamp
 - how the context was captured: focused element, selected text, semantic push, viewport, region, lasso, circle, or custom capture
 - what the user is pointing at: text, role, label, selector, bounds, metadata, optional screenshots
-- surrounding context: ancestors, visible items, and recent interactions
+- surrounding context: ancestors, visible items, recent interactions, and app-owned sources
 - privacy and provenance: redaction state, consent state, producer, and capture method
 
 ## Why packets?
@@ -49,6 +54,39 @@ ctx.toPromptContext();
 
 Use packets when the receiving system should validate, store, transform, or
 route context before sending it to a model.
+
+## App-owned sources
+
+When a page only renders part of the underlying data, register a source and use
+`toContextPacketAsync()` to include resolver-backed application context in
+`surrounding.sources`.
+
+```ts
+import { createAskableCollectionSource } from '@askable-ui/core';
+
+ctx.registerSource('accounts', createAskableCollectionSource({
+  describe: 'Customer accounts matching the active filters',
+  getState: () => ({ filters, sort, page, pageSize, totalCount }),
+  getVisibleItems: () => table.getRowModel().rows.map((row) => row.original),
+  getItems: () => accountStore.getAllMatching({ filters, sort }),
+  getSummary: ({ maxItems }) => summarizeAccounts({ filters, sort, maxItems }),
+  sanitizeItem: redactAccountFields,
+  sanitize: (source) => ({
+    ...source,
+    state: redactFilterState(source.state),
+  }),
+}));
+
+const packet = await ctx.toContextPacketAsync({
+  sources: [{ id: 'accounts', mode: 'all', maxItems: 20, timeoutMs: 750 }],
+  sourceErrorMode: 'include',
+});
+```
+
+Each source becomes a `WebContextTarget` with the source id in `label`, source
+kind in `role`, source description in `text`, and resolved state/data in
+`metadata`. Failed sources use a safe unavailable marker by default so packet
+consumers do not receive stack traces or secret-bearing error messages.
 
 ## MCP bridge
 
@@ -132,9 +170,9 @@ capture.start();
 The resulting packet uses `capture.mode` of `region`, `circle`, or `lasso`,
 sets `privacy.consent` to `explicit`, and places the selected bounds on
 `target.bounds`. Lasso packets also include the freehand path in
-`target.metadata.points`. The default lasso overlay uses a solid gradient
-freehand stroke; pass `theme` to adjust overlay colors, selection fill/stroke,
-or lasso line styling.
+`target.metadata.points`. The default lasso overlay uses
+`ASKABLE_REGION_CAPTURE_THEME`; pass `theme` to adjust overlay colors,
+selection fill/stroke, or lasso line styling.
 
 Framework apps can use wrapper APIs instead:
 

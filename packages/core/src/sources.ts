@@ -1,0 +1,148 @@
+import type {
+  AskableContextSource,
+  AskableContextSourceMode,
+  AskableContextSourceResolveRequest,
+  AskableResolvedContextSource,
+} from './types.js';
+
+export type AskableSourceValue<T> = T | (() => T | Promise<T>);
+
+export interface AskableCreateSourceOptions<TData = unknown, TState = unknown> {
+  /** Source category. Examples: "document", "collection", "chart", "map", "canvas". */
+  kind?: string;
+  /** Human-readable source description. */
+  describe?: string | (() => string | Promise<string>);
+  /** Current app state for this source. */
+  state?: AskableSourceValue<TState>;
+  /** App-owned context data. Receives the same request that custom sources receive. */
+  data?: TData | ((request: AskableContextSourceResolveRequest) => TData | Promise<TData>);
+  /** Custom resolver for advanced source behavior. Overrides `data` when provided. */
+  resolve?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
+  /** Redact or transform this source before serialization. */
+  sanitize?: (source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>;
+}
+
+export interface AskableCollectionSourceData<TItem = unknown> {
+  mode: AskableContextSourceMode;
+  items?: TItem[];
+  summary?: unknown;
+  totalCount?: number;
+  returnedCount?: number;
+  truncated?: boolean;
+}
+
+export interface AskableCreateCollectionSourceOptions<TItem = unknown, TState = unknown> {
+  /** Source category. Defaults to "collection". */
+  kind?: string;
+  /** Human-readable source description. */
+  describe?: string | (() => string | Promise<string>);
+  /** Current collection state, such as filters, sort, page, route, or query. */
+  getState?: () => TState | Promise<TState>;
+  /** All logical items, including items not currently mounted in the DOM. */
+  getItems?: () => readonly TItem[] | Promise<readonly TItem[]>;
+  /** Items currently visible on screen. */
+  getVisibleItems?: () => readonly TItem[] | Promise<readonly TItem[]>;
+  /** Items explicitly selected by the user or active app state. */
+  getSelectedItems?: (request: AskableContextSourceResolveRequest) => readonly TItem[] | Promise<readonly TItem[]>;
+  /** Lightweight aggregate summary for prompt budgets. */
+  getSummary?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
+  /** Fallback for custom modes. */
+  resolve?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
+  /** Default item cap when the request does not provide `maxItems`. */
+  maxItems?: number;
+  /** Redact or transform each returned item. */
+  sanitizeItem?: (item: TItem, request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
+  /** Redact or transform this source before serialization. */
+  sanitize?: (source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>;
+}
+
+export function createAskableSource<TData = unknown, TState = unknown>(
+  options: AskableCreateSourceOptions<TData, TState>,
+): AskableContextSource {
+  return {
+    kind: options.kind,
+    describe: options.describe,
+    getState: options.state === undefined
+      ? undefined
+      : () => resolveSourceValue(options.state),
+    resolve: options.resolve ?? (options.data === undefined
+      ? undefined
+      : (request) => (typeof options.data === 'function'
+          ? (options.data as (request: AskableContextSourceResolveRequest) => TData | Promise<TData>)(request)
+          : options.data)),
+    sanitize: options.sanitize,
+  };
+}
+
+export function createAskableCollectionSource<TItem = unknown, TState = unknown>(
+  options: AskableCreateCollectionSourceOptions<TItem, TState>,
+): AskableContextSource {
+  return {
+    kind: options.kind ?? 'collection',
+    describe: options.describe,
+    getState: options.getState,
+    resolve: async (request) => {
+      const custom = await resolveCustomCollectionMode(options, request);
+      if (custom !== undefined) return custom;
+      if (!options.resolve) return undefined;
+      return options.resolve(request);
+    },
+    sanitize: options.sanitize,
+  };
+}
+
+async function resolveSourceValue<T>(value: AskableSourceValue<T>): Promise<T> {
+  return typeof value === 'function'
+    ? (value as () => T | Promise<T>)()
+    : value;
+}
+
+async function resolveCustomCollectionMode<TItem, TState>(
+  options: AskableCreateCollectionSourceOptions<TItem, TState>,
+  request: AskableContextSourceResolveRequest,
+): Promise<AskableCollectionSourceData<unknown> | unknown | undefined> {
+  if (request.mode === 'summary' && options.getSummary) {
+    return {
+      mode: request.mode,
+      summary: await options.getSummary(request),
+    };
+  }
+
+  if (request.mode === 'visible' && options.getVisibleItems) {
+    return collectionItemsResult(await options.getVisibleItems(), options, request);
+  }
+
+  if (request.mode === 'selected' && options.getSelectedItems) {
+    return collectionItemsResult(await options.getSelectedItems(request), options, request);
+  }
+
+  if (request.mode === 'all' && options.getItems) {
+    return collectionItemsResult(await options.getItems(), options, request);
+  }
+
+  if (request.mode === 'state') {
+    return undefined;
+  }
+
+  return undefined;
+}
+
+async function collectionItemsResult<TItem>(
+  items: readonly TItem[],
+  options: AskableCreateCollectionSourceOptions<TItem>,
+  request: AskableContextSourceResolveRequest,
+): Promise<AskableCollectionSourceData<unknown>> {
+  const maxItems = request.maxItems ?? options.maxItems;
+  const capped = maxItems === undefined ? items : items.slice(0, Math.max(0, maxItems));
+  const serialized = options.sanitizeItem
+    ? await Promise.all(capped.map((item) => options.sanitizeItem!(item, request)))
+    : [...capped];
+
+  return {
+    mode: request.mode,
+    items: serialized,
+    totalCount: items.length,
+    returnedCount: serialized.length,
+    truncated: serialized.length < items.length,
+  };
+}

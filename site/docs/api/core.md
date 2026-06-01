@@ -215,6 +215,103 @@ Sanitizers (`sanitizeMeta`, `sanitizeText`) apply to `push()` the same way they 
 
 ---
 
+### `registerSource(id, source)`
+
+Register app-owned context that is not fully represented in the DOM: paginated
+tables, virtualized lists, documents, maps, canvases, calendars, charts, file
+trees, or any custom state.
+
+```ts
+import { createAskableCollectionSource, createAskableSource } from '@askable-ui/core';
+
+const handle = ctx.registerSource('accounts', createAskableCollectionSource({
+  describe: 'Customer accounts in the dashboard',
+  getState: () => ({
+    filters,
+    sort,
+    page,
+    pageSize,
+    totalCount,
+  }),
+  getVisibleItems: () => table.getVisibleRows(),
+  getSelectedItems: ({ selection }) => getSelectedAccounts(selection),
+  getItems: () => accountStore.getAllMatching({ filters, sort }),
+  getSummary: ({ focus, maxItems }) => summarizeAccounts({ filters, sort, focus, maxItems }),
+  maxItems: 50,
+  sanitizeItem: redactAccountFields,
+  sanitize: (source) => ({
+    ...source,
+    state: redactFilterState(source.state),
+  }),
+}));
+
+ctx.registerSource('active-document', createAskableSource({
+  kind: 'document',
+  describe: 'Open editor document',
+  state: () => ({ title: editor.title, dirty: editor.dirty }),
+  data: ({ mode }) => mode === 'summary' ? editor.summary() : editor.export(),
+}));
+
+await ctx.toPromptContextAsync({
+  sources: [{ id: 'accounts', mode: 'all', maxItems: 20, timeoutMs: 750 }],
+  sourceErrorMode: 'include',
+});
+
+table.onStateChange(() => {
+  handle.notifyChanged();
+});
+
+handle.unregister();
+```
+
+Use this when the UI only renders part of the data. Askable captures what the
+user meant; the source resolver supplies what the app knows.
+
+| Field | Type | Description |
+|---|---|---|
+| `kind` | `string` | Optional category, such as `collection`, `document`, `chart`, `map`, or `custom` |
+| `describe` | `string \| () => string \| Promise<string>` | Human-readable source description |
+| `getState` | `() => unknown \| Promise<unknown>` | Current state, such as filters, sort, page, route, or viewport |
+| `resolve` | `(request) => unknown \| Promise<unknown>` | Returns selected, visible, summary, all-matching, or custom context |
+| `sanitize` | `(source) => source \| Promise<source>` | Redacts or transforms resolved source context before serialization |
+
+`createAskableSource()` is a small factory for arbitrary app context.
+`createAskableCollectionSource()` adds `getItems`, `getVisibleItems`,
+`getSelectedItems`, `getSummary`, `maxItems`, and `sanitizeItem` so paginated or
+virtualized collections can expose more than the rows currently mounted in the
+DOM without a table-specific API.
+
+`registerSource()` returns a handle with `id`, `notifyChanged()`, and
+`unregister()`. Call `notifyChanged()` when filters, pagination, selected
+records, query caches, documents, or store data change without a DOM focus
+change. Source-backed async subscribers re-resolve matching sources
+automatically. Stale handles from unmounted or replaced components cannot
+unregister or notify a newer source with the same id.
+
+Use `ctx.hasSource(id)` and `ctx.listSources()` to drive source pickers,
+diagnostics, or chat controls without resolving source data. `listSources()`
+returns each source id, optional kind, registration time, and last update time.
+
+Async prompt methods isolate source failures by default. If a resolver throws or
+times out, Askable includes a safe `Context source unavailable.` marker and does
+not expose the original error message or stack trace. Use
+`sourceErrorMode: 'omit'` to skip failed sources or `'throw'` to fail the prompt
+call.
+
+Related methods:
+
+```ts
+ctx.hasSource('accounts');
+ctx.listSources();
+ctx.unregisterSource('accounts');
+ctx.notifySourceChanged('accounts');
+await ctx.resolveSource('accounts', { mode: 'visible' });
+await ctx.toPromptContextAsync({ sources: 'all' });
+await ctx.toContextAsync({ history: 3, sources: ['accounts'] });
+```
+
+---
+
 ### `clear()`
 
 Reset current focus to `null` and fire the `'clear'` event. History is not affected.
@@ -259,6 +356,49 @@ Use this when the model/runtime should stay in sync while the user keeps interac
 
 ---
 
+### `subscribeAsync(callback, options?)`
+
+Subscribe to source-backed serialized context updates for streaming or
+long-running AI integrations. The callback receives the latest
+`ctx.toContextAsync()` output plus the current `AskableFocus | null`.
+
+```ts
+const unsubscribe = ctx.subscribeAsync(async (context, focus) => {
+  await streamTransport.send({
+    type: 'ui-context',
+    context,
+    focusMeta: focus?.meta ?? null,
+  });
+}, {
+  history: 3,
+  sources: [{ id: 'accounts', mode: 'summary', timeoutMs: 750 }],
+  debounce: 100,
+  onError(error) {
+    reportContextError(error);
+  },
+});
+```
+
+Async subscriptions rerun when focus changes, clear is called, or a matching
+source calls `notifyChanged()`. They ignore stale resolver results when a newer
+focus or source update happens before an earlier request finishes. Use
+`emitInitial: true` when the runtime needs the current context as soon as the
+subscription is registered.
+
+**Options:**
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `sources` | `'all' \| Array<string \| AskableContextSourceRequest>` | — | Sources to resolve and append |
+| `sourceMode` | `AskableContextSourceMode` | `'summary'` | Default source mode |
+| `sourceLabel` | `string` | `'Context sources'` | Natural-language source section label |
+| `sourceErrorMode` | `'include' \| 'omit' \| 'throw'` | `'include'` | How failed sources are handled |
+| `emitInitial` | `boolean` | `false` | Emit once immediately after registration |
+| `onError` | `(error) => void` | — | Handles source or callback failures |
+| _...all `AskableContextOutputOptions`_ | | | Passed through to `toContextAsync()` |
+
+---
+
 ### `toPromptContext(options?)`
 
 Serialize the current focus to a prompt-ready string. See [Prompt Serialization](/guide/serialization) for full option details.
@@ -281,6 +421,116 @@ ctx.toPromptContext({ scope: 'analytics' });
 ```
 
 **Returns:** `string` — `'No UI element is currently focused.'` (or `'null'` for JSON format) when nothing is focused.
+
+---
+
+### `toPromptContextAsync(options?)`
+
+Serialize the current focus plus registered async context sources.
+
+```ts
+await ctx.toPromptContextAsync({
+  sources: [
+    { id: 'accounts', mode: 'summary', timeoutMs: 750 },
+    { id: 'calendar', mode: 'selected' },
+  ],
+  sourceErrorMode: 'include',
+});
+
+await ctx.toPromptContextAsync({ sources: 'all', sourceMode: 'summary' });
+```
+
+In JSON mode, the output is wrapped as:
+
+```json
+{
+  "focus": { "meta": { "widget": "accounts-table" }, "text": "Accounts" },
+  "sources": [
+    {
+      "id": "accounts",
+      "kind": "collection",
+      "mode": "summary",
+      "state": { "page": 2, "totalCount": 80 },
+      "data": { "atRisk": 4 }
+    }
+  ]
+}
+```
+
+Use `toPromptContext()` for synchronous focus-only prompts. Use
+`toPromptContextAsync()` when the prompt should include app state, API data,
+summaries, selected rows, or other resolver-backed context.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `sources` | `'all' \| Array<string \| AskableContextSourceRequest>` | — | Sources to resolve and append |
+| `sourceMode` | `AskableContextSourceMode` | `'summary'` | Default mode when a source request omits `mode` |
+| `sourceLabel` | `string` | `'Context sources'` | Natural-language section label |
+| `sourceErrorMode` | `'include' \| 'omit' \| 'throw'` | `'include'` | How failed sources are handled |
+
+---
+
+### `toAgentRequest(question, options?)`
+
+Package a user question with source-backed Askable context for chat and agent
+transports. This returns a JSON-ready payload so production apps do not need to
+invent a different request shape for each provider.
+
+```ts
+const request = await ctx.toAgentRequest('Which accounts need follow-up?', {
+  requestId: crypto.randomUUID(),
+  history: 3,
+  sources: [{ id: 'accounts', mode: 'summary', timeoutMs: 750 }],
+  packet: true,
+  metadata: {
+    route: '/accounts',
+  },
+});
+
+await fetch('/api/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(request),
+});
+```
+
+The returned object includes:
+
+| Field | Description |
+|---|---|
+| `question` | User-authored question or instruction |
+| `context` | Prompt-ready string from `toContextAsync()` |
+| `focus` | Serialized current focus at request creation time |
+| `packet` | Optional structured Context packet when `packet` is enabled |
+| `requestId` | Optional app-provided tracing id |
+| `metadata` | Optional app-provided metadata |
+| `timestamp` | Unix timestamp in ms |
+
+Pass `packet: true` to derive packet options from the request options, pass a
+full `AskableAsyncContextPacketOptions` object when the packet needs different
+privacy, provenance, source, or capture settings than the prompt context, or
+pass an existing `WebContextPacket` from a region, circle, lasso, or text
+selection capture. Existing packets are attached as-is, which is useful for
+"select first, then ask a question" chat composers.
+
+```ts
+let pendingPacket: WebContextPacket | null = null;
+
+const lasso = createAskableRegionCapture(ctx, {
+  shape: 'lasso',
+  onCapture: (packet) => {
+    pendingPacket = packet;
+    openChatComposer();
+  },
+});
+
+async function submit(question: string) {
+  return ctx.toAgentRequest(question, {
+    packet: pendingPacket ?? true,
+    sources: ['accounts'],
+  });
+}
+```
 
 ---
 
@@ -366,6 +616,49 @@ const packet = ctx.toContextPacket({
 
 ---
 
+### `toContextPacketAsync(options?)`
+
+Serialize the current UI state plus registered async context sources to a
+structured Context packet. Resolved sources are added to
+`packet.surrounding.sources`.
+
+```ts
+const packet = await ctx.toContextPacketAsync({
+  source: { app: 'analytics-dashboard' },
+  sources: [{ id: 'accounts', mode: 'summary', maxItems: 20, timeoutMs: 750 }],
+  sourceErrorMode: 'include',
+});
+
+packet.surrounding?.sources;
+// [
+//   {
+//     label: 'accounts',
+//     role: 'collection',
+//     metadata: {
+//       id: 'accounts',
+//       mode: 'summary',
+//       state: { ... },
+//       data: { ... }
+//     }
+//   }
+// ]
+```
+
+Use `toContextPacket()` for synchronous focus/viewport/history packets. Use
+`toContextPacketAsync()` when agent runtimes or MCP bridges need resolver-backed
+application state in the same structured packet.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `sources` | `'all' \| Array<string \| AskableContextSourceRequest>` | — | Sources to resolve into `surrounding.sources` |
+| `sourceMode` | `AskableContextSourceMode` | `'summary'` | Default mode when a source request omits `mode` |
+| `sourceErrorMode` | `'include' \| 'omit' \| 'throw'` | `'include'` | How failed sources are handled |
+| _...all `AskableContextPacketOptions`_ | | | Passed through to base packet serialization |
+
+**Returns:** `Promise<WebContextPacket>`
+
+---
+
 ### `serializeFocus(options?)`
 
 Returns structured focus data as `AskableSerializedFocus | null`. Same options as `toPromptContext()`.
@@ -396,7 +689,11 @@ Mounts a temporary browser overlay that lets the user drag a rectangle, circle,
 or lasso, then emits a structured Context packet with explicit consent metadata.
 
 ```ts
-import { createAskableContext, createAskableRegionCapture } from '@askable-ui/core';
+import {
+  ASKABLE_REGION_CAPTURE_THEME,
+  createAskableContext,
+  createAskableRegionCapture,
+} from '@askable-ui/core';
 
 const ctx = createAskableContext({ viewport: true });
 ctx.observe(document);
@@ -406,11 +703,12 @@ const capture = createAskableRegionCapture(ctx, {
   intent: 'explain this selected area',
   includeViewport: true,
   theme: {
+    ...ASKABLE_REGION_CAPTURE_THEME,
     lassoStrokeWidth: 4,
     lassoGradientStops: [
-      { offset: '0%', color: '#06b6d4' },
-      { offset: '70%', color: '#a855f7' },
-      { offset: '100%', color: '#22c55e' },
+      { offset: '0%', color: '#6d28d9' },
+      { offset: '78%', color: '#8b5cf6' },
+      { offset: '100%', color: '#a78bfa' },
     ],
   },
   onCapture: (packet, selection) => {
@@ -429,14 +727,18 @@ capture.start();
 | `shape` | `'region' \| 'circle' \| 'lasso'` | `'region'` | Shape produced by the drag gesture |
 | `minSize` | `number` | `6` | Minimum accepted width/height in CSS pixels |
 | `once` | `boolean` | `true` | Remove the overlay after the first accepted capture |
-| `theme` | `Partial<AskableRegionCaptureTheme>` | Askable default | Overlay colors, selection fill/stroke, and lasso gradient/glow styling |
+| `theme` | `Partial<AskableRegionCaptureTheme>` | `ASKABLE_REGION_CAPTURE_THEME` | Overlay colors, selection fill/stroke, and lasso gradient/glow styling |
 | `onCapture` | `(packet, selection) => void` | — | Called with the Context packet and selection geometry |
 | `onCancel` | `() => void` | — | Called when the capture is cancelled |
 | _...most `AskableContextPacketOptions`_ | | | Passed through to `toContextPacket()` |
 
-The default lasso theme is a solid gradient freehand stroke with a soft glow.
-Use `theme` when your app needs brand-specific capture styling without
-replacing the library overlay.
+The default lasso theme is exported as `ASKABLE_REGION_CAPTURE_THEME`. Use
+`theme` when your app needs brand-specific capture styling without replacing the
+library overlay.
+
+Set `once: false` for persistent tools in production dashboards, canvases, and
+editors. The overlay stays mounted after each accepted capture, and
+`isActive()` remains `true` until `cancel()` or `destroy()` is called.
 
 **Returns:** `AskableRegionCaptureHandle` — object with `start()`, `cancel()`,
 `destroy()`, and `isActive()` methods.

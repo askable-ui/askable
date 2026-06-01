@@ -33,12 +33,10 @@ function AIChatInput() {
   async function handleSubmit(question: string) {
     const res = await fetch('/api/chat', {
       method: 'POST',
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: `UI context: ${promptContext}` },
-          { role: 'user', content: question },
-        ],
-      }),
+      body: JSON.stringify(await ctx.toAgentRequest(question, {
+        history: 3,
+        packet: true,
+      })),
     });
     return res.json();
   }
@@ -164,8 +162,12 @@ const { focus: focusOnly } = useAskable({ events: ['focus'] });
   - `ctx.getHistory(limit?)` — focus history, newest first
   - `ctx.toHistoryContext(limit?, options?)` — history as a prompt-ready string
   - `ctx.toPromptContext(options?)` — full serialization options (format, maxTokens, excludeKeys, …)
+  - `ctx.toPromptContextAsync(options?)` — include async app-owned sources
+  - `ctx.toAgentRequest(question, options?)` — package a user question with prompt context, focus, and an optional Context packet
+  - `ctx.subscribeAsync(callback, options?)` — stream source-backed context updates with stale result protection
   - `ctx.serializeFocus(options?)` — structured `AskableSerializedFocus` object
   - `ctx.toContextPacket()` — structured Context packet for agents and MCP bridges
+- `useAskableSource()` — lifecycle-managed app-owned source registration
 - `useAskableRegionCapture()` — explicit region/circle/lasso capture for visual page selection
 - `useAskableTextSelectionCapture()` — explicit highlighted text capture for page copy selection
 
@@ -208,6 +210,65 @@ function RevenueCard({ data }) {
 }
 ```
 
+### App-owned sources
+
+Use `useAskableSource()` when the assistant needs data that is not fully
+rendered in the DOM: paginated tables, virtualized lists, documents, charts,
+maps, calendars, canvases, or custom product state. The hook registers the
+source after mount, keeps the latest resolver implementation current, and
+unregisters automatically on unmount.
+
+```tsx
+import { useEffect } from 'react';
+import { useAskableSource } from '@askable-ui/react';
+
+function AccountsSource({ table, filters, sort }) {
+  const accounts = useAskableSource('accounts', {
+    kind: 'collection',
+    describe: 'Customer accounts matching the active filters',
+    getState: () => ({
+      filters,
+      sort,
+      page: table.getState().pagination.pageIndex + 1,
+      pageSize: table.getState().pagination.pageSize,
+      totalCount: table.options.meta?.totalCount,
+    }),
+    resolve: async ({ mode, maxItems }) => {
+      if (mode === 'visible') return table.getRowModel().rows.map((row) => row.original);
+      return summarizeAccounts({ filters, sort, maxItems });
+    },
+    sanitize: (source) => ({
+      ...source,
+      data: redactAccountFields(source.data),
+    }),
+  });
+
+  async function askAboutAccounts(question: string) {
+    const promptContext = await accounts.toPromptContext({
+      source: { mode: 'summary', maxItems: 20, timeoutMs: 750 },
+      sourceErrorMode: 'include',
+    });
+
+    return sendToAgent({ question, promptContext });
+  }
+
+  useEffect(() => {
+    return table.onStateChange(() => {
+      accounts.notifyChanged();
+    });
+  }, [accounts.notifyChanged, table]);
+
+  return null;
+}
+```
+
+Use `ctx.toPromptContext()` for synchronous focus-only prompts. Use
+`toPromptContextAsync()` or the hook's `toPromptContext()` helper when the
+assistant should include resolver-backed application data.
+Call `notifyChanged()` when source data changes without a DOM focus change,
+such as pagination, filters, selected rows, or query-cache updates. Async
+subscribers created with `ctx.subscribeAsync()` re-resolve matching sources.
+
 ### Region, circle, and lasso capture
 
 Use `useAskableRegionCapture()` when a user should select an area of the page
@@ -247,9 +308,13 @@ function RegionTools() {
 }
 ```
 
-The lasso overlay ships with a solid gradient freehand stroke. Pass `theme`
-through `useAskableRegionCapture()` to override the overlay, region/circle
-fill, or lasso gradient for your app.
+The lasso overlay ships with the core `ASKABLE_REGION_CAPTURE_THEME`. Pass
+`theme` through `useAskableRegionCapture()` to override the overlay,
+region/circle fill, or lasso gradient for your app.
+
+Use `once: false` when the capture control should stay active for repeated
+region, circle, or lasso selections. The hook keeps `active` true until
+`cancel()` or `destroy()` runs.
 
 ### Text selection capture
 

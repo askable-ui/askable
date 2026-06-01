@@ -166,7 +166,7 @@ export function StreamingChat() {
   useEffect(() => {
     if (status !== 'streaming') return;
 
-    return ctx.subscribe(async (context) => {
+    return ctx.subscribeAsync(async (context) => {
       if (!requestIdRef.current) return;
       await fetch('/api/chat/context', {
         method: 'POST',
@@ -178,7 +178,11 @@ export function StreamingChat() {
       });
     }, {
       history: 5,
+      sources: [{ id: 'accounts', mode: 'summary', timeoutMs: 750 }],
       debounce: 100,
+      onError(error) {
+        console.error(error);
+      },
     });
   }, [ctx, status]);
 
@@ -213,17 +217,36 @@ export async function askWithContext(userMessage: string, uiContext: string) {
 import { useAskable } from '@askable-ui/react';
 
 function AskButton() {
-  const { promptContext } = useAskable();
+  const { ctx } = useAskable();
 
   async function ask(question: string) {
     const res = await fetch('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, uiContext: promptContext }),
+      body: JSON.stringify(await ctx.toAgentRequest(question, {
+        history: 3,
+        packet: true,
+      })),
     });
     return res.json();
   }
   // ...
+}
+```
+
+Server routes can read the same payload shape regardless of provider:
+
+```ts
+export async function POST(req: Request) {
+  const { question, context, packet, focus, requestId } = await req.json();
+  const answer = await askWithContext(question, context);
+
+  return Response.json({
+    answer,
+    requestId,
+    receivedContextPacket: Boolean(packet),
+    focusMeta: focus?.meta ?? null,
+  });
 }
 ```
 

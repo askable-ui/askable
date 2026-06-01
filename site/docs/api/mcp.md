@@ -28,11 +28,35 @@ Adapts an existing `AskableContext` to the MCP provider interface.
 
 | Option | Type | Description |
 |---|---|---|
-| `ctx` | `Pick<AskableContext, 'toContextPacket' \| 'toContext'>` | Source context to expose through MCP |
+| `ctx` | `Pick<AskableContext, 'toContextPacket' \| 'toContext'>` plus optional async methods | Source context to expose through MCP |
 | `defaults` | `AskableMcpContextOptions` | Default packet and prompt options applied to every tool call |
 
 Defaults and tool-call options are merged. Nested `source`, `privacy`, and
 `provenance` metadata are merged field-by-field.
+
+When the provided context implements `toContextPacketAsync()` and
+`toContextAsync()`, the built-in provider uses those methods so registered
+app-owned sources can flow into MCP tools.
+
+```ts
+import { createAskableCollectionSource } from '@askable-ui/core';
+
+ctx.registerSource('accounts', createAskableCollectionSource({
+  describe: 'Accounts matching active filters',
+  getState: () => ({ filters, sort, totalCount }),
+  getVisibleItems: () => table.getVisibleRows(),
+  getItems: () => accountStore.getAllMatching({ filters, sort }),
+  getSummary: ({ maxItems }) => summarizeAccounts({ filters, sort, maxItems }),
+  sanitizeItem: redactAccountFields,
+}));
+
+const provider = createAskableMcpContextProvider(ctx, {
+  history: 3,
+  includeViewport: true,
+  sources: [{ id: 'accounts', mode: 'all', maxItems: 25, timeoutMs: 750 }],
+  sourceErrorMode: 'include',
+});
+```
 
 ## `createAskableMcpServer(options)`
 
@@ -61,8 +85,12 @@ options:
 | `hierarchyDepth` | Limit included ancestor hierarchy |
 | `history` | Include recent interactions |
 | `includeViewport` | Include visible annotated elements in packets |
+| `sources` | Include registered app-owned sources in packets and prompt text |
+| `sourceMode` | Default source mode when a source request omits `mode` |
+| `sourceErrorMode` | Use `include`, `omit`, or `throw` for failed sources |
 | `intent` | Attach user intent to packets |
 | `currentLabel` / `historyLabel` | Customize prompt section labels |
+| `sourceLabel` | Customize the prompt section label for source context |
 
 ## Registered MCP surface
 

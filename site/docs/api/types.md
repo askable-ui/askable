@@ -5,13 +5,33 @@ All types are exported from `@askable-ui/core`.
 ```ts
 import type {
   AskableContext,
+  AskableAgentRequest,
+  AskableAgentRequestOptions,
+  AskableAsyncContextSubscriber,
+  AskableAsyncContextPacketOptions,
+  AskableAsyncContextOutputOptions,
+  AskableAsyncPromptContextOptions,
   AskableContextOptions,
   AskableContextOutputOptions,
+  AskableCollectionSourceData,
+  AskableCreateCollectionSourceOptions,
+  AskableCreateSourceOptions,
+  AskableContextSource,
+  AskableContextSourceErrorMode,
+  AskableContextSourceHandle,
+  AskableContextSourceInclude,
+  AskableContextSourceInfo,
+  AskableContextSourceMode,
+  AskableContextSourceRequest,
+  AskableContextSourceResolveRequest,
+  AskableContextSubscriber,
   AskableFocus,
   AskableFocusSegment,
   AskableFocusSource,
+  AskableResolvedContextSource,
   AskableSerializedFocus,
   AskableSerializedFocusSegment,
+  AskableSourceValue,
   AskablePromptContextOptions,
   AskablePromptFormat,
   AskablePromptPreset,
@@ -21,6 +41,9 @@ import type {
   AskableEventMap,
   AskableEventName,
   AskableEventHandler,
+  AskableAsyncSubscribeOptions,
+  AskableSubscribeOptions,
+  WebContextPacket,
 } from '@askable-ui/core';
 ```
 
@@ -57,6 +80,11 @@ interface AskableContextOptions {
    * Applied at capture time.
    */
   sanitizeText?: (text: string) => string;
+  /**
+   * Sanitize resolved source context before serialization.
+   * Applied after source-level sanitizers.
+   */
+  sanitizeSource?: (source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>;
 }
 ```
 
@@ -181,6 +209,182 @@ interface AskablePromptContextOptions {
   prefix?: string;                 // Prefix in natural format. Default: 'User is focused on:'
   textLabel?: string;              // Label for text. Default: 'value'
   maxTokens?: number;              // Token budget (4 chars/token). Appends [truncated] if exceeded.
+}
+```
+
+---
+
+## Context Source Types
+
+Generic app-owned context source types used by `registerSource()`,
+`resolveSource()`, `toPromptContextAsync()`, and `toContextAsync()`.
+
+```ts
+type AskableContextSourceMode =
+  | 'state'
+  | 'visible'
+  | 'selected'
+  | 'summary'
+  | 'all'
+  | (string & {});
+
+interface AskableContextSource {
+  kind?: string;
+  describe?: string | (() => string | Promise<string>);
+  getState?: () => unknown | Promise<unknown>;
+  resolve?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
+  sanitize?: (source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>;
+}
+
+interface AskableContextSourceResolveRequest {
+  sourceId: string;
+  mode: AskableContextSourceMode;
+  focus: AskableFocus | null;
+  selection?: unknown;
+  maxItems?: number;
+  maxTokens?: number;
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}
+
+type AskableContextSourceErrorMode = 'include' | 'omit' | 'throw';
+
+interface AskableContextSourceRequest {
+  id: string;
+  mode?: AskableContextSourceMode;
+  selection?: unknown;
+  maxItems?: number;
+  maxTokens?: number;
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}
+
+type AskableContextSourceInclude = string | AskableContextSourceRequest;
+
+interface AskableResolvedContextSource {
+  id: string;
+  kind?: string;
+  description?: string;
+  mode: AskableContextSourceMode;
+  state?: unknown;
+  data?: unknown;
+  error?: { message: string };
+}
+
+interface AskableContextSourceHandle {
+  id: string;
+  notifyChanged(): void;
+  unregister(): void;
+}
+
+interface AskableContextSourceInfo {
+  id: string;
+  kind?: string;
+  registeredAt: number;
+  updatedAt: number;
+}
+
+interface AskableContextSourceChange {
+  id?: string;
+  timestamp: number;
+}
+```
+
+Helper factories:
+
+```ts
+type AskableSourceValue<T> = T | (() => T | Promise<T>);
+
+interface AskableCreateSourceOptions<TData = unknown, TState = unknown> {
+  kind?: string;
+  describe?: string | (() => string | Promise<string>);
+  state?: AskableSourceValue<TState>;
+  data?: TData | ((request: AskableContextSourceResolveRequest) => TData | Promise<TData>);
+  resolve?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
+  sanitize?: (source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>;
+}
+
+interface AskableCollectionSourceData<TItem = unknown> {
+  mode: AskableContextSourceMode;
+  items?: TItem[];
+  summary?: unknown;
+  totalCount?: number;
+  returnedCount?: number;
+  truncated?: boolean;
+}
+
+interface AskableCreateCollectionSourceOptions<TItem = unknown, TState = unknown> {
+  kind?: string;
+  describe?: string | (() => string | Promise<string>);
+  getState?: () => TState | Promise<TState>;
+  getItems?: () => readonly TItem[] | Promise<readonly TItem[]>;
+  getVisibleItems?: () => readonly TItem[] | Promise<readonly TItem[]>;
+  getSelectedItems?: (request: AskableContextSourceResolveRequest) => readonly TItem[] | Promise<readonly TItem[]>;
+  getSummary?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
+  resolve?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
+  maxItems?: number;
+  sanitizeItem?: (item: TItem, request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
+  sanitize?: (source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>;
+}
+```
+
+```ts
+interface AskableAsyncPromptContextOptions extends AskablePromptContextOptions {
+  sources?: 'all' | AskableContextSourceInclude[];
+  sourceMode?: AskableContextSourceMode;
+  sourceLabel?: string;
+  sourceErrorMode?: AskableContextSourceErrorMode;
+}
+
+interface AskableAsyncContextOutputOptions extends AskableContextOutputOptions {
+  sources?: 'all' | AskableContextSourceInclude[];
+  sourceMode?: AskableContextSourceMode;
+  sourceLabel?: string;
+  sourceErrorMode?: AskableContextSourceErrorMode;
+}
+
+interface AskableAsyncContextPacketOptions extends AskableContextPacketOptions {
+  sources?: 'all' | AskableContextSourceInclude[];
+  sourceMode?: AskableContextSourceMode;
+  sourceErrorMode?: AskableContextSourceErrorMode;
+}
+
+interface AskableAgentRequestOptions extends AskableAsyncContextOutputOptions {
+  requestId?: string;
+  metadata?: Record<string, unknown>;
+  packet?: boolean | AskableAsyncContextPacketOptions | WebContextPacket;
+}
+
+interface AskableAgentRequest {
+  requestId?: string;
+  question: string;
+  context: string;
+  focus: AskableSerializedFocus | null;
+  packet?: WebContextPacket;
+  metadata?: Record<string, unknown>;
+  timestamp: number;
+}
+```
+
+```ts
+type AskableContextSubscriber = (
+  context: string,
+  focus: AskableFocus | null
+) => void;
+
+interface AskableSubscribeOptions extends AskableContextOutputOptions {
+  debounce?: number;
+}
+
+type AskableAsyncContextSubscriber = (
+  context: string,
+  focus: AskableFocus | null
+) => void | Promise<void>;
+
+interface AskableAsyncSubscribeOptions extends AskableAsyncContextOutputOptions {
+  debounce?: number;
+  emitInitial?: boolean;
+  onError?: (error: unknown) => void;
 }
 ```
 

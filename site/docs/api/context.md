@@ -62,6 +62,6 @@ JSON.stringify(webContextPacketSchema, null, 2);
 | `source` | URL, title, app, route, and timestamp |
 | `capture` | Capture mode, gesture, and optional user intent |
 | `target` | Text, label, role, selector, bounds, metadata, and screenshot |
-| `surrounding` | Ancestors, nearby items, visible items, and history |
+| `surrounding` | Ancestors, nearby items, visible items, history, and app-owned sources |
 | `privacy` | Redaction and consent metadata |
 | `provenance` | Producer and capture method |

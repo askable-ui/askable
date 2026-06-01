@@ -145,6 +145,87 @@ Use the private default for isolated widgets. Pass a shared `ctx` when multiple 
 
 ---
 
+## `createAskableSourceStore(id, source, options?)`
+
+Lifecycle-managed registration for app-owned context sources. Use this when the
+assistant needs data that is not fully rendered in the DOM: paginated tables,
+virtualized lists, documents, charts, maps, calendars, canvases, file trees, or
+custom state.
+
+The store registers the source immediately and unregisters it when `destroy()`
+is called.
+
+```svelte
+<script lang="ts">
+  import { onDestroy } from 'svelte';
+  import { createAskableSourceStore } from '@askable-ui/svelte';
+
+  const accounts = createAskableSourceStore('accounts', {
+    kind: 'collection',
+    describe: 'Customer accounts matching the active filters',
+    getState: () => ({
+      filters,
+      sort,
+      page: table.getState().pagination.pageIndex + 1,
+      pageSize: table.getState().pagination.pageSize,
+      totalCount,
+    }),
+    resolve: async ({ mode, maxItems }) => {
+      if (mode === 'visible') return table.getRowModel().rows.map((row) => row.original);
+      return summarizeAccounts({ filters, sort, maxItems });
+    },
+    sanitize: (source) => ({
+      ...source,
+      data: redactAccountFields(source.data),
+    }),
+  });
+
+  onDestroy(accounts.destroy);
+
+  async function ask(question: string) {
+    const promptContext = await accounts.toPromptContext({
+      source: { mode: 'summary', maxItems: 20, timeoutMs: 750 },
+      sourceErrorMode: 'include',
+    });
+
+    return sendToAgent({ question, promptContext });
+  }
+
+  $: {
+    filters;
+    sort;
+    totalCount;
+    accounts.notifyChanged();
+  }
+</script>
+```
+
+Call `notifyChanged()` when source data changes without a DOM focus change,
+such as pagination, filters, selected rows, or query-cache updates. Async
+subscribers created with `ctx.subscribeAsync()` re-resolve matching sources.
+
+**Options:**
+
+| Option | Type | Description |
+|---|---|---|
+| `enabled` | `boolean` | Register while true. Defaults to `true` |
+| `ctx` | `AskableContext` | Optional context to share with other Svelte stores/components |
+| `events` | `AskableEvent[]` | Observation events for the underlying store context |
+
+**Returns:**
+
+| Value | Type | Description |
+|---|---|---|
+| `ctx` | `AskableContext` | Context instance that owns the source |
+| `sourceId` | `string` | Trimmed registered source id |
+| `resolve(request?)` | `Promise<AskableResolvedContextSource>` | Resolve this source directly |
+| `toPromptContext(options?)` | `Promise<string>` | Serialize focus plus this source |
+| `notifyChanged()` | `() => void` | Re-resolve matching async subscribers after source data changes |
+| `unregister()` | `() => void` | Manually unregister before destroy when needed |
+| `destroy()` | `() => void` | Unregisters the source and destroys the underlying store context |
+
+---
+
 ## `createAskableRegionCaptureStore(options?)`
 
 Factory that starts an explicit region, circle, or lasso selection overlay and exposes the captured Context packet as Svelte stores.
@@ -197,6 +278,10 @@ onDestroy(capture.destroy);
 | `destroy` | `() => void` | Cancels capture and destroys the underlying store context |
 | `isActive` | `() => boolean` | Reads the current overlay state |
 | `ctx` | `AskableContext` | Store context instance |
+
+For persistent capture tools, pass `once: false`. The overlay and `active` store
+stay on after each accepted capture until the user cancels or the store is
+destroyed.
 
 ---
 

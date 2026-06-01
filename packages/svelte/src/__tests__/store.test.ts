@@ -1,7 +1,8 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { get } from 'svelte/store';
 import {
   createAskableRegionCaptureStore,
+  createAskableSourceStore,
   createAskableStore,
   createAskableTextSelectionCaptureStore,
 } from '../askable.js';
@@ -192,6 +193,125 @@ describe('createAskableTextSelectionCaptureStore', () => {
   });
 });
 
+describe('createAskableSourceStore', () => {
+  it('registers a source and unregisters it on destroy', async () => {
+    const { createAskableContext } = await import('@askable-ui/core');
+    const ctx = createAskableContext();
+    const source = createAskableSourceStore('accounts', {
+      kind: 'collection',
+      getState: () => ({ totalCount: 2 }),
+      resolve: () => ({ rows: [{ company: 'Acme' }] }),
+    }, { ctx });
+
+    await expect(ctx.resolveSource('accounts')).resolves.toMatchObject({
+      id: 'accounts',
+      kind: 'collection',
+      state: { totalCount: 2 },
+      data: { rows: [{ company: 'Acme' }] },
+    });
+
+    source.destroy();
+
+    await expect(ctx.resolveSource('accounts')).rejects.toThrow('not registered');
+    ctx.destroy();
+  });
+
+  it('resolves current closure values', async () => {
+    const { createAskableContext } = await import('@askable-ui/core');
+    const ctx = createAskableContext();
+    let count = 1;
+    const source = createAskableSourceStore('accounts', {
+      getState: () => ({ count }),
+      resolve: () => ({ count }),
+    }, { ctx });
+
+    const first = await source.resolve();
+    count = 2;
+    const second = await source.resolve();
+
+    expect(first.state).toEqual({ count: 1 });
+    expect(second.state).toEqual({ count: 2 });
+
+    source.destroy();
+    ctx.destroy();
+  });
+
+  it('returns a helper for serializing the registered source', async () => {
+    const source = createAskableSourceStore('accounts', {
+      kind: 'collection',
+      resolve: ({ mode }) => ({ mode, total: 12 }),
+    });
+
+    const prompt = await source.toPromptContext({
+      source: { mode: 'summary' },
+    });
+
+    expect(prompt).toContain('accounts');
+    expect(prompt).toContain('"total":12');
+
+    source.destroy();
+  });
+
+  it('notifies async subscribers when source data changes', async () => {
+    const { createAskableContext } = await import('@askable-ui/core');
+    const ctx = createAskableContext();
+    let total = 1;
+    const source = createAskableSourceStore('accounts', {
+      resolve: () => ({ total }),
+    }, { ctx });
+
+    const received: string[] = [];
+    ctx.subscribeAsync((context) => {
+      received.push(context);
+    }, {
+      emitInitial: true,
+      sources: ['accounts'],
+    });
+
+    await vi.waitFor(() => expect(received).toHaveLength(1));
+
+    total = 2;
+    source.notifyChanged();
+
+    await vi.waitFor(() => {
+      expect(received).toHaveLength(2);
+      expect(received[1]).toContain('"total":2');
+    });
+
+    source.destroy();
+    ctx.destroy();
+  });
+
+  it('can disable registration', async () => {
+    const { createAskableContext } = await import('@askable-ui/core');
+    const ctx = createAskableContext();
+    const source = createAskableSourceStore('accounts', {
+      resolve: () => ({ total: 1 }),
+    }, { ctx, enabled: false });
+
+    await expect(ctx.resolveSource('accounts')).rejects.toThrow('not registered');
+
+    source.destroy();
+    ctx.destroy();
+  });
+
+  it('normalizes whitespace around ids', async () => {
+    const { createAskableContext } = await import('@askable-ui/core');
+    const ctx = createAskableContext();
+    const source = createAskableSourceStore(' accounts ', {
+      resolve: () => ({ total: 1 }),
+    }, { ctx });
+
+    await expect(ctx.resolveSource('accounts')).resolves.toMatchObject({
+      id: 'accounts',
+      data: { total: 1 },
+    });
+
+    source.destroy();
+    ctx.destroy();
+  });
+});
+
 describe('createAskableRegionCaptureStore', () => {
   afterEach(() => {
     document.getElementById('askable-region-capture')?.remove();
@@ -273,6 +393,31 @@ describe('createAskableRegionCaptureStore', () => {
         { x: 80, y: 75 },
       ],
     });
+
+    capture.destroy();
+  });
+
+  it('keeps store state active after capture when once is false', () => {
+    const capture = createAskableRegionCaptureStore({ once: false });
+
+    capture.start();
+    expect(get(capture.active)).toBe(true);
+    expect(capture.isActive()).toBe(true);
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 20, 30));
+    overlay.dispatchEvent(pointerEvent('pointermove', 80, 90));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 90));
+
+    expect(get(capture.lastPacket)).toMatchObject({
+      capture: {
+        mode: 'region',
+        gesture: 'drag',
+      },
+    });
+    expect(get(capture.active)).toBe(true);
+    expect(capture.isActive()).toBe(true);
+    expect(document.getElementById('askable-region-capture')).toBe(overlay);
 
     capture.destroy();
   });

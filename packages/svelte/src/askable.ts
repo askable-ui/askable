@@ -6,9 +6,12 @@ import {
   createAskableTextSelectionCapture,
 } from '@askable-ui/core';
 import type {
+  AskableAsyncPromptContextOptions,
   AskableEvent,
   AskableFocus,
   AskableContext,
+  AskableContextSource,
+  AskableContextSourceRequest,
   AskableInspectorOptions,
   AskableContextOptions,
   AskableRegionCaptureHandle,
@@ -17,6 +20,7 @@ import type {
   AskableTextSelectionCaptureHandle,
   AskableTextSelectionCaptureOptions,
   AskableTextSelectionCaptureSelection,
+  AskableResolvedContextSource,
   WebContextPacket,
 } from '@askable-ui/core';
 
@@ -60,6 +64,24 @@ export interface AskableTextSelectionCaptureStore {
   isActive: () => boolean;
 }
 
+export interface AskableSourceStoreOptions extends AskableStoreOptions {
+  /** Register the source while true. Defaults to true. */
+  enabled?: boolean;
+}
+
+export interface AskableSourceStore {
+  ctx: AskableContext;
+  sourceId: string;
+  resolve: (request?: Omit<AskableContextSourceRequest, 'id'>) => Promise<AskableResolvedContextSource>;
+  toPromptContext: (
+    options?: Omit<AskableAsyncPromptContextOptions, 'sources'>
+      & { source?: Omit<AskableContextSourceRequest, 'id'> },
+  ) => Promise<string>;
+  notifyChanged: () => void;
+  unregister: () => void;
+  destroy: () => void;
+}
+
 export function createAskableStore(options?: AskableStoreOptions) {
   const usesProvidedCtx = Boolean(options?.ctx);
   const ctx = options?.ctx ?? createAskableContext(options?.name ? { name: options.name } : undefined);
@@ -100,6 +122,72 @@ export function createAskableStore(options?: AskableStoreOptions) {
   return { focus, promptContext, ctx, destroy };
 }
 
+export function createAskableSourceStore(
+  id: string,
+  source: AskableContextSource,
+  options: AskableSourceStoreOptions = {},
+): AskableSourceStore {
+  const { enabled = true, ...storeOptions } = options;
+  const askable = createAskableStore(storeOptions);
+  const sourceId = id.trim();
+  let registered = false;
+  let handle: ReturnType<AskableContext['registerSource']> | null = null;
+
+  function buildProxy(): AskableContextSource {
+    return {
+      get kind() {
+        return source.kind;
+      },
+      describe: () => {
+        const describe = source.describe;
+        if (typeof describe === 'function') return describe();
+        return describe ?? '';
+      },
+      getState: () => source.getState?.(),
+      resolve: (request) => source.resolve?.(request),
+      sanitize: (resolved) => source.sanitize?.(resolved) ?? resolved,
+    };
+  }
+
+  function unregister() {
+    if (!registered) return;
+    handle?.unregister();
+    handle = null;
+    registered = false;
+  }
+
+  if (enabled && sourceId) {
+    handle = askable.ctx.registerSource(sourceId, buildProxy());
+    registered = true;
+  }
+
+  function notifyChanged() {
+    handle?.notifyChanged();
+  }
+
+  function destroy() {
+    unregister();
+    askable.destroy();
+  }
+
+  return {
+    ctx: askable.ctx,
+    sourceId,
+    resolve: (request?: Omit<AskableContextSourceRequest, 'id'>) => askable.ctx.resolveSource(sourceId, request),
+    toPromptContext: (promptOptions?: Omit<AskableAsyncPromptContextOptions, 'sources'>
+      & { source?: Omit<AskableContextSourceRequest, 'id'> }) => {
+      const { source: sourceRequest, ...rest } = promptOptions ?? {};
+      return askable.ctx.toPromptContextAsync({
+        ...rest,
+        sources: [{ id: sourceId, ...sourceRequest }],
+      });
+    },
+    notifyChanged,
+    unregister,
+    destroy,
+  };
+}
+
 export function createAskableRegionCaptureStore(
   options: AskableRegionCaptureStoreOptions = {},
 ): AskableRegionCaptureStore {
@@ -129,8 +217,12 @@ export function createAskableRegionCaptureStore(
       onCapture(packet, selection) {
         _lastPacket.set(packet);
         _lastSelection.set(selection);
-        handle = null;
-        _active.set(false);
+        if (currentOptions.once === false) {
+          _active.set(true);
+        } else {
+          handle = null;
+          _active.set(false);
+        }
         currentOptions.onCapture?.(packet, selection);
       },
       onCancel() {
