@@ -305,18 +305,19 @@ export function createAskableRegionCapture(
       },
     });
 
-    options.onCapture?.(packet, selection);
-
+    // Clean up before calling onCapture so an error in the callback
+    // never leaves a stale overlay in the DOM.
     if (once) {
       removeOverlay();
-      return;
+    } else {
+      startPoint = null;
+      lassoPoints = [];
+      active = false;
+      if (selectionEl) selectionEl.style.display = 'none';
+      if (lassoSvg) lassoSvg.style.display = 'none';
     }
 
-    startPoint = null;
-    lassoPoints = [];
-    active = false;
-    if (selectionEl) selectionEl.style.display = 'none';
-    if (lassoSvg) lassoSvg.style.display = 'none';
+    options.onCapture?.(packet, selection);
   }
 
   function onPointerCancel() {
