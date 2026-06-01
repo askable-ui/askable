@@ -1,4 +1,8 @@
 import type { AskableContext, AskableFocus, AskablePromptContextOptions } from './types.js';
+import { createAskableRegionCapture } from './capture.js';
+import { createAskableTextSelectionCapture } from './selection.js';
+import type { AskableRegionCaptureHandle, AskableRegionCaptureShape } from './capture.js';
+import type { AskableTextSelectionCaptureHandle } from './selection.js';
 
 export type AskableInspectorPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
@@ -17,6 +21,11 @@ export interface AskableInspectorOptions {
    * @default true
    */
   highlight?: boolean;
+  /**
+   * Show built-in buttons for testing clear, region, circle, lasso, and text selection modes.
+   * @default true
+   */
+  tools?: boolean;
 }
 
 export interface AskableInspectorHandle {
@@ -85,6 +94,42 @@ function buildPanelHTML(focus: AskableFocus | null, promptContext: string): stri
   `;
 }
 
+function clampPanelPosition(panel: HTMLElement, left: number, top: number): { left: number; top: number } {
+  const rect = panel.getBoundingClientRect();
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+  const margin = 8;
+  const maxLeft = Math.max(margin, viewportWidth - rect.width - margin);
+  const maxTop = Math.max(margin, viewportHeight - rect.height - margin);
+  return {
+    left: Math.min(Math.max(margin, left), maxLeft),
+    top: Math.min(Math.max(margin, top), maxTop),
+  };
+}
+
+function applyPanelPosition(panel: HTMLElement, left: number, top: number) {
+  panel.style.left = `${Math.round(left)}px`;
+  panel.style.top = `${Math.round(top)}px`;
+  panel.style.right = 'auto';
+  panel.style.bottom = 'auto';
+}
+
+type InspectorToolHandle = Pick<AskableRegionCaptureHandle | AskableTextSelectionCaptureHandle, 'cancel' | 'destroy' | 'isActive'>;
+
+function inspectorButtonStyle(active = false): string {
+  return [
+    'border:1px solid #30363d',
+    `background:${active ? '#1f6feb' : '#21262d'}`,
+    `color:${active ? '#ffffff' : '#c9d1d9'}`,
+    'border-radius:6px',
+    'font:inherit',
+    'font-size:11px',
+    'line-height:1',
+    'padding:6px 7px',
+    'cursor:pointer',
+  ].join(';');
+}
+
 /**
  * Mount a floating inspector panel that shows the current Askable focus,
  * parsed metadata, and prompt output in real time.
@@ -104,7 +149,12 @@ export function createAskableInspector(
     return { destroy: () => {} };
   }
 
-  const { position = 'bottom-right', promptOptions, highlight = true } = options;
+  const {
+    position = 'bottom-right',
+    promptOptions,
+    highlight = true,
+    tools = true,
+  } = options;
 
   // Remove any existing inspector
   document.getElementById(PANEL_ID)?.remove();
@@ -117,6 +167,7 @@ export function createAskableInspector(
     POSITION_STYLES[position],
     'z-index:2147483647',
     'width:320px',
+    'max-width:calc(100vw - 32px)',
     'max-height:420px',
     'overflow:auto',
     'background:#161b22',
@@ -132,12 +183,34 @@ export function createAskableInspector(
 
   // Header row
   const header = document.createElement('div');
-  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #30363d';
+  header.setAttribute('data-askable-inspector-drag-handle', '');
+  header.style.cssText = [
+    'display:flex',
+    'align-items:center',
+    'justify-content:space-between',
+    'gap:8px',
+    'margin-bottom:8px',
+    'padding-bottom:8px',
+    'border-bottom:1px solid #30363d',
+    'cursor:grab',
+    'user-select:none',
+  ].join(';');
   header.innerHTML = `
     <span style="color:#58a6ff;font-weight:700;font-size:11px;letter-spacing:.06em">✦ ASKABLE INSPECTOR</span>
     <button id="askable-inspector-close" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:14px;line-height:1;padding:2px" title="Close">&times;</button>
   `;
   panel.appendChild(header);
+
+  const toolsEl = document.createElement('div');
+  toolsEl.style.cssText = [
+    'display:flex',
+    'flex-wrap:wrap',
+    'gap:6px',
+    'margin-bottom:8px',
+    'padding-bottom:8px',
+    'border-bottom:1px solid #30363d',
+  ].join(';');
+  if (tools) panel.appendChild(toolsEl);
 
   const body = document.createElement('div');
   panel.appendChild(body);
@@ -180,15 +253,152 @@ export function createAskableInspector(
   ctx.on('clear', clearHandler);
 
   let destroyed = false;
+  let activeTool: InspectorToolHandle | null = null;
+  let activeToolName: string | null = null;
+  let dragging: {
+    startX: number;
+    startY: number;
+    startLeft: number;
+    startTop: number;
+  } | null = null;
+
+  function stopActiveTool() {
+    activeTool?.destroy();
+    activeTool = null;
+    activeToolName = null;
+    renderTools();
+  }
+
+  function toolCaptureMeta(mode: string, meta: Record<string, unknown>) {
+    ctx.push({ capture: mode, ...meta }, `${mode} inspector selection`);
+  }
+
+  function startRegionTool(shape: AskableRegionCaptureShape) {
+    stopActiveTool();
+    const handle = createAskableRegionCapture(ctx, {
+      shape,
+      intent: `inspect ${shape} selection`,
+      onCapture: (packet, selection) => {
+        activeTool = null;
+        activeToolName = null;
+        toolCaptureMeta(packet.capture.mode, {
+          shape: selection.shape,
+          bounds: selection.bounds,
+          ...(selection.points ? { pointCount: selection.points.length } : {}),
+        });
+        renderTools();
+      },
+      onCancel: () => {
+        activeTool = null;
+        activeToolName = null;
+        renderTools();
+      },
+    });
+    activeTool = handle;
+    activeToolName = shape;
+    handle.start();
+    renderTools();
+  }
+
+  function startTextSelectionTool() {
+    stopActiveTool();
+    const handle = createAskableTextSelectionCapture(ctx, {
+      once: true,
+      intent: 'inspect text selection',
+      onCapture: (_packet, selection) => {
+        activeTool = null;
+        activeToolName = null;
+        ctx.push({
+          capture: 'text-selection',
+          length: selection.text.length,
+          ...(selection.bounds ? { bounds: selection.bounds } : {}),
+          ...(selection.selector ? { selector: selection.selector } : {}),
+        }, selection.text);
+        renderTools();
+      },
+      onCancel: () => {
+        activeTool = null;
+        activeToolName = null;
+        renderTools();
+      },
+    });
+    activeTool = handle;
+    activeToolName = 'text';
+    handle.start();
+    renderTools();
+  }
+
+  function renderTools() {
+    if (!tools) return;
+    const buttons = [
+      { id: 'region', label: 'Region', onClick: () => startRegionTool('region') },
+      { id: 'circle', label: 'Circle', onClick: () => startRegionTool('circle') },
+      { id: 'lasso', label: 'Lasso', onClick: () => startRegionTool('lasso') },
+      { id: 'text', label: 'Text', onClick: () => startTextSelectionTool() },
+      { id: 'clear', label: 'Clear', onClick: () => { stopActiveTool(); ctx.clear(); } },
+    ];
+    toolsEl.replaceChildren(...buttons.map((button) => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.setAttribute('data-askable-inspector-tool', button.id);
+      el.style.cssText = inspectorButtonStyle(activeToolName === button.id);
+      el.textContent = button.label;
+      el.addEventListener('click', button.onClick);
+      return el;
+    }));
+  }
+
+  function onDragMove(event: MouseEvent) {
+    if (!dragging) return;
+    event.preventDefault();
+    const next = clampPanelPosition(
+      panel,
+      dragging.startLeft + event.clientX - dragging.startX,
+      dragging.startTop + event.clientY - dragging.startY,
+    );
+    applyPanelPosition(panel, next.left, next.top);
+  }
+
+  function onDragEnd() {
+    if (!dragging) return;
+    dragging = null;
+    header.style.cursor = 'grab';
+    document.removeEventListener('mousemove', onDragMove);
+    document.removeEventListener('mouseup', onDragEnd);
+  }
+
+  function onDragStart(event: MouseEvent) {
+    if (event.button !== 0) return;
+    if (event.target instanceof HTMLButtonElement) return;
+    event.preventDefault();
+    const rect = panel.getBoundingClientRect();
+    const start = clampPanelPosition(panel, rect.left, rect.top);
+    applyPanelPosition(panel, start.left, start.top);
+    dragging = {
+      startX: event.clientX,
+      startY: event.clientY,
+      startLeft: start.left,
+      startTop: start.top,
+    };
+    header.style.cursor = 'grabbing';
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+  }
+
   function destroy() {
     if (destroyed) return;
     destroyed = true;
     ctx.off('focus', focusHandler);
     ctx.off('clear', clearHandler);
+    onDragEnd();
+    stopActiveTool();
+    header.removeEventListener('mousedown', onDragStart);
     clearHighlight();
     panel.remove();
   }
 
+  renderTools();
+  header.addEventListener('mousedown', onDragStart);
   panel.querySelector('#askable-inspector-close')?.addEventListener('click', destroy);
 
   return { destroy };

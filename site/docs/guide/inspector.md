@@ -50,6 +50,7 @@ if (process.env.NODE_ENV === 'development') {
 createAskableInspector(ctx, {
   position: 'bottom-right',  // 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
   highlight: true,           // outline the focused element
+  tools: true,               // buttons for region, circle, lasso, text, and clear
   promptOptions: {           // forwarded to toPromptContext()
     preset: 'compact',
   },
@@ -60,6 +61,7 @@ createAskableInspector(ctx, {
 |---|---|---|---|
 | `position` | `string` | `'bottom-right'` | Where to anchor the panel |
 | `highlight` | `boolean` | `true` | Draw an outline on the focused element |
+| `tools` | `boolean` | `true` | Show buttons for region, circle, lasso, text selection, and clear |
 | `promptOptions` | `AskablePromptContextOptions` | — | Options for the prompt output preview |
 
 ## React
