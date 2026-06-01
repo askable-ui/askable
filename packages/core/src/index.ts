@@ -46,6 +46,8 @@ export type {
   AskableCollectionSourceData,
   AskableCreateCollectionSourceOptions,
   AskableCreateSourceOptions,
+  AskableSourceModeMap,
+  AskableSourceResolver,
   AskableSourceValue,
 } from './sources.js';
 export type {
