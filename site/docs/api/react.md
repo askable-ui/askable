@@ -89,7 +89,7 @@ import { AskableInspector } from '@askable-ui/react';
 ```
 
 **Props:**
-- all core `AskableInspectorOptions` props such as `position`, `highlight`, and `promptOptions`
+- all core `AskableInspectorOptions` props such as `position`, `highlight`, `tools`, and `promptOptions`
 - `ctx?: AskableContext` — reuse an explicit context
 - `name?: string` — match a named shared React context
 - `events?: AskableEvent[]` — match a shared React event configuration

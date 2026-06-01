@@ -226,4 +226,103 @@ describe('createAskableInspector', () => {
     inspector.destroy();
     ctx.destroy();
   });
+
+  it('can be dragged to a new viewport position', () => {
+    const ctx = createAskableContext();
+    const inspector = createAskableInspector(ctx);
+    const panel = document.getElementById('askable-inspector')!;
+    const handle = panel.querySelector('[data-askable-inspector-drag-handle]')!;
+
+    panel.getBoundingClientRect = () => ({
+      x: 100,
+      y: 120,
+      left: 100,
+      top: 120,
+      right: 420,
+      bottom: 360,
+      width: 320,
+      height: 240,
+      toJSON: () => ({}),
+    });
+
+    handle.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true,
+      button: 0,
+      clientX: 110,
+      clientY: 130,
+    }));
+    document.dispatchEvent(new MouseEvent('mousemove', {
+      bubbles: true,
+      clientX: 180,
+      clientY: 210,
+    }));
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+
+    expect(panel.style.left).toBe('170px');
+    expect(panel.style.top).toBe('200px');
+    expect(panel.style.right).toBe('auto');
+    expect(panel.style.bottom).toBe('auto');
+
+    inspector.destroy();
+    ctx.destroy();
+  });
+
+  it('shows built-in interaction test tools by default', () => {
+    const ctx = createAskableContext();
+    const inspector = createAskableInspector(ctx);
+
+    expect(document.querySelector('[data-askable-inspector-tool="region"]')).not.toBeNull();
+    expect(document.querySelector('[data-askable-inspector-tool="circle"]')).not.toBeNull();
+    expect(document.querySelector('[data-askable-inspector-tool="lasso"]')).not.toBeNull();
+    expect(document.querySelector('[data-askable-inspector-tool="text"]')).not.toBeNull();
+    expect(document.querySelector('[data-askable-inspector-tool="clear"]')).not.toBeNull();
+
+    inspector.destroy();
+    ctx.destroy();
+  });
+
+  it('can hide built-in interaction test tools', () => {
+    const ctx = createAskableContext();
+    const inspector = createAskableInspector(ctx, { tools: false });
+
+    expect(document.querySelector('[data-askable-inspector-tool="region"]')).toBeNull();
+
+    inspector.destroy();
+    ctx.destroy();
+  });
+
+  it('starts and cleans up capture tools from the inspector', () => {
+    const ctx = createAskableContext();
+    const inspector = createAskableInspector(ctx);
+    const lasso = document.querySelector('[data-askable-inspector-tool="lasso"]')!;
+
+    lasso.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(document.getElementById('askable-region-capture')).not.toBeNull();
+
+    inspector.destroy();
+
+    expect(document.getElementById('askable-region-capture')).toBeNull();
+
+    ctx.destroy();
+  });
+
+  it('clear tool clears the active focus', () => {
+    const el = attach(makeEl({ metric: 'revenue' }, 'Revenue'));
+    const ctx = createAskableContext();
+    ctx.observe(document);
+    const inspector = createAskableInspector(ctx);
+
+    el.click();
+    expect(ctx.getFocus()).not.toBeNull();
+
+    document
+      .querySelector('[data-askable-inspector-tool="clear"]')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(ctx.getFocus()).toBeNull();
+
+    inspector.destroy();
+    ctx.destroy();
+  });
 });
