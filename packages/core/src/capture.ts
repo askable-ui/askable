@@ -93,6 +93,25 @@ export const ASKABLE_REGION_CAPTURE_THEME: AskableRegionCaptureTheme = {
   lassoGlowRadius: 8,
 };
 
+/**
+ * Attaches a pointer-driven region-capture overlay to the document. The user drags
+ * (region), draws (circle), or traces (lasso) a shape; on release, an Askable context
+ * packet is emitted to `onCapture` with the selection geometry and the current context.
+ *
+ * Call `handle.start()` to mount the overlay and `handle.destroy()` to clean up.
+ * With `once: false` (default is `true`) the overlay persists after each capture.
+ *
+ * @example
+ * ```ts
+ * const capture = createAskableRegionCapture(ctx, {
+ *   shape: 'lasso',
+ *   intent: 'explain this region',
+ *   onCapture: (packet, selection) => sendToAI(packet),
+ *   onCancel: () => console.log('cancelled'),
+ * });
+ * capture.start(); // mounts overlay
+ * ```
+ */
 export function createAskableRegionCapture(
   ctx: AskableContext,
   options: AskableRegionCaptureOptions = {},

@@ -373,6 +373,213 @@ Do not ship `<AskableInspector>` or `{ inspector: true }` in production builds.
 
 ---
 
+## App-owned context sources
+
+Attach non-DOM data (tables, lists, API responses, documents) so the AI always has the right data — not just what's visible in the DOM.
+
+### Registering a collection source
+
+```ts
+import { createAskableCollectionSource } from '@askable-ui/core';
+
+const accountsSource = createAskableCollectionSource({
+  describe: 'Accounts matching active filters',
+  getState: () => ({ filter: activeFilter, sort: currentSort, page: currentPage }),
+  getItems: () => allAccounts,           // all logical items (e.g. beyond current page)
+  getVisibleItems: () => visibleRows,    // items rendered on screen
+  getSummary: () => ({ total: allAccounts.length, filtered: visibleRows.length }),
+  maxItems: 50,
+  sanitizeItem: (account) => {
+    const { internalId: _, rawSql: __, ...safe } = account;
+    return safe;                         // strip PII / internal keys before sending
+  },
+});
+
+ctx.registerSource('accounts', accountsSource);
+```
+
+`sanitizeItem` runs per item, async-safe. Rejected items are silently dropped so one bad row never crashes the whole source.
+
+### Registering a generic source
+
+```ts
+import { createAskableSource } from '@askable-ui/core';
+
+ctx.registerSource('current-doc', createAskableSource({
+  kind: 'document',
+  describe: 'Currently open editor document',
+  state: () => ({ filename: editor.filename, isDirty: editor.isDirty }),
+  data: ({ mode }) => mode === 'summary'
+    ? { wordCount: editor.wordCount, language: editor.language }
+    : { content: editor.getText() },
+}));
+```
+
+### React: `useAskableSource`
+
+```tsx
+import { useAskableSource } from '@askable-ui/react';
+
+function AccountsTable({ rows }) {
+  const { handle } = useAskableSource('accounts', {
+    getSummary: () => ({ total: rows.length }),
+    getItems: () => rows,
+    sanitizeItem: ({ internalId: _, ...safe }) => safe,
+  });
+
+  useEffect(() => {
+    handle?.notifyChanged(); // tell context the data updated
+  }, [rows, handle]);
+}
+```
+
+### Vue 3: `useAskableSource`
+
+```vue
+<script setup>
+import { useAskableSource } from '@askable-ui/vue';
+import { computed } from 'vue';
+
+const props = defineProps(['rows']);
+useAskableSource('accounts', {
+  getItems: () => props.rows,
+  enabled: computed(() => props.rows.length > 0),
+});
+</script>
+```
+
+### Controlling source resolution
+
+```ts
+// Include specific sources in prompt output
+const prompt = await ctx.toPromptContextAsync({
+  sources: ['accounts', { id: 'current-doc', mode: 'summary', timeoutMs: 1500 }],
+  sourceMode: 'summary',   // default mode for sources listed by string ID
+  sourceErrorMode: 'omit', // 'include' (default), 'omit', or 'throw'
+});
+```
+
+`sourceErrorMode`:
+- `'include'` *(default)* — failed source appears with an error note; context is still emitted
+- `'omit'` — failed source is silently dropped; healthy sources still appear
+- `'throw'` — any failure rejects the whole promise
+
+---
+
+## Streaming context with `subscribeAsync`
+
+Use `subscribeAsync` for live multi-turn agent transports — every time focus changes, the subscriber fires with fresh context including async source data.
+
+```ts
+const unsubscribe = ctx.subscribeAsync(async (context, focus) => {
+  // context is the fully resolved prompt string (sources included)
+  await myStreamingLLM.updateSystemPrompt(context);
+}, {
+  sources: 'all',
+  sourceMode: 'summary',
+  sourceErrorMode: 'omit',
+  debounce: 300,        // ms to wait after the last focus change before firing
+  emitInitial: true,    // fire immediately on subscribe (before the first user interaction)
+});
+
+// Stop listening
+unsubscribe();
+```
+
+For one-shot async serialization without subscribing:
+
+```ts
+const prompt = await ctx.toPromptContextAsync({
+  sources: ['accounts'],
+  history: 3,
+  sourceMode: 'summary',
+});
+```
+
+---
+
+## Packaging context for agent requests
+
+`toAgentRequest` bundles the current context, focus, and an optional `WebContextPacket` into a single typed object — ready to send over HTTP, WebSocket, or any agent transport.
+
+```ts
+const request = await ctx.toAgentRequest('Which accounts need follow-up?', {
+  requestId: crypto.randomUUID(),
+  sources: ['accounts'],
+  excludeKeys: ['internalId'],   // strip keys before they reach the packet
+  packet: true,                  // include a full WebContextPacket
+  metadata: { route: '/accounts', userId: session.userId },
+});
+
+// request.context  — prompt-ready string
+// request.focus    — serialized focus (null if nothing focused)
+// request.packet   — full WebContextPacket (undefined if packet:false)
+// request.metadata — your app-level metadata passed through verbatim
+// request.timestamp — Unix ms epoch
+
+await fetch('/api/agent', {
+  method: 'POST',
+  body: JSON.stringify(request),
+});
+```
+
+Pass an existing `WebContextPacket` (from a region capture, etc.) instead of `packet: true`:
+
+```ts
+const request = await ctx.toAgentRequest('Explain this selection', {
+  packet: capturedPacket,
+});
+```
+
+---
+
+## MCP integration (`@askable-ui/mcp`)
+
+Connect Askable context to any MCP-compatible LLM client (Claude Desktop, Cursor, custom agents) using `@askable-ui/mcp`.
+
+```bash
+npm install @askable-ui/mcp
+```
+
+### Wiring the MCP server
+
+```ts
+import { createAskableMcpServer, createAskableMcpContextProvider } from '@askable-ui/mcp';
+import { createAskableContext } from '@askable-ui/core';
+
+const ctx = createAskableContext();
+ctx.observe(document.body);
+
+// Optional: register sources
+ctx.registerSource('accounts', accountsSource);
+
+const provider = createAskableMcpContextProvider(ctx, {
+  source: { app: 'my-dashboard', version: '1.0.0' },
+  sources: 'all',
+  sourceMode: 'summary',
+  privacy: { consent: 'explicit' },
+});
+
+const server = createAskableMcpServer({ provider });
+// Attach server to your MCP transport (SSE, stdio, etc.)
+```
+
+The server exposes three tools to connected agents:
+- `get_current_context` — returns the current `WebContextPacket` as JSON
+- `format_context_for_prompt` — returns a prompt-ready text rendering of the context
+- `get_context_schema` — returns the JSON Schema for `WebContextPacket`
+
+### When to use MCP vs direct API
+
+| Use case | Approach |
+|---|---|
+| React/Vue app with in-page AI sidebar | Direct API — `useAskable` + `toAgentRequest` |
+| Claude Desktop / Cursor plugin | MCP server |
+| Custom agent outside the browser | MCP server or `toAgentRequest` over HTTP |
+| Streaming context to a live agent transport | `subscribeAsync` |
+
+---
+
 ## Common mistakes
 
 **Over-annotating.** Only annotate elements whose data is directly useful to an AI answer. Annotating generic layout wrappers (`<header>`, `<nav>`, `<main>`) adds noise without value.

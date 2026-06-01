@@ -2,9 +2,24 @@ import { describe, expect, it, vi } from 'vitest';
 import { createWebContextPacket } from '@askable-ui/context';
 import {
   createAskableMcpContextProvider,
+  createAskableMcpServer,
   defaultPromptFormatter,
+  type AskableMcpContextProvider,
   type AskableMcpSourceContext,
 } from '../index.js';
+
+type McpToolHandler = (args: Record<string, unknown>) => Promise<{
+  isError?: boolean;
+  content: Array<{ type: string; text: string }>;
+}>;
+
+function getToolHandler(provider: AskableMcpContextProvider, toolName: string): McpToolHandler {
+  const server = createAskableMcpServer({ provider });
+  const tools = (server as unknown as { _registeredTools: Record<string, { handler: McpToolHandler }> })._registeredTools;
+  const tool = tools[toolName];
+  if (!tool) throw new Error(`Tool ${toolName} not registered`);
+  return tool.handler;
+}
 
 describe('createAskableMcpContextProvider', () => {
   it('adapts an Askable context to an MCP context provider', async () => {
@@ -141,6 +156,68 @@ describe('createAskableMcpContextProvider', () => {
       includeText: false,
       maxTokens: 50,
     });
+  });
+});
+
+describe('createAskableMcpServer', () => {
+  it('returns isError when get_current_context provider throws', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockRejectedValue(new Error('provider crashed')),
+    };
+    const handler = getToolHandler(provider, 'get_current_context');
+    const result = await handler({});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('provider crashed');
+  });
+
+  it('returns isError when format_context_for_prompt provider throws', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockRejectedValue(new Error('context unavailable')),
+    };
+    const handler = getToolHandler(provider, 'format_context_for_prompt');
+    const result = await handler({});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('context unavailable');
+  });
+
+  it('returns isError when formatContextForPrompt throws after getContext succeeds', async () => {
+    const packet = createWebContextPacket({ capture: { mode: 'element-focus' } });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+      formatContextForPrompt: vi.fn().mockRejectedValue(new Error('format failed')),
+    };
+    const handler = getToolHandler(provider, 'format_context_for_prompt');
+    const result = await handler({});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('format failed');
+  });
+
+  it('passes recognized context options to the provider', async () => {
+    const packet = createWebContextPacket({ capture: { mode: 'element-focus' } });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const handler = getToolHandler(provider, 'get_current_context');
+    await handler({ intent: 'test intent', history: 3 });
+    expect(provider.getContext).toHaveBeenCalledWith(
+      expect.objectContaining({ intent: 'test intent', history: 3 }),
+    );
+  });
+
+  it('uses defaultPromptFormatter when provider has no formatContextForPrompt', async () => {
+    const packet = createWebContextPacket({
+      source: { url: 'https://example.com' },
+      capture: { mode: 'element-focus', intent: 'test' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const handler = getToolHandler(provider, 'format_context_for_prompt');
+    const result = await handler({});
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0].text).toContain('Context mode: element-focus');
+    expect(result.content[0].text).toContain('User intent: test');
+    expect(result.content[0].text).toContain('URL: https://example.com');
   });
 });
 
