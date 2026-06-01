@@ -2,6 +2,10 @@
 
 `createAskableInspector` mounts a floating overlay panel on the page that shows what Askable is currently tracking — useful for development and for creating demos.
 
+The panel also shows registered context sources, so you can confirm that
+app-owned sources such as tables, documents, charts, or MCP bridges are mounted
+and refreshing while you test interactions.
+
 ## What it shows
 
 The panel updates in real time whenever the focused element changes:
