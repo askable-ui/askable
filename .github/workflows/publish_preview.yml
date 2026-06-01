@@ -41,6 +41,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build context
+        run: npm run build -w packages/context
+
       - name: Build core
         run: npm run build -w packages/core
 
@@ -48,4 +51,4 @@ jobs:
         run: npm run build --workspaces --if-present
 
       - name: Publish preview packages
-        run: npx pkg-pr-new publish ./packages/core ./packages/react ./packages/vue ./packages/svelte ./packages/react-native ./packages/create-askable-app
+        run: npx pkg-pr-new publish ./packages/context ./packages/core ./packages/mcp ./packages/react ./packages/vue ./packages/svelte ./packages/react-native ./packages/create-askable-app

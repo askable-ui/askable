@@ -203,4 +203,19 @@ describe('source helpers', () => {
 
     ctx.destroy();
   });
+
+  it('returns undefined data when resolve returns undefined for an unsupported mode', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('chart', createAskableSource({
+      data: ({ mode }) => mode === 'summary' ? { total: 5 } : undefined,
+    }));
+
+    const resultSummary = await ctx.resolveSource('chart', { mode: 'summary' });
+    expect(resultSummary.data).toEqual({ total: 5 });
+
+    const resultOther = await ctx.resolveSource('chart', { mode: 'all' });
+    expect(resultOther.data).toBeUndefined();
+
+    ctx.destroy();
+  });
 });

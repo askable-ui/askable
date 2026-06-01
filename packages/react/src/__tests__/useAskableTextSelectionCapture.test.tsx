@@ -26,6 +26,30 @@ afterEach(() => {
 });
 
 describe('useAskableTextSelectionCapture', () => {
+  it('fires onCapture via selectionchange event when started', async () => {
+    const captured: unknown[] = [];
+
+    function Consumer() {
+      const capture = useAskableTextSelectionCapture({
+        debounce: 0,
+        onCapture: (packet) => { captured.push(packet); },
+      });
+
+      return (
+        <button type="button" onClick={() => capture.start()}>Start</button>
+      );
+    }
+
+    render(<Consumer />);
+    act(() => { fireEvent.click(screen.getByText('Start')); });
+
+    selectText('React selectionchange fires');
+    act(() => { document.dispatchEvent(new Event('selectionchange')); });
+
+    await waitFor(() => expect(captured.length).toBe(1));
+    expect((captured[0] as { target?: { text?: string } }).target?.text).toBe('React selectionchange fires');
+  });
+
   it('captures the current browser selection', async () => {
     function Consumer() {
       const capture = useAskableTextSelectionCapture({

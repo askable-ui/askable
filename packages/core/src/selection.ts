@@ -48,6 +48,25 @@ type LastInteraction = {
 
 const DEFAULT_DEBOUNCE = 120;
 
+/**
+ * Listens for text selection changes in the document and emits an Askable context packet
+ * each time the user selects text. Use `captureNow()` to programmatically snapshot the
+ * current selection without waiting for a `selectionchange` event.
+ *
+ * Call `handle.start()` to begin listening and `handle.destroy()` to clean up.
+ * Set `enabled: false` to pause without destroying.
+ *
+ * @example
+ * ```ts
+ * const capture = createAskableTextSelectionCapture(ctx, {
+ *   onCapture: (packet) => sendToAI(packet),
+ *   debounce: 200,
+ * });
+ * capture.start();
+ * // later:
+ * const snapshot = capture.captureNow(); // captures current selection
+ * ```
+ */
 export function createAskableTextSelectionCapture(
   ctx: AskableContext,
   options: AskableTextSelectionCaptureOptions = {},

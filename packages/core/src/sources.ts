@@ -56,6 +56,24 @@ export interface AskableCreateCollectionSourceOptions<TItem = unknown, TState = 
   sanitize?: (source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>;
 }
 
+/**
+ * Creates a generic app-owned context source that exposes arbitrary data to AI context.
+ * Use this for document, canvas, chart, or any non-collection data that doesn't need
+ * built-in item pagination modes.
+ *
+ * @example
+ * ```ts
+ * const editorSource = createAskableSource({
+ *   kind: 'document',
+ *   describe: 'Currently open editor document',
+ *   state: () => ({ filename: editor.filename, isDirty: editor.isDirty }),
+ *   data: ({ mode }) => mode === 'summary'
+ *     ? { wordCount: editor.wordCount }
+ *     : { content: editor.getText() },
+ * });
+ * ctx.registerSource('editor', editorSource);
+ * ```
+ */
 export function createAskableSource<TData = unknown, TState = unknown>(
   options: AskableCreateSourceOptions<TData, TState>,
 ): AskableContextSource {
@@ -74,6 +92,28 @@ export function createAskableSource<TData = unknown, TState = unknown>(
   };
 }
 
+/**
+ * Creates a collection source that understands list-oriented modes (summary, visible,
+ * selected, all) and handles item capping, async sanitization, and state tracking.
+ * Prefer this over `createAskableSource` for tables, lists, feeds, and other iterable data.
+ *
+ * @example
+ * ```ts
+ * const accountsSource = createAskableCollectionSource({
+ *   describe: 'Accounts matching active filters',
+ *   getState: () => ({ filter: activeFilter, sort: currentSort }),
+ *   getItems: () => allAccounts,
+ *   getVisibleItems: () => visibleRows,
+ *   getSummary: () => ({ total: allAccounts.length, filtered: visibleRows.length }),
+ *   maxItems: 50,
+ *   sanitizeItem: (account) => {
+ *     const { internalId: _, ...safe } = account;
+ *     return safe;
+ *   },
+ * });
+ * ctx.registerSource('accounts', accountsSource);
+ * ```
+ */
 export function createAskableCollectionSource<TItem = unknown, TState = unknown>(
   options: AskableCreateCollectionSourceOptions<TItem, TState>,
 ): AskableContextSource {
