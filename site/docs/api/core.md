@@ -249,7 +249,12 @@ ctx.registerSource('active-document', createAskableSource({
   kind: 'document',
   describe: 'Open editor document',
   state: () => ({ title: editor.title, dirty: editor.dirty }),
-  data: ({ mode }) => mode === 'summary' ? editor.summary() : editor.export(),
+  modes: {
+    summary: () => editor.summary(),
+    selected: ({ selection }) => editor.sliceForSelection(selection),
+    all: ({ maxTokens }) => editor.export({ maxTokens }),
+  },
+  data: ({ mode }) => editor.export({ mode }),
 }));
 
 await ctx.toPromptContextAsync({
@@ -272,10 +277,15 @@ user meant; the source resolver supplies what the app knows.
 | `kind` | `string` | Optional category, such as `collection`, `document`, `chart`, `map`, or `custom` |
 | `describe` | `string \| () => string \| Promise<string>` | Human-readable source description |
 | `getState` | `() => unknown \| Promise<unknown>` | Current state, such as filters, sort, page, route, or viewport |
+| `modes` | `Record<string, value \| resolver>` | Named slices for `summary`, `selected`, `all`, or app-defined source modes |
+| `data` | `unknown \| (request) => unknown \| Promise<unknown>` | Fallback data when the requested mode is not listed in `modes` |
 | `resolve` | `(request) => unknown \| Promise<unknown>` | Returns selected, visible, summary, all-matching, or custom context |
 | `sanitize` | `(source) => source \| Promise<source>` | Redacts or transforms resolved source context before serialization |
 
 `createAskableSource()` is a small factory for arbitrary app context.
+Use its `modes` map when the source can expose named slices without a custom
+switch statement; `resolve` remains available for advanced behavior and
+overrides both `modes` and `data`.
 `createAskableCollectionSource()` adds `getItems`, `getVisibleItems`,
 `getSelectedItems`, `getSummary`, `maxItems`, and `sanitizeItem` so paginated or
 virtualized collections can expose more than the rows currently mounted in the

@@ -29,6 +29,66 @@ describe('source helpers', () => {
     ctx.destroy();
   });
 
+  it('creates a generic source with named mode resolvers', async () => {
+    const ctx = createAskableContext();
+    ctx.push({ widget: 'forecast', region: 'West' }, 'West forecast');
+    ctx.registerSource('forecast', createAskableSource({
+      kind: 'forecast',
+      state: { currency: 'USD', range: 'Q2' },
+      data: ({ mode }) => ({ mode, fallback: true }),
+      modes: {
+        summary: { totalPipeline: 420000, risk: 'medium' },
+        selected: ({ focus, selection }) => ({
+          focus: focus?.meta,
+          selection,
+        }),
+        all: ({ maxItems }) => ({
+          rows: ['acme', 'beta', 'cobalt'].slice(0, maxItems),
+        }),
+      },
+    }));
+
+    await expect(ctx.resolveSource('forecast', { mode: 'summary' })).resolves.toMatchObject({
+      data: { totalPipeline: 420000, risk: 'medium' },
+    });
+
+    await expect(ctx.resolveSource('forecast', {
+      mode: 'selected',
+      selection: { ids: ['deal-1'] },
+    })).resolves.toMatchObject({
+      data: {
+        focus: { widget: 'forecast', region: 'West' },
+        selection: { ids: ['deal-1'] },
+      },
+    });
+
+    await expect(ctx.resolveSource('forecast', { mode: 'all', maxItems: 2 })).resolves.toMatchObject({
+      data: { rows: ['acme', 'beta'] },
+    });
+
+    await expect(ctx.resolveSource('forecast', { mode: 'custom' })).resolves.toMatchObject({
+      data: { mode: 'custom', fallback: true },
+    });
+
+    ctx.destroy();
+  });
+
+  it('lets custom generic source resolvers override named modes', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('forecast', createAskableSource({
+      modes: {
+        summary: { ignored: true },
+      },
+      resolve: ({ mode }) => ({ mode, custom: true }),
+    }));
+
+    await expect(ctx.resolveSource('forecast', { mode: 'summary' })).resolves.toMatchObject({
+      data: { mode: 'summary', custom: true },
+    });
+
+    ctx.destroy();
+  });
+
   it('creates a collection source that can resolve all logical items beyond the visible page', async () => {
     const accounts = [
       { id: 'a1', company: 'Acme Corp', mrr: 8400, secret: 'token-a' },

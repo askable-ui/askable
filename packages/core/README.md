@@ -252,7 +252,7 @@ tables, virtualized lists, documents, maps, charts, calendars, canvases, file
 trees, or custom product state.
 
 ```ts
-import { createAskableCollectionSource } from '@askable-ui/core';
+import { createAskableCollectionSource, createAskableSource } from '@askable-ui/core';
 
 const accountsSource = ctx.registerSource('accounts', createAskableCollectionSource({
   describe: 'Customer accounts matching the active filters',
@@ -269,6 +269,18 @@ const accountsSource = ctx.registerSource('accounts', createAskableCollectionSou
   }),
 }));
 
+ctx.registerSource('active-chart', createAskableSource({
+  kind: 'chart',
+  describe: 'Revenue chart',
+  state: () => ({ range, segment }),
+  modes: {
+    summary: () => chart.summary(),
+    selected: ({ selection }) => chart.pointsForSelection(selection),
+    all: ({ maxItems }) => chart.series().slice(0, maxItems),
+  },
+  data: ({ mode }) => chart.export({ mode }),
+}));
+
 const prompt = await ctx.toPromptContextAsync({
   sources: [{ id: 'accounts', mode: 'all', maxItems: 20, timeoutMs: 750 }],
   sourceErrorMode: 'include',
@@ -281,11 +293,13 @@ table.onStateChange(() => {
 
 Source resolvers let Askable capture what the user meant while your app supplies
 what it knows. Use `createAskableSource()` for arbitrary documents, charts,
-maps, canvases, and product state. Use `createAskableCollectionSource()` when a
-list, grid, table, board, or search result has more data than the DOM currently
-renders. Failed or timed-out sources are represented with a safe unavailable
-marker by default; use `sourceErrorMode: 'omit'` or `'throw'` for stricter
-runtimes.
+maps, canvases, and product state. Its `modes` map is a concise way to expose
+named slices such as `summary`, `selected`, `all`, or app-defined modes, while
+`data` remains the fallback for modes you do not list. Use
+`createAskableCollectionSource()` when a list, grid, table, board, or search
+result has more data than the DOM currently renders. Failed or timed-out
+sources are represented with a safe unavailable marker by default; use
+`sourceErrorMode: 'omit'` or `'throw'` for stricter runtimes.
 
 Call `handle.notifyChanged()` or `ctx.notifySourceChanged('accounts')` when
 filters, pagination, query data, or selected records change without a DOM focus
