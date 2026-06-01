@@ -262,6 +262,15 @@ export interface AskableAsyncContextOutputOptions extends AskableContextOutputOp
   sourceErrorMode?: AskableContextSourceErrorMode;
 }
 
+export interface AskableResolveSourcesOptions {
+  /** Sources to resolve. Defaults to "all" registered sources. */
+  sources?: 'all' | AskableContextSourceInclude[];
+  /** Default source mode when a source request omits `mode`. Defaults to "summary". */
+  sourceMode?: AskableContextSourceMode;
+  /** How source failures are handled. Defaults to "include". */
+  sourceErrorMode?: AskableContextSourceErrorMode;
+}
+
 /**
  * Options for creating an AskableContext.
  */
@@ -463,6 +472,8 @@ export interface AskableContext {
   notifySourceChanged(id?: string): void;
   /** Resolve one registered source on demand. */
   resolveSource(id: string, request?: Omit<AskableContextSourceRequest, 'id'>): Promise<AskableResolvedContextSource>;
+  /** Resolve multiple app-owned context sources as structured data. Defaults to all registered sources. */
+  resolveSources(options?: AskableResolveSourcesOptions): Promise<AskableResolvedContextSource[]>;
   /** Reset the current focus to null and emit a 'clear' event */
   clear(): void;
   /** Serialize current focus to structured prompt-ready data */

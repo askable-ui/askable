@@ -127,4 +127,80 @@ describe('source helpers', () => {
 
     ctx.destroy();
   });
+
+  it('resolves multiple registered sources as structured data', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', createAskableCollectionSource({
+      getItems: () => [
+        { id: 'a1', company: 'Acme Corp' },
+        { id: 'b2', company: 'Beta Labs' },
+      ],
+      getSummary: () => ({ count: 2 }),
+    }));
+    ctx.registerSource('document', createAskableSource({
+      kind: 'document',
+      data: ({ mode }) => ({ mode, title: 'Launch plan' }),
+    }));
+
+    await expect(ctx.resolveSources()).resolves.toMatchObject([
+      {
+        id: 'accounts',
+        kind: 'collection',
+        mode: 'summary',
+        data: { mode: 'summary', summary: { count: 2 } },
+      },
+      {
+        id: 'document',
+        kind: 'document',
+        mode: 'summary',
+        data: { mode: 'summary', title: 'Launch plan' },
+      },
+    ]);
+
+    await expect(ctx.resolveSources({
+      sources: [{ id: 'accounts', mode: 'all', maxItems: 1 }],
+    })).resolves.toMatchObject([
+      {
+        id: 'accounts',
+        data: {
+          mode: 'all',
+          items: [{ id: 'a1', company: 'Acme Corp' }],
+          totalCount: 2,
+          returnedCount: 1,
+          truncated: true,
+        },
+      },
+    ]);
+
+    ctx.destroy();
+  });
+
+  it('isolates source failures when resolving multiple sources', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('broken', createAskableSource({
+      resolve: () => {
+        throw new Error('Sensitive backend error');
+      },
+    }));
+
+    await expect(ctx.resolveSources()).resolves.toEqual([
+      {
+        id: 'broken',
+        mode: 'summary',
+        error: {
+          message: 'Context source unavailable.',
+        },
+      },
+    ]);
+
+    await expect(ctx.resolveSources({
+      sourceErrorMode: 'omit',
+    })).resolves.toEqual([]);
+
+    await expect(ctx.resolveSources({
+      sourceErrorMode: 'throw',
+    })).rejects.toThrow('Sensitive backend error');
+
+    ctx.destroy();
+  });
 });
