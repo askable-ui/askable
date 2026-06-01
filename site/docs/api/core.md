@@ -222,7 +222,11 @@ tables, virtualized lists, documents, maps, canvases, calendars, charts, file
 trees, or any custom state.
 
 ```ts
-import { createAskableCollectionSource, createAskableSource } from '@askable-ui/core';
+import {
+  createAskableCollectionSource,
+  createAskablePageSource,
+  createAskableSource,
+} from '@askable-ui/core';
 
 const handle = ctx.registerSource('accounts', createAskableCollectionSource({
   describe: 'Customer accounts in the dashboard',
@@ -255,6 +259,12 @@ ctx.registerSource('active-document', createAskableSource({
     all: ({ maxTokens }) => editor.export({ maxTokens }),
   },
   data: ({ mode }) => editor.export({ mode }),
+}));
+
+ctx.registerSource('page', createAskablePageSource({
+  includeLinks: true,
+  maxTextLength: 6000,
+  sanitizeText: redactPageText,
 }));
 
 await ctx.toPromptContextAsync({
@@ -290,6 +300,9 @@ overrides both `modes` and `data`.
 `getSelectedItems`, `getSummary`, `maxItems`, and `sanitizeItem` so paginated or
 virtualized collections can expose more than the rows currently mounted in the
 DOM without a table-specific API.
+`createAskablePageSource()` snapshots unannotated pages for extension and
+fallback contexts. It supports `summary`, `selected`, and `all` modes for page
+title, URL, selected text, headings, optional links, and capped full-page text.
 
 `registerSource()` returns a handle with `id`, `notifyChanged()`, and
 `unregister()`. Call `notifyChanged()` when filters, pagination, selected
