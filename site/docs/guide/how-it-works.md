@@ -65,11 +65,12 @@ Some user intent is not tied to one DOM element. Askable includes explicit captu
 | `ctx.select(element)` | Ask AI buttons and known widgets | `element-focus` |
 | `ctx.push(meta, text)` | App events, command palettes, generated summaries | `semantic` |
 | `createAskableRegionCapture(ctx)` | Dragging a rectangular page area | `region` |
+| `createAskableRegionCapture(ctx, { shape: 'square' })` | Selecting a fixed-ratio visual area | `region` |
 | `createAskableRegionCapture(ctx, { shape: 'circle' })` | Circling one object or anomaly | `circle` |
 | `createAskableRegionCapture(ctx, { shape: 'lasso' })` | Freehand irregular selections | `lasso` |
 | `createAskableTextSelectionCapture(ctx)` | Browser-highlighted copy | `text-selection` |
 
-Region, circle, lasso, and text capture mark `privacy.consent` as `explicit` because the user intentionally selected the context.
+Region, square, circle, lasso, and text capture mark `privacy.consent` as `explicit` because the user intentionally selected the context.
 
 ## Singleton vs. scoped contexts
 

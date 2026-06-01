@@ -713,8 +713,9 @@ ctx.destroy();
 
 ## `createAskableRegionCapture(ctx, options?)`
 
-Mounts a temporary browser overlay that lets the user drag a rectangle, circle,
-or lasso, then emits a structured Context packet with explicit consent metadata.
+Mounts a temporary browser overlay that lets the user drag a rectangle, square,
+circle, or lasso, then emits a structured Context packet with explicit consent
+metadata.
 
 ```ts
 import {
@@ -730,6 +731,15 @@ const capture = createAskableRegionCapture(ctx, {
   shape: 'lasso',
   intent: 'explain this selected area',
   includeViewport: true,
+  selectionAffordance: {
+    label: 'Selected context',
+    prompt: {
+      placeholder: 'Ask about this area...',
+      onSubmit(question, packet) {
+        sendToAgent({ question, context: packet });
+      },
+    },
+  },
   theme: {
     ...ASKABLE_REGION_CAPTURE_THEME,
     lassoStrokeWidth: 4,
@@ -752,24 +762,36 @@ capture.start();
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `shape` | `'region' \| 'circle' \| 'lasso'` | `'region'` | Shape produced by the drag gesture |
+| `shape` | `'region' \| 'square' \| 'circle' \| 'lasso'` | `'region'` | Shape produced by the drag gesture |
 | `minSize` | `number` | `6` | Minimum accepted width/height in CSS pixels |
 | `once` | `boolean` | `true` | Remove the overlay after the first accepted capture |
 | `theme` | `Partial<AskableRegionCaptureTheme>` | `ASKABLE_REGION_CAPTURE_THEME` | Overlay colors, selection fill/stroke, and lasso gradient/glow styling |
+| `selectionAffordance` | `boolean \| AskableRegionCaptureSelectionAffordanceOptions` | `false` | Keep selected geometry visible after capture, optionally with an anchored prompt |
 | `onCapture` | `(packet, selection) => void` | — | Called with the Context packet and selection geometry |
 | `onCancel` | `() => void` | — | Called when the capture is cancelled |
 | _...most `AskableContextPacketOptions`_ | | | Passed through to `toContextPacket()` |
 
 The default lasso theme is exported as `ASKABLE_REGION_CAPTURE_THEME`. Use
 `theme` when your app needs brand-specific capture styling without replacing the
-library overlay.
+library overlay. The same theme controls persisted selected-state defaults such
+as `selectionAffordanceStroke`, `selectionAffordanceFill`, and prompt colors.
+
+`selectionAffordance` is opt-in. Pass `true` to keep the selected shape visible
+after capture, or pass an object with `className`, `style`, `label`, `prompt`,
+and `render()` hooks. `prompt.onSubmit(question, packet, selection)` is useful
+when the selected area should immediately become the anchor for a follow-up chat
+question.
+
+Square captures are constrained to equal width and height. They serialize with
+`capture.mode: 'region'` and `target.metadata.shape: 'square'` so existing
+region consumers keep working.
 
 Set `once: false` for persistent tools in production dashboards, canvases, and
 editors. The overlay stays mounted after each accepted capture, and
 `isActive()` remains `true` until `cancel()` or `destroy()` is called.
 
 **Returns:** `AskableRegionCaptureHandle` — object with `start()`, `cancel()`,
-`destroy()`, and `isActive()` methods.
+`clearSelection()`, `destroy()`, and `isActive()` methods.
 
 ---
 

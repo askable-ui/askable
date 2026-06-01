@@ -35,8 +35,11 @@ export type {
   AskableRegionCaptureGradientStop,
   AskableRegionCaptureOptions,
   AskableRegionCapturePoint,
+  AskableRegionCapturePromptOptions,
   AskableRegionCaptureSelection,
+  AskableRegionCaptureSelectionAffordanceOptions,
   AskableRegionCaptureShape,
+  AskableRegionCaptureStyle,
   AskableRegionCaptureTheme,
 } from './capture.js';
 export type {

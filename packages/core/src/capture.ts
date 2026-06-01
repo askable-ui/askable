@@ -9,7 +9,7 @@ import type {
   AskableContextPacketOptions,
 } from './types.js';
 
-export type AskableRegionCaptureShape = 'region' | 'circle' | 'lasso';
+export type AskableRegionCaptureShape = 'region' | 'square' | 'circle' | 'lasso';
 
 export interface AskableRegionCaptureSelection {
   shape: AskableRegionCaptureShape;
@@ -25,6 +25,55 @@ export interface AskableRegionCaptureSelection {
 export interface AskableRegionCaptureGradientStop {
   offset: string;
   color: string;
+}
+
+export type AskableRegionCaptureStyle = Partial<CSSStyleDeclaration>;
+
+export interface AskableRegionCapturePromptOptions {
+  /** Placeholder shown in the anchored prompt input. */
+  placeholder?: string;
+  /** Accessible label/title for the submit button. */
+  submitLabel?: string;
+  /** Class added to the prompt container. */
+  className?: string;
+  /** Inline styles applied to the prompt container. */
+  style?: AskableRegionCaptureStyle;
+  /** Class added to the prompt input. */
+  inputClassName?: string;
+  /** Inline styles applied to the prompt input. */
+  inputStyle?: AskableRegionCaptureStyle;
+  /** Class added to the prompt submit button. */
+  buttonClassName?: string;
+  /** Inline styles applied to the prompt submit button. */
+  buttonStyle?: AskableRegionCaptureStyle;
+  /** Called when the user submits a non-empty prompt from the selected area. */
+  onSubmit?: (
+    question: string,
+    packet: WebContextPacket,
+    selection: AskableRegionCaptureSelection,
+  ) => void;
+}
+
+export interface AskableRegionCaptureSelectionAffordanceOptions {
+  /** Keep the selected shape visible after capture. Defaults to true when enabled. */
+  persist?: boolean;
+  /** Render a compact prompt input anchored to the selected shape. Defaults to false. */
+  prompt?: boolean | AskableRegionCapturePromptOptions;
+  /** Optional label shown beside the selected area. */
+  label?: string;
+  /** Class added to the selected-area affordance root. */
+  className?: string;
+  /** Inline styles applied to the selected-area affordance root. */
+  style?: AskableRegionCaptureStyle;
+  /** Class added to the selected-area label. */
+  labelClassName?: string;
+  /** Inline styles applied to the selected-area label. */
+  labelStyle?: AskableRegionCaptureStyle;
+  /** Replace the built-in selected-area affordance with consumer-rendered DOM. */
+  render?: (
+    packet: WebContextPacket,
+    selection: AskableRegionCaptureSelection,
+  ) => HTMLElement | null | undefined | void;
 }
 
 export interface AskableRegionCaptureTheme {
@@ -44,6 +93,20 @@ export interface AskableRegionCaptureTheme {
   lassoGlowColor: string;
   /** Lasso glow radius in CSS pixels. */
   lassoGlowRadius: number;
+  /** Border color for persisted selected-region affordances. */
+  selectionAffordanceStroke: string;
+  /** Fill color for persisted selected-region affordances. */
+  selectionAffordanceFill: string;
+  /** Shadow for persisted selected-region affordances. */
+  selectionAffordanceShadow: string;
+  /** Background color for the anchored prompt input. */
+  promptBackground: string;
+  /** Border color for the anchored prompt input. */
+  promptBorder: string;
+  /** Text color for the anchored prompt input. */
+  promptText: string;
+  /** Accent color for the anchored prompt submit button. */
+  promptAccent: string;
 }
 
 export interface AskableRegionCaptureOptions extends Omit<AskableContextPacketOptions, 'mode' | 'gesture' | 'target'> {
@@ -55,6 +118,8 @@ export interface AskableRegionCaptureOptions extends Omit<AskableContextPacketOp
   once?: boolean;
   /** Visual theme for region, circle, and lasso capture overlays. */
   theme?: Partial<AskableRegionCaptureTheme>;
+  /** Opt-in selected-state UI shown after capture, optionally with an anchored prompt. */
+  selectionAffordance?: boolean | AskableRegionCaptureSelectionAffordanceOptions;
   /** Called after a region/circle/lasso is accepted and serialized to a Context packet. */
   onCapture?: (packet: WebContextPacket, selection: AskableRegionCaptureSelection) => void;
   /** Called when an active capture is cancelled. */
@@ -64,6 +129,7 @@ export interface AskableRegionCaptureOptions extends Omit<AskableContextPacketOp
 export interface AskableRegionCaptureHandle {
   start(): void;
   cancel(): void;
+  clearSelection(): void;
   destroy(): void;
   isActive(): boolean;
 }
@@ -76,7 +142,9 @@ export interface AskableRegionCapturePoint {
 type Point = AskableRegionCapturePoint;
 
 const OVERLAY_ID = 'askable-region-capture';
+const AFFORDANCE_ID = 'askable-region-selection-affordance';
 const SELECTION_ATTR = 'data-askable-region-capture-selection';
+const AFFORDANCE_ATTR = 'data-askable-region-selection-affordance';
 export const ASKABLE_REGION_CAPTURE_THEME: AskableRegionCaptureTheme = {
   overlayBackground: 'rgba(15,23,42,0.08)',
   selectionStroke: '#2563eb',
@@ -91,12 +159,20 @@ export const ASKABLE_REGION_CAPTURE_THEME: AskableRegionCaptureTheme = {
   lassoStrokeWidth: 3,
   lassoGlowColor: 'rgba(124,58,237,0.16)',
   lassoGlowRadius: 8,
+  selectionAffordanceStroke: '#7c3aed',
+  selectionAffordanceFill: 'rgba(124,58,237,0.1)',
+  selectionAffordanceShadow: '0 12px 30px rgba(91,33,182,0.16)',
+  promptBackground: '#ffffff',
+  promptBorder: 'rgba(124,58,237,0.22)',
+  promptText: '#111317',
+  promptAccent: '#111317',
 };
 
 /**
  * Attaches a pointer-driven region-capture overlay to the document. The user drags
- * (region), draws (circle), or traces (lasso) a shape; on release, an Askable context
- * packet is emitted to `onCapture` with the selection geometry and the current context.
+ * (region/square), draws (circle), or traces (lasso) a shape; on release, an
+ * Askable context packet is emitted to `onCapture` with the selection geometry
+ * and the current context.
  *
  * Call `handle.start()` to mount the overlay and `handle.destroy()` to clean up.
  * With `once: false` (default is `true`) the overlay persists after each capture.
@@ -120,6 +196,7 @@ export function createAskableRegionCapture(
     return {
       start: () => undefined,
       cancel: () => undefined,
+      clearSelection: () => undefined,
       destroy: () => undefined,
       isActive: () => false,
     };
@@ -139,6 +216,11 @@ export function createAskableRegionCapture(
   const minSize = options.minSize ?? 6;
   const once = options.once ?? true;
   const theme = resolveRegionCaptureTheme(options.theme);
+  const selectionAffordance = resolveSelectionAffordance(options.selectionAffordance);
+
+  const removeAffordance = () => {
+    document.getElementById(AFFORDANCE_ID)?.remove();
+  };
 
   const removeOverlay = () => {
     overlay?.removeEventListener('pointerdown', onPointerDown);
@@ -159,6 +241,7 @@ export function createAskableRegionCapture(
   const cancel = () => {
     const wasActive = Boolean(overlay);
     removeOverlay();
+    removeAffordance();
     if (wasActive) options.onCancel?.();
   };
 
@@ -336,6 +419,7 @@ export function createAskableRegionCapture(
       if (lassoSvg) lassoSvg.style.display = 'none';
     }
 
+    renderSelectionAffordance(packet, selection);
     options.onCapture?.(packet, selection);
   }
 
@@ -352,9 +436,178 @@ export function createAskableRegionCapture(
       ensureOverlay();
     },
     cancel,
-    destroy: removeOverlay,
+    clearSelection: removeAffordance,
+    destroy() {
+      removeOverlay();
+      removeAffordance();
+    },
     isActive: () => Boolean(overlay),
   };
+
+  function renderSelectionAffordance(packet: WebContextPacket, selection: AskableRegionCaptureSelection) {
+    if (!selectionAffordance || selectionAffordance.persist === false) return;
+    removeAffordance();
+
+    const custom = selectionAffordance.render?.(packet, selection);
+    if (custom instanceof HTMLElement) {
+      custom.id = custom.id || AFFORDANCE_ID;
+      custom.setAttribute(AFFORDANCE_ATTR, selection.shape);
+      document.body.appendChild(custom);
+      return;
+    }
+
+    const root = document.createElement('div');
+    root.id = AFFORDANCE_ID;
+    root.setAttribute(AFFORDANCE_ATTR, selection.shape);
+    if (selectionAffordance.className) root.className = selectionAffordance.className;
+    root.style.cssText = [
+      'position:fixed',
+      `left:${selection.bounds.x}px`,
+      `top:${selection.bounds.y}px`,
+      `width:${Math.max(1, selection.bounds.width)}px`,
+      `height:${Math.max(1, selection.bounds.height)}px`,
+      'z-index:2147483646',
+      'pointer-events:none',
+      'box-sizing:border-box',
+    ].join(';');
+    assignStyles(root, selectionAffordance.style);
+
+    root.appendChild(createSelectionMarker(selection));
+    if (selectionAffordance.label !== '') {
+      root.appendChild(createSelectionLabel(selectionAffordance.label ?? `${selection.shape} context`));
+    }
+
+    const prompt = resolvePromptOptions(selectionAffordance.prompt);
+    if (prompt) root.appendChild(createPrompt(prompt, packet, selection));
+
+    document.body.appendChild(root);
+  }
+
+  function createSelectionMarker(selection: AskableRegionCaptureSelection): HTMLElement | SVGSVGElement {
+    if (selection.shape === 'lasso' && selection.points?.length) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', `0 0 ${Math.max(1, selection.bounds.width)} ${Math.max(1, selection.bounds.height)}`);
+      svg.style.cssText = [
+        'position:absolute',
+        'inset:0',
+        'overflow:visible',
+        'pointer-events:none',
+      ].join(';');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pointsToPath(selection.points, selection.bounds));
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', theme.selectionAffordanceStroke);
+      path.setAttribute('stroke-width', String(theme.lassoStrokeWidth));
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      path.style.filter = `drop-shadow(0 0 ${theme.lassoGlowRadius}px ${theme.lassoGlowColor})`;
+      svg.appendChild(path);
+      return svg;
+    }
+
+    const marker = document.createElement('div');
+    marker.style.cssText = [
+      'position:absolute',
+      'inset:0',
+      'box-sizing:border-box',
+      `border:2px solid ${theme.selectionAffordanceStroke}`,
+      `background:${theme.selectionAffordanceFill}`,
+      `box-shadow:${theme.selectionAffordanceShadow}`,
+      'pointer-events:none',
+    ].join(';');
+    if (selection.shape === 'circle') marker.style.borderRadius = '9999px';
+    return marker;
+  }
+
+  function createSelectionLabel(label: string): HTMLSpanElement {
+    const el = document.createElement('span');
+    el.textContent = label;
+    if (selectionAffordance?.labelClassName) el.className = selectionAffordance.labelClassName;
+    el.style.cssText = [
+      'position:absolute',
+      'left:0',
+      'bottom:calc(100% + 6px)',
+      'padding:4px 8px',
+      'border-radius:999px',
+      `background:${theme.promptBackground}`,
+      `border:1px solid ${theme.promptBorder}`,
+      `color:${theme.promptText}`,
+      'font:600 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+      'box-shadow:0 8px 20px rgba(15,23,42,0.12)',
+      'white-space:nowrap',
+      'pointer-events:none',
+    ].join(';');
+    assignStyles(el, selectionAffordance?.labelStyle);
+    return el;
+  }
+
+  function createPrompt(
+    prompt: AskableRegionCapturePromptOptions,
+    packet: WebContextPacket,
+    selection: AskableRegionCaptureSelection,
+  ): HTMLFormElement {
+    const form = document.createElement('form');
+    if (prompt.className) form.className = prompt.className;
+    const placeAbove = selection.bounds.y + selection.bounds.height + 56 > window.innerHeight;
+    form.style.cssText = [
+      'position:absolute',
+      'left:0',
+      placeAbove ? 'bottom:calc(100% + 10px)' : 'top:calc(100% + 10px)',
+      'display:flex',
+      'align-items:center',
+      'gap:6px',
+      'min-width:220px',
+      'max-width:min(320px, calc(100vw - 24px))',
+      'padding:6px',
+      'border-radius:999px',
+      `background:${theme.promptBackground}`,
+      `border:1px solid ${theme.promptBorder}`,
+      'box-shadow:0 14px 34px rgba(15,23,42,0.14)',
+      'pointer-events:auto',
+    ].join(';');
+    assignStyles(form, prompt.style);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = prompt.placeholder ?? 'Ask about this selection...';
+    if (prompt.inputClassName) input.className = prompt.inputClassName;
+    input.style.cssText = [
+      'min-width:0',
+      'flex:1',
+      'border:0',
+      'outline:0',
+      'background:transparent',
+      `color:${theme.promptText}`,
+      'font:500 13px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+    ].join(';');
+    assignStyles(input, prompt.inputStyle);
+
+    const button = document.createElement('button');
+    button.type = 'submit';
+    button.textContent = 'Ask';
+    button.setAttribute('aria-label', prompt.submitLabel ?? 'Ask about selected context');
+    if (prompt.buttonClassName) button.className = prompt.buttonClassName;
+    button.style.cssText = [
+      'border:0',
+      'border-radius:999px',
+      'padding:6px 10px',
+      `background:${theme.promptAccent}`,
+      'color:#fff',
+      'font:700 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+      'cursor:pointer',
+    ].join(';');
+    assignStyles(button, prompt.buttonStyle);
+
+    form.append(input, button);
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const question = input.value.trim();
+      if (!question) return;
+      prompt.onSubmit?.(question, packet, selection);
+      input.value = '';
+    });
+    return form;
+  }
 }
 
 function resolveRegionCaptureTheme(theme?: Partial<AskableRegionCaptureTheme>): AskableRegionCaptureTheme {
@@ -363,6 +616,37 @@ function resolveRegionCaptureTheme(theme?: Partial<AskableRegionCaptureTheme>): 
     ...theme,
     lassoGradientStops: theme?.lassoGradientStops ?? ASKABLE_REGION_CAPTURE_THEME.lassoGradientStops,
   };
+}
+
+function resolveSelectionAffordance(
+  affordance?: boolean | AskableRegionCaptureSelectionAffordanceOptions,
+): AskableRegionCaptureSelectionAffordanceOptions | null {
+  if (!affordance) return null;
+  if (affordance === true) return { persist: true };
+  return { persist: affordance.persist ?? true, ...affordance };
+}
+
+function resolvePromptOptions(
+  prompt?: boolean | AskableRegionCapturePromptOptions,
+): AskableRegionCapturePromptOptions | null {
+  if (!prompt) return null;
+  if (prompt === true) return {};
+  return prompt;
+}
+
+function assignStyles(element: HTMLElement | SVGElement, styles?: AskableRegionCaptureStyle): void {
+  if (!styles) return;
+  Object.assign(element.style, styles);
+}
+
+function pointsToPath(points: Point[], bounds: WebContextRect): string {
+  return points
+    .map((point, index) => {
+      const x = Math.round(point.x - bounds.x);
+      const y = Math.round(point.y - bounds.y);
+      return `${index === 0 ? 'M' : 'L'}${x} ${y}`;
+    })
+    .join(' ');
 }
 
 function pointFromEvent(event: PointerEvent): Point {
@@ -381,6 +665,16 @@ function boundsForShape(shape: AskableRegionCaptureShape, start: Point, end: Poi
       y: center.y - radius,
       width: radius * 2,
       height: radius * 2,
+    };
+  }
+
+  if (shape === 'square') {
+    const size = Math.max(Math.abs(end.x - start.x), Math.abs(end.y - start.y));
+    return {
+      x: end.x < start.x ? start.x - size : start.x,
+      y: end.y < start.y ? start.y - size : start.y,
+      width: size,
+      height: size,
     };
   }
 
