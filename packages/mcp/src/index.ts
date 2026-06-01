@@ -135,9 +135,10 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
           ],
         };
       } catch (err) {
+        console.error('[askable-mcp] get_current_context failed:', err);
         return {
           isError: true,
-          content: [{ type: 'text', text: `Failed to get context: ${err instanceof Error ? err.message : String(err)}` }],
+          content: [{ type: 'text', text: 'Failed to get context. Check server logs for details.' }],
         };
       }
     },
@@ -184,9 +185,10 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
           ],
         };
       } catch (err) {
+        console.error('[askable-mcp] format_context_for_prompt failed:', err);
         return {
           isError: true,
-          content: [{ type: 'text', text: `Failed to format context: ${err instanceof Error ? err.message : String(err)}` }],
+          content: [{ type: 'text', text: 'Failed to format context. Check server logs for details.' }],
         };
       }
     },
