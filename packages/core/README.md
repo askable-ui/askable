@@ -252,7 +252,11 @@ tables, virtualized lists, documents, maps, charts, calendars, canvases, file
 trees, or custom product state.
 
 ```ts
-import { createAskableCollectionSource, createAskableSource } from '@askable-ui/core';
+import {
+  createAskableCollectionSource,
+  createAskablePageSource,
+  createAskableSource,
+} from '@askable-ui/core';
 
 const accountsSource = ctx.registerSource('accounts', createAskableCollectionSource({
   describe: 'Customer accounts matching the active filters',
@@ -281,6 +285,12 @@ ctx.registerSource('active-chart', createAskableSource({
   data: ({ mode }) => chart.export({ mode }),
 }));
 
+ctx.registerSource('page', createAskablePageSource({
+  includeLinks: true,
+  maxTextLength: 6000,
+  sanitizeText: redactPageText,
+}));
+
 const prompt = await ctx.toPromptContextAsync({
   sources: [{ id: 'accounts', mode: 'all', maxItems: 20, timeoutMs: 750 }],
   sourceErrorMode: 'include',
@@ -297,9 +307,11 @@ maps, canvases, and product state. Its `modes` map is a concise way to expose
 named slices such as `summary`, `selected`, `all`, or app-defined modes, while
 `data` remains the fallback for modes you do not list. Use
 `createAskableCollectionSource()` when a list, grid, table, board, or search
-result has more data than the DOM currently renders. Failed or timed-out
-sources are represented with a safe unavailable marker by default; use
-`sourceErrorMode: 'omit'` or `'throw'` for stricter runtimes.
+result has more data than the DOM currently renders. Use
+`createAskablePageSource()` when an extension, fallback bridge, or unannotated
+page still needs selected text, headings, optional links, and full-page text.
+Failed or timed-out sources are represented with a safe unavailable marker by
+default; use `sourceErrorMode: 'omit'` or `'throw'` for stricter runtimes.
 
 Call `handle.notifyChanged()` or `ctx.notifySourceChanged('accounts')` when
 filters, pagination, query data, or selected records change without a DOM focus

@@ -119,7 +119,11 @@ lists, documents, maps, charts, calendars, canvases, or API-backed dashboards,
 register a source that resolves data from your application state.
 
 ```ts
-import { createAskableCollectionSource, createAskableSource } from '@askable-ui/core';
+import {
+  createAskableCollectionSource,
+  createAskablePageSource,
+  createAskableSource,
+} from '@askable-ui/core';
 
 ctx.registerSource('accounts', createAskableCollectionSource({
   describe: 'Customer accounts matching the active filters',
@@ -146,6 +150,11 @@ ctx.registerSource('active-chart', createAskableSource({
   },
 }));
 
+ctx.registerSource('page', createAskablePageSource({
+  includeLinks: true,
+  sanitizeText: redactPageText,
+}));
+
 const context = await ctx.toPromptContextAsync({
   sources: [{ id: 'accounts', mode: 'all', maxItems: 20, timeoutMs: 750 }],
   sourceErrorMode: 'include',
@@ -164,6 +173,10 @@ writing a custom resolver switch. Source output can be redacted with
 `sanitizeSource` hook. Failed or timed-out sources are represented with a safe
 unavailable marker by default; use `sourceErrorMode: 'omit'` or `'throw'` when
 your runtime needs stricter behavior.
+
+For browser extensions and other clients that cannot change the site code,
+`createAskablePageSource()` can still expose the page title, URL, selected
+text, headings, optional links, and capped full-page text as a normal source.
 
 ## Custom labels
 

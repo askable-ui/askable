@@ -3,6 +3,7 @@ export { ASKABLE_REGION_CAPTURE_THEME, createAskableRegionCapture } from './capt
 export { createAskableTextSelectionCapture } from './selection.js';
 export { a11yTextExtractor } from './a11y.js';
 export { createAskableCollectionSource, createAskableSource } from './sources.js';
+export { createAskablePageSource } from './page-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -51,6 +52,12 @@ export type {
   AskableSourceResolver,
   AskableSourceValue,
 } from './sources.js';
+export type {
+  AskableCreatePageSourceOptions,
+  AskablePageSourceHeading,
+  AskablePageSourceLink,
+  AskablePageSourceSnapshot,
+} from './page-source.js';
 export type {
   AskableContext,
   AskableAgentRequest,
