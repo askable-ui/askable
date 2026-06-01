@@ -790,6 +790,19 @@ describe('createAskableContext', () => {
     revenue.remove();
   });
 
+  it('invalid CSS selector in data-askable-parent does not throw and falls back to DOM ancestry', () => {
+    const el = makeEl({ widget: 'orphan' }, 'Orphan');
+    el.setAttribute('data-askable-parent', ':invalid-selector(');
+    const ctx = createAskableContext();
+    ctx.observe(document);
+
+    expect(() => el.click()).not.toThrow();
+    expect(ctx.getFocus()?.meta).toEqual({ widget: 'orphan' });
+
+    ctx.destroy();
+    el.remove();
+  });
+
   it('serializes DOM hierarchy in JSON output and respects scope filtering for ancestors', () => {
     const dashboard = makeEl({ view: 'dashboard' }, 'Dashboard');
     dashboard.setAttribute('data-askable-scope', 'analytics');

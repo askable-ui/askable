@@ -53,7 +53,11 @@ function isBrowser(): boolean {
 
 function parseMeta(raw: string): Record<string, unknown> | string {
   try {
-    return JSON.parse(raw) as Record<string, unknown>;
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return raw;
   } catch {
     return raw;
   }
