@@ -119,7 +119,7 @@ lists, documents, maps, charts, calendars, canvases, or API-backed dashboards,
 register a source that resolves data from your application state.
 
 ```ts
-import { createAskableCollectionSource } from '@askable-ui/core';
+import { createAskableCollectionSource, createAskableSource } from '@askable-ui/core';
 
 ctx.registerSource('accounts', createAskableCollectionSource({
   describe: 'Customer accounts matching the active filters',
@@ -135,6 +135,17 @@ ctx.registerSource('accounts', createAskableCollectionSource({
   }),
 }));
 
+ctx.registerSource('active-chart', createAskableSource({
+  kind: 'chart',
+  describe: 'Revenue chart',
+  state: () => ({ range, segment }),
+  modes: {
+    summary: () => chart.summary(),
+    selected: ({ selection }) => chart.pointsForSelection(selection),
+    all: ({ maxItems }) => chart.series().slice(0, maxItems),
+  },
+}));
+
 const context = await ctx.toPromptContextAsync({
   sources: [{ id: 'accounts', mode: 'all', maxItems: 20, timeoutMs: 750 }],
   sourceErrorMode: 'include',
@@ -145,11 +156,14 @@ This keeps Askable generic: interaction tools capture what the user meant, and
 source resolvers supply what the app knows. `createAskableCollectionSource()`
 is useful when the app owns more items than the DOM renders; `mode: 'all'`
 asks that source for the logical collection, while `maxItems` keeps prompt
-budgets explicit. Source output can be redacted with `sanitizeItem`, a
-source-level `sanitize` hook, or a context-level `sanitizeSource` hook. Failed
-or timed-out sources are represented with a safe unavailable marker by default;
-use `sourceErrorMode: 'omit'` or `'throw'` when your runtime needs stricter
-behavior.
+budgets explicit. `createAskableSource()` covers non-collection state like
+documents, charts, maps, canvases, or workflows; use `modes` to expose named
+slices such as `summary`, `selected`, `all`, or app-defined modes without
+writing a custom resolver switch. Source output can be redacted with
+`sanitizeItem`, a source-level `sanitize` hook, or a context-level
+`sanitizeSource` hook. Failed or timed-out sources are represented with a safe
+unavailable marker by default; use `sourceErrorMode: 'omit'` or `'throw'` when
+your runtime needs stricter behavior.
 
 ## Custom labels
 

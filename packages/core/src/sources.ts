@@ -6,6 +6,10 @@ import type {
 } from './types.js';
 
 export type AskableSourceValue<T> = T | (() => T | Promise<T>);
+export type AskableSourceResolver<T> = (
+  request: AskableContextSourceResolveRequest
+) => T | Promise<T>;
+export type AskableSourceModeMap<T> = Record<string, T | AskableSourceResolver<T>>;
 
 export interface AskableCreateSourceOptions<TData = unknown, TState = unknown> {
   /** Source category. Examples: "document", "collection", "chart", "map", "canvas". */
@@ -16,6 +20,8 @@ export interface AskableCreateSourceOptions<TData = unknown, TState = unknown> {
   state?: AskableSourceValue<TState>;
   /** App-owned context data. Receives the same request that custom sources receive. */
   data?: TData | ((request: AskableContextSourceResolveRequest) => TData | Promise<TData>);
+  /** Named context slices keyed by source mode, such as "summary", "selected", "all", or app-defined modes. */
+  modes?: AskableSourceModeMap<TData>;
   /** Custom resolver for advanced source behavior. Overrides `data` when provided. */
   resolve?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
   /** Redact or transform this source before serialization. */
@@ -77,17 +83,15 @@ export interface AskableCreateCollectionSourceOptions<TItem = unknown, TState = 
 export function createAskableSource<TData = unknown, TState = unknown>(
   options: AskableCreateSourceOptions<TData, TState>,
 ): AskableContextSource {
+  const resolve = options.resolve ?? buildSourceResolver(options);
+
   return {
     kind: options.kind,
     describe: options.describe,
     getState: options.state === undefined
       ? undefined
       : () => resolveSourceValue(options.state),
-    resolve: options.resolve ?? (options.data === undefined
-      ? undefined
-      : (request) => (typeof options.data === 'function'
-          ? (options.data as (request: AskableContextSourceResolveRequest) => TData | Promise<TData>)(request)
-          : options.data)),
+    resolve,
     sanitize: options.sanitize,
   };
 }
@@ -134,6 +138,30 @@ export function createAskableCollectionSource<TItem = unknown, TState = unknown>
 async function resolveSourceValue<T>(value: AskableSourceValue<T>): Promise<T> {
   return typeof value === 'function'
     ? (value as () => T | Promise<T>)()
+    : value;
+}
+
+function buildSourceResolver<TData, TState>(
+  options: AskableCreateSourceOptions<TData, TState>,
+): AskableContextSource['resolve'] {
+  if (!options.modes && options.data === undefined) return undefined;
+
+  return (request) => {
+    const modeValue = options.modes?.[request.mode];
+    if (modeValue !== undefined) {
+      return resolveSourceData(modeValue, request);
+    }
+    if (options.data === undefined) return undefined;
+    return resolveSourceData(options.data, request);
+  };
+}
+
+function resolveSourceData<T>(
+  value: T | AskableSourceResolver<T>,
+  request: AskableContextSourceResolveRequest,
+): T | Promise<T> {
+  return typeof value === 'function'
+    ? (value as AskableSourceResolver<T>)(request)
     : value;
 }
 
