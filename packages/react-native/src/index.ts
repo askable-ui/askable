@@ -2,10 +2,15 @@ export { Askable } from './Askable.js';
 export { useAskable } from './useAskable.js';
 export { useAskableScreen } from './useAskableScreen.js';
 export { useAskableScrollView } from './useAskableScrollView.js';
+export { useAskableSource } from './useAskableSource.js';
 export { useAskableVisibility } from './useAskableVisibility.js';
 export type { AskableProps } from './Askable.js';
 export type { UseAskableOptions, UseAskableResult } from './useAskable.js';
 export type { UseAskableScreenOptions } from './useAskableScreen.js';
+export type {
+  UseAskableSourceOptions,
+  UseAskableSourceResult,
+} from './useAskableSource.js';
 export type {
   AskableScrollLayout,
   AskableScrollNativeEvent,

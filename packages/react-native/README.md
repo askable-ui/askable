@@ -8,6 +8,7 @@ React Native bindings for askable.
 - `useAskableScreen()` hook for screen/navigation-aware context updates
 - `useAskableVisibility()` hook for FlatList / SectionList visibility-driven context updates
 - `useAskableScrollView()` hook for raw `ScrollView` measurement-driven visibility tracking
+- `useAskableSource()` hook for app-owned mobile data that is not fully visible on screen
 - `<Askable ctx={...}>` wrapper that turns `onPress` / `onLongPress` into context updates
 - Runnable Expo example in [`examples/react-native-expo`](../../examples/react-native-expo)
 
@@ -31,6 +32,43 @@ export function RevenueCard() {
 ```
 
 `scope` is optional and lets you later read filtered context with `ctx.toPromptContext({ scope: 'analytics' })` or `ctx.toHistoryContext(5, { scope: 'analytics' })`.
+
+## App-owned sources
+
+Use `useAskableSource()` when the assistant needs data that is not fully
+represented by the current screen, such as full query results, offline records,
+navigation state, or a selected account loaded from your store.
+
+```tsx
+import { useAskable, useAskableSource } from '@askable-ui/react-native';
+
+const accounts = [
+  { id: 'a1', name: 'Acme Corp', status: 'healthy' },
+  { id: 'b2', name: 'Beta Labs', status: 'review' },
+];
+
+export function AccountsScreen() {
+  const { ctx } = useAskable();
+  const accountsSource = useAskableSource('accounts', {
+    kind: 'collection',
+    describe: 'Accounts loaded in the mobile store',
+    resolve: ({ mode }) => ({
+      mode,
+      items: accounts,
+      totalCount: accounts.length,
+    }),
+  }, { ctx });
+
+  async function askAboutAccounts() {
+    const context = await accountsSource.toPromptContext({
+      source: { mode: 'all', maxItems: 20 },
+    });
+    return context;
+  }
+
+  return null;
+}
+```
 
 ## Screen awareness
 
