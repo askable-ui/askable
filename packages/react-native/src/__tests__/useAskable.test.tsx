@@ -345,4 +345,185 @@ describe('useAskable (React Native)', () => {
 
     expect(seenCtx!.getFocus()).toBeNull();
   });
+
+  it('retains context when clearOnBlur is false and active becomes false', () => {
+    let seenCtx: AskableContext | null = null;
+    let onScroll: ((event: { nativeEvent: { contentOffset?: { y?: number }; layoutMeasurement?: { height?: number } } }) => void) | null = null;
+    let measureItem: ((key: string, item: { id: string; title: string }, layout: { y: number; height: number }) => void) | null = null;
+    let setActive!: (val: boolean) => void;
+
+    function Consumer() {
+      const [active, _setActive] = React.useState(true);
+      setActive = _setActive;
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      const tracker = useAskableScrollView({
+        ctx,
+        active,
+        clearOnBlur: false,
+        getMeta: (item) => ({ id: item.id }),
+        getText: (item) => item.title,
+      });
+      onScroll = tracker.onScroll;
+      measureItem = tracker.measureItem;
+      return null;
+    }
+
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
+    act(() => {
+      measureItem!('a', { id: 'a', title: 'Item A' }, { y: 0, height: 100 });
+      onScroll!({ nativeEvent: { contentOffset: { y: 0 }, layoutMeasurement: { height: 100 } } });
+    });
+
+    expect(seenCtx!.getFocus()).toMatchObject({ meta: { id: 'a' } });
+
+    act(() => {
+      setActive(false);
+    });
+
+    // clearOnBlur: false — context should be retained
+    expect(seenCtx!.getFocus()).toMatchObject({ meta: { id: 'a' } });
+  });
+
+  it('clears context when active becomes false and clearOnBlur is true (default)', () => {
+    let seenCtx: AskableContext | null = null;
+    let onScroll: ((event: { nativeEvent: { contentOffset?: { y?: number }; layoutMeasurement?: { height?: number } } }) => void) | null = null;
+    let measureItem: ((key: string, item: { id: string; title: string }, layout: { y: number; height: number }) => void) | null = null;
+    let setActive!: (val: boolean) => void;
+
+    function Consumer() {
+      const [active, _setActive] = React.useState(true);
+      setActive = _setActive;
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      const tracker = useAskableScrollView({
+        ctx,
+        active,
+        getMeta: (item) => ({ id: item.id }),
+        getText: (item) => item.title,
+      });
+      onScroll = tracker.onScroll;
+      measureItem = tracker.measureItem;
+      return null;
+    }
+
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
+    act(() => {
+      measureItem!('a', { id: 'a', title: 'Item A' }, { y: 0, height: 100 });
+      onScroll!({ nativeEvent: { contentOffset: { y: 0 }, layoutMeasurement: { height: 100 } } });
+    });
+
+    expect(seenCtx!.getFocus()).toMatchObject({ meta: { id: 'a' } });
+
+    act(() => {
+      setActive(false);
+    });
+
+    expect(seenCtx!.getFocus()).toBeNull();
+  });
+
+  it('only the first visible item wins with multiple items in viewport', () => {
+    let seenCtx: AskableContext | null = null;
+    let onScroll: ((event: { nativeEvent: { contentOffset?: { y?: number }; layoutMeasurement?: { height?: number } } }) => void) | null = null;
+    let measureItem: ((key: string, item: { id: string; title: string }, layout: { y: number; height: number }) => void) | null = null;
+
+    function Consumer() {
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      const tracker = useAskableScrollView({
+        ctx,
+        getMeta: (item) => ({ id: item.id }),
+        getText: (item) => item.title,
+      });
+      onScroll = tracker.onScroll;
+      measureItem = tracker.measureItem;
+      return null;
+    }
+
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
+    act(() => {
+      measureItem!('a', { id: 'a', title: 'First' }, { y: 0, height: 100 });
+      measureItem!('b', { id: 'b', title: 'Second' }, { y: 100, height: 100 });
+      measureItem!('c', { id: 'c', title: 'Third' }, { y: 200, height: 100 });
+      // viewport shows all three
+      onScroll!({ nativeEvent: { contentOffset: { y: 0 }, layoutMeasurement: { height: 400 } } });
+    });
+
+    // default selectVisible picks topmost — item 'a'
+    expect(seenCtx!.getFocus()).toMatchObject({ meta: { id: 'a' } });
+  });
+
+  it('custom selectVisible picks a different item from the visible list', () => {
+    let seenCtx: AskableContext | null = null;
+    let onScroll: ((event: { nativeEvent: { contentOffset?: { y?: number }; layoutMeasurement?: { height?: number } } }) => void) | null = null;
+    let measureItem: ((key: string, item: { id: string; title: string }, layout: { y: number; height: number }) => void) | null = null;
+
+    function Consumer() {
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      const tracker = useAskableScrollView({
+        ctx,
+        getMeta: (item) => ({ id: item.id }),
+        getText: (item) => item.title,
+        selectVisible: (items) => items[items.length - 1] ?? null, // pick last
+      });
+      onScroll = tracker.onScroll;
+      measureItem = tracker.measureItem;
+      return null;
+    }
+
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
+    act(() => {
+      measureItem!('a', { id: 'a', title: 'First' }, { y: 0, height: 100 });
+      measureItem!('b', { id: 'b', title: 'Second' }, { y: 100, height: 100 });
+      onScroll!({ nativeEvent: { contentOffset: { y: 0 }, layoutMeasurement: { height: 300 } } });
+    });
+
+    // custom selectVisible picks last — item 'b'
+    expect(seenCtx!.getFocus()).toMatchObject({ meta: { id: 'b' } });
+  });
+
+  it('does not crash when layout has no width or height', () => {
+    let seenCtx: AskableContext | null = null;
+    let onScroll: ((event: { nativeEvent: { contentOffset?: { y?: number }; layoutMeasurement?: { height?: number } } }) => void) | null = null;
+    let measureItem: ((key: string, item: { id: string }, layout: Record<string, never>) => void) | null = null;
+
+    function Consumer() {
+      const { ctx } = useAskable();
+      seenCtx = ctx;
+      const tracker = useAskableScrollView({
+        ctx,
+        getMeta: (item) => ({ id: item.id }),
+      });
+      onScroll = tracker.onScroll as typeof onScroll;
+      measureItem = tracker.measureItem as typeof measureItem;
+      return null;
+    }
+
+    act(() => {
+      TestRenderer.create(<Consumer />);
+    });
+
+    expect(() => {
+      act(() => {
+        measureItem!('a', { id: 'a' }, {});
+        onScroll!({ nativeEvent: {} });
+      });
+    }).not.toThrow();
+
+    // No crash; focus may or may not be set, but the context is intact
+    expect(seenCtx).not.toBeNull();
+  });
 });
