@@ -83,6 +83,7 @@ export type {
   AskablePromptFormat,
   AskablePromptPreset,
   AskablePushOptions,
+  AskableResolveSourcesOptions,
   AskableResolvedContextSource,
   AskableSerializedFocus,
   AskableSerializedFocusSegment,
