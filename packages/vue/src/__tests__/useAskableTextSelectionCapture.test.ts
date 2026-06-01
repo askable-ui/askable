@@ -35,6 +35,62 @@ afterEach(() => {
 });
 
 describe('useAskableTextSelectionCapture (Vue)', () => {
+  it('fires onCapture via selectionchange event when started', async () => {
+    const captured: unknown[] = [];
+    const Consumer = defineComponent({
+      name: 'SelectionChangeConsumer',
+      setup() {
+        const capture = useAskableTextSelectionCapture({
+          debounce: 0,
+          onCapture: (packet) => { captured.push(packet); },
+        });
+        capture.start();
+        return {};
+      },
+      template: '<div />',
+    });
+
+    const wrapper = track(mount(Consumer, { attachTo: document.body }));
+    await flushAll();
+
+    selectText('Selectionchange fires');
+    document.dispatchEvent(new Event('selectionchange'));
+    await flushAll();
+
+    expect(captured.length).toBe(1);
+    expect((captured[0] as { target?: { text?: string } }).target?.text).toBe('Selectionchange fires');
+
+    wrapper.unmount();
+  });
+
+  it('stops listening after cancel()', async () => {
+    const captured: unknown[] = [];
+    const Consumer = defineComponent({
+      name: 'CancelConsumer',
+      setup() {
+        const capture = useAskableTextSelectionCapture({
+          debounce: 0,
+          onCapture: (packet) => { captured.push(packet); },
+        });
+        capture.start();
+        capture.cancel();
+        return {};
+      },
+      template: '<div />',
+    });
+
+    const wrapper = track(mount(Consumer, { attachTo: document.body }));
+    await flushAll();
+
+    selectText('Should not be captured');
+    document.dispatchEvent(new Event('selectionchange'));
+    await flushAll();
+
+    expect(captured.length).toBe(0);
+
+    wrapper.unmount();
+  });
+
   it('captures the current browser selection', async () => {
     const Consumer = defineComponent({
       name: 'TextSelectionCaptureConsumer',
