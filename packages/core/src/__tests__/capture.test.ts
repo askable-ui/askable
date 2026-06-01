@@ -293,4 +293,28 @@ describe('createAskableRegionCapture', () => {
     capture.destroy();
     ctx.destroy();
   });
+
+  it('removes the overlay before calling onCapture so an error in the callback cannot leave it mounted', () => {
+    const ctx = createAskableContext();
+    let overlayAtCallbackTime: HTMLElement | null | undefined;
+
+    const capture = createAskableRegionCapture(ctx, {
+      onCapture: () => {
+        // Read DOM state from inside the callback to confirm cleanup already ran.
+        overlayAtCallbackTime = document.getElementById('askable-region-capture');
+      },
+    });
+
+    capture.start();
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 80, 90));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 90));
+
+    expect(overlayAtCallbackTime).toBeNull();
+    expect(document.getElementById('askable-region-capture')).toBeNull();
+
+    ctx.destroy();
+  });
 });

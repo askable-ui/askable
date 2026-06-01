@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { createAskableInspector } from '@askable-ui/core';
 import type { AskableContext, AskableEvent, AskableInspectorOptions } from '@askable-ui/core';
 import { useAskable } from './useAskable.js';
@@ -35,10 +35,20 @@ export function AskableInspector({
   const { ctx } = useAskable({ ctx: providedCtx, name, events, viewport });
   const promptOptionsKey = JSON.stringify(inspectorOptions.promptOptions ?? null);
 
+  const stableInspectorOptions = useMemo(
+    () => ({
+      position: inspectorOptions.position,
+      highlight: inspectorOptions.highlight,
+      promptOptions: inspectorOptions.promptOptions,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ctx, inspectorOptions.position, inspectorOptions.highlight, promptOptionsKey],
+  );
+
   useEffect(() => {
-    const handle = createAskableInspector(ctx, inspectorOptions);
+    const handle = createAskableInspector(ctx, stableInspectorOptions);
     return () => handle.destroy();
-  }, [ctx, inspectorOptions.position, inspectorOptions.highlight, promptOptionsKey]);
+  }, [ctx, stableInspectorOptions]);
 
   return null;
 }

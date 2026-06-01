@@ -49,7 +49,6 @@
     "@askable-ui/core": "^0.12.0"
   },
   "devDependencies": {
-    "@askable-ui/core": "*",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@testing-library/svelte": "^5.3.1",
     "jsdom": "^29.1.1",

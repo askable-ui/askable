@@ -134,9 +134,18 @@ async function collectionItemsResult<TItem>(
 ): Promise<AskableCollectionSourceData<unknown>> {
   const maxItems = request.maxItems ?? options.maxItems;
   const capped = maxItems === undefined ? items : items.slice(0, Math.max(0, maxItems));
-  const serialized = options.sanitizeItem
-    ? await Promise.all(capped.map((item) => options.sanitizeItem!(item, request)))
-    : [...capped];
+  let serialized: unknown[];
+  if (options.sanitizeItem) {
+    // async wrapper converts synchronous sanitizeItem throws into rejected promises
+    const results = await Promise.allSettled(
+      capped.map(async (item) => options.sanitizeItem!(item, request)),
+    );
+    serialized = results
+      .filter((r): r is PromiseFulfilledResult<unknown> => r.status === 'fulfilled')
+      .map((r) => r.value);
+  } else {
+    serialized = [...capped];
+  }
 
   return {
     mode: request.mode,

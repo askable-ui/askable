@@ -69,11 +69,13 @@ export function useAskableRegionCapture(
           handleRef.current = null;
           setActive(false);
         }
-        currentOptions.onCapture?.(packet, selection);
+        // Always read from the ref so a callback that changed since start()
+        // was called still fires correctly.
+        optionsRef.current.onCapture?.(packet, selection);
       },
       onCancel() {
         setActive(false);
-        currentOptions.onCancel?.();
+        optionsRef.current.onCancel?.();
       },
     });
 

@@ -1,4 +1,4 @@
-import { onUnmounted } from 'vue';
+import { onUnmounted, watch, type MaybeRef, toRef } from 'vue';
 import type {
   AskableAsyncPromptContextOptions,
   AskableContext,
@@ -9,8 +9,8 @@ import type {
 import { useAskable, type UseAskableOptions } from './useAskable.js';
 
 export interface UseAskableSourceOptions extends Omit<UseAskableOptions, 'inspector'> {
-  /** Register the source while true. Defaults to true. */
-  enabled?: boolean;
+  /** Register the source while true. Accepts a reactive ref. Defaults to true. */
+  enabled?: MaybeRef<boolean>;
 }
 
 export interface UseAskableSourceResult {
@@ -30,11 +30,13 @@ export function useAskableSource(
   source: AskableContextSource,
   options: UseAskableSourceOptions = {},
 ): UseAskableSourceResult {
-  const { enabled = true, ...askableOptions } = options;
+  const { enabled: enabledInput = true, ...askableOptions } = options;
   const { ctx } = useAskable(askableOptions);
   const sourceId = id.trim();
   let registered = false;
   let handle: ReturnType<AskableContext['registerSource']> | null = null;
+
+  const enabledRef = toRef(enabledInput as MaybeRef<boolean>);
 
   function buildProxy(): AskableContextSource {
     return {
@@ -59,10 +61,14 @@ export function useAskableSource(
     registered = false;
   }
 
-  if (enabled && sourceId) {
-    handle = ctx.registerSource(sourceId, buildProxy());
-    registered = true;
-  }
+  watch(enabledRef, (enabled) => {
+    if (enabled && sourceId && !registered) {
+      handle = ctx.registerSource(sourceId, buildProxy());
+      registered = true;
+    } else if (!enabled) {
+      unregister();
+    }
+  }, { immediate: true });
 
   function notifyChanged() {
     handle?.notifyChanged();

@@ -65,7 +65,7 @@ const contextOptionsShape = {
         maxItems: z.number().int().min(0).max(100_000).optional(),
         maxTokens: z.number().int().min(1).max(100_000).optional(),
         timeoutMs: z.number().int().min(0).max(60_000).optional(),
-      }).passthrough(),
+      }),
     ])),
   ]).optional(),
 };
@@ -123,16 +123,23 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
       inputSchema: contextOptionsShape,
     },
     async (args) => {
-      const packet = await options.provider.getContext(args);
-      return {
-        content: [
-          {
-            type: 'text',
-            mimeType: 'application/json',
-            text: JSON.stringify(packet, null, 2),
-          },
-        ],
-      };
+      try {
+        const packet = await options.provider.getContext(args);
+        return {
+          content: [
+            {
+              type: 'text',
+              mimeType: 'application/json',
+              text: JSON.stringify(packet, null, 2),
+            },
+          ],
+        };
+      } catch (err) {
+        return {
+          isError: true,
+          content: [{ type: 'text', text: `Failed to get context: ${err instanceof Error ? err.message : String(err)}` }],
+        };
+      }
     },
   );
 
@@ -162,19 +169,26 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
       inputSchema: contextOptionsShape,
     },
     async (args) => {
-      const packet = await options.provider.getContext(args);
-      const text = options.provider.formatContextForPrompt
-        ? await options.provider.formatContextForPrompt(packet, args)
-        : defaultPromptFormatter(packet);
+      try {
+        const packet = await options.provider.getContext(args);
+        const text = options.provider.formatContextForPrompt
+          ? await options.provider.formatContextForPrompt(packet, args)
+          : defaultPromptFormatter(packet);
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text,
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: 'text',
+              text,
+            },
+          ],
+        };
+      } catch (err) {
+        return {
+          isError: true,
+          content: [{ type: 'text', text: `Failed to format context: ${err instanceof Error ? err.message : String(err)}` }],
+        };
+      }
     },
   );
 
