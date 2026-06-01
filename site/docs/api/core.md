@@ -801,6 +801,7 @@ ctx.observe(document);
 
 const inspector = createAskableInspector(ctx);
 // Shows a draggable floating panel in the bottom-right corner with test tools.
+// Use Copy to copy the current prompt context exactly as the panel renders it.
 
 // Tear down when done:
 inspector.destroy();

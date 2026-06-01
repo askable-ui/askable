@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createAskableContext } from '../index.js';
 import { createAskableInspector } from '../inspector.js';
 
@@ -316,6 +316,37 @@ describe('createAskableInspector', () => {
     expect(document.querySelector('[data-askable-inspector-tool="text"]')).not.toBeNull();
     expect(document.querySelector('[data-askable-inspector-tool="clear"]')).not.toBeNull();
 
+    inspector.destroy();
+    ctx.destroy();
+  });
+
+  it('copies the current prompt context from the inspector', async () => {
+    const el = attach(makeEl({ metric: 'revenue', value: '$128k' }, 'Revenue'));
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const originalClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+
+    const ctx = createAskableContext();
+    ctx.observe(document);
+    const inspector = createAskableInspector(ctx);
+
+    el.click();
+    document
+      .querySelector('[data-askable-inspector-copy]')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    await Promise.resolve();
+
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('revenue'));
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('$128k'));
+
+    Object.defineProperty(navigator, 'clipboard', {
+      value: originalClipboard,
+      configurable: true,
+    });
     inspector.destroy();
     ctx.destroy();
   });
