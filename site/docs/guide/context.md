@@ -141,7 +141,7 @@ ctx.toContextPacket({
 });
 ```
 
-## Region, circle, and lasso capture
+## Region, square, circle, and lasso capture
 
 For "send this part of the page" interactions, `@askable-ui/core` can mount a
 temporary drag overlay and emit a packet with selected geometry:
@@ -156,8 +156,18 @@ const capture = createAskableRegionCapture(ctx, {
   shape: 'lasso',
   intent: 'explain this selected chart segment',
   includeViewport: true,
+  selectionAffordance: {
+    label: 'Selected context',
+    prompt: {
+      placeholder: 'Ask about this area...',
+      onSubmit(question, packet) {
+        sendToAgent({ question, context: packet });
+      },
+    },
+  },
   theme: {
     lassoStrokeWidth: 4,
+    selectionAffordanceStroke: '#7c3aed',
   },
   onCapture: (packet) => {
     sendToAgent(packet);
@@ -169,10 +179,13 @@ capture.start();
 
 The resulting packet uses `capture.mode` of `region`, `circle`, or `lasso`,
 sets `privacy.consent` to `explicit`, and places the selected bounds on
-`target.bounds`. Lasso packets also include the freehand path in
+`target.bounds`. Square captures serialize as `region` mode with
+`target.metadata.shape: 'square'`. Lasso packets also include the freehand path in
 `target.metadata.points`. The default lasso overlay uses
 `ASKABLE_REGION_CAPTURE_THEME`; pass `theme` to adjust overlay colors,
-selection fill/stroke, or lasso line styling.
+selection fill/stroke, lasso line styling, or selected-state defaults. Set
+`selectionAffordance` when the selected area should stay visible after capture
+or expose a small question input anchored to the selected geometry.
 
 Framework apps can use wrapper APIs instead:
 

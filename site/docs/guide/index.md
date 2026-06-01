@@ -54,8 +54,11 @@ Start simple with annotated elements:
 Then add explicit user-marking tools where the UI needs more precision:
 
 ```ts
-const region = createAskableRegionCapture(ctx, { shape: 'lasso' });
+const region = createAskableRegionCapture(ctx, { shape: 'square' });
 region.start();
+
+const lasso = createAskableRegionCapture(ctx, { shape: 'lasso' });
+lasso.start();
 
 const text = createAskableTextSelectionCapture(ctx);
 text.captureNow();

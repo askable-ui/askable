@@ -15,6 +15,7 @@ function pointerEvent(type: string, x: number, y: number): PointerEvent {
 
 afterEach(() => {
   document.getElementById('askable-region-capture')?.remove();
+  document.getElementById('askable-region-selection-affordance')?.remove();
 });
 
 describe('createAskableRegionCapture', () => {
@@ -99,6 +100,66 @@ describe('createAskableRegionCapture', () => {
         center: { x: 30, y: 50 },
         radius: 30,
       },
+    });
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
+  it('captures a square as constrained region geometry', () => {
+    const ctx = createAskableContext();
+    const onCapture = vi.fn();
+    const capture = createAskableRegionCapture(ctx, {
+      shape: 'square',
+      onCapture,
+    });
+
+    capture.start();
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 50, 60));
+    overlay.dispatchEvent(pointerEvent('pointermove', 90, 140));
+    overlay.dispatchEvent(pointerEvent('pointerup', 90, 140));
+
+    const [packet, selection] = onCapture.mock.calls[0];
+    expect(selection).toMatchObject({
+      shape: 'square',
+      bounds: { x: 50, y: 60, width: 80, height: 80 },
+    });
+    expect(packet.capture).toMatchObject({
+      mode: 'region',
+      gesture: 'drag',
+    });
+    expect(packet.target).toMatchObject({
+      bounds: { x: 50, y: 60, width: 80, height: 80 },
+      metadata: {
+        shape: 'square',
+      },
+    });
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
+  it('captures a square dragged up and left', () => {
+    const ctx = createAskableContext();
+    const onCapture = vi.fn();
+    const capture = createAskableRegionCapture(ctx, {
+      shape: 'square',
+      onCapture,
+    });
+
+    capture.start();
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 90, 140));
+    overlay.dispatchEvent(pointerEvent('pointermove', 50, 60));
+    overlay.dispatchEvent(pointerEvent('pointerup', 50, 60));
+
+    const [, selection] = onCapture.mock.calls[0];
+    expect(selection).toMatchObject({
+      shape: 'square',
+      bounds: { x: 10, y: 60, width: 80, height: 80 },
     });
 
     capture.destroy();
@@ -315,6 +376,113 @@ describe('createAskableRegionCapture', () => {
     expect(overlayAtCallbackTime).toBeNull();
     expect(document.getElementById('askable-region-capture')).toBeNull();
 
+    ctx.destroy();
+  });
+
+  it('can persist a selected region affordance after capture', () => {
+    const ctx = createAskableContext();
+    const capture = createAskableRegionCapture(ctx, {
+      selectionAffordance: {
+        label: 'Selected area',
+        className: 'custom-affordance',
+        style: { opacity: '0.92' },
+      },
+    });
+
+    capture.start();
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 80, 90));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 90));
+
+    const affordance = document.getElementById('askable-region-selection-affordance')!;
+    expect(document.getElementById('askable-region-capture')).toBeNull();
+    expect(affordance).toBeInstanceOf(HTMLElement);
+    expect(affordance.getAttribute('data-askable-region-selection-affordance')).toBe('region');
+    expect(affordance.className).toBe('custom-affordance');
+    expect(affordance.style.left).toBe('10px');
+    expect(affordance.style.top).toBe('20px');
+    expect(affordance.style.width).toBe('70px');
+    expect(affordance.style.height).toBe('70px');
+    expect(affordance.style.opacity).toBe('0.92');
+    expect(affordance.textContent).toContain('Selected area');
+
+    capture.clearSelection();
+    expect(document.getElementById('askable-region-selection-affordance')).toBeNull();
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
+  it('renders an anchored prompt and calls onSubmit with the captured packet', () => {
+    const ctx = createAskableContext();
+    const onSubmit = vi.fn();
+    const capture = createAskableRegionCapture(ctx, {
+      source: { app: 'dashboard' },
+      selectionAffordance: {
+        prompt: {
+          placeholder: 'Ask here',
+          submitLabel: 'Send question',
+          onSubmit,
+        },
+      },
+    });
+
+    capture.start();
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 80, 90));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 90));
+
+    const affordance = document.getElementById('askable-region-selection-affordance')!;
+    const input = affordance.querySelector('input')!;
+    const button = affordance.querySelector('button')!;
+    input.value = 'What changed here?';
+    button.click();
+
+    expect(input.placeholder).toBe('Ask here');
+    expect(button.getAttribute('aria-label')).toBe('Send question');
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0]).toBe('What changed here?');
+    expect(onSubmit.mock.calls[0][1]).toMatchObject({
+      source: { app: 'dashboard' },
+      capture: { mode: 'region' },
+    });
+    expect(onSubmit.mock.calls[0][2]).toMatchObject({
+      bounds: { x: 10, y: 20, width: 70, height: 70 },
+    });
+    expect(input.value).toBe('');
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
+  it('can persist lasso affordance geometry', () => {
+    const ctx = createAskableContext();
+    const capture = createAskableRegionCapture(ctx, {
+      shape: 'lasso',
+      selectionAffordance: true,
+    });
+
+    capture.start();
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 30, 45));
+    overlay.dispatchEvent(pointerEvent('pointermove', 70, 35));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 75));
+
+    const affordance = document.getElementById('askable-region-selection-affordance')!;
+    const path = affordance.querySelector('path')!;
+    expect(affordance.getAttribute('data-askable-region-selection-affordance')).toBe('lasso');
+    expect(affordance.style.left).toBe('10px');
+    expect(affordance.style.top).toBe('20px');
+    expect(path.getAttribute('d')).toBe('M0 0 L20 25 L60 15 L70 55');
+
+    capture.destroy();
+    expect(document.getElementById('askable-region-selection-affordance')).toBeNull();
     ctx.destroy();
   });
 });

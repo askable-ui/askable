@@ -429,6 +429,59 @@
       stroke-linejoin: round;
       filter: blur(1px);
     }
+    .selected-region {
+      position: absolute; z-index: 12; pointer-events: none;
+      border: 2px solid rgba(124,58,237,0.78);
+      background: rgba(124,58,237,0.08);
+      box-shadow: 0 12px 34px rgba(91,33,182,0.16), 0 0 0 4px rgba(124,58,237,0.05);
+      animation: selectedRegionIn .18s ease-out;
+    }
+    .selected-region.circle { border-radius: 999px; }
+    .selected-region.lasso { inset: 0; border: none; background: transparent; box-shadow: none; }
+    .selected-region svg { position: absolute; inset: 0; overflow: visible; }
+    .selected-region path {
+      fill: none;
+      stroke: rgba(124,58,237,0.9);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 7px rgba(124,58,237,0.24));
+    }
+    .selected-region-label {
+      position: absolute; left: 0; bottom: calc(100% + 7px);
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .28rem .52rem; border-radius: var(--radius-pill);
+      border: 1px solid rgba(124,58,237,0.18); background: rgba(255,255,255,0.94);
+      color: #5b21b6; font-size: .66rem; font-weight: 850;
+      letter-spacing: .05em; text-transform: uppercase;
+      box-shadow: 0 10px 24px rgba(15,23,42,0.1); white-space: nowrap;
+    }
+    .selected-region-label::before {
+      content: ''; width: .42rem; height: .42rem; border-radius: 999px;
+      background: #7c3aed; box-shadow: 0 0 0 4px rgba(124,58,237,0.1);
+    }
+    .selection-inline-prompt {
+      position: absolute; left: 0; top: calc(100% + 9px); z-index: 13;
+      display: flex; align-items: center; gap: .42rem;
+      width: min(310px, calc(100vw - 3rem)); padding: .38rem;
+      border: 1px solid rgba(124,58,237,0.18); border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.96); box-shadow: 0 16px 42px rgba(15,23,42,0.15);
+      pointer-events: auto;
+    }
+    .selection-inline-prompt.above { top: auto; bottom: calc(100% + 9px); }
+    .selection-inline-prompt input {
+      min-width: 0; flex: 1; border: none; outline: none; background: transparent;
+      color: var(--ink); font: 500 .78rem/1.2 var(--font); padding: .26rem .32rem;
+    }
+    .selection-inline-prompt button {
+      flex: 0 0 auto; border: none; border-radius: var(--radius-pill);
+      background: var(--ink); color: #fff; padding: .36rem .62rem;
+      font-size: .7rem; font-weight: 800; cursor: pointer;
+    }
+    @keyframes selectedRegionIn {
+      from { opacity: 0; transform: scale(.985); }
+      to { opacity: 1; transform: scale(1); }
+    }
     .ai-cursor-canvas {
       position: absolute; inset: 0; z-index: 10;
       width: 100%; height: 100%;
@@ -547,11 +600,20 @@
       border: 1px solid rgba(124,58,237,0.18);
       background: linear-gradient(180deg, rgba(124,58,237,0.08), rgba(255,255,255,0.88));
     }
+    .selected-region-card {
+      margin: .72rem .78rem 0; padding: .72rem .78rem; border-radius: 14px;
+      border: 1px solid rgba(79,70,229,0.16);
+      background: linear-gradient(180deg, rgba(79,70,229,0.075), rgba(255,255,255,0.9));
+    }
     .selected-text-card-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .44rem; }
     .selected-text-card-title { display: flex; align-items: center; gap: .42rem; color: #5b21b6; font-size: .7rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
     .selected-text-card-title::before { content: '“'; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 999px; background: #6d28d9; color: #fff; font-size: .9rem; line-height: 1; }
     .selected-text-card-state { color: var(--ink-3); font-size: .64rem; font-weight: 700; }
     .selected-text-quote { margin: 0; color: var(--ink); font-size: .78rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .selected-region-card .selected-text-card-title { color: #3730a3; }
+    .selected-region-card .selected-text-card-title::before { content: ''; background: #4f46e5; box-shadow: inset 0 0 0 5px rgba(255,255,255,0.25); }
+    .selected-region-list { margin: 0; color: var(--ink-2); font-size: .76rem; line-height: 1.48; display: grid; gap: .22rem; }
+    .selected-region-list span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .dashboard ::selection { background: rgba(124,58,237,0.24); color: var(--ink); }
     .text-capture-mark {
       position: absolute; pointer-events: none; z-index: 6; border-radius: 7px;
@@ -736,6 +798,7 @@
           <span class="hero-pattern-pill">Click</span>
           <span class="hero-pattern-pill">Ask AI button</span>
           <span class="hero-pattern-pill">Region</span>
+          <span class="hero-pattern-pill">Square</span>
           <span class="hero-pattern-pill">Circle</span>
           <span class="hero-pattern-pill">Lasso</span>
           <span class="hero-pattern-pill">Selected text</span>
@@ -831,7 +894,7 @@ User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ag
         <article class="pattern-copy">
           <div>
             <h3>Context becomes an intentional user action.</h3>
-            <p>Use DOM focus for the common path, then add explicit tools for visual ambiguity: draw over a chart, circle an outlier, lasso an irregular area, or send the text the user highlighted.</p>
+            <p>Use DOM focus for the common path, then add explicit tools for visual ambiguity: draw over a chart, square off a fixed area, circle an outlier, lasso an irregular area, or send the text the user highlighted.</p>
           </div>
           <pre class="step-code">region.start({ shape: 'lasso' });
 text.captureNow();
@@ -847,6 +910,11 @@ ctx.push(meta, text);</pre>
             <div class="pattern-icon">□</div>
             <h4>Region capture</h4>
             <p>Drag a rectangular page area when the answer depends on a visible section.</p>
+          </article>
+          <article class="pattern-card">
+            <div class="pattern-icon">▣</div>
+            <h4>Square capture</h4>
+            <p>Constrain the selected area when the target should keep an equal width and height.</p>
           </article>
           <article class="pattern-card">
             <div class="pattern-icon">○</div>
@@ -920,6 +988,10 @@ ctx.push(meta, text);</pre>
               <button class="pattern-option" data-tool="region" type="button" data-pattern-title="Region" data-pattern-payload="Bounds + selected items">
                 <span class="pattern-glyph">□</span>
                 <span class="pattern-copy-mini"><b>Region</b><small>boxed area</small></span>
+              </button>
+              <button class="pattern-option" data-tool="square" type="button" data-pattern-title="Square" data-pattern-payload="Equal bounds + selected items">
+                <span class="pattern-glyph">▣</span>
+                <span class="pattern-copy-mini"><b>Square</b><small>fixed ratio</small></span>
               </button>
               <button class="pattern-option" data-tool="circle" type="button" data-pattern-title="Circle" data-pattern-payload="Radius + selected items">
                 <span class="pattern-glyph">○</span>
@@ -999,6 +1071,13 @@ ctx.push(meta, text);</pre>
                 <span class="selected-text-card-state">ready for chat</span>
               </div>
               <blockquote class="selected-text-quote" id="selected-text-preview"></blockquote>
+            </div>
+            <div class="selected-region-card" id="selected-region-card" style="display:none">
+              <div class="selected-text-card-head">
+                <span class="selected-text-card-title" id="selected-region-title">Selected region context</span>
+                <span class="selected-text-card-state">ready for chat</span>
+              </div>
+              <div class="selected-region-list" id="selected-region-preview"></div>
             </div>
             <div class="composer-suggestions" id="composer-suggestions" style="display:none"></div>
             <div class="chat-input-row">
@@ -1314,6 +1393,9 @@ ctx.push(meta, text);</pre>
     var contextChip = document.getElementById('context-chip');
     var selectedTextCard = document.getElementById('selected-text-card');
     var selectedTextPreview = document.getElementById('selected-text-preview');
+    var selectedRegionCard = document.getElementById('selected-region-card');
+    var selectedRegionTitle = document.getElementById('selected-region-title');
+    var selectedRegionPreview = document.getElementById('selected-region-preview');
     var composerSuggestions = document.getElementById('composer-suggestions');
     var selectionLayer = document.getElementById('selection-layer');
     var aiCursor = document.getElementById('ai-cursor');
@@ -1324,7 +1406,7 @@ ctx.push(meta, text);</pre>
     var patternPayload = document.getElementById('pattern-payload');
     var cancelTool = document.getElementById('cancel-tool');
     var activeEl = null; var typingTimer = null; var lastKey = null;
-    var activeTool = null; var drawingEl = null; var dragStart = null; var lassoPoints = []; var toolClearTimer = null; var textSelectionMode = false;
+    var activeTool = null; var drawingEl = null; var selectedRegionEl = null; var dragStart = null; var lassoPoints = []; var toolClearTimer = null; var textSelectionMode = false;
     var aiTrailPoints = []; var aiTrailFrame = null; var aiTrailDpr = 1; var aiTrailMaxPoints = 22;
     var dashboard = document.querySelector('.dashboard');
     var promptOpts = { format: 'natural', includeText: true };
@@ -1461,6 +1543,7 @@ ctx.push(meta, text);</pre>
       if (toolClearTimer) { clearTimeout(toolClearTimer); toolClearTimer = null; }
       activeTool = null; dragStart = null; lassoPoints = []; textSelectionMode = false;
       clearSelectedTextPreview();
+      clearSelectedRegionPreview();
       if (drawingEl) { drawingEl.remove(); drawingEl = null; }
       resetAiTrail();
       if (dashboard) dashboard.classList.remove('selecting', 'lasso-active');
@@ -1487,7 +1570,7 @@ ctx.push(meta, text);</pre>
       document.querySelectorAll('[data-tool]').forEach(function(btn) {
         btn.classList.toggle('active', btn.getAttribute('data-tool') === tool);
       });
-      setPatternState(document.querySelector('[data-tool="' + tool + '"]'), tool === 'region' ? 'Drag a box over the dashboard.' : tool === 'circle' ? 'Drag from the center to circle an area.' : 'Freehand drag with the AI cursor. Lasso stays active until you cancel.');
+      setPatternState(document.querySelector('[data-tool="' + tool + '"]'), tool === 'region' ? 'Drag a box over the dashboard.' : tool === 'square' ? 'Drag a fixed-ratio square over the dashboard.' : tool === 'circle' ? 'Drag from the center to circle an area.' : 'Freehand drag with the AI cursor. Lasso stays active until you cancel.');
     }
     function updateAiCursor(point) {
       if (!aiCursor || activeTool !== 'lasso') return;
@@ -1509,6 +1592,15 @@ ctx.push(meta, text);</pre>
         y: Math.round(Math.min(a.y, b.y)),
         width: Math.round(Math.abs(b.x - a.x)),
         height: Math.round(Math.abs(b.y - a.y))
+      };
+    }
+    function squareBoundsFromPoints(a, b) {
+      var size = Math.round(Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y)));
+      return {
+        x: Math.round(b.x < a.x ? a.x - size : a.x),
+        y: Math.round(b.y < a.y ? a.y - size : a.y),
+        width: size,
+        height: size
       };
     }
     function pointInBounds(point, bounds) {
@@ -1574,6 +1666,99 @@ ctx.push(meta, text);</pre>
       return shape + ' selected ' + items.length + ' dashboard item' + (items.length === 1 ? '' : 's') + ':\n' +
         items.map(function(item) { return '- ' + item.label + ': ' + item.text; }).join('\n');
     }
+    function shapeTitle(shape) {
+      if (shape === 'lasso') return 'Lasso context';
+      if (shape === 'square') return 'Square context';
+      if (shape === 'circle') return 'Circled context';
+      return 'Region context';
+    }
+    function shapeAction(shape) {
+      if (shape === 'lasso') return 'lassoed';
+      if (shape === 'square') return 'squared';
+      if (shape === 'circle') return 'circled';
+      return 'selected';
+    }
+    function createRegionLabel(shape, bounds) {
+      var label = document.createElement('div');
+      label.className = 'selected-region-label';
+      label.textContent = shapeTitle(shape);
+      if (shape === 'lasso') {
+        label.style.left = Math.round(bounds.x) + 'px';
+        label.style.top = Math.max(0, Math.round(bounds.y) - 30) + 'px';
+        label.style.bottom = 'auto';
+      }
+      return label;
+    }
+    function createInlinePrompt(shape, bounds, layerHeight) {
+      var form = document.createElement('form');
+      form.className = 'selection-inline-prompt';
+      if (bounds.y + bounds.height + 62 > layerHeight) form.classList.add('above');
+      if (shape === 'lasso') {
+        form.style.left = Math.round(bounds.x) + 'px';
+        form.style.top = Math.round(bounds.y + bounds.height + 9) + 'px';
+        form.style.bottom = 'auto';
+        if (bounds.y + bounds.height + 62 > layerHeight) {
+          form.style.top = 'auto';
+          form.style.bottom = Math.max(0, Math.round(layerHeight - bounds.y + 9)) + 'px';
+        }
+      }
+      form.innerHTML = '<input type="text" placeholder="Ask about this ' + shapeAction(shape) + ' area…" aria-label="Ask about selected area"><button type="submit">Ask</button>';
+      form.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+      form.addEventListener('click', function(e) { e.stopPropagation(); });
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var input = form.querySelector('input');
+        var value = input ? input.value.trim() : '';
+        if (!value) return;
+        chatInput.value = value;
+        send();
+      });
+      return form;
+    }
+    function clearSelectedRegionPreview() {
+      if (selectedRegionEl) { selectedRegionEl.remove(); selectedRegionEl = null; }
+      if (selectedRegionCard) selectedRegionCard.style.display = 'none';
+      if (selectedRegionPreview) selectedRegionPreview.innerHTML = '';
+    }
+    function showSelectedRegionPanel(shape, items) {
+      if (!selectedRegionCard || !selectedRegionPreview) return;
+      if (selectedRegionTitle) selectedRegionTitle.textContent = shapeTitle(shape);
+      selectedRegionPreview.innerHTML = '';
+      var labels = items && items.length ? items.map(function(item) { return item.label; }) : ['No annotated widgets inside the selected area'];
+      labels.slice(0, 4).forEach(function(label) {
+        var row = document.createElement('span');
+        row.textContent = label;
+        selectedRegionPreview.appendChild(row);
+      });
+      selectedRegionCard.style.display = 'block';
+    }
+    function showSelectedRegionPreview(shape, bounds, radius, points, items) {
+      if (!selectionLayer) return;
+      clearSelectedRegionPreview();
+      clearSelectedTextPreview();
+      var layerRect = selectionLayer.getBoundingClientRect();
+      selectedRegionEl = document.createElement('div');
+      selectedRegionEl.className = 'selected-region ' + shape;
+      if (shape === 'lasso') {
+        var path = (points || []).map(function(p, index) { return (index ? 'L' : 'M') + Math.round(p.x) + ' ' + Math.round(p.y); }).join(' ');
+        selectedRegionEl.innerHTML = '<svg width="100%" height="100%" viewBox="0 0 ' + Math.round(layerRect.width) + ' ' + Math.round(layerRect.height) + '"><path d="' + path + '"></path></svg>';
+      } else if (shape === 'circle') {
+        selectedRegionEl.style.left = Math.round(dragStart.x - radius) + 'px';
+        selectedRegionEl.style.top = Math.round(dragStart.y - radius) + 'px';
+        selectedRegionEl.style.width = radius * 2 + 'px';
+        selectedRegionEl.style.height = radius * 2 + 'px';
+      } else {
+        selectedRegionEl.style.left = bounds.x + 'px';
+        selectedRegionEl.style.top = bounds.y + 'px';
+        selectedRegionEl.style.width = Math.max(8, bounds.width) + 'px';
+        selectedRegionEl.style.height = Math.max(8, bounds.height) + 'px';
+      }
+      selectedRegionEl.appendChild(createRegionLabel(shape, bounds));
+      selectedRegionEl.appendChild(createInlinePrompt(shape, bounds, layerRect.height));
+      selectionLayer.appendChild(selectedRegionEl);
+      showSelectedRegionPanel(shape, items);
+      if (contextBarLabel) contextBarLabel.textContent = shapeTitle(shape) + ':';
+    }
     function drawSelection(point) {
       if (!selectionLayer || !dragStart) return;
       if (!drawingEl) {
@@ -1595,6 +1780,7 @@ ctx.push(meta, text);</pre>
         drawingEl.style.width = radius * 2 + 'px';
         drawingEl.style.height = radius * 2 + 'px';
       } else {
+        if (activeTool === 'square') b = squareBoundsFromPoints(dragStart, point);
         drawingEl.style.left = b.x + 'px';
         drawingEl.style.top = b.y + 'px';
         drawingEl.style.width = Math.max(8, b.width) + 'px';
@@ -1612,7 +1798,7 @@ ctx.push(meta, text);</pre>
               maxY: Math.max(acc.maxY, p.y)
             };
           }, { x: dragStart.x, y: dragStart.y, maxX: dragStart.x, maxY: dragStart.y })
-        : boundsFromPoints(dragStart, point);
+        : activeTool === 'square' ? squareBoundsFromPoints(dragStart, point) : boundsFromPoints(dragStart, point);
       if (bounds.maxX != null) {
         bounds = { x: Math.round(bounds.x), y: Math.round(bounds.y), width: Math.round(bounds.maxX - bounds.x), height: Math.round(bounds.maxY - bounds.y) };
       }
@@ -1646,18 +1832,13 @@ ctx.push(meta, text);</pre>
         consent: 'explicit'
       };
       askable.push(meta, selectionSummary(activeTool, selectedItems), dashboard);
+      showSelectedRegionPreview(activeTool, bounds, radius, lassoPoints.slice(), selectedItems);
       setToolHint(activeTool + ' context sent to the assistant.');
-      if (activeTool === 'lasso') {
-        toolClearTimer = setTimeout(function() {
-          if (drawingEl) { drawingEl.remove(); drawingEl = null; }
-          dragStart = null;
-          lassoPoints = [];
-          resetAiTrail();
-          setToolHint('Lasso context sent. Draw another lasso, or cancel to leave lasso mode.');
-        }, 450);
-      } else {
-        toolClearTimer = setTimeout(clearToolState, 450);
-      }
+      if (drawingEl) { drawingEl.remove(); drawingEl = null; }
+      dragStart = null;
+      lassoPoints = [];
+      resetAiTrail();
+      setToolHint(shapeTitle(activeTool) + ' sent. Ask in the selected area, draw again, or cancel.');
     }
     document.querySelectorAll('[data-tool]').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
@@ -1677,6 +1858,7 @@ ctx.push(meta, text);</pre>
         e.preventDefault();
         if (toolClearTimer) { clearTimeout(toolClearTimer); toolClearTimer = null; }
         if (drawingEl) { drawingEl.remove(); drawingEl = null; }
+        clearSelectedRegionPreview();
         if (activeTool === 'lasso') {
           resizeAiTrail();
           resetAiTrail();
@@ -1788,6 +1970,7 @@ ctx.push(meta, text);</pre>
       if (w === 'arpu') return 'How can we improve ARPU?';
       if (w === 'nps') return 'What should we do with this NPS score?';
       if (meta.capture === 'region') return 'What should I know about this selected area?';
+      if (meta.capture === 'square') return 'What should I know about this squared area?';
       if (meta.capture === 'circle') return 'What should I do about this circled area?';
       if (meta.capture === 'lasso') return 'What stands out in this lassoed area?';
       if (meta.capture === 'text-selection') return 'Use this selected text to answer my question.';
@@ -1804,6 +1987,7 @@ ctx.push(meta, text);</pre>
       if (meta.capture === 'text-selection') return ['Summarize this', 'Extract action items', 'Use this in my answer'];
       if (meta.capture === 'lasso') return ['What stands out?', 'Summarize this area', 'What should I do next?'];
       if (meta.capture === 'region') return ['Summarize this area', 'Find risks here', 'What changed?'];
+      if (meta.capture === 'square') return ['Summarize this square', 'Compare this area', 'What changed?'];
       if (meta.capture === 'circle') return ['Explain this point', 'Is this an issue?', 'What should I do?'];
       if (meta.widget === 'account_row') {
         if (meta.status === 'at_risk') return ['Recommended action', 'Why is this risky?', 'Draft next step'];
@@ -1910,8 +2094,16 @@ ctx.push(meta, text);</pre>
       // Show context bar — let user see what's loaded before sending
       contextBar.style.display = 'flex';
       contextChip.textContent = prompt;
-      if (meta && meta.capture === 'text-selection') showSelectedTextPreview(focus.text);
-      else clearSelectedTextPreview();
+      if (meta && meta.capture === 'text-selection') {
+        clearSelectedRegionPreview();
+        showSelectedTextPreview(focus.text);
+      } else if (meta && (meta.capture === 'region' || meta.capture === 'square' || meta.capture === 'circle' || meta.capture === 'lasso')) {
+        clearSelectedTextPreview();
+        showSelectedRegionPanel(meta.capture, meta.selectedItems || []);
+      } else {
+        clearSelectedTextPreview();
+        clearSelectedRegionPreview();
+      }
       // Highlight active element
       if (activeEl) activeEl.classList.remove('active');
       activeEl = focus.element;
@@ -1925,6 +2117,7 @@ ctx.push(meta, text);</pre>
     document.getElementById('context-dismiss').addEventListener('click', function() {
       contextBar.style.display = 'none'; contextChip.textContent = '';
       clearSelectedTextPreview();
+      clearSelectedRegionPreview();
       if (activeEl) activeEl.classList.remove('active');
       activeEl = null; lastKey = null; askable.clear();
       hideQuestionSuggestions();
@@ -1953,6 +2146,8 @@ ctx.push(meta, text);</pre>
           // Context-aware canned responses
           if (meta.capture === 'region') {
             reply = 'This region selection is now explicit context. A real app would attach bounds plus any nearby semantic data, chart data, or screenshot reference.';
+          } else if (meta.capture === 'square') {
+            reply = 'This square selection keeps the visual target constrained while still carrying explicit bounds, nearby semantic data, and the selected UI state.';
           } else if (meta.capture === 'circle') {
             reply = 'The circled area is treated as intentional context. This is useful for chart anomalies, visual defects, map locations, or one object in a dense UI.';
           } else if (meta.capture === 'lasso') {

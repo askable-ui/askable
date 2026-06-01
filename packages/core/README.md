@@ -45,7 +45,8 @@ ctx.destroy();
 ## Region, Circle, and Lasso Capture
 
 Use `createAskableRegionCapture()` when the user should draw a page region,
-circle an area, or lasso a freehand shape and send it as structured context.
+square off a fixed-ratio area, circle an area, or lasso a freehand shape and
+send it as structured context.
 
 ```ts
 import {
@@ -61,10 +62,21 @@ const capture = createAskableRegionCapture(ctx, {
   shape: 'lasso',
   intent: 'explain this selected area',
   includeViewport: true,
+  selectionAffordance: {
+    label: 'Selected context',
+    className: 'my-selection-marker',
+    prompt: {
+      placeholder: 'Ask about this area...',
+      onSubmit(question, packet) {
+        sendToAgent({ question, context: packet });
+      },
+    },
+  },
   theme: {
     ...ASKABLE_REGION_CAPTURE_THEME,
     lassoStrokeWidth: 4,
     lassoGlowRadius: 12,
+    selectionAffordanceStroke: '#7c3aed',
   },
   onCapture(packet) {
     sendToAgent(packet);
@@ -75,12 +87,17 @@ capture.start();
 ```
 
 The packet uses `capture.mode` of `region`, `circle`, or `lasso`, marks consent
-as explicit, and includes the selected geometry in `target.bounds`. Lasso
-captures also include `target.metadata.points` for the freehand path.
+as explicit, and includes the selected geometry in `target.bounds`. Square
+captures use `capture.mode: 'region'` with `target.metadata.shape: 'square'`.
+Lasso captures also include `target.metadata.points` for the freehand path.
 The built-in lasso overlay uses `ASKABLE_REGION_CAPTURE_THEME` by default; pass
 `theme` to override any overlay, selection, or lasso style for your app.
+Set `selectionAffordance` to keep the selected shape visible after capture and,
+optionally, render a small prompt anchored to the selected area. The affordance
+accepts class names, inline style hooks, and a custom `render()` escape hatch.
 Set `once: false` to keep the overlay mounted for repeated captures. The handle
-reports active until `cancel()` or `destroy()` runs.
+reports active until `cancel()` or `destroy()` runs, and `clearSelection()`
+removes only the persisted selected-state UI.
 
 ## Text Selection Capture
 

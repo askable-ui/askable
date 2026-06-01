@@ -165,6 +165,15 @@ function RegionTools() {
   const capture = useAskableRegionCapture({
     ctx,
     includeViewport: true,
+    selectionAffordance: {
+      label: 'Selected context',
+      prompt: {
+        placeholder: 'Ask about this area...',
+        onSubmit(question, packet) {
+          sendToAgent({ question, context: packet });
+        },
+      },
+    },
     theme: {
       lassoStrokeWidth: 4,
       lassoGlowRadius: 12,
@@ -179,6 +188,9 @@ function RegionTools() {
       <button onClick={() => capture.start({ shape: 'region' })}>
         Select region
       </button>
+      <button onClick={() => capture.start({ shape: 'square' })}>
+        Select square
+      </button>
       <button onClick={() => capture.start({ shape: 'circle' })}>
         Circle area
       </button>
@@ -191,11 +203,14 @@ function RegionTools() {
 }
 ```
 
-Region packets use `capture.mode: 'region'`; circle packets use
+Region and square packets use `capture.mode: 'region'`; square packets also set
+`target.metadata.shape: 'square'`. Circle packets use
 `capture.mode: 'circle'` and include center/radius metadata. Lasso packets use
 `capture.mode: 'lasso'` and include freehand path points.
 The default lasso overlay uses the core `ASKABLE_REGION_CAPTURE_THEME`; pass
-`theme` when you need brand-specific overlay colors or line styling.
+`theme` when you need brand-specific overlay colors, line styling, or
+selected-state defaults. Use `selectionAffordance` to keep the selected area
+visible after capture and optionally attach a small prompt input to it.
 
 ## Text selection capture
 
