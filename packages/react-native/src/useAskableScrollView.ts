@@ -83,7 +83,10 @@ export function useAskableScrollView<Item = unknown>(
     getText,
     selectVisible = defaultSelectVisible,
   } = options;
-  const [scrollCtx] = useState<AskableContext>(() => ctx ?? createAskableContext(options));
+  const [{ scrollCtx, ownedCtx }] = useState(() => {
+    if (ctx) return { scrollCtx: ctx, ownedCtx: false };
+    return { scrollCtx: createAskableContext(options), ownedCtx: true };
+  });
   const measuredItemsRef = useRef<Map<string, AskableMeasuredItem<Item>>>(new Map());
   const viewportRef = useRef<{ offsetY: number; height: number } | null>(null);
 
@@ -170,11 +173,11 @@ export function useAskableScrollView<Item = unknown>(
   useEffect(() => {
     return () => {
       measuredItemsRef.current.clear();
-      if (!ctx) {
+      if (ownedCtx) {
         scrollCtx.destroy();
       }
     };
-  }, [ctx, scrollCtx]);
+  }, [scrollCtx, ownedCtx]);
 
   return {
     ctx: scrollCtx,

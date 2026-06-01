@@ -51,7 +51,10 @@ export function useAskableVisibility<Item = unknown>(
     getText,
     selectViewable = defaultSelectViewable,
   } = options;
-  const [visibilityCtx] = useState<AskableContext>(() => ctx ?? createAskableContext(options));
+  const [{ visibilityCtx, ownedCtx }] = useState(() => {
+    if (ctx) return { visibilityCtx: ctx, ownedCtx: false };
+    return { visibilityCtx: createAskableContext(options), ownedCtx: true };
+  });
 
   const clearVisibleItem = useCallback(() => {
     visibilityCtx.clear();
@@ -83,11 +86,11 @@ export function useAskableVisibility<Item = unknown>(
 
   useEffect(() => {
     return () => {
-      if (!ctx) {
+      if (ownedCtx) {
         visibilityCtx.destroy();
       }
     };
-  }, [ctx, visibilityCtx]);
+  }, [visibilityCtx, ownedCtx]);
 
   return {
     ctx: visibilityCtx,

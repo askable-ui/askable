@@ -35,11 +35,16 @@ export function useAskable(options?: UseAskableOptions): UseAskable {
 
   let focus: AskableFocus | null = $state(null);
 
-  const handleFocus = (nextFocus: AskableFocus) => { focus = nextFocus; };
-  const handleClear = () => { focus = null; };
-
-  ctx.on('focus', handleFocus);
-  ctx.on('clear', handleClear);
+  $effect(() => {
+    const handleFocus = (f: AskableFocus) => { focus = f; };
+    const handleClear = () => { focus = null; };
+    ctx.on('focus', handleFocus);
+    ctx.on('clear', handleClear);
+    return () => {
+      ctx.off('focus', handleFocus);
+      ctx.off('clear', handleClear);
+    };
+  });
 
   const promptContext = $derived(focus ? ctx.toPromptContext() : 'No UI element is currently focused.');
 
@@ -59,9 +64,6 @@ export function useAskable(options?: UseAskableOptions): UseAskable {
   function destroy() {
     if (destroyed) return;
     destroyed = true;
-
-    ctx.off('focus', handleFocus);
-    ctx.off('clear', handleClear);
     if (!usesProvidedCtx) ctx.destroy();
   }
 

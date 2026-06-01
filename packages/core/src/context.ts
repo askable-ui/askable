@@ -80,7 +80,11 @@ export class AskableContextImpl implements AskableContext {
     this.sanitizeTextFn = options?.sanitizeText;
     this.sanitizeSourceFn = options?.sanitizeSource;
     this.viewportEnabled = options?.viewport ?? false;
-    this.maxHistory = options?.maxHistory ?? DEFAULT_MAX_HISTORY;
+    const maxHistory = options?.maxHistory ?? DEFAULT_MAX_HISTORY;
+    if (!Number.isInteger(maxHistory) || maxHistory < 0) {
+      throw new RangeError('maxHistory must be a non-negative integer');
+    }
+    this.maxHistory = maxHistory;
     this.observer = new Observer((rawFocus) => {
       const focus = this.applySanitizers(rawFocus);
       this.currentFocus = focus;
@@ -275,13 +279,21 @@ export class AskableContextImpl implements AskableContext {
   push(meta: Record<string, unknown> | string, text?: string, options?: AskablePushOptions): void {
     const sanitizedMeta = this.sanitizeMetaFn && typeof meta !== 'string'
       ? this.sanitizeMetaFn(meta) : meta;
-    const sanitizedText = this.sanitizeTextFn && text
-      ? this.sanitizeTextFn(text) : (text ?? '');
+    const sanitizedText = this.sanitizeTextFn
+      ? this.sanitizeTextFn(text ?? '')
+      : (text ?? '');
+    const sanitizedAncestors = options?.ancestors?.map((seg) => ({
+      ...seg,
+      meta: this.sanitizeMetaFn && typeof seg.meta !== 'string'
+        ? this.sanitizeMetaFn(seg.meta)
+        : seg.meta,
+      text: this.sanitizeTextFn ? this.sanitizeTextFn(seg.text) : seg.text,
+    }));
     const focus: AskableFocus = {
       source: 'push',
       meta: sanitizedMeta,
       ...(options?.scope ? { scope: options.scope } : {}),
-      ...(options?.ancestors?.length ? { ancestors: options.ancestors } : {}),
+      ...(sanitizedAncestors?.length ? { ancestors: sanitizedAncestors } : {}),
       text: sanitizedText,
       timestamp: Date.now(),
     };

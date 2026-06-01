@@ -36,13 +36,15 @@ export function a11yTextExtractor(el: HTMLElement): string {
   // 2. aria-labelledby — concatenate text from referenced elements
   const labelledBy = el.getAttribute('aria-labelledby');
   if (labelledBy?.trim()) {
-    const root = el.ownerDocument ?? document;
-    const parts = labelledBy
-      .trim()
-      .split(/\s+/)
-      .map((id) => root.getElementById(id)?.textContent?.trim() ?? '')
-      .filter(Boolean);
-    if (parts.length > 0) return parts.join(' ');
+    const root = el.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
+    if (root) {
+      const parts = labelledBy
+        .trim()
+        .split(/\s+/)
+        .map((id) => root.getElementById(id)?.textContent?.trim() ?? '')
+        .filter(Boolean);
+      if (parts.length > 0) return parts.join(' ');
+    }
   }
 
   // 3. title attribute
