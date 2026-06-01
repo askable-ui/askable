@@ -790,8 +790,8 @@ selection.captureNow();
 ## `createAskableInspector(ctx, options?)`
 
 Mount a floating inspector panel that shows the active focus, parsed metadata,
-prompt output, and optional interaction test tools in real time. Designed for
-development and demos.
+prompt output, registered context sources, and optional interaction test tools
+in real time. Designed for development and demos.
 
 ```ts
 import { createAskableContext, createAskableInspector } from '@askable-ui/core';

@@ -1,4 +1,9 @@
-import type { AskableContext, AskableFocus, AskablePromptContextOptions } from './types.js';
+import type {
+  AskableContext,
+  AskableContextSourceInfo,
+  AskableFocus,
+  AskablePromptContextOptions,
+} from './types.js';
 import { createAskableRegionCapture } from './capture.js';
 import { createAskableTextSelectionCapture } from './selection.js';
 import type { AskableRegionCaptureHandle, AskableRegionCaptureShape } from './capture.js';
@@ -55,13 +60,8 @@ function renderMeta(meta: Record<string, unknown> | string): string {
   return `{\n${lines}\n}`;
 }
 
-function buildPanelHTML(focus: AskableFocus | null, promptContext: string): string {
-  if (!focus) {
-    return `
-      <div style="color:#8b949e;font-style:italic;padding:4px 0">No element focused</div>
-    `;
-  }
-
+function buildFocusHTML(focus: AskableFocus | null, promptContext: string): string {
+  if (!focus) return '<div style="color:#8b949e;font-style:italic;padding:4px 0">No element focused</div>';
   const el = focus.element;
   const tag = el ? el.tagName.toLowerCase() : null;
   const id = el?.id ? `#${escapeHtml(el.id)}` : '';
@@ -92,6 +92,44 @@ function buildPanelHTML(focus: AskableFocus | null, promptContext: string): stri
       <pre style="color:#a5d6ff;margin:4px 0;white-space:pre-wrap;word-break:break-all">${escapeHtml(promptContext)}</pre>
     </div>
   `;
+}
+
+function renderTime(timestamp: number): string {
+  if (!Number.isFinite(timestamp)) return '';
+  return new Date(timestamp).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
+function buildSourcesHTML(sources: AskableContextSourceInfo[]): string {
+  const rows = sources.length
+    ? sources.map((source) => `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid #30363d">
+        <div style="min-width:0">
+          <code style="display:block;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(source.id)}</code>
+          ${source.kind ? `<span style="color:#8b949e;font-size:11px">${escapeHtml(source.kind)}</span>` : ''}
+        </div>
+        <span title="Last updated" style="color:#8b949e;font-size:11px;white-space:nowrap">${escapeHtml(renderTime(source.updatedAt))}</span>
+      </div>
+    `).join('')
+    : '<div style="color:#8b949e;font-style:italic;padding-top:4px">No sources registered</div>';
+
+  return `
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d">
+      <span style="color:#7ee787;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Context sources</span>
+      ${rows}
+    </div>
+  `;
+}
+
+function buildPanelHTML(
+  focus: AskableFocus | null,
+  promptContext: string,
+  sources: AskableContextSourceInfo[],
+): string {
+  return `${buildFocusHTML(focus, promptContext)}${buildSourcesHTML(sources)}`;
 }
 
 function clampPanelPosition(panel: HTMLElement, left: number, top: number): { left: number; top: number } {
@@ -239,7 +277,7 @@ export function createAskableInspector(
 
   function update(focus: AskableFocus | null) {
     const promptContext = ctx.toPromptContext(promptOptions);
-    body.innerHTML = buildPanelHTML(focus, promptContext);
+    body.innerHTML = buildPanelHTML(focus, promptContext, ctx.listSources());
     if (focus?.element?.isConnected) applyHighlight(focus.element);
     else clearHighlight();
   }
@@ -249,8 +287,10 @@ export function createAskableInspector(
 
   const focusHandler = (f: AskableFocus) => update(f);
   const clearHandler = (_: null) => update(null);
+  const sourceHandler = () => update(ctx.getFocus());
   ctx.on('focus', focusHandler);
   ctx.on('clear', clearHandler);
+  ctx.on('sourcechange', sourceHandler);
 
   let destroyed = false;
   let activeTool: InspectorToolHandle | null = null;
@@ -390,6 +430,7 @@ export function createAskableInspector(
     destroyed = true;
     ctx.off('focus', focusHandler);
     ctx.off('clear', clearHandler);
+    ctx.off('sourcechange', sourceHandler);
     onDragEnd();
     stopActiveTool();
     header.removeEventListener('mousedown', onDragStart);

@@ -92,6 +92,45 @@ describe('createAskableInspector', () => {
     ctx.destroy();
   });
 
+  it('shows registered context sources in the panel', () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', {
+      kind: 'collection',
+      resolve: () => ({ total: 12 }),
+    });
+    const inspector = createAskableInspector(ctx);
+
+    const panel = document.getElementById('askable-inspector')!;
+    expect(panel.textContent).toContain('Context sources');
+    expect(panel.textContent).toContain('accounts');
+    expect(panel.textContent).toContain('collection');
+
+    inspector.destroy();
+    ctx.destroy();
+  });
+
+  it('updates context sources when registrations change', () => {
+    const ctx = createAskableContext();
+    const inspector = createAskableInspector(ctx);
+    const panel = document.getElementById('askable-inspector')!;
+
+    expect(panel.textContent).toContain('No sources registered');
+
+    const handle = ctx.registerSource('document', {
+      kind: 'document',
+      resolve: () => ({ title: 'Launch plan' }),
+    });
+
+    expect(panel.textContent).toContain('document');
+
+    handle.unregister();
+
+    expect(panel.textContent).toContain('No sources registered');
+
+    inspector.destroy();
+    ctx.destroy();
+  });
+
   it('highlights the focused element', () => {
     const el = attach(makeEl({ metric: 'revenue' }, 'Revenue'));
     const ctx = createAskableContext();
