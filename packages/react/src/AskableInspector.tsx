@@ -34,15 +34,18 @@ export function AskableInspector({
 }: AskableInspectorProps) {
   const { ctx } = useAskable({ ctx: providedCtx, name, events, viewport });
   const promptOptionsKey = JSON.stringify(inspectorOptions.promptOptions ?? null);
+  const sourcePreviewKey = JSON.stringify(inspectorOptions.sourcePreview ?? null);
 
   const stableInspectorOptions = useMemo(
     () => ({
       position: inspectorOptions.position,
       highlight: inspectorOptions.highlight,
+      tools: inspectorOptions.tools,
       promptOptions: inspectorOptions.promptOptions,
+      sourcePreview: inspectorOptions.sourcePreview,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ctx, inspectorOptions.position, inspectorOptions.highlight, promptOptionsKey],
+    [ctx, inspectorOptions.position, inspectorOptions.highlight, inspectorOptions.tools, promptOptionsKey, sourcePreviewKey],
   );
 
   useEffect(() => {

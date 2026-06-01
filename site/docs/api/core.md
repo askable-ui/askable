@@ -818,6 +818,14 @@ const inspector = createAskableInspector(ctx);
 // Shows a draggable floating panel in the bottom-right corner with test tools.
 // Use Copy to copy the current prompt context exactly as the panel renders it.
 
+createAskableInspector(ctx, {
+  sourcePreview: {
+    sources: 'all',
+    sourceMode: 'summary',
+  },
+});
+// Includes resolved app-owned sources in the Prompt context preview and Copy output.
+
 // Tear down when done:
 inspector.destroy();
 ```
@@ -830,6 +838,7 @@ inspector.destroy();
 | `highlight` | `boolean` | `true` | Outline the focused element |
 | `tools` | `boolean` | `true` | Show buttons for region, circle, lasso, text selection, and clear |
 | `promptOptions` | `AskablePromptContextOptions` | — | Options passed to `toPromptContext()` for the preview |
+| `sourcePreview` | `boolean \| AskableInspectorSourcePreviewOptions` | `false` | Include resolved app-owned sources in the preview and Copy output |
 
 **Returns:** `AskableInspectorHandle` — object with `destroy()` method.
 

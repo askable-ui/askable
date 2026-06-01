@@ -27,6 +27,7 @@ export type {
   AskableInspectorHandle,
   AskableInspectorOptions,
   AskableInspectorPosition,
+  AskableInspectorSourcePreviewOptions,
 } from './inspector.js';
 export type {
   AskableRegionCaptureHandle,

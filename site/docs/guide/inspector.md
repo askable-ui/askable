@@ -58,6 +58,7 @@ createAskableInspector(ctx, {
   position: 'bottom-right',  // 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
   highlight: true,           // outline the focused element
   tools: true,               // buttons for region, circle, lasso, text, and clear
+  sourcePreview: true,       // include registered source data in preview/copy
   promptOptions: {           // forwarded to toPromptContext()
     preset: 'compact',
   },
@@ -70,6 +71,19 @@ createAskableInspector(ctx, {
 | `highlight` | `boolean` | `true` | Draw an outline on the focused element |
 | `tools` | `boolean` | `true` | Show buttons for region, circle, lasso, text selection, and clear |
 | `promptOptions` | `AskablePromptContextOptions` | — | Options for the prompt output preview |
+| `sourcePreview` | `boolean \| AskableInspectorSourcePreviewOptions` | `false` | Resolve app-owned sources into the preview and Copy output |
+
+Use `sourcePreview` when you want the inspector to show the same source-backed
+context a chat bridge receives from `toPromptContextAsync()`.
+
+```ts
+createAskableInspector(ctx, {
+  sourcePreview: {
+    sources: [{ id: 'accounts', mode: 'all', maxItems: 20 }],
+    sourceErrorMode: 'include',
+  },
+});
+```
 
 ## React
 

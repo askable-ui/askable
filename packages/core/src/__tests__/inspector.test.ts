@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { createAskableContext } from '../index.js';
+import { createAskableContext, createAskableSource } from '../index.js';
 import { createAskableInspector } from '../inspector.js';
 
 function makeEl(meta: object | string, text = ''): HTMLElement {
@@ -8,6 +8,12 @@ function makeEl(meta: object | string, text = ''): HTMLElement {
   el.textContent = text;
   document.body.appendChild(el);
   return el;
+}
+
+async function waitForInspectorPreview() {
+  await Promise.resolve();
+  await Promise.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 describe('createAskableInspector', () => {
@@ -104,6 +110,35 @@ describe('createAskableInspector', () => {
     expect(panel.textContent).toContain('Context sources');
     expect(panel.textContent).toContain('accounts');
     expect(panel.textContent).toContain('collection');
+
+    inspector.destroy();
+    ctx.destroy();
+  });
+
+  it('can show resolved source-backed prompt context in the panel', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', createAskableSource({
+      kind: 'collection',
+      describe: 'Accounts matching filters',
+      state: { filter: 'enterprise' },
+      modes: {
+        all: { total: 2, companies: ['Acme Corp', 'Beta Labs'] },
+      },
+    }));
+    const inspector = createAskableInspector(ctx, {
+      sourcePreview: {
+        sourceMode: 'all',
+        sourceLabel: 'Resolved sources',
+      },
+    });
+
+    await waitForInspectorPreview();
+
+    const panel = document.getElementById('askable-inspector')!;
+    expect(panel.textContent).toContain('Resolved sources');
+    expect(panel.textContent).toContain('accounts');
+    expect(panel.textContent).toContain('Acme Corp');
+    expect(panel.textContent).toContain('enterprise');
 
     inspector.destroy();
     ctx.destroy();
@@ -342,6 +377,39 @@ describe('createAskableInspector', () => {
 
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('revenue'));
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('$128k'));
+
+    Object.defineProperty(navigator, 'clipboard', {
+      value: originalClipboard,
+      configurable: true,
+    });
+    inspector.destroy();
+    ctx.destroy();
+  });
+
+  it('copies source-backed prompt context when sourcePreview is enabled', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const originalClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', createAskableSource({
+      data: { total: 12, company: 'Acme Corp' },
+    }));
+    const inspector = createAskableInspector(ctx, { sourcePreview: true });
+
+    await waitForInspectorPreview();
+
+    document
+      .querySelector('[data-askable-inspector-copy]')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    await Promise.resolve();
+
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('Context sources'));
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('Acme Corp'));
 
     Object.defineProperty(navigator, 'clipboard', {
       value: originalClipboard,
