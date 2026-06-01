@@ -161,6 +161,42 @@ describe('createAskableTextSelectionCaptureStore', () => {
     document.querySelectorAll('#svelte-selection').forEach((el) => el.remove());
   });
 
+  it('fires onCapture via selectionchange event when started', () => {
+    const captured: unknown[] = [];
+    const capture = createAskableTextSelectionCaptureStore({
+      debounce: 0,
+      onCapture: (packet) => { captured.push(packet); },
+    });
+
+    capture.start();
+    selectText('Selectionchange Svelte');
+    document.dispatchEvent(new Event('selectionchange'));
+
+    expect(captured.length).toBe(1);
+    expect((captured[0] as { target?: { text?: string } }).target?.text).toBe('Selectionchange Svelte');
+
+    capture.destroy();
+  });
+
+  it('stops listening after cancel()', () => {
+    const captured: unknown[] = [];
+    const capture = createAskableTextSelectionCaptureStore({
+      debounce: 0,
+      onCapture: (packet) => { captured.push(packet); },
+    });
+
+    capture.start();
+    capture.cancel();
+    expect(get(capture.active)).toBe(false);
+
+    selectText('Should not capture');
+    document.dispatchEvent(new Event('selectionchange'));
+
+    expect(captured.length).toBe(0);
+
+    capture.destroy();
+  });
+
   it('captures the current browser selection', () => {
     const capture = createAskableTextSelectionCaptureStore({
       source: { app: 'svelte-test' },
@@ -432,6 +468,19 @@ describe('createAskableRegionCaptureStore', () => {
 
     expect(get(capture.active)).toBe(false);
     expect(document.getElementById('askable-region-capture')).toBeNull();
+
+    capture.destroy();
+  });
+
+  it('fires onCancel when cancel is called', () => {
+    const onCancel = vi.fn();
+    const capture = createAskableRegionCaptureStore({ onCancel });
+
+    capture.start();
+    capture.cancel();
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(get(capture.active)).toBe(false);
 
     capture.destroy();
   });
