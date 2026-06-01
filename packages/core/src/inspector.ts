@@ -168,6 +168,41 @@ function inspectorButtonStyle(active = false): string {
   ].join(';');
 }
 
+function copyButtonStyle(): string {
+  return [
+    'border:1px solid #30363d',
+    'background:#21262d',
+    'color:#c9d1d9',
+    'border-radius:6px',
+    'font:inherit',
+    'font-size:11px',
+    'line-height:1',
+    'padding:5px 7px',
+    'cursor:pointer',
+  ].join(';');
+}
+
+async function copyText(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.cssText = [
+    'position:fixed',
+    'top:-9999px',
+    'left:-9999px',
+    'opacity:0',
+  ].join(';');
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  textarea.remove();
+}
+
 /**
  * Mount a floating inspector panel that shows the current Askable focus,
  * parsed metadata, and prompt output in real time.
@@ -235,7 +270,10 @@ export function createAskableInspector(
   ].join(';');
   header.innerHTML = `
     <span style="color:#58a6ff;font-weight:700;font-size:11px;letter-spacing:.06em">✦ ASKABLE INSPECTOR</span>
-    <button id="askable-inspector-close" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:14px;line-height:1;padding:2px" title="Close">&times;</button>
+    <span style="display:flex;align-items:center;gap:6px">
+      <button id="askable-inspector-copy" data-askable-inspector-copy style="${copyButtonStyle()}" title="Copy prompt context">Copy</button>
+      <button id="askable-inspector-close" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:14px;line-height:1;padding:2px" title="Close">&times;</button>
+    </span>
   `;
   panel.appendChild(header);
 
@@ -256,6 +294,7 @@ export function createAskableInspector(
   document.body.appendChild(panel);
 
   let highlightedEl: HTMLElement | null = null;
+  let latestPromptContext = '';
 
   function clearHighlight() {
     if (highlightedEl) {
@@ -277,6 +316,7 @@ export function createAskableInspector(
 
   function update(focus: AskableFocus | null) {
     const promptContext = ctx.toPromptContext(promptOptions);
+    latestPromptContext = promptContext;
     body.innerHTML = buildPanelHTML(focus, promptContext, ctx.listSources());
     if (focus?.element?.isConnected) applyHighlight(focus.element);
     else clearHighlight();
@@ -441,6 +481,22 @@ export function createAskableInspector(
   renderTools();
   header.addEventListener('mousedown', onDragStart);
   panel.querySelector('#askable-inspector-close')?.addEventListener('click', destroy);
+  panel.querySelector('#askable-inspector-copy')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    if (!(button instanceof HTMLButtonElement)) return;
+    try {
+      await copyText(latestPromptContext);
+      button.textContent = 'Copied';
+      window.setTimeout(() => {
+        if (!destroyed) button.textContent = 'Copy';
+      }, 1200);
+    } catch {
+      button.textContent = 'Failed';
+      window.setTimeout(() => {
+        if (!destroyed) button.textContent = 'Copy';
+      }, 1200);
+    }
+  });
 
   return { destroy };
 }
