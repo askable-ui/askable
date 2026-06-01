@@ -2003,4 +2003,195 @@ describe('createAskableContext', () => {
     Object.defineProperty(globalThis, 'window', { value: win, configurable: true });
     ctx.destroy();
   });
+
+  describe('toAgentRequest() edge cases', () => {
+    it('returns valid request with null focus when nothing is focused', async () => {
+      const ctx = createAskableContext();
+      const request = await ctx.toAgentRequest('What can I do?');
+      expect(request.question).toBe('What can I do?');
+      expect(request.focus).toBeNull();
+      expect(request.context).toContain('No UI element');
+      ctx.destroy();
+    });
+
+    it('returns packet without target when packet:true and no focus', async () => {
+      const ctx = createAskableContext();
+      const request = await ctx.toAgentRequest('Describe the page', { packet: true });
+      expect(request.packet).toBeDefined();
+      expect(request.packet?.target).toBeUndefined();
+      ctx.destroy();
+    });
+
+    it('preserves requestId verbatim', async () => {
+      const ctx = createAskableContext();
+      const request = await ctx.toAgentRequest('Test', { requestId: 'custom-req-456' });
+      expect(request.requestId).toBe('custom-req-456');
+      ctx.destroy();
+    });
+
+    it('timestamp is a Unix millisecond epoch close to Date.now()', async () => {
+      const ctx = createAskableContext();
+      const before = Date.now();
+      const request = await ctx.toAgentRequest('Test');
+      const after = Date.now();
+      expect(request.timestamp).toBeGreaterThanOrEqual(before);
+      expect(request.timestamp).toBeLessThanOrEqual(after);
+      ctx.destroy();
+    });
+
+    it('excludeKeys filters nested metadata keys in focus meta', async () => {
+      const el = makeEl({ widget: 'table', secret: 'sensitive' }, 'Table');
+      const ctx = createAskableContext();
+      ctx.observe(document);
+      el.click();
+
+      const request = await ctx.toAgentRequest('Describe this', { excludeKeys: ['secret'] });
+      expect(request.focus?.meta).toEqual({ widget: 'table' });
+      expect(request.context).not.toContain('sensitive');
+
+      ctx.destroy();
+      cleanup(el);
+    });
+
+    it('returns context without sources section when no sources registered', async () => {
+      const ctx = createAskableContext();
+      ctx.push({ widget: 'empty' }, 'Empty panel');
+      const request = await ctx.toAgentRequest('What is here?', { sources: 'all' });
+      expect(request.context).not.toContain('Context sources');
+      ctx.destroy();
+    });
+  });
+
+  describe('toViewportContext() edge cases', () => {
+    it('returns fallback string when no elements are visible', () => {
+      const originalIO = globalThis.IntersectionObserver;
+      globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+
+      const ctx = createAskableContext({ viewport: true });
+      ctx.observe(document);
+      expect((ctx as any).toViewportContext()).toBe('No annotated UI elements are currently visible.');
+
+      ctx.destroy();
+      globalThis.IntersectionObserver = originalIO;
+    });
+
+    it('returns empty JSON array when no elements visible and format is json', () => {
+      const originalIO = globalThis.IntersectionObserver;
+      globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+
+      const ctx = createAskableContext({ viewport: true });
+      ctx.observe(document);
+      expect((ctx as any).toViewportContext({ format: 'json' })).toBe('[]');
+
+      ctx.destroy();
+      globalThis.IntersectionObserver = originalIO;
+    });
+
+    it('returns a JSON array of visible elements when format is json', () => {
+      const originalIO = globalThis.IntersectionObserver;
+      globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+
+      const el = makeEl({ widget: 'chart' }, 'Revenue chart');
+      const ctx = createAskableContext({ viewport: true });
+      ctx.observe(document);
+
+      const observer = MockIntersectionObserver.instances[0];
+      observer.trigger([{ target: el, isIntersecting: true }]);
+
+      const result = (ctx as any).toViewportContext({ format: 'json' });
+      const parsed = JSON.parse(result);
+      expect(Array.isArray(parsed)).toBe(true);
+      expect(parsed[0]).toMatchObject({ meta: { widget: 'chart' } });
+
+      ctx.destroy();
+      cleanup(el);
+      globalThis.IntersectionObserver = originalIO;
+    });
+
+    it('filters visible elements by scope', () => {
+      const originalIO = globalThis.IntersectionObserver;
+      globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+
+      const inScope = makeEl({ widget: 'table' }, 'Table');
+      inScope.setAttribute('data-askable-scope', 'dashboard');
+      const outScope = makeEl({ widget: 'nav' }, 'Nav');
+      outScope.setAttribute('data-askable-scope', 'header');
+      const ctx = createAskableContext({ viewport: true });
+      ctx.observe(document);
+
+      const observer = MockIntersectionObserver.instances[0];
+      observer.trigger([
+        { target: inScope, isIntersecting: true },
+        { target: outScope, isIntersecting: true },
+      ]);
+
+      const result = (ctx as any).toViewportContext({ scope: 'dashboard' });
+      expect(result).toContain('table');
+      expect(result).not.toContain('nav');
+
+      ctx.destroy();
+      cleanup(inScope);
+      cleanup(outScope);
+      globalThis.IntersectionObserver = originalIO;
+    });
+
+    it('removes elements that become non-intersecting', () => {
+      const originalIO = globalThis.IntersectionObserver;
+      globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+
+      const el = makeEl({ widget: 'table' }, 'Table');
+      const ctx = createAskableContext({ viewport: true });
+      ctx.observe(document);
+
+      const observer = MockIntersectionObserver.instances[0];
+      observer.trigger([{ target: el, isIntersecting: true }]);
+      expect((ctx as any).getVisibleElements()).toHaveLength(1);
+
+      observer.trigger([{ target: el, isIntersecting: false }]);
+      expect((ctx as any).getVisibleElements()).toHaveLength(0);
+      expect((ctx as any).toViewportContext()).toBe('No annotated UI elements are currently visible.');
+
+      ctx.destroy();
+      cleanup(el);
+      globalThis.IntersectionObserver = originalIO;
+    });
+  });
+
+  describe('source timeout edge cases', () => {
+    it('times out slow sources after positive timeoutMs', async () => {
+      vi.useFakeTimers();
+      const ctx = createAskableContext();
+      ctx.registerSource('slow', {
+        resolve: () => new Promise<{ data: string }>((resolve) => {
+          setTimeout(() => resolve({ data: 'late' }), 500);
+        }),
+      });
+
+      const promptPromise = ctx.toPromptContextAsync({
+        sources: [{ id: 'slow', timeoutMs: 100 }],
+      });
+      await vi.runAllTimersAsync();
+      const prompt = await promptPromise;
+
+      expect(prompt).toContain('slow');
+      expect(prompt).toContain('Context source unavailable.');
+      ctx.destroy();
+    });
+
+    it('rejects immediately when the source request signal is already aborted', async () => {
+      const ctx = createAskableContext();
+      const controller = new AbortController();
+      controller.abort();
+
+      ctx.registerSource('fast', {
+        resolve: (_req) => ({ data: 'ok' }),
+      });
+
+      await expect(
+        (ctx as any).resolveSource('fast', { mode: 'summary', signal: controller.signal }),
+      ).rejects.toThrow('aborted');
+
+      ctx.destroy();
+    });
+  });
 });
