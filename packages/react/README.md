@@ -123,13 +123,15 @@ import { AskableInspector } from '@askable-ui/react';
 ```
 
 Pass the same `events`, `name`, `viewport`, or `ctx` that your React app uses for `useAskable()` when the inspector should follow the same context.
+Set `sourcePreview` when the dev panel should resolve registered source data in
+the prompt preview and Copy output.
 
 ```tsx
 function DevInspector() {
   useAskable({ events: ['click'] });
 
   return process.env.NODE_ENV === 'development'
-    ? <AskableInspector events={['click']} position="bottom-left" />
+    ? <AskableInspector events={['click']} position="bottom-left" sourcePreview />
     : null;
 }
 ```

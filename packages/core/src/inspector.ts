@@ -1,7 +1,11 @@
 import type {
+  AskableAsyncPromptContextOptions,
   AskableContext,
   AskableContextSourceInfo,
   AskableFocus,
+  AskableContextSourceInclude,
+  AskableContextSourceErrorMode,
+  AskableContextSourceMode,
   AskablePromptContextOptions,
 } from './types.js';
 import { createAskableRegionCapture } from './capture.js';
@@ -10,6 +14,17 @@ import type { AskableRegionCaptureHandle, AskableRegionCaptureShape } from './ca
 import type { AskableTextSelectionCaptureHandle } from './selection.js';
 
 export type AskableInspectorPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+
+export interface AskableInspectorSourcePreviewOptions {
+  /** Sources to include in the inspector prompt preview. Defaults to all registered sources. */
+  sources?: 'all' | AskableContextSourceInclude[];
+  /** Default source mode when a source request omits mode. Defaults to "summary". */
+  sourceMode?: AskableContextSourceMode;
+  /** Heading used in the prompt preview. Defaults to "Context sources". */
+  sourceLabel?: string;
+  /** How failed sources are shown in the inspector preview. Defaults to "include". */
+  sourceErrorMode?: AskableContextSourceErrorMode;
+}
 
 export interface AskableInspectorOptions {
   /**
@@ -21,6 +36,12 @@ export interface AskableInspectorOptions {
    * Serialization options passed to toPromptContext() for the output preview.
    */
   promptOptions?: AskablePromptContextOptions;
+  /**
+   * Include resolved app-owned sources in the prompt preview and Copy output.
+   * Pass true to include all registered sources with default source options.
+   * @default false
+   */
+  sourcePreview?: boolean | AskableInspectorSourcePreviewOptions;
   /**
    * Highlight the focused element with an outline.
    * @default true
@@ -60,8 +81,22 @@ function renderMeta(meta: Record<string, unknown> | string): string {
   return `{\n${lines}\n}`;
 }
 
+function buildPromptContextHTML(promptContext: string): string {
+  return `
+    <div>
+      <span style="color:#7ee787;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Prompt context</span><br>
+      <pre style="color:#a5d6ff;margin:4px 0;white-space:pre-wrap;word-break:break-all">${escapeHtml(promptContext)}</pre>
+    </div>
+  `;
+}
+
 function buildFocusHTML(focus: AskableFocus | null, promptContext: string): string {
-  if (!focus) return '<div style="color:#8b949e;font-style:italic;padding:4px 0">No element focused</div>';
+  if (!focus) {
+    return `
+      <div style="color:#8b949e;font-style:italic;padding:4px 0">No element focused</div>
+      ${buildPromptContextHTML(promptContext)}
+    `;
+  }
   const el = focus.element;
   const tag = el ? el.tagName.toLowerCase() : null;
   const id = el?.id ? `#${escapeHtml(el.id)}` : '';
@@ -87,10 +122,7 @@ function buildFocusHTML(focus: AskableFocus | null, promptContext: string): stri
       <code style="color:#e6edf3">"${escapeHtml(focus.text.slice(0, 120))}${focus.text.length > 120 ? '…' : ''}"</code>
     </div>
     ` : ''}
-    <div>
-      <span style="color:#7ee787;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Prompt context</span><br>
-      <pre style="color:#a5d6ff;margin:4px 0;white-space:pre-wrap;word-break:break-all">${escapeHtml(promptContext)}</pre>
-    </div>
+    ${buildPromptContextHTML(promptContext)}
   `;
 }
 
@@ -130,6 +162,24 @@ function buildPanelHTML(
   sources: AskableContextSourceInfo[],
 ): string {
   return `${buildFocusHTML(focus, promptContext)}${buildSourcesHTML(sources)}`;
+}
+
+function resolveSourcePreviewOptions(
+  promptOptions: AskablePromptContextOptions | undefined,
+  sourcePreview: true | AskableInspectorSourcePreviewOptions,
+): AskableAsyncPromptContextOptions {
+  if (sourcePreview === true) {
+    return {
+      ...promptOptions,
+      sources: 'all',
+    };
+  }
+
+  return {
+    ...promptOptions,
+    ...sourcePreview,
+    sources: sourcePreview.sources ?? 'all',
+  };
 }
 
 function clampPanelPosition(panel: HTMLElement, left: number, top: number): { left: number; top: number } {
@@ -225,6 +275,7 @@ export function createAskableInspector(
   const {
     position = 'bottom-right',
     promptOptions,
+    sourcePreview = false,
     highlight = true,
     tools = true,
   } = options;
@@ -293,8 +344,10 @@ export function createAskableInspector(
 
   document.body.appendChild(panel);
 
+  let destroyed = false;
   let highlightedEl: HTMLElement | null = null;
   let latestPromptContext = '';
+  let updateVersion = 0;
 
   function clearHighlight() {
     if (highlightedEl) {
@@ -314,12 +367,33 @@ export function createAskableInspector(
     highlightedEl = el;
   }
 
-  function update(focus: AskableFocus | null) {
-    const promptContext = ctx.toPromptContext(promptOptions);
+  function renderFocusState(focus: AskableFocus | null, promptContext: string) {
     latestPromptContext = promptContext;
     body.innerHTML = buildPanelHTML(focus, promptContext, ctx.listSources());
     if (focus?.element?.isConnected) applyHighlight(focus.element);
     else clearHighlight();
+  }
+
+  async function updateSourcePreview(focus: AskableFocus | null, version: number) {
+    if (!sourcePreview) return;
+    try {
+      const promptContext = await ctx.toPromptContextAsync(
+        resolveSourcePreviewOptions(promptOptions, sourcePreview),
+      );
+      if (destroyed || version !== updateVersion) return;
+      renderFocusState(focus, promptContext);
+    } catch {
+      if (destroyed || version !== updateVersion) return;
+      const fallback = `${ctx.toPromptContext(promptOptions)}\n\nContext sources:\nContext source unavailable.`;
+      renderFocusState(focus, fallback);
+    }
+  }
+
+  function update(focus: AskableFocus | null) {
+    const version = ++updateVersion;
+    const promptContext = ctx.toPromptContext(promptOptions);
+    renderFocusState(focus, promptContext);
+    if (sourcePreview) void updateSourcePreview(focus, version);
   }
 
   // Initial render
@@ -332,7 +406,6 @@ export function createAskableInspector(
   ctx.on('clear', clearHandler);
   ctx.on('sourcechange', sourceHandler);
 
-  let destroyed = false;
   let activeTool: InspectorToolHandle | null = null;
   let activeToolName: string | null = null;
   let dragging: {

@@ -89,7 +89,7 @@ import { AskableInspector } from '@askable-ui/react';
 ```
 
 **Props:**
-- all core `AskableInspectorOptions` props such as `position`, `highlight`, `tools`, and `promptOptions`
+- all core `AskableInspectorOptions` props such as `position`, `highlight`, `tools`, `promptOptions`, and `sourcePreview`
 - `ctx?: AskableContext` — reuse an explicit context
 - `name?: string` — match a named shared React context
 - `events?: AskableEvent[]` — match a shared React event configuration
@@ -110,6 +110,16 @@ function DashboardDevTools() {
     </>
   );
 }
+```
+
+Set `sourcePreview` to include registered source data in the inspector preview
+and Copy output:
+
+```tsx
+<AskableInspector
+  ctx={ctx}
+  sourcePreview={{ sources: [{ id: 'accounts', mode: 'summary' }] }}
+/>
 ```
 
 ---

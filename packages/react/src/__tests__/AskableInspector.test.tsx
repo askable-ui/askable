@@ -2,7 +2,7 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import { useState } from 'react';
 import { AskableInspector } from '../AskableInspector';
 import { useAskable } from '../useAskable';
-import { createAskableContext } from '@askable-ui/core';
+import { createAskableContext, createAskableSource } from '@askable-ui/core';
 
 function ClickOnlyConsumer() {
   const { focus } = useAskable({ events: ['click'] });
@@ -102,6 +102,23 @@ describe('AskableInspector', () => {
     const panel = document.getElementById('askable-inspector');
     expect(panel).not.toBeNull();
     expect(panel?.textContent).toContain('external');
+
+    view.unmount();
+    ctx.destroy();
+  });
+
+  it('forwards tools and sourcePreview options to the core inspector', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', createAskableSource({
+      data: { company: 'Acme Corp' },
+    }));
+
+    const view = render(<AskableInspector ctx={ctx} tools={false} sourcePreview />);
+
+    expect(document.querySelector('[data-askable-inspector-tool="region"]')).toBeNull();
+    await waitFor(() => {
+      expect(document.getElementById('askable-inspector')?.textContent).toContain('Acme Corp');
+    });
 
     view.unmount();
     ctx.destroy();
