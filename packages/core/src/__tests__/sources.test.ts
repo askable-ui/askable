@@ -78,4 +78,53 @@ describe('source helpers', () => {
 
     ctx.destroy();
   });
+
+  it('isolates individual sanitizeItem failures — other items still resolve', async () => {
+    const items = [
+      { id: 1, value: 'safe' },
+      { id: 2, value: 'will-fail' },
+      { id: 3, value: 'also-safe' },
+    ];
+    const ctx = createAskableContext();
+    ctx.registerSource('items', createAskableCollectionSource({
+      getItems: () => items,
+      sanitizeItem: (item) => {
+        if (item.value === 'will-fail') throw new Error('sanitize failed');
+        return { id: item.id };
+      },
+    }));
+
+    const result = await ctx.resolveSource('items', { mode: 'all' });
+
+    expect(result.data).toMatchObject({
+      mode: 'all',
+      items: [{ id: 1 }, { id: 3 }],
+      totalCount: 3,
+      returnedCount: 2,
+    });
+
+    ctx.destroy();
+  });
+
+  it('isolates async sanitizeItem rejections — other items still resolve', async () => {
+    const items = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    const ctx = createAskableContext();
+    ctx.registerSource('items', createAskableCollectionSource({
+      getItems: () => items,
+      sanitizeItem: async (item) => {
+        if (item.id === 2) return Promise.reject(new Error('async fail'));
+        return item;
+      },
+    }));
+
+    const result = await ctx.resolveSource('items', { mode: 'all' });
+
+    expect(result.data).toMatchObject({
+      items: [{ id: 1 }, { id: 3 }],
+      totalCount: 3,
+      returnedCount: 2,
+    });
+
+    ctx.destroy();
+  });
 });
