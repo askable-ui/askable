@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
-import { defineComponent, nextTick, reactive } from 'vue';
+import { defineComponent, nextTick, reactive, ref } from 'vue';
 import { createAskableContext } from '@askable-ui/core';
 import type { AskableResolvedContextSource } from '@askable-ui/core';
 import { useAskableSource } from '../useAskableSource.js';
@@ -169,6 +169,38 @@ describe('useAskableSource (Vue)', () => {
     await flushAll();
 
     await expect(ctx.resolveSource('accounts')).rejects.toThrow('not registered');
+    ctx.destroy();
+  });
+
+  it('registers and unregisters reactively when enabled ref changes', async () => {
+    const ctx = createAskableContext();
+    const enabled = ref(false);
+
+    const SourceConsumer = defineComponent({
+      setup() {
+        useAskableSource('accounts', {
+          resolve: () => ({ total: 1 }),
+        }, { ctx, enabled });
+        return {};
+      },
+      template: '<div />',
+    });
+
+    track(mount(SourceConsumer, { attachTo: document.body }));
+    await flushAll();
+
+    await expect(ctx.resolveSource('accounts')).rejects.toThrow('not registered');
+
+    enabled.value = true;
+    await flushAll();
+
+    await expect(ctx.resolveSource('accounts')).resolves.toMatchObject({ data: { total: 1 } });
+
+    enabled.value = false;
+    await flushAll();
+
+    await expect(ctx.resolveSource('accounts')).rejects.toThrow('not registered');
+
     ctx.destroy();
   });
 
