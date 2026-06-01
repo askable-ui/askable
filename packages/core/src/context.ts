@@ -20,6 +20,7 @@ import type {
   AskableContextSourceMode,
   AskableContextSourceRequest,
   AskableContextSourceChange,
+  AskableResolveSourcesOptions,
   AskableEventHandler,
   AskableEventName,
   AskableFocus,
@@ -418,6 +419,13 @@ export class AskableContextImpl implements AskableContext {
       ...(data !== undefined ? { data } : {}),
     };
     return this.applySourceSanitizers(resolved, source);
+  }
+
+  async resolveSources(options?: AskableResolveSourcesOptions): Promise<AskableResolvedContextSource[]> {
+    return this.resolveIncludedSources({
+      ...options,
+      sources: options?.sources ?? 'all',
+    });
   }
 
   clear(): void {

@@ -292,6 +292,10 @@ Use `ctx.hasSource(id)` and `ctx.listSources()` to drive source pickers,
 diagnostics, or chat controls without resolving source data. `listSources()`
 returns each source id, optional kind, registration time, and last update time.
 
+Use `ctx.resolveSources()` when an agent bridge, chat endpoint, or debug surface
+needs source data as structured objects instead of prompt text. It resolves all
+registered sources by default, or the requested subset when `sources` is passed.
+
 Async prompt methods isolate source failures by default. If a resolver throws or
 times out, Askable includes a safe `Context source unavailable.` marker and does
 not expose the original error message or stack trace. Use
@@ -306,6 +310,7 @@ ctx.listSources();
 ctx.unregisterSource('accounts');
 ctx.notifySourceChanged('accounts');
 await ctx.resolveSource('accounts', { mode: 'visible' });
+await ctx.resolveSources({ sources: [{ id: 'accounts', mode: 'all' }] });
 await ctx.toPromptContextAsync({ sources: 'all' });
 await ctx.toContextAsync({ history: 3, sources: ['accounts'] });
 ```

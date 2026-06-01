@@ -296,6 +296,16 @@ newer source with the same id.
 Use `ctx.hasSource(id)` and `ctx.listSources()` to drive source pickers,
 diagnostics, or chat controls without resolving source data. `listSources()`
 returns each source id, optional kind, registration time, and last update time.
+Use `ctx.resolveSources()` when a chat endpoint, MCP bridge, or debug surface
+needs structured source objects instead of prompt text. It resolves all
+registered sources by default, or a selected subset when `sources` is passed.
+
+```ts
+const sources = await ctx.resolveSources({
+  sources: [{ id: 'accounts', mode: 'all', maxItems: 20 }],
+  sourceErrorMode: 'include',
+});
+```
 
 #### `toHistoryContext(limit?: number, options?: AskablePromptContextOptions): string`
 
