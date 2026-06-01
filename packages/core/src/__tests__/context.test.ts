@@ -323,6 +323,92 @@ describe('createAskableContext', () => {
     ctx.destroy();
   });
 
+  it('omits a failing source in subscribeAsync when sourceErrorMode is omit', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('healthy', {
+      resolve: () => ({ rows: 5 }),
+    });
+    ctx.registerSource('broken', {
+      resolve: () => { throw new Error('db error'); },
+    });
+
+    let received = '';
+    const done = new Promise<void>((resolve) => {
+      ctx.subscribeAsync((context) => {
+        received = context;
+        resolve();
+      }, {
+        sources: ['healthy', 'broken'],
+        sourceErrorMode: 'omit',
+      });
+    });
+
+    ctx.push({ widget: 'table' }, 'Table');
+    await done;
+
+    expect(received).toContain('healthy');
+    expect(received).toContain('"rows":5');
+    expect(received).not.toContain('broken');
+    expect(received).not.toContain('db error');
+
+    ctx.destroy();
+  });
+
+  it('includes error text for a failing source when sourceErrorMode is include', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('broken', {
+      resolve: () => { throw new Error('db unavailable'); },
+    });
+
+    let received = '';
+    const done = new Promise<void>((resolve) => {
+      ctx.subscribeAsync((context) => {
+        received = context;
+        resolve();
+      }, {
+        sources: ['broken'],
+        sourceErrorMode: 'include',
+      });
+    });
+
+    ctx.push({ widget: 'table' }, 'Table');
+    await done;
+
+    expect(received).toContain('broken');
+    expect(received).toContain('Context source unavailable.');
+
+    ctx.destroy();
+  });
+
+  it('emits context with healthy sources when one of two fails under sourceErrorMode omit', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('good', {
+      resolve: () => ({ value: 42 }),
+    });
+    ctx.registerSource('bad', {
+      resolve: () => { throw new Error('fail'); },
+    });
+
+    let received = '';
+    const done = new Promise<void>((resolve) => {
+      ctx.subscribeAsync((context) => {
+        received = context;
+        resolve();
+      }, {
+        sources: ['good', 'bad'],
+        sourceErrorMode: 'omit',
+      });
+    });
+
+    ctx.push({ widget: 'x' }, 'X');
+    await done;
+
+    expect(received).toContain('"value":42');
+    expect(received).not.toContain('bad');
+
+    ctx.destroy();
+  });
+
   it('packages a user question with source-backed context for agent requests', async () => {
     const ctx = createAskableContext();
     ctx.push({ widget: 'accounts-table', debug: 'internal' }, 'Accounts');
