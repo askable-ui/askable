@@ -63,6 +63,10 @@ export async function runCli(args) {
   const projectName = projectArg.trim();
   const targetDir = path.resolve(process.cwd(), projectName);
 
+  if (!targetDir.startsWith(process.cwd() + path.sep) && targetDir !== process.cwd()) {
+    throw new Error(`Target directory must be inside the current working directory: ${targetDir}`);
+  }
+
   if (!isDirectoryEmpty(targetDir)) {
     throw new Error(`Target directory is not empty: ${targetDir}`);
   }

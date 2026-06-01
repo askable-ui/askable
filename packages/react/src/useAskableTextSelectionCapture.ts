@@ -67,12 +67,12 @@ export function useAskableTextSelectionCapture(
           handleRef.current = null;
           setActive(false);
         }
-        currentOptions.onCapture?.(packet, selection);
+        optionsRef.current.onCapture?.(packet, selection);
       },
       onCancel() {
         handleRef.current = null;
         setActive(false);
-        currentOptions.onCancel?.();
+        optionsRef.current.onCancel?.();
       },
     });
 
