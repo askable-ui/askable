@@ -478,6 +478,10 @@
       background: var(--ink); color: #fff; padding: .36rem .62rem;
       font-size: .7rem; font-weight: 800; cursor: pointer;
     }
+    .text-selection-inline-prompt {
+      z-index: 14;
+      box-shadow: 0 16px 42px rgba(91,33,182,0.16);
+    }
     @keyframes selectedRegionIn {
       from { opacity: 0; transform: scale(.985); }
       to { opacity: 1; transform: scale(1); }
@@ -1406,7 +1410,7 @@ ctx.push(meta, text);</pre>
     var patternPayload = document.getElementById('pattern-payload');
     var cancelTool = document.getElementById('cancel-tool');
     var activeEl = null; var typingTimer = null; var lastKey = null;
-    var activeTool = null; var drawingEl = null; var selectedRegionEl = null; var dragStart = null; var lassoPoints = []; var toolClearTimer = null; var textSelectionMode = false;
+    var activeTool = null; var drawingEl = null; var selectedRegionEl = null; var selectedTextPromptEl = null; var dragStart = null; var lassoPoints = []; var toolClearTimer = null; var textSelectionMode = false;
     var aiTrailPoints = []; var aiTrailFrame = null; var aiTrailDpr = 1; var aiTrailMaxPoints = 22;
     var dashboard = document.querySelector('.dashboard');
     var promptOpts = { format: 'natural', includeText: true };
@@ -1712,6 +1716,7 @@ ctx.push(meta, text);</pre>
         if (!value) return;
         chatInput.value = value;
         send();
+        if (input) input.value = '';
       });
       return form;
     }
@@ -2006,6 +2011,7 @@ ctx.push(meta, text);</pre>
       composerSuggestions.innerHTML = '';
     }
     function clearSelectedTextPreview() {
+      if (selectedTextPromptEl) { selectedTextPromptEl.remove(); selectedTextPromptEl = null; }
       if (selectedTextCard) selectedTextCard.style.display = 'none';
       if (selectedTextPreview) selectedTextPreview.textContent = '';
       if (contextBar) contextBar.classList.remove('text-context');
@@ -2023,8 +2029,10 @@ ctx.push(meta, text);</pre>
       if (!dashboard || !range) return;
       document.querySelectorAll('.text-capture-mark').forEach(function(mark) { mark.remove(); });
       var hostRect = dashboard.getBoundingClientRect();
+      var lastRect = null;
       Array.from(range.getClientRects()).forEach(function(rect) {
         if (rect.width < 3 || rect.height < 3) return;
+        lastRect = rect;
         var mark = document.createElement('span');
         mark.className = 'text-capture-mark';
         mark.style.left = Math.max(0, rect.left - hostRect.left - 2) + 'px';
@@ -2033,6 +2041,37 @@ ctx.push(meta, text);</pre>
         mark.style.height = rect.height + 2 + 'px';
         dashboard.appendChild(mark);
       });
+      if (lastRect) showTextInlinePrompt(lastRect, hostRect);
+    }
+    function showTextInlinePrompt(rect, hostRect) {
+      if (!dashboard) return;
+      if (selectedTextPromptEl) selectedTextPromptEl.remove();
+      selectedTextPromptEl = document.createElement('form');
+      selectedTextPromptEl.className = 'selection-inline-prompt text-selection-inline-prompt';
+      var left = Math.max(8, Math.min(rect.left - hostRect.left, hostRect.width - 330));
+      var top = rect.bottom - hostRect.top + 9;
+      selectedTextPromptEl.style.left = left + 'px';
+      selectedTextPromptEl.style.top = top + 'px';
+      if (top + 48 > hostRect.height) {
+        selectedTextPromptEl.classList.add('above');
+        selectedTextPromptEl.style.top = 'auto';
+        selectedTextPromptEl.style.bottom = Math.max(8, hostRect.bottom - rect.top + 9) + 'px';
+      }
+      selectedTextPromptEl.innerHTML = '<input type="text" placeholder="Ask about this highlighted text…" aria-label="Ask about highlighted text"><button type="submit">Ask</button>';
+      selectedTextPromptEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+      selectedTextPromptEl.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+      selectedTextPromptEl.addEventListener('mouseup', function(e) { e.stopPropagation(); });
+      selectedTextPromptEl.addEventListener('click', function(e) { e.stopPropagation(); });
+      selectedTextPromptEl.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var input = selectedTextPromptEl ? selectedTextPromptEl.querySelector('input') : null;
+        var value = input ? input.value.trim() : '';
+        if (!value) return;
+        chatInput.value = value;
+        send();
+        if (input) input.value = '';
+      });
+      dashboard.appendChild(selectedTextPromptEl);
     }
     function addContextMsg(focus) {
       var meta = focus ? focus.meta : null;

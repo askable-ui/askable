@@ -20,6 +20,7 @@ export interface UseAskableRegionCaptureResult {
   lastSelection: AskableRegionCaptureSelection | null;
   start: (overrides?: Partial<AskableRegionCaptureOptions>) => void;
   cancel: () => void;
+  clearSelection: () => void;
   destroy: () => void;
   isActive: () => boolean;
 }
@@ -50,6 +51,10 @@ export function useAskableRegionCapture(
     setActive(false);
   }, []);
 
+  const clearSelection = useCallback(() => {
+    handleRef.current?.clearSelection();
+  }, []);
+
   const start = useCallback((overrides?: Partial<AskableRegionCaptureOptions>) => {
     handleRef.current?.destroy();
 
@@ -66,7 +71,6 @@ export function useAskableRegionCapture(
         if (currentOptions.once === false) {
           setActive(true);
         } else {
-          handleRef.current = null;
           setActive(false);
         }
         // Always read from the ref so a callback that changed since start()
@@ -95,6 +99,7 @@ export function useAskableRegionCapture(
     lastSelection,
     start,
     cancel,
+    clearSelection,
     destroy,
     isActive,
   };

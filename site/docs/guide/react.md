@@ -223,6 +223,15 @@ function TextSelectionTools() {
   const selection = useAskableTextSelectionCapture({
     includeViewport: true,
     intent: 'answer using the highlighted text',
+    selectionAffordance: {
+      label: 'Selected text',
+      prompt: {
+        placeholder: 'Ask about this text...',
+        onSubmit(question, packet) {
+          sendToAgent({ question, context: packet });
+        },
+      },
+    },
     onCapture(packet) {
       sendToAgent(packet);
     },
@@ -239,7 +248,9 @@ function TextSelectionTools() {
 ```
 
 Selection packets use `capture.mode: 'text-selection'` and include the
-highlighted text in `target.text`.
+highlighted text in `target.text`. Use `selectionAffordance` to keep the
+highlight visible after capture and optionally attach a small prompt input to
+the selected range.
 
 ## History-aware context
 

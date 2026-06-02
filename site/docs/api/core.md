@@ -801,7 +801,11 @@ Listens for highlighted browser text or reads the current selection on demand,
 then emits a structured Context packet with explicit consent metadata.
 
 ```ts
-import { createAskableContext, createAskableTextSelectionCapture } from '@askable-ui/core';
+import {
+  ASKABLE_TEXT_SELECTION_CAPTURE_THEME,
+  createAskableContext,
+  createAskableTextSelectionCapture,
+} from '@askable-ui/core';
 
 const ctx = createAskableContext({ viewport: true });
 ctx.observe(document);
@@ -809,6 +813,19 @@ ctx.observe(document);
 const selection = createAskableTextSelectionCapture(ctx, {
   intent: 'answer using this highlighted text',
   includeViewport: true,
+  selectionAffordance: {
+    label: 'Selected text',
+    prompt: {
+      placeholder: 'Ask about this text...',
+      onSubmit(question, packet) {
+        sendToAgent({ question, context: packet });
+      },
+    },
+  },
+  theme: {
+    ...ASKABLE_TEXT_SELECTION_CAPTURE_THEME,
+    selectionFill: 'rgba(124,58,237,0.14)',
+  },
   onCapture: (packet, selected) => {
     sendToAgent(packet);
     console.log(selected.text);
@@ -828,12 +845,24 @@ selection.captureNow();
 | `debounce` | `number` | `120` | Delay for `selectionchange` captures |
 | `once` | `boolean` | `false` | Stop listening after the first accepted capture |
 | `dedupe` | `boolean` | `true` | Ignore repeated captures of the same text/bounds |
+| `theme` | `Partial<AskableTextSelectionCaptureTheme>` | `ASKABLE_TEXT_SELECTION_CAPTURE_THEME` | Selected-text mark and anchored prompt styling |
+| `selectionAffordance` | `boolean \| AskableTextSelectionCaptureAffordanceOptions` | `false` | Keep highlighted text visible after capture, optionally with an anchored prompt |
 | `onCapture` | `(packet, selection) => void` | — | Called with the Context packet and selected text details |
 | `onCancel` | `() => void` | — | Called when active capture is cancelled |
 | _...most `AskableContextPacketOptions`_ | | | Passed through to `toContextPacket()` |
 
+`selectionAffordance` is opt-in. Pass `true` to persist highlighted text marks,
+or pass an object with `className`, `style`, `label`, `prompt`, and `render()`
+hooks. `prompt.onSubmit(question, packet, selection)` lets a highlighted range
+immediately anchor a follow-up chat question.
+
+When browser range geometry is available, the selection includes aggregate
+`bounds` plus `rects` for multi-line selected text. Packets include
+`target.metadata.rectCount` when rects are present.
+
 **Returns:** `AskableTextSelectionCaptureHandle` — object with `start()`,
-`captureNow()`, `cancel()`, `destroy()`, and `isActive()` methods.
+`captureNow()`, `cancel()`, `clearSelection()`, `destroy()`, and `isActive()`
+methods.
 
 ---
 

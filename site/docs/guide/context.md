@@ -224,7 +224,11 @@ Use text selection capture when the user highlights copy in the page and wants
 that exact selected range sent to an agent:
 
 ```ts
-import { createAskableContext, createAskableTextSelectionCapture } from '@askable-ui/core';
+import {
+  ASKABLE_TEXT_SELECTION_CAPTURE_THEME,
+  createAskableContext,
+  createAskableTextSelectionCapture,
+} from '@askable-ui/core';
 
 const ctx = createAskableContext({ viewport: true });
 ctx.observe(document);
@@ -232,6 +236,19 @@ ctx.observe(document);
 const selection = createAskableTextSelectionCapture(ctx, {
   intent: 'answer using the highlighted text',
   includeViewport: true,
+  selectionAffordance: {
+    label: 'Selected text',
+    prompt: {
+      placeholder: 'Ask about this text...',
+      onSubmit(question, packet) {
+        sendToAgent({ question, context: packet });
+      },
+    },
+  },
+  theme: {
+    ...ASKABLE_TEXT_SELECTION_CAPTURE_THEME,
+    selectionFill: 'rgba(124,58,237,0.14)',
+  },
   onCapture: (packet) => {
     sendToAgent(packet);
   },
@@ -242,6 +259,8 @@ selection.start();
 
 The resulting packet uses `capture.mode` of `text-selection`, sets
 `privacy.consent` to `explicit`, and places the selected text on `target.text`.
+Set `selectionAffordance` when highlighted text should stay visually marked
+after capture or expose a small question input anchored to the selection.
 
 Framework wrappers expose the same behavior:
 

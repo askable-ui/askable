@@ -46,6 +46,7 @@ export interface AskableRegionCaptureStore {
   ctx: AskableContext;
   start: (overrides?: Partial<AskableRegionCaptureOptions>) => void;
   cancel: () => void;
+  clearSelection: () => void;
   destroy: () => void;
   isActive: () => boolean;
 }
@@ -60,6 +61,7 @@ export interface AskableTextSelectionCaptureStore {
   start: (overrides?: Partial<AskableTextSelectionCaptureOptions>) => void;
   captureNow: (overrides?: Partial<AskableTextSelectionCaptureOptions>) => WebContextPacket | null;
   cancel: () => void;
+  clearSelection: () => void;
   destroy: () => void;
   isActive: () => boolean;
 }
@@ -220,7 +222,6 @@ export function createAskableRegionCaptureStore(
         if (currentOptions.once === false) {
           _active.set(true);
         } else {
-          handle = null;
           _active.set(false);
         }
         currentOptions.onCapture?.(packet, selection);
@@ -242,6 +243,10 @@ export function createAskableRegionCaptureStore(
     _active.set(false);
   }
 
+  function clearSelection() {
+    handle?.clearSelection();
+  }
+
   function destroy() {
     destroyCapture();
     askable.destroy();
@@ -258,6 +263,7 @@ export function createAskableRegionCaptureStore(
     ctx: askable.ctx,
     start,
     cancel,
+    clearSelection,
     destroy,
     isActive,
   };
@@ -293,7 +299,6 @@ export function createAskableTextSelectionCaptureStore(
         _lastPacket.set(packet);
         _lastSelection.set(selection);
         if (currentOptions.once) {
-          handle = null;
           _active.set(false);
         }
         currentOptions.onCapture?.(packet, selection);
@@ -318,7 +323,6 @@ export function createAskableTextSelectionCaptureStore(
     const current = handle ?? ensureHandle(overrides);
     const packet = current.captureNow(overrides);
     if (packet && (selectionOptions.once || overrides?.once)) {
-      handle = null;
       _active.set(false);
     }
     return packet;
@@ -328,6 +332,10 @@ export function createAskableTextSelectionCaptureStore(
     handle?.cancel();
     handle = null;
     _active.set(false);
+  }
+
+  function clearSelection() {
+    handle?.clearSelection();
   }
 
   function destroy() {
@@ -347,6 +355,7 @@ export function createAskableTextSelectionCaptureStore(
     start,
     captureNow,
     cancel,
+    clearSelection,
     destroy,
     isActive,
   };

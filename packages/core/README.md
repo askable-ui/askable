@@ -105,7 +105,11 @@ Use `createAskableTextSelectionCapture()` when the user should highlight page
 text and send that exact selected range as structured context.
 
 ```ts
-import { createAskableContext, createAskableTextSelectionCapture } from '@askable-ui/core';
+import {
+  ASKABLE_TEXT_SELECTION_CAPTURE_THEME,
+  createAskableContext,
+  createAskableTextSelectionCapture,
+} from '@askable-ui/core';
 
 const ctx = createAskableContext({ viewport: true });
 ctx.observe(document);
@@ -113,6 +117,19 @@ ctx.observe(document);
 const selection = createAskableTextSelectionCapture(ctx, {
   intent: 'answer using this selected text',
   includeViewport: true,
+  selectionAffordance: {
+    label: 'Selected text',
+    prompt: {
+      placeholder: 'Ask about this text...',
+      onSubmit(question, packet) {
+        sendToAgent({ question, context: packet });
+      },
+    },
+  },
+  theme: {
+    ...ASKABLE_TEXT_SELECTION_CAPTURE_THEME,
+    selectionFill: 'rgba(124,58,237,0.14)',
+  },
   onCapture(packet) {
     sendToAgent(packet);
   },
@@ -124,6 +141,10 @@ selection.start();
 The packet uses `capture.mode` of `text-selection`, marks consent as explicit,
 and includes the highlighted copy in `target.text`. Call `captureNow()` for
 button-driven flows where selection should be read on demand.
+Set `selectionAffordance` to keep selected text visually marked after capture
+and optionally attach a small prompt to the highlighted range. The affordance
+accepts class names, inline styles, theme overrides, and a custom `render()`
+escape hatch.
 
 ## API Reference
 

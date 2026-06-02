@@ -17,6 +17,9 @@ function selectText(
   Object.defineProperty(range, 'getBoundingClientRect', {
     value: () => bounds,
   });
+  Object.defineProperty(range, 'getClientRects', {
+    value: () => [bounds],
+  });
 
   const selection = document.getSelection()!;
   selection.removeAllRanges();
@@ -66,6 +69,7 @@ describe('createAskableTextSelectionCapture', () => {
         metadata: {
           kind: 'text-selection',
           length: 29,
+          rectCount: 1,
         },
       },
       privacy: { consent: 'explicit' },
@@ -74,6 +78,95 @@ describe('createAskableTextSelectionCapture', () => {
         method: 'dom',
       },
     });
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
+  it('can persist selected text affordance after capture', () => {
+    const ctx = createAskableContext();
+    const capture = createAskableTextSelectionCapture(ctx, {
+      selectionAffordance: {
+        label: 'Quoted text',
+        className: 'custom-text-affordance',
+        style: { opacity: '0.9' },
+      },
+    });
+
+    selectText('Selected sentence.');
+    capture.captureNow();
+
+    const affordance = document.getElementById('askable-text-selection-affordance')!;
+    expect(affordance).toBeInstanceOf(HTMLElement);
+    expect(affordance.getAttribute('data-askable-text-selection-affordance')).toBe('true');
+    expect(affordance.className).toBe('custom-text-affordance');
+    expect(affordance.style.opacity).toBe('0.9');
+    expect(affordance.textContent).toContain('Quoted text');
+    expect(affordance.querySelectorAll('span').length).toBeGreaterThanOrEqual(2);
+
+    capture.clearSelection();
+    expect(document.getElementById('askable-text-selection-affordance')).toBeNull();
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
+  it('renders an anchored selected text prompt and calls onSubmit with the captured packet', () => {
+    const ctx = createAskableContext();
+    const onSubmit = vi.fn();
+    const capture = createAskableTextSelectionCapture(ctx, {
+      source: { app: 'reader' },
+      selectionAffordance: {
+        prompt: {
+          placeholder: 'Ask about quote',
+          submitLabel: 'Send text question',
+          onSubmit,
+        },
+      },
+    });
+
+    selectText('Explain this sentence.');
+    capture.captureNow();
+
+    const affordance = document.getElementById('askable-text-selection-affordance')!;
+    const input = affordance.querySelector('input')!;
+    const button = affordance.querySelector('button')!;
+    input.value = 'What does this mean?';
+    button.click();
+
+    expect(input.placeholder).toBe('Ask about quote');
+    expect(button.getAttribute('aria-label')).toBe('Send text question');
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0]).toBe('What does this mean?');
+    expect(onSubmit.mock.calls[0][1]).toMatchObject({
+      source: { app: 'reader' },
+      capture: { mode: 'text-selection' },
+      target: { text: 'Explain this sentence.' },
+    });
+    expect(onSubmit.mock.calls[0][2]).toMatchObject({
+      text: 'Explain this sentence.',
+      bounds: { x: 12, y: 20, width: 80, height: 18 },
+    });
+    expect(input.value).toBe('');
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
+  it('keeps the selected text affordance when once stops listeners', () => {
+    const ctx = createAskableContext();
+    const capture = createAskableTextSelectionCapture(ctx, {
+      once: true,
+      selectionAffordance: true,
+    });
+
+    capture.start();
+    selectText('One shot selected text.');
+    const packet = capture.captureNow();
+
+    expect(packet).not.toBeNull();
+    expect(capture.isActive()).toBe(false);
+    expect(document.getElementById('askable-text-selection-affordance')).toBeInstanceOf(HTMLElement);
 
     capture.destroy();
     ctx.destroy();

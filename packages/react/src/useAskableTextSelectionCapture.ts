@@ -21,6 +21,7 @@ export interface UseAskableTextSelectionCaptureResult {
   start: (overrides?: Partial<AskableTextSelectionCaptureOptions>) => void;
   captureNow: (overrides?: Partial<AskableTextSelectionCaptureOptions>) => WebContextPacket | null;
   cancel: () => void;
+  clearSelection: () => void;
   destroy: () => void;
   isActive: () => boolean;
 }
@@ -51,6 +52,10 @@ export function useAskableTextSelectionCapture(
     setActive(false);
   }, []);
 
+  const clearSelection = useCallback(() => {
+    handleRef.current?.clearSelection();
+  }, []);
+
   const ensureHandle = useCallback((overrides?: Partial<AskableTextSelectionCaptureOptions>) => {
     const currentOptions = {
       ...optionsRef.current,
@@ -64,7 +69,6 @@ export function useAskableTextSelectionCapture(
         setLastPacket(packet);
         setLastSelection(selection);
         if (currentOptions.once) {
-          handleRef.current = null;
           setActive(false);
         }
         currentOptions.onCapture?.(packet, selection);
@@ -90,7 +94,6 @@ export function useAskableTextSelectionCapture(
     const handle = handleRef.current ?? ensureHandle(overrides);
     const packet = handle.captureNow(overrides);
     if (packet && (optionsRef.current.once || overrides?.once)) {
-      handleRef.current = null;
       setActive(false);
     }
     return packet;
@@ -108,6 +111,7 @@ export function useAskableTextSelectionCapture(
     start,
     captureNow,
     cancel,
+    clearSelection,
     destroy,
     isActive,
   };

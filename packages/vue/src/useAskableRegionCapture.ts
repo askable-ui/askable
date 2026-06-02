@@ -20,6 +20,7 @@ export interface UseAskableRegionCaptureResult {
   lastSelection: ReturnType<typeof shallowRef<AskableRegionCaptureSelection | null>>;
   start: (overrides?: Partial<AskableRegionCaptureOptions>) => void;
   cancel: () => void;
+  clearSelection: () => void;
   destroy: () => void;
   isActive: () => boolean;
 }
@@ -45,6 +46,10 @@ export function useAskableRegionCapture(
     active.value = false;
   }
 
+  function clearSelection() {
+    handle?.clearSelection();
+  }
+
   function start(overrides?: Partial<AskableRegionCaptureOptions>) {
     handle?.destroy();
 
@@ -61,7 +66,6 @@ export function useAskableRegionCapture(
         if (currentOptions.once === false) {
           active.value = true;
         } else {
-          handle = null;
           active.value = false;
         }
         currentOptions.onCapture?.(packet, selection);
@@ -90,6 +94,7 @@ export function useAskableRegionCapture(
     lastSelection,
     start,
     cancel,
+    clearSelection,
     destroy,
     isActive,
   };
