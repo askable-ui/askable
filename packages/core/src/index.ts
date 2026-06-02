@@ -1,6 +1,6 @@
 export { createAskableInspector } from './inspector.js';
 export { ASKABLE_REGION_CAPTURE_THEME, createAskableRegionCapture } from './capture.js';
-export { createAskableTextSelectionCapture } from './selection.js';
+export { ASKABLE_TEXT_SELECTION_CAPTURE_THEME, createAskableTextSelectionCapture } from './selection.js';
 export { a11yTextExtractor } from './a11y.js';
 export { createAskableCollectionSource, createAskableSource } from './sources.js';
 export { createAskablePageSource } from './page-source.js';
@@ -43,9 +43,13 @@ export type {
   AskableRegionCaptureTheme,
 } from './capture.js';
 export type {
+  AskableTextSelectionCaptureAffordanceOptions,
   AskableTextSelectionCaptureHandle,
   AskableTextSelectionCaptureOptions,
+  AskableTextSelectionCapturePromptOptions,
   AskableTextSelectionCaptureSelection,
+  AskableTextSelectionCaptureStyle,
+  AskableTextSelectionCaptureTheme,
 } from './selection.js';
 export type {
   AskableCollectionSourceData,

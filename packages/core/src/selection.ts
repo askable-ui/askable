@@ -11,9 +11,76 @@ import type {
 export interface AskableTextSelectionCaptureSelection {
   text: string;
   bounds?: WebContextRect;
+  rects?: WebContextRect[];
   selector?: string;
   pointerType?: string;
   capturedAt: string;
+}
+
+export type AskableTextSelectionCaptureStyle = Partial<CSSStyleDeclaration>;
+
+export interface AskableTextSelectionCapturePromptOptions {
+  /** Placeholder shown in the anchored prompt input. */
+  placeholder?: string;
+  /** Accessible label/title for the submit button. */
+  submitLabel?: string;
+  /** Class added to the prompt container. */
+  className?: string;
+  /** Inline styles applied to the prompt container. */
+  style?: AskableTextSelectionCaptureStyle;
+  /** Class added to the prompt input. */
+  inputClassName?: string;
+  /** Inline styles applied to the prompt input. */
+  inputStyle?: AskableTextSelectionCaptureStyle;
+  /** Class added to the prompt submit button. */
+  buttonClassName?: string;
+  /** Inline styles applied to the prompt submit button. */
+  buttonStyle?: AskableTextSelectionCaptureStyle;
+  /** Called when the user submits a non-empty prompt from the selected text. */
+  onSubmit?: (
+    question: string,
+    packet: WebContextPacket,
+    selection: AskableTextSelectionCaptureSelection,
+  ) => void;
+}
+
+export interface AskableTextSelectionCaptureAffordanceOptions {
+  /** Keep the selected text range visible after capture. Defaults to true when enabled. */
+  persist?: boolean;
+  /** Render a compact prompt input anchored to the selected text. Defaults to false. */
+  prompt?: boolean | AskableTextSelectionCapturePromptOptions;
+  /** Optional label shown beside the selected text. */
+  label?: string;
+  /** Class added to the selected-text affordance root. */
+  className?: string;
+  /** Inline styles applied to the selected-text affordance root. */
+  style?: AskableTextSelectionCaptureStyle;
+  /** Class added to the selected-text label. */
+  labelClassName?: string;
+  /** Inline styles applied to the selected-text label. */
+  labelStyle?: AskableTextSelectionCaptureStyle;
+  /** Replace the built-in selected-text affordance with consumer-rendered DOM. */
+  render?: (
+    packet: WebContextPacket,
+    selection: AskableTextSelectionCaptureSelection,
+  ) => HTMLElement | null | undefined | void;
+}
+
+export interface AskableTextSelectionCaptureTheme {
+  /** Fill used for persisted selected text marks. */
+  selectionFill: string;
+  /** Outline used for persisted selected text marks. */
+  selectionOutline: string;
+  /** Shadow used for persisted selected text marks. */
+  selectionShadow: string;
+  /** Background color for the anchored prompt input. */
+  promptBackground: string;
+  /** Border color for the anchored prompt input. */
+  promptBorder: string;
+  /** Text color for the anchored prompt input. */
+  promptText: string;
+  /** Accent color for the anchored prompt submit button. */
+  promptAccent: string;
 }
 
 export interface AskableTextSelectionCaptureOptions extends Omit<AskableContextPacketOptions, 'mode' | 'gesture' | 'target'> {
@@ -27,6 +94,10 @@ export interface AskableTextSelectionCaptureOptions extends Omit<AskableContextP
   once?: boolean;
   /** Ignore duplicate selections with the same text and bounds. Defaults to true. */
   dedupe?: boolean;
+  /** Visual theme for selected text marks and anchored prompts. */
+  theme?: Partial<AskableTextSelectionCaptureTheme>;
+  /** Opt-in selected-state UI shown after capture, optionally with an anchored prompt. */
+  selectionAffordance?: boolean | AskableTextSelectionCaptureAffordanceOptions;
   /** Called after selected text is serialized to a Context packet. */
   onCapture?: (packet: WebContextPacket, selection: AskableTextSelectionCaptureSelection) => void;
   /** Called when active selection capture is cancelled. */
@@ -37,6 +108,7 @@ export interface AskableTextSelectionCaptureHandle {
   start(): void;
   captureNow(overrides?: Partial<AskableTextSelectionCaptureOptions>): WebContextPacket | null;
   cancel(): void;
+  clearSelection(): void;
   destroy(): void;
   isActive(): boolean;
 }
@@ -47,6 +119,17 @@ type LastInteraction = {
 };
 
 const DEFAULT_DEBOUNCE = 120;
+const AFFORDANCE_ID = 'askable-text-selection-affordance';
+const AFFORDANCE_ATTR = 'data-askable-text-selection-affordance';
+export const ASKABLE_TEXT_SELECTION_CAPTURE_THEME: AskableTextSelectionCaptureTheme = {
+  selectionFill: 'rgba(124,58,237,0.14)',
+  selectionOutline: 'rgba(124,58,237,0.28)',
+  selectionShadow: '0 8px 22px rgba(91,33,182,0.1)',
+  promptBackground: '#ffffff',
+  promptBorder: 'rgba(124,58,237,0.22)',
+  promptText: '#111317',
+  promptAccent: '#111317',
+};
 
 /**
  * Listens for text selection changes in the document and emits an Askable context packet
@@ -77,6 +160,7 @@ export function createAskableTextSelectionCapture(
       start: () => undefined,
       captureNow: () => null,
       cancel: () => undefined,
+      clearSelection: () => undefined,
       destroy: () => undefined,
       isActive: () => false,
     };
@@ -88,6 +172,8 @@ export function createAskableTextSelectionCapture(
   const debounce = options.debounce ?? DEFAULT_DEBOUNCE;
   const once = options.once ?? false;
   const dedupe = options.dedupe ?? true;
+  const theme = resolveTextSelectionTheme(options.theme);
+  const selectionAffordance = resolveSelectionAffordance(options.selectionAffordance);
   let active = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let lastInteraction: LastInteraction = { gesture: 'programmatic' };
@@ -124,6 +210,7 @@ export function createAskableTextSelectionCapture(
         metadata: {
           kind: 'text-selection',
           length: selection.text.length,
+          ...(selection.rects?.length ? { rectCount: selection.rects.length } : {}),
           ...(selection.pointerType ? { pointerType: selection.pointerType } : {}),
         },
       },
@@ -138,8 +225,9 @@ export function createAskableTextSelectionCapture(
       },
     });
 
+    renderSelectionAffordance(packet, selection);
     currentOptions.onCapture?.(packet, selection);
-    if (currentOnce) destroy();
+    if (currentOnce) stopListening();
     return packet;
   };
 
@@ -181,12 +269,21 @@ export function createAskableTextSelectionCapture(
     ownerDocument.addEventListener('keyup', onKeyUp);
   }
 
-  function destroy() {
+  const removeAffordance = () => {
+    ownerDocument.getElementById(AFFORDANCE_ID)?.remove();
+  };
+
+  function stopListening() {
     clearTimer();
     ownerDocument.removeEventListener('selectionchange', onSelectionChange);
     ownerDocument.removeEventListener('pointerup', onPointerUp);
     ownerDocument.removeEventListener('keyup', onKeyUp);
     active = false;
+  }
+
+  function destroy() {
+    stopListening();
+    removeAffordance();
   }
 
   function cancel() {
@@ -199,9 +296,157 @@ export function createAskableTextSelectionCapture(
     start,
     captureNow: capture,
     cancel,
+    clearSelection: removeAffordance,
     destroy,
     isActive: () => active,
   };
+
+  function renderSelectionAffordance(packet: WebContextPacket, selection: AskableTextSelectionCaptureSelection) {
+    if (!selectionAffordance || selectionAffordance.persist === false || !selection.bounds) return;
+    removeAffordance();
+
+    const custom = selectionAffordance.render?.(packet, selection);
+    if (custom instanceof HTMLElement) {
+      custom.id = custom.id || AFFORDANCE_ID;
+      custom.setAttribute(AFFORDANCE_ATTR, 'true');
+      ownerDocument.body.appendChild(custom);
+      return;
+    }
+
+    const rootEl = ownerDocument.createElement('div');
+    rootEl.id = AFFORDANCE_ID;
+    rootEl.setAttribute(AFFORDANCE_ATTR, 'true');
+    if (selectionAffordance.className) rootEl.className = selectionAffordance.className;
+    rootEl.style.cssText = [
+      'position:fixed',
+      'inset:0',
+      'z-index:2147483645',
+      'pointer-events:none',
+      'box-sizing:border-box',
+    ].join(';');
+    assignStyles(rootEl, selectionAffordance.style);
+
+    const rects = selection.rects?.length ? selection.rects : [selection.bounds];
+    rects.forEach((rect) => rootEl.appendChild(createTextMark(rect)));
+    if (selectionAffordance.label !== '') {
+      rootEl.appendChild(createSelectionLabel(selectionAffordance.label ?? 'Selected text', selection.bounds));
+    }
+
+    const prompt = resolvePromptOptions(selectionAffordance.prompt);
+    if (prompt) rootEl.appendChild(createPrompt(prompt, packet, selection));
+
+    ownerDocument.body.appendChild(rootEl);
+  }
+
+  function createTextMark(rect: WebContextRect): HTMLSpanElement {
+    const mark = ownerDocument.createElement('span');
+    mark.style.cssText = [
+      'position:fixed',
+      `left:${Math.max(0, rect.x - 2)}px`,
+      `top:${Math.max(0, rect.y - 1)}px`,
+      `width:${Math.max(1, rect.width + 4)}px`,
+      `height:${Math.max(1, rect.height + 2)}px`,
+      'border-radius:7px',
+      `background:${theme.selectionFill}`,
+      `outline:1px solid ${theme.selectionOutline}`,
+      `box-shadow:${theme.selectionShadow}`,
+      'pointer-events:none',
+    ].join(';');
+    return mark;
+  }
+
+  function createSelectionLabel(label: string, bounds: WebContextRect): HTMLSpanElement {
+    const el = ownerDocument.createElement('span');
+    el.textContent = label;
+    if (selectionAffordance?.labelClassName) el.className = selectionAffordance.labelClassName;
+    el.style.cssText = [
+      'position:fixed',
+      `left:${bounds.x}px`,
+      `top:${Math.max(8, bounds.y - 32)}px`,
+      'padding:4px 8px',
+      'border-radius:999px',
+      `background:${theme.promptBackground}`,
+      `border:1px solid ${theme.promptBorder}`,
+      `color:${theme.promptText}`,
+      'font:600 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+      'box-shadow:0 8px 20px rgba(15,23,42,0.12)',
+      'white-space:nowrap',
+      'pointer-events:none',
+    ].join(';');
+    assignStyles(el, selectionAffordance?.labelStyle);
+    return el;
+  }
+
+  function createPrompt(
+    prompt: AskableTextSelectionCapturePromptOptions,
+    packet: WebContextPacket,
+    selection: AskableTextSelectionCaptureSelection,
+  ): HTMLFormElement {
+    const bounds = selection.bounds;
+    const form = ownerDocument.createElement('form');
+    if (prompt.className) form.className = prompt.className;
+    const placeAbove = bounds ? bounds.y + bounds.height + 56 > window.innerHeight : false;
+    form.style.cssText = [
+      'position:fixed',
+      `left:${bounds ? Math.max(8, Math.min(bounds.x, window.innerWidth - 240)) : 8}px`,
+      bounds && placeAbove
+        ? `top:${Math.max(8, bounds.y - 48)}px`
+        : `top:${bounds ? Math.min(window.innerHeight - 48, bounds.y + bounds.height + 10) : 8}px`,
+      'display:flex',
+      'align-items:center',
+      'gap:6px',
+      'min-width:220px',
+      'max-width:min(320px, calc(100vw - 24px))',
+      'padding:6px',
+      'border-radius:999px',
+      `background:${theme.promptBackground}`,
+      `border:1px solid ${theme.promptBorder}`,
+      'box-shadow:0 14px 34px rgba(15,23,42,0.14)',
+      'pointer-events:auto',
+    ].join(';');
+    assignStyles(form, prompt.style);
+
+    const input = ownerDocument.createElement('input');
+    input.type = 'text';
+    input.placeholder = prompt.placeholder ?? 'Ask about this text...';
+    if (prompt.inputClassName) input.className = prompt.inputClassName;
+    input.style.cssText = [
+      'min-width:0',
+      'flex:1',
+      'border:0',
+      'outline:0',
+      'background:transparent',
+      `color:${theme.promptText}`,
+      'font:500 13px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+    ].join(';');
+    assignStyles(input, prompt.inputStyle);
+
+    const button = ownerDocument.createElement('button');
+    button.type = 'submit';
+    button.textContent = 'Ask';
+    button.setAttribute('aria-label', prompt.submitLabel ?? 'Ask about selected text');
+    if (prompt.buttonClassName) button.className = prompt.buttonClassName;
+    button.style.cssText = [
+      'border:0',
+      'border-radius:999px',
+      'padding:6px 10px',
+      `background:${theme.promptAccent}`,
+      'color:#fff',
+      'font:700 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+      'cursor:pointer',
+    ].join(';');
+    assignStyles(button, prompt.buttonStyle);
+
+    form.append(input, button);
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const question = input.value.trim();
+      if (!question) return;
+      prompt.onSubmit?.(question, packet, selection);
+      input.value = '';
+    });
+    return form;
+  }
 }
 
 function resolveDocument(root?: Document | HTMLElement): Document | null {
@@ -226,14 +471,28 @@ function readSelection(
   if (!rangeInsideRoot(range, root)) return null;
 
   const bounds = rangeBounds(range);
+  const rects = rangeRects(range);
   const selector = selectorForRange(range);
   return {
     text,
     ...(bounds ? { bounds } : {}),
+    ...(rects.length ? { rects } : {}),
     ...(selector ? { selector } : {}),
     ...(pointerType ? { pointerType } : {}),
     capturedAt: new Date().toISOString(),
   };
+}
+
+function rangeRects(range: Range): WebContextRect[] {
+  if (typeof range.getClientRects !== 'function') return [];
+  return Array.from(range.getClientRects())
+    .filter((rect) => rect.width > 0 || rect.height > 0)
+    .map((rect) => ({
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    }));
 }
 
 function rangeInsideRoot(range: Range, root: Document | HTMLElement): boolean {
@@ -291,4 +550,32 @@ function selectionSignature(selection: AskableTextSelectionCaptureSelection): st
     bounds: selection.bounds,
     selector: selection.selector,
   });
+}
+
+function resolveTextSelectionTheme(theme?: Partial<AskableTextSelectionCaptureTheme>): AskableTextSelectionCaptureTheme {
+  return {
+    ...ASKABLE_TEXT_SELECTION_CAPTURE_THEME,
+    ...theme,
+  };
+}
+
+function resolveSelectionAffordance(
+  affordance?: boolean | AskableTextSelectionCaptureAffordanceOptions,
+): AskableTextSelectionCaptureAffordanceOptions | null {
+  if (!affordance) return null;
+  if (affordance === true) return { persist: true };
+  return { persist: affordance.persist ?? true, ...affordance };
+}
+
+function resolvePromptOptions(
+  prompt?: boolean | AskableTextSelectionCapturePromptOptions,
+): AskableTextSelectionCapturePromptOptions | null {
+  if (!prompt) return null;
+  if (prompt === true) return {};
+  return prompt;
+}
+
+function assignStyles(element: HTMLElement, styles?: AskableTextSelectionCaptureStyle): void {
+  if (!styles) return;
+  Object.assign(element.style, styles);
 }
