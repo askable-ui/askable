@@ -515,6 +515,73 @@ describe('createAskableContext', () => {
     ctx.destroy();
   });
 
+  it('can build agent request context from an attached selection packet', async () => {
+    const ctx = createAskableContext();
+    ctx.push({ widget: 'hovered-card' }, 'Hovered card');
+    const packet = ctx.toContextPacket({
+      mode: 'lasso',
+      gesture: 'drag',
+      target: {
+        label: 'lasso selection',
+        text: 'Acme Corp row',
+        bounds: { x: 10, y: 20, width: 120, height: 80 },
+        metadata: {
+          selectedItems: [{ company: 'Acme Corp', mrr: '$8,400', plan: 'Enterprise' }],
+        },
+      },
+      privacy: { consent: 'explicit' },
+    });
+
+    const request = await ctx.toAgentRequest('Why is this account healthy?', {
+      packet,
+      contextFromPacket: true,
+    });
+
+    expect(request.packet).toBe(packet);
+    expect(request.context).toContain('Current: User selected context:');
+    expect(request.context).toContain('capture: lasso');
+    expect(request.context).toContain('label: lasso selection');
+    expect(request.context).toContain('"company":"Acme Corp"');
+    expect(request.context).toContain('value "Acme Corp row"');
+    expect(request.context).toContain('bounds: 120x80 at 10,20');
+    expect(request.context).not.toContain('hovered-card');
+
+    ctx.destroy();
+  });
+
+  it('can append sources while building agent request context from a packet', async () => {
+    const ctx = createAskableContext();
+    ctx.push({ widget: 'chart' }, 'Revenue chart');
+    ctx.registerSource('accounts', {
+      kind: 'collection',
+      resolve: () => ({ totalMatching: 12 }),
+    });
+    const packet = ctx.toContextPacket({
+      mode: 'circle',
+      target: {
+        label: 'circled accounts',
+        metadata: { segment: 'enterprise' },
+      },
+    });
+
+    const request = await ctx.toAgentRequest('Summarize this selection', {
+      packet,
+      contextFromPacket: true,
+      sources: ['accounts'],
+      format: 'json',
+    });
+    const parsed = JSON.parse(request.context);
+
+    expect(parsed.packet.capture.mode).toBe('circle');
+    expect(parsed.packet.target.label).toBe('circled accounts');
+    expect(parsed.sources[0]).toMatchObject({
+      id: 'accounts',
+      data: { totalMatching: 12 },
+    });
+
+    ctx.destroy();
+  });
+
   it('getFocus() returns null before any interaction', () => {
     const ctx = createAskableContext();
     ctx.observe(document);

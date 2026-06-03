@@ -174,7 +174,7 @@ export class AskableContextImpl implements AskableContext {
   private formatFocusMeta(meta: Record<string, unknown> | string): string {
     return typeof meta === 'string'
       ? meta
-      : Object.entries(meta).map(([k, v]) => `${k}: ${String(v)}`).join(', ');
+      : Object.entries(meta).map(([k, v]) => `${k}: ${this.formatMetaValue(v)}`).join(', ');
   }
 
   private filterAncestorSegments(segments: AskableFocusSegment[] | undefined, scope?: string): AskableFocusSegment[] {
@@ -570,9 +570,9 @@ export class AskableContextImpl implements AskableContext {
       requestId,
       metadata,
       packet: packetOption,
+      contextFromPacket = false,
       ...contextOptions
     } = options ?? {};
-    const context = await this.toContextAsync(contextOptions);
     let packet: WebContextPacket | undefined;
     if (packetOption) {
       if (packetOption === true) {
@@ -583,6 +583,9 @@ export class AskableContextImpl implements AskableContext {
         packet = await this.toContextPacketAsync(packetOption);
       }
     }
+    const context = contextFromPacket && packet
+      ? await this.toPacketContextAsync(packet, contextOptions)
+      : await this.toContextAsync(contextOptions);
 
     return {
       ...(requestId ? { requestId } : {}),
@@ -845,11 +848,12 @@ export class AskableContextImpl implements AskableContext {
     base: string,
     sources: AskableResolvedContextSource[],
     options: AskablePromptContextOptions,
-    label = 'Context sources'
+    label = 'Context sources',
+    jsonBaseKey = 'focus'
   ): string {
     if ((options.format ?? 'natural') === 'json') {
       return JSON.stringify({
-        focus: this.safeParseJson(base),
+        [jsonBaseKey]: this.safeParseJson(base),
         sources,
       });
     }
@@ -876,6 +880,22 @@ export class AskableContextImpl implements AskableContext {
 
   private stringifySourceValue(value: unknown): string {
     if (typeof value === 'string') return `"${value}"`;
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  private formatMetaValue(value: unknown): string {
+    if (
+      value === null ||
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      return String(value);
+    }
     try {
       return JSON.stringify(value);
     } catch {
@@ -973,6 +993,24 @@ export class AskableContextImpl implements AskableContext {
       ...packetOptions
     } = options;
     return packetOptions;
+  }
+
+  private async toPacketContextAsync(
+    packet: WebContextPacket,
+    options: AskableAsyncContextOutputOptions
+  ): Promise<string> {
+    const resolved = this.resolveOptions(options);
+    const { sourceLabel, maxTokens } = options ?? {};
+    const currentLabel = options.currentLabel ?? 'Current';
+    const packetContext = this.buildPacketPromptString(packet, resolved);
+    const base = (resolved.format ?? 'natural') === 'json'
+      ? packetContext
+      : `${currentLabel}: ${packetContext}`;
+    const sources = await this.resolveIncludedSources(options);
+    const output = sources.length === 0
+      ? base
+      : this.appendSourcesToOutput(base, sources, resolved, sourceLabel, 'packet');
+    return this.applyTokenBudget(output, maxTokens);
   }
 
   private resolveCaptureMode(focus: AskableFocus | null): WebContextCaptureMode {
@@ -1074,6 +1112,49 @@ export class AskableContextImpl implements AskableContext {
     const parts: string[] = [prefix];
     if (metaWithHierarchy) parts.push(metaWithHierarchy);
     if (serialized.text) parts.push(`${textLabel} "${serialized.text}"`);
+
+    return parts.join(' — ');
+  }
+
+  private buildPacketPromptString(packet: WebContextPacket, options?: AskablePromptContextOptions): string {
+    const resolved = this.resolveOptions(options);
+    const format = resolved.format ?? 'natural';
+    const target = packet.target ?? null;
+
+    if (format === 'json') {
+      return JSON.stringify({
+        capture: packet.capture,
+        target,
+        ...(packet.surrounding ? { surrounding: packet.surrounding } : {}),
+        privacy: packet.privacy,
+        provenance: packet.provenance,
+      });
+    }
+
+    if (!target) return 'No packet target is available.';
+
+    const prefix = resolved.prefix ?? 'User selected context:';
+    const textLabel = resolved.textLabel ?? 'value';
+    const metadata = typeof target.metadata === 'string'
+      ? target.metadata
+      : target.metadata
+        ? this.normalizeMeta(target.metadata, resolved)
+        : undefined;
+    const metaStr = metadata ? this.formatFocusMeta(metadata) : '';
+    const text = target.text && (resolved.includeText ?? true)
+      ? this.normalizeText(target.text, resolved.maxTextLength)
+      : '';
+    const bounds = target.bounds
+      ? `bounds: ${Math.round(target.bounds.width)}x${Math.round(target.bounds.height)} at ${Math.round(target.bounds.x)},${Math.round(target.bounds.y)}`
+      : '';
+
+    const parts: string[] = [prefix];
+    if (packet.capture.mode) parts.push(`capture: ${packet.capture.mode}`);
+    if (target.label) parts.push(`label: ${target.label}`);
+    if (target.role) parts.push(`role: ${target.role}`);
+    if (metaStr) parts.push(metaStr);
+    if (text) parts.push(`${textLabel} "${text}"`);
+    if (bounds) parts.push(bounds);
 
     return parts.join(' — ');
   }

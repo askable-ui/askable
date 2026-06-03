@@ -475,8 +475,9 @@ await fetch('/api/chat', {
 
 For "select first, then ask" flows, pass an existing `WebContextPacket` from a
 region, circle, lasso, or text selection capture as `packet`. Askable attaches
-that exact packet to the request while still generating the prompt-ready context
-string from the current focus and registered sources.
+that exact packet to the request. Set `contextFromPacket: true` when the
+prompt-ready `context` string should be generated from the pinned selection
+instead of the current hover/click focus.
 
 #### `subscribeAsync(callback, options?): () => void`
 

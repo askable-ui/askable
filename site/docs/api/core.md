@@ -541,6 +541,11 @@ pass an existing `WebContextPacket` from a region, circle, lasso, or text
 selection capture. Existing packets are attached as-is, which is useful for
 "select first, then ask a question" chat composers.
 
+Set `contextFromPacket: true` when that pinned packet should also become the
+prompt-ready `context` string. This keeps the user question grounded to the
+selected area or highlighted text even if hover/click focus changes while the
+composer is open.
+
 ```ts
 let pendingPacket: WebContextPacket | null = null;
 
@@ -555,6 +560,7 @@ const lasso = createAskableRegionCapture(ctx, {
 async function submit(question: string) {
   return ctx.toAgentRequest(question, {
     packet: pendingPacket ?? true,
+    contextFromPacket: Boolean(pendingPacket),
     sources: ['accounts'],
   });
 }

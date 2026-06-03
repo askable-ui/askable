@@ -422,6 +422,11 @@ export interface AskableAgentRequestOptions extends AskableAsyncContextOutputOpt
   metadata?: Record<string, unknown>;
   /** Include a structured Context packet. Pass true, packet options, or an existing packet from a capture tool. */
   packet?: boolean | AskableAsyncContextPacketOptions | WebContextPacket;
+  /**
+   * Build the prompt-ready `context` string from the attached packet target
+   * instead of the current focus. Useful for "select first, then ask" composers.
+   */
+  contextFromPacket?: boolean;
 }
 
 export interface AskableAgentRequest {
