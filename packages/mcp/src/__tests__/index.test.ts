@@ -257,6 +257,52 @@ describe('createAskableMcpServer', () => {
   });
 });
 
+describe('requireRedacted option', () => {
+  function getToolHandlerStrict(provider: AskableMcpContextProvider, toolName: string): McpToolHandler {
+    const server = createAskableMcpServer({ provider, requireRedacted: true });
+    const tools = (server as unknown as { _registeredTools: Record<string, { handler: McpToolHandler }> })._registeredTools;
+    const tool = tools[toolName];
+    if (!tool) throw new Error(`Tool ${toolName} not registered`);
+    return tool.handler;
+  }
+
+  it('blocks get_current_context when packet is not redacted', async () => {
+    const packet = createWebContextPacket({ capture: { mode: 'element-focus' } });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const handler = getToolHandlerStrict(provider, 'get_current_context');
+    const result = await handler({});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not been redacted');
+  });
+
+  it('blocks format_context_for_prompt when packet is not redacted', async () => {
+    const packet = createWebContextPacket({ capture: { mode: 'element-focus' } });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const handler = getToolHandlerStrict(provider, 'format_context_for_prompt');
+    const result = await handler({});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not been redacted');
+  });
+
+  it('allows forwarding when packet is explicitly marked redacted', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'element-focus' },
+      privacy: { consent: 'explicit', redacted: true },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const handler = getToolHandlerStrict(provider, 'get_current_context');
+    const result = await handler({});
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0].text).toContain('element-focus');
+  });
+});
+
 describe('createAskableMcpWebHandler', () => {
   it('handles stateless Streamable HTTP tool calls', async () => {
     const packet = createWebContextPacket({
