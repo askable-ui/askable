@@ -120,13 +120,26 @@ export function useAskableScrollView<Item = unknown>(
         viewportBottom,
       }));
 
-    const selected = selectVisible(visibleItems);
+    let selected: ReturnType<typeof selectVisible>;
+    try {
+      selected = selectVisible(visibleItems);
+    } catch {
+      return;
+    }
     if (!selected) {
       clearVisibleItem();
       return;
     }
 
-    scrollCtx.push(getMeta(selected.item, selected), getText?.(selected.item, selected) ?? '');
+    let meta: ReturnType<typeof getMeta>;
+    let text: string;
+    try {
+      meta = getMeta(selected.item, selected);
+      text = getText?.(selected.item, selected) ?? '';
+    } catch {
+      return;
+    }
+    scrollCtx.push(meta, text);
   }, [active, clearVisibleItem, getMeta, getText, scrollCtx, selectVisible]);
 
   const onScroll = useCallback(

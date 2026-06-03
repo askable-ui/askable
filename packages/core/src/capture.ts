@@ -493,6 +493,8 @@ export function createAskableRegionCapture(
     if (!selectionAffordance || selectionAffordance.persist === false) return;
     removeAffordance(false);
 
+    removeAffordance();
+
     const custom = selectionAffordance.render?.(packet, selection);
     if (custom instanceof HTMLElement) {
       custom.id = custom.id || AFFORDANCE_ID;
