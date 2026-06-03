@@ -164,6 +164,17 @@ async function ask(userMessage: string) {
 }
 ```
 
+For a selection composer, keep the packet from region, circle, lasso, or text
+selection capture and pass it back with `contextFromPacket: true`:
+
+```ts
+await ctx.toAgentRequest(userMessage, {
+  packet: pendingSelectionPacket,
+  contextFromPacket: true,
+  sources: ['accounts'],
+});
+```
+
 When the user clicks a revenue chart and asks *"why is this dropping?"*, `promptContext` becomes:
 
 ```

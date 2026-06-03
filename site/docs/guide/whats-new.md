@@ -147,6 +147,8 @@ const request = await ctx.toAgentRequest(question, {
 You can also pass a packet that came from a region, circle, lasso, or text
 selection capture. This supports a controlled UX where the user selects context,
 sees it pinned in the chat composer, then adds a question before sending.
+Set `contextFromPacket: true` when the prompt string should be generated from
+that pinned selection instead of the current hover or click focus.
 
 ### Region, circle, lasso, and text capture together
 

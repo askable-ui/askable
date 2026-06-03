@@ -353,6 +353,7 @@ interface AskableAgentRequestOptions extends AskableAsyncContextOutputOptions {
   requestId?: string;
   metadata?: Record<string, unknown>;
   packet?: boolean | AskableAsyncContextPacketOptions | WebContextPacket;
+  contextFromPacket?: boolean;
 }
 
 interface AskableAgentRequest {
