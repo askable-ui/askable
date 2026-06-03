@@ -503,7 +503,12 @@ export function createAskableRegionCapture(
     if (!selectionAffordance || selectionAffordance.persist === false) return;
     removeAffordance(false);
 
-    const custom = selectionAffordance.render?.(packet, selection);
+    let custom: HTMLElement | null | undefined | void;
+    try {
+      custom = selectionAffordance.render?.(packet, selection);
+    } catch (err) {
+      console.error('[askable] selectionAffordance.render callback threw:', err);
+    }
     if (custom instanceof HTMLElement) {
       custom.id = custom.id || AFFORDANCE_ID;
       custom.setAttribute(AFFORDANCE_ATTR, selection.shape);
