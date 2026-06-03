@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { vi } from 'vitest';
 import { useAskableTextSelectionCapture } from '../useAskableTextSelectionCapture.js';
 
 function selectText(text: string): HTMLElement {
@@ -48,6 +49,29 @@ describe('useAskableTextSelectionCapture', () => {
 
     await waitFor(() => expect(captured.length).toBe(1));
     expect((captured[0] as { target?: { text?: string } }).target?.text).toBe('React selectionchange fires');
+  });
+
+  it('invokes the latest onCapture after prop changes mid-session', async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+
+    function Consumer({ cb }: { cb: (p: unknown) => void }) {
+      const capture = useAskableTextSelectionCapture({ debounce: 0, onCapture: cb });
+      return (
+        <button type="button" onClick={() => capture.start()}>Start</button>
+      );
+    }
+
+    const { rerender } = render(<Consumer cb={first} />);
+    act(() => { fireEvent.click(screen.getByText('Start')); });
+
+    rerender(<Consumer cb={second} />);
+
+    selectText('Changed callback');
+    document.dispatchEvent(new Event('selectionchange'));
+
+    await waitFor(() => expect(second).toHaveBeenCalledTimes(1));
+    expect(first).not.toHaveBeenCalled();
   });
 
   it('captures the current browser selection', async () => {

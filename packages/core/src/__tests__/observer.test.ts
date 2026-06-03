@@ -660,4 +660,60 @@ describe('Observer', () => {
       obs.unobserve();
     });
   });
+
+  describe('data-askable-parent and parseMeta safety', () => {
+    it('invalid CSS selector in data-askable-parent does not throw', () => {
+      const el = attach(makeEl({ id: 'orphan' }, 'Orphan'));
+      el.setAttribute('data-askable-parent', ':invalid-selector(');
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document);
+
+      expect(() => el.click()).not.toThrow();
+      expect(onFocus).toHaveBeenCalledOnce();
+      expect(onFocus.mock.calls[0][0].meta).toEqual({ id: 'orphan' });
+      expect(onFocus.mock.calls[0][0].ancestors).toBeUndefined();
+
+      obs.unobserve();
+    });
+
+    it('non-object JSON in data-askable falls back to raw string', () => {
+      const el = document.createElement('div');
+      el.setAttribute('data-askable', '42');
+      el.textContent = 'Number meta';
+      document.body.appendChild(el);
+      elements.push(el);
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document);
+
+      el.click();
+
+      expect(onFocus).toHaveBeenCalledOnce();
+      expect(onFocus.mock.calls[0][0].meta).toBe('42');
+
+      obs.unobserve();
+    });
+
+    it('array JSON in data-askable falls back to raw string', () => {
+      const el = document.createElement('div');
+      el.setAttribute('data-askable', '[1,2,3]');
+      el.textContent = 'Array meta';
+      document.body.appendChild(el);
+      elements.push(el);
+
+      const onFocus = vi.fn();
+      const obs = new Observer(onFocus);
+      obs.observe(document);
+
+      el.click();
+
+      expect(onFocus).toHaveBeenCalledOnce();
+      expect(onFocus.mock.calls[0][0].meta).toBe('[1,2,3]');
+
+      obs.unobserve();
+    });
+  });
 });

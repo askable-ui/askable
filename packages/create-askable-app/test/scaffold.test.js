@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isDirectoryEmpty, toPackageName } from '../src/scaffold.js';
+import { isDirectoryEmpty, toPackageName, runCli } from '../src/scaffold.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -20,4 +20,11 @@ test('isDirectoryEmpty ignores .DS_Store', () => {
   const target = fs.mkdtempSync(path.join(os.tmpdir(), 'askable-scaffold-'));
   fs.writeFileSync(path.join(target, '.DS_Store'), '');
   assert.equal(isDirectoryEmpty(target), true);
+});
+
+test('runCli rejects path traversal outside cwd', async () => {
+  await assert.rejects(
+    () => runCli(['../../malicious']),
+    /Target directory must be inside the current working directory/,
+  );
 });

@@ -159,10 +159,14 @@ export class AskableContextImpl implements AskableContext {
     const queryRoot = typeof (rootNode as ParentNode).querySelector === 'function'
       ? rootNode as ParentNode
       : document;
-    const candidate = queryRoot.querySelector(selector);
-    return candidate instanceof HTMLElement && candidate !== el && candidate.hasAttribute('data-askable')
-      ? candidate
-      : null;
+    try {
+      const candidate = queryRoot.querySelector(selector);
+      return candidate instanceof HTMLElement && candidate !== el && candidate.hasAttribute('data-askable')
+        ? candidate
+        : null;
+    } catch {
+      return null;
+    }
   }
 
   private limitHierarchyDepth(elements: HTMLElement[], depth?: number): HTMLElement[] {

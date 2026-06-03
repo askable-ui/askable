@@ -167,7 +167,7 @@ describe('createAskableMcpServer', () => {
     const handler = getToolHandler(provider, 'get_current_context');
     const result = await handler({});
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('provider crashed');
+    expect(result.content[0].text).toContain('Failed to get context');
   });
 
   it('returns isError when format_context_for_prompt provider throws', async () => {
@@ -177,7 +177,7 @@ describe('createAskableMcpServer', () => {
     const handler = getToolHandler(provider, 'format_context_for_prompt');
     const result = await handler({});
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('context unavailable');
+    expect(result.content[0].text).toContain('Failed to format context');
   });
 
   it('returns isError when formatContextForPrompt throws after getContext succeeds', async () => {
@@ -189,7 +189,7 @@ describe('createAskableMcpServer', () => {
     const handler = getToolHandler(provider, 'format_context_for_prompt');
     const result = await handler({});
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('format failed');
+    expect(result.content[0].text).toContain('Failed to format context');
   });
 
   it('passes recognized context options to the provider', async () => {
