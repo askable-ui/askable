@@ -259,8 +259,12 @@ export function createAskableTextSelectionCapture(
     const nextSelection: AskableTextSelectionCaptureState = { packet, selection };
     renderSelectionAffordance(packet, selection, nextSelection);
     setCurrentSelection(nextSelection, currentOptions.onSelectionChange);
-    currentOptions.onCapture?.(packet, selection);
     if (currentOnce) stopListening();
+    try {
+      currentOptions.onCapture?.(packet, selection);
+    } catch (err) {
+      console.error('[askable] onCapture callback threw:', err);
+    }
     return packet;
   };
 
