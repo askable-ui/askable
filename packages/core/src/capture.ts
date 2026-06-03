@@ -280,7 +280,13 @@ export function createAskableRegionCapture(
     const wasActive = Boolean(overlay);
     removeOverlay();
     removeAffordance();
-    if (wasActive) options.onCancel?.();
+    if (wasActive) {
+      try {
+        options.onCancel?.();
+      } catch (err) {
+        console.error('[askable] onCancel callback threw:', err);
+      }
+    }
   };
 
   const ensureOverlay = () => {
@@ -460,7 +466,11 @@ export function createAskableRegionCapture(
     const nextSelection: AskableRegionCaptureState = { packet, selection };
     renderSelectionAffordance(packet, selection, nextSelection);
     setCurrentSelection(nextSelection);
-    options.onCapture?.(packet, selection);
+    try {
+      options.onCapture?.(packet, selection);
+    } catch (err) {
+      console.error('[askable] onCapture callback threw:', err);
+    }
   }
 
   function onPointerCancel() {
@@ -654,7 +664,11 @@ export function createAskableRegionCapture(
       event.preventDefault();
       const question = input.value.trim();
       if (!question) return;
-      prompt.onSubmit?.(question, packet, selection);
+      try {
+        prompt.onSubmit?.(question, packet, selection);
+      } catch (err) {
+        console.error('[askable] onSubmit callback threw:', err);
+      }
       input.value = '';
     });
     return form;
