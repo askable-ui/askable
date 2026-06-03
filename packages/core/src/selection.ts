@@ -336,7 +336,13 @@ export function createAskableTextSelectionCapture(
   function cancel() {
     const wasActive = active;
     destroy();
-    if (wasActive) options.onCancel?.();
+    if (wasActive) {
+      try {
+        options.onCancel?.();
+      } catch (err) {
+        console.error('[askable] onCancel callback threw:', err);
+      }
+    }
   }
 
   return {
