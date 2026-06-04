@@ -42,14 +42,14 @@
     "@askable-ui/core": "^0.13.1"
   },
   "devDependencies": {
-    "@types/react": "^19.2.15",
+    "@types/react": "^19.2.16",
     "jsdom": "^29.1.1",
-    "react": "^19.2.6",
-    "react-test-renderer": "^19.2.6",
+    "react": "^19.2.7",
+    "react-test-renderer": "^19.2.7",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.8"
   },
   "overrides": {
-    "react": "^19.2.6"
+    "react": "^19.2.7"
   }
 }
