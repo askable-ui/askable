@@ -552,6 +552,23 @@ state for a selected table row, document range, chart region, map feature, or
 canvas shape. Explicit `selection` values on individual source requests still
 take precedence.
 
+Use `isAskablePacketSourceSelection()` inside a resolver when you need to narrow
+that generic `selection` payload:
+
+```ts
+import { isAskablePacketSourceSelection } from '@askable-ui/core';
+
+ctx.registerSource('accounts', {
+  kind: 'collection',
+  resolve({ mode, selection }) {
+    if (mode === 'selected' && isAskablePacketSourceSelection(selection)) {
+      return getAccountsForSelection(selection.target?.metadata);
+    }
+    return getAccountsSummary();
+  },
+});
+```
+
 ```ts
 let pendingPacket: WebContextPacket | null = null;
 

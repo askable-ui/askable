@@ -2,6 +2,7 @@ import type {
   AskableContextSource,
   AskableContextSourceMode,
   AskableContextSourceResolveRequest,
+  AskablePacketSourceSelection,
   AskableResolvedContextSource,
 } from './types.js';
 
@@ -10,6 +11,14 @@ export type AskableSourceResolver<T> = (
   request: AskableContextSourceResolveRequest
 ) => T | Promise<T>;
 export type AskableSourceModeMap<T> = Record<string, T | AskableSourceResolver<T>>;
+
+export function isAskablePacketSourceSelection(
+  selection: unknown,
+): selection is AskablePacketSourceSelection {
+  if (!selection || typeof selection !== 'object') return false;
+  const value = selection as Partial<AskablePacketSourceSelection>;
+  return Boolean(value.capture && typeof value.capture === 'object' && value.source && typeof value.source === 'object');
+}
 
 export interface AskableCreateSourceOptions<TData = unknown, TState = unknown> {
   /** Source category. Examples: "document", "collection", "chart", "map", "canvas". */

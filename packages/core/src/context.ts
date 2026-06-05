@@ -26,6 +26,7 @@ import type {
   AskableFocus,
   AskableFocusSegment,
   AskableObserveOptions,
+  AskablePacketSourceSelection,
   AskablePromptContextOptions,
   AskablePromptPreset,
   AskablePushOptions,
@@ -1044,7 +1045,7 @@ export class AskableContextImpl implements AskableContext {
     return this.applyTokenBudget(output, maxTokens);
   }
 
-  private packetToSourceSelection(packet: WebContextPacket): Record<string, unknown> {
+  private packetToSourceSelection(packet: WebContextPacket): AskablePacketSourceSelection {
     const target = packet.target;
     return {
       capture: packet.capture,

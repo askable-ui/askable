@@ -3,9 +3,25 @@ import {
   createAskableCollectionSource,
   createAskableContext,
   createAskableSource,
+  isAskablePacketSourceSelection,
 } from '../index.js';
 
 describe('source helpers', () => {
+  it('narrows packet-derived source selections', () => {
+    const selection = {
+      capture: { mode: 'lasso', gesture: 'drag' },
+      source: { timestamp: '2026-06-05T00:00:00.000Z', route: '/accounts' },
+      target: {
+        label: 'lasso selection',
+        metadata: { selectedItems: [{ id: 'acct_123' }] },
+      },
+    };
+
+    expect(isAskablePacketSourceSelection(selection)).toBe(true);
+    expect(isAskablePacketSourceSelection({ ids: ['acct_123'] })).toBe(false);
+    expect(isAskablePacketSourceSelection(null)).toBe(false);
+  });
+
   it('creates a generic app-owned context source', async () => {
     const ctx = createAskableContext();
     ctx.registerSource('document', createAskableSource({
