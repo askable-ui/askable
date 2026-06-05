@@ -357,6 +357,21 @@ interface AskableAgentRequestOptions extends AskableAsyncContextOutputOptions {
   selectionFromPacket?: boolean;
 }
 
+type AskablePacketSourceSelectionTarget = Pick<
+  WebContextTarget,
+  'label' | 'role' | 'selector' | 'bounds' | 'text' | 'metadata'
+>;
+
+interface AskablePacketSourceSelection {
+  capture: WebContextPacket['capture'];
+  source: WebContextSource;
+  target?: AskablePacketSourceSelectionTarget;
+}
+
+function isAskablePacketSourceSelection(
+  selection: unknown
+): selection is AskablePacketSourceSelection;
+
 interface AskableAgentRequest {
   requestId?: string;
   question: string;

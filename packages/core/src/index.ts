@@ -2,7 +2,7 @@ export { createAskableInspector } from './inspector.js';
 export { ASKABLE_REGION_CAPTURE_THEME, createAskableRegionCapture } from './capture.js';
 export { ASKABLE_TEXT_SELECTION_CAPTURE_THEME, createAskableTextSelectionCapture } from './selection.js';
 export { a11yTextExtractor } from './a11y.js';
-export { createAskableCollectionSource, createAskableSource } from './sources.js';
+export { createAskableCollectionSource, createAskableSource, isAskablePacketSourceSelection } from './sources.js';
 export { createAskablePageSource } from './page-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
@@ -96,6 +96,8 @@ export type {
   AskableFocusSegment,
   AskableFocusSource,
   AskableObserveOptions,
+  AskablePacketSourceSelection,
+  AskablePacketSourceSelectionTarget,
   AskablePromptContextOptions,
   AskablePromptFormat,
   AskablePromptPreset,

@@ -151,6 +151,20 @@ export type AskableContextSourceMode =
   | 'all'
   | (string & {});
 
+export type AskablePacketSourceSelectionTarget = Pick<
+  WebContextTarget,
+  'label' | 'role' | 'selector' | 'bounds' | 'text' | 'metadata'
+>;
+
+export interface AskablePacketSourceSelection {
+  /** Capture metadata from the selected Context packet. */
+  capture: WebContextPacket['capture'];
+  /** Page or app source metadata from the selected Context packet. */
+  source: WebContextSource;
+  /** Selected packet target, when the packet has one. */
+  target?: AskablePacketSourceSelectionTarget;
+}
+
 export interface AskableContextSourceResolveRequest {
   /** Registered source id. */
   sourceId: string;

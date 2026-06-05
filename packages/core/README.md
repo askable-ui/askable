@@ -481,6 +481,19 @@ instead of the current hover/click focus. Set `selectionFromPacket: true` when
 registered sources should receive the packet target as their `selection` input
 so app-owned state can resolve the full selected data.
 
+```ts
+import { isAskablePacketSourceSelection } from '@askable-ui/core';
+
+ctx.registerSource('accounts', {
+  resolve({ mode, selection }) {
+    if (mode === 'selected' && isAskablePacketSourceSelection(selection)) {
+      return getAccountsForSelection(selection.target?.metadata);
+    }
+    return getAccountsSummary();
+  },
+});
+```
+
 #### `subscribeAsync(callback, options?): () => void`
 
 Subscribe to source-backed context updates. The callback receives
