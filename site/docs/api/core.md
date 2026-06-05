@@ -546,6 +546,12 @@ prompt-ready `context` string. This keeps the user question grounded to the
 selected area or highlighted text even if hover/click focus changes while the
 composer is open.
 
+Set `selectionFromPacket: true` when registered sources should receive the
+packet target as their `selection` input. This lets a source resolve backing app
+state for a selected table row, document range, chart region, map feature, or
+canvas shape. Explicit `selection` values on individual source requests still
+take precedence.
+
 ```ts
 let pendingPacket: WebContextPacket | null = null;
 
@@ -561,7 +567,8 @@ async function submit(question: string) {
   return ctx.toAgentRequest(question, {
     packet: pendingPacket ?? true,
     contextFromPacket: Boolean(pendingPacket),
-    sources: ['accounts'],
+    selectionFromPacket: Boolean(pendingPacket),
+    sources: [{ id: 'accounts', mode: 'selected' }],
   });
 }
 ```

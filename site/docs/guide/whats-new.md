@@ -149,6 +149,8 @@ selection capture. This supports a controlled UX where the user selects context,
 sees it pinned in the chat composer, then adds a question before sending.
 Set `contextFromPacket: true` when the prompt string should be generated from
 that pinned selection instead of the current hover or click focus.
+Set `selectionFromPacket: true` when registered sources should use that packet
+target to resolve selected app data that may not be visible in the DOM.
 
 ### Region, circle, lasso, and text capture together
 

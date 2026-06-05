@@ -171,7 +171,8 @@ selection capture and pass it back with `contextFromPacket: true`:
 await ctx.toAgentRequest(userMessage, {
   packet: pendingSelectionPacket,
   contextFromPacket: true,
-  sources: ['accounts'],
+  selectionFromPacket: true,
+  sources: [{ id: 'accounts', mode: 'selected' }],
 });
 ```
 

@@ -582,6 +582,84 @@ describe('createAskableContext', () => {
     ctx.destroy();
   });
 
+  it('passes packet selection data into agent request source resolvers', async () => {
+    const ctx = createAskableContext();
+    ctx.push({ widget: 'accounts-table' }, 'Accounts table');
+    let resolverSelection: unknown;
+    ctx.registerSource('accounts', {
+      kind: 'collection',
+      resolve: ({ selection }) => {
+        resolverSelection = selection;
+        return { selectedRows: selection };
+      },
+    });
+    const packet = ctx.toContextPacket({
+      mode: 'lasso',
+      gesture: 'drag',
+      target: {
+        label: 'lasso selection',
+        text: 'Acme Corp',
+        bounds: { x: 10, y: 20, width: 120, height: 80 },
+        metadata: {
+          selectedItems: [{ company: 'Acme Corp', mrr: '$8,400' }],
+        },
+      },
+      privacy: { consent: 'explicit' },
+    });
+
+    const request = await ctx.toAgentRequest('What should I do next?', {
+      packet,
+      contextFromPacket: true,
+      selectionFromPacket: true,
+      sources: ['accounts'],
+    });
+
+    expect(resolverSelection).toMatchObject({
+      capture: { mode: 'lasso', gesture: 'drag' },
+      target: {
+        label: 'lasso selection',
+        text: 'Acme Corp',
+        bounds: { x: 10, y: 20, width: 120, height: 80 },
+        metadata: {
+          selectedItems: [{ company: 'Acme Corp', mrr: '$8,400' }],
+        },
+      },
+    });
+    expect(request.context).toContain('Context sources');
+    expect(request.context).toContain('"selectedItems":[{"company":"Acme Corp","mrr":"$8,400"}]');
+
+    ctx.destroy();
+  });
+
+  it('preserves explicit source selections when packet selection is enabled', async () => {
+    const ctx = createAskableContext();
+    let resolverSelection: unknown;
+    ctx.registerSource('accounts', {
+      resolve: ({ selection }) => {
+        resolverSelection = selection;
+        return { selection };
+      },
+    });
+    const packet = ctx.toContextPacket({
+      mode: 'circle',
+      target: {
+        label: 'circled accounts',
+        metadata: { selectedItems: [{ company: 'Acme Corp' }] },
+      },
+    });
+
+    await ctx.toAgentRequest('Explain these accounts', {
+      packet,
+      contextFromPacket: true,
+      selectionFromPacket: true,
+      sources: [{ id: 'accounts', selection: { ids: ['acct_123'] } }],
+    });
+
+    expect(resolverSelection).toEqual({ ids: ['acct_123'] });
+
+    ctx.destroy();
+  });
+
   it('getFocus() returns null before any interaction', () => {
     const ctx = createAskableContext();
     ctx.observe(document);
