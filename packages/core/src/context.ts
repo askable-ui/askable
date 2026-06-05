@@ -503,10 +503,17 @@ export class AskableContextImpl implements AskableContext {
   }
 
   async toContextAsync(options?: AskableAsyncContextOutputOptions): Promise<string> {
+    return this.toContextAsyncWithSourceSelection(options);
+  }
+
+  private async toContextAsyncWithSourceSelection(
+    options?: AskableAsyncContextOutputOptions,
+    defaultSourceSelection?: unknown
+  ): Promise<string> {
     const resolved = this.resolveOptions(options);
     const { sources: _sources, sourceMode: _sourceMode, sourceLabel, maxTokens, ...contextOptions } = options ?? {};
     const base = this.toContext(contextOptions);
-    const sources = await this.resolveIncludedSources(options);
+    const sources = await this.resolveIncludedSources(options, defaultSourceSelection);
     if (sources.length === 0) return this.applyTokenBudget(base, maxTokens);
     const output = this.appendSourcesToOutput(base, sources, resolved, sourceLabel);
     return this.applyTokenBudget(output, maxTokens);
@@ -575,6 +582,7 @@ export class AskableContextImpl implements AskableContext {
       metadata,
       packet: packetOption,
       contextFromPacket = false,
+      selectionFromPacket = false,
       ...contextOptions
     } = options ?? {};
     let packet: WebContextPacket | undefined;
@@ -587,9 +595,12 @@ export class AskableContextImpl implements AskableContext {
         packet = await this.toContextPacketAsync(packetOption);
       }
     }
+    const defaultSourceSelection = selectionFromPacket && packet
+      ? this.packetToSourceSelection(packet)
+      : undefined;
     const context = contextFromPacket && packet
-      ? await this.toPacketContextAsync(packet, contextOptions)
-      : await this.toContextAsync(contextOptions);
+      ? await this.toPacketContextAsync(packet, contextOptions, defaultSourceSelection)
+      : await this.toContextAsyncWithSourceSelection(contextOptions, defaultSourceSelection);
 
     return {
       ...(requestId ? { requestId } : {}),
@@ -792,11 +803,21 @@ export class AskableContextImpl implements AskableContext {
 
   private normalizeSourceRequest(
     include: AskableContextSourceInclude,
-    defaultMode: AskableContextSourceMode
+    defaultMode: AskableContextSourceMode,
+    defaultSelection?: unknown
   ): AskableContextSourceRequest {
-    return typeof include === 'string'
-      ? { id: include, mode: defaultMode }
-      : { ...include, mode: include.mode ?? defaultMode };
+    if (typeof include === 'string') {
+      return {
+        id: include,
+        mode: defaultMode,
+        ...(defaultSelection !== undefined ? { selection: defaultSelection } : {}),
+      };
+    }
+    return {
+      ...include,
+      mode: include.mode ?? defaultMode,
+      ...(include.selection === undefined && defaultSelection !== undefined ? { selection: defaultSelection } : {}),
+    };
   }
 
   private shouldRefreshSources(
@@ -814,14 +835,19 @@ export class AskableContextImpl implements AskableContext {
   }
 
   private async resolveIncludedSources(
-    options?: AskableAsyncPromptContextOptions | AskableAsyncContextOutputOptions
+    options?: AskableAsyncPromptContextOptions | AskableAsyncContextOutputOptions,
+    defaultSelection?: unknown
   ): Promise<AskableResolvedContextSource[]> {
     const includes = options?.sources;
     if (!includes) return [];
     const defaultMode = options.sourceMode ?? 'summary';
     const requests = includes === 'all'
-      ? Array.from(this.sources.keys()).map((id) => ({ id, mode: defaultMode }))
-      : includes.map((include) => this.normalizeSourceRequest(include, defaultMode));
+      ? Array.from(this.sources.keys()).map((id) => ({
+          id,
+          mode: defaultMode,
+          ...(defaultSelection !== undefined ? { selection: defaultSelection } : {}),
+        }))
+      : includes.map((include) => this.normalizeSourceRequest(include, defaultMode, defaultSelection));
 
     const errorMode = options.sourceErrorMode ?? 'include';
     const resolved = await Promise.all(requests.map(({ id, ...request }) => (
@@ -1001,7 +1027,8 @@ export class AskableContextImpl implements AskableContext {
 
   private async toPacketContextAsync(
     packet: WebContextPacket,
-    options: AskableAsyncContextOutputOptions
+    options: AskableAsyncContextOutputOptions,
+    defaultSourceSelection?: unknown
   ): Promise<string> {
     const resolved = this.resolveOptions(options);
     const { sourceLabel, maxTokens } = options ?? {};
@@ -1010,11 +1037,29 @@ export class AskableContextImpl implements AskableContext {
     const base = (resolved.format ?? 'natural') === 'json'
       ? packetContext
       : `${currentLabel}: ${packetContext}`;
-    const sources = await this.resolveIncludedSources(options);
+    const sources = await this.resolveIncludedSources(options, defaultSourceSelection);
     const output = sources.length === 0
       ? base
       : this.appendSourcesToOutput(base, sources, resolved, sourceLabel, 'packet');
     return this.applyTokenBudget(output, maxTokens);
+  }
+
+  private packetToSourceSelection(packet: WebContextPacket): Record<string, unknown> {
+    const target = packet.target;
+    return {
+      capture: packet.capture,
+      source: packet.source,
+      ...(target ? {
+        target: {
+          ...(target.label ? { label: target.label } : {}),
+          ...(target.role ? { role: target.role } : {}),
+          ...(target.selector ? { selector: target.selector } : {}),
+          ...(target.bounds ? { bounds: target.bounds } : {}),
+          ...(target.text ? { text: target.text } : {}),
+          ...(target.metadata !== undefined ? { metadata: target.metadata } : {}),
+        },
+      } : {}),
+    };
   }
 
   private resolveCaptureMode(focus: AskableFocus | null): WebContextCaptureMode {

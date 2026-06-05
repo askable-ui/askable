@@ -427,6 +427,11 @@ export interface AskableAgentRequestOptions extends AskableAsyncContextOutputOpt
    * instead of the current focus. Useful for "select first, then ask" composers.
    */
   contextFromPacket?: boolean;
+  /**
+   * Pass a packet-derived selection payload into registered source resolvers.
+   * Explicit `selection` values on individual source requests take precedence.
+   */
+  selectionFromPacket?: boolean;
 }
 
 export interface AskableAgentRequest {
