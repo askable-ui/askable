@@ -66,6 +66,17 @@ host app.
 import { createAskableMcpContextProvider, createAskableMcpWebHandler } from '@askable-ui/mcp';
 
 const handler = createAskableMcpWebHandler({
+  authorize: async (request) => {
+    const token = await verifyMcpToken(request);
+    if (!token) return false;
+    return {
+      authInfo: {
+        token: token.value,
+        clientId: token.clientId,
+        scopes: token.scopes,
+      },
+    };
+  },
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,
@@ -77,6 +88,10 @@ export const GET = handler;
 export const POST = handler;
 export const DELETE = handler;
 ```
+
+`authorize` runs before context is read. Return `false` for the built-in `401`
+JSON-RPC response, return a custom `Response` when the host app owns the error
+shape, or return MCP request options such as `authInfo`.
 
 Claude clients can connect to the public MCP URL as a remote MCP server. The
 Anthropic Messages API MCP connector uses an object like:
