@@ -53,3 +53,44 @@ const server = createAskableMcpServer({
 
 Transports are intentionally left to the host app so the same server factory can
 be used with stdio, Streamable HTTP, or an embedded web runtime.
+
+## Web MCP for Claude and ChatGPT
+
+To make Askable context available to user-owned Claude or ChatGPT clients, host
+the MCP server behind a public HTTPS endpoint such as `https://your-app.com/mcp`.
+Keep authentication, rate limits, tenancy checks, and consent handling in the
+host app.
+
+```ts
+const server = createAskableMcpServer({
+  provider: createAskableMcpContextProvider(ctx, {
+    history: 3,
+    includeViewport: true,
+    sources: ['accounts'],
+  }),
+});
+
+// Attach `server` to the Streamable HTTP or SSE transport supported by your MCP runtime.
+```
+
+Claude clients can connect to the public MCP URL as a remote MCP server. The
+Anthropic Messages API MCP connector uses an object like:
+
+```json
+{
+  "type": "url",
+  "name": "askable-context",
+  "url": "https://your-app.com/mcp"
+}
+```
+
+ChatGPT developer mode can create an app from a remote MCP server. OpenAI API
+calls can also pass the same endpoint as a remote MCP server:
+
+```json
+{
+  "type": "mcp",
+  "server_label": "askable",
+  "server_url": "https://your-app.com/mcp"
+}
+```

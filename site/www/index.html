@@ -668,6 +668,17 @@
     .pkg-desc { color: var(--ink-2); font-size: .83rem; line-height: 1.56; }
     .pkg-tag { display: inline-flex; align-items: center; gap: .3rem; margin-top: .78rem; padding: .22rem .52rem; border-radius: var(--radius-pill); border: 1px solid rgba(0,0,0,0.08); color: var(--ink-3); font-size: .66rem; font-weight: 600; }
 
+    .mcp-panel { margin-top: 2.5rem; border-radius: var(--radius-lg); border: 1px solid var(--line); background: #fff; overflow: hidden; }
+    .mcp-panel-head { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: 1.5rem; padding: 1.6rem; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .mcp-panel h3 { font-size: clamp(1.35rem, 2.4vw, 2rem); line-height: 1.05; letter-spacing: -.045em; margin-bottom: .6rem; }
+    .mcp-panel p { color: var(--ink-2); font-size: .9rem; line-height: 1.62; }
+    .mcp-endpoint { display: flex; align-items: center; gap: .5rem; align-self: start; padding: .8rem .95rem; border: 1px solid rgba(79,70,229,0.16); border-radius: 16px; background: rgba(79,70,229,0.05); font-family: var(--mono); color: var(--accent); font-size: .78rem; word-break: break-all; }
+    .mcp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .mcp-card { padding: 1.25rem; border-right: 1px solid rgba(0,0,0,0.06); }
+    .mcp-card:last-child { border-right: 0; }
+    .mcp-card h4 { font-size: .92rem; letter-spacing: -.02em; margin-bottom: .42rem; }
+    .mcp-card pre { margin-top: .82rem; padding: .8rem; border-radius: 12px; background: #f6f7f9; border: 1px solid rgba(0,0,0,0.06); font-family: var(--mono); font-size: .68rem; line-height: 1.58; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
+
     /* DARK CTA */
     .cta-section { margin-top: 7rem; }
     .cta-card { border-radius: var(--radius-lg); background: var(--ink); padding: 5rem 4rem; text-align: center; position: relative; overflow: hidden; }
@@ -719,6 +730,9 @@
       .pattern-option { grid-template-columns: 1.35rem minmax(0, 1fr); padding: .52rem; }
       .pattern-status { align-items: flex-start; flex-direction: column; }
       .pattern-payload { max-width: 100%; }
+      .mcp-panel-head, .mcp-grid { grid-template-columns: 1fr; }
+      .mcp-card { border-right: 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+      .mcp-card:last-child { border-bottom: 0; }
       .tool-hint { min-width: 0; }
       .toggle-group { justify-content: stretch; }
       .toggle-btn { flex: 1 1 0; padding-inline: .65rem; }
@@ -1208,6 +1222,48 @@ ctx.push(meta, text);</pre>
           <div class="pkg-badge">Any LLM API</div>
           <div class="pkg-name">Direct API</div>
           <div class="pkg-desc">Append the string to your system or user message. Works with OpenAI, Anthropic, or any provider.</div>
+        </div>
+      </div>
+
+      <div class="mcp-panel">
+        <div class="mcp-panel-head">
+          <div>
+            <p class="section-label" style="margin-bottom:.55rem">Web MCP</p>
+            <h3>Expose selected UI context to Claude and ChatGPT.</h3>
+            <p>Host <code>@askable-ui/mcp</code> behind a public HTTPS MCP transport so approved clients can call <code>get_current_context</code> and <code>format_context_for_prompt</code>.</p>
+          </div>
+          <div class="mcp-endpoint">https://your-app.com/mcp</div>
+        </div>
+        <div class="mcp-grid">
+          <article class="mcp-card">
+            <h4>Server</h4>
+            <p>Adapt the same Askable context your app already uses. Keep auth, rate limits, and tenancy in your host app.</p>
+            <pre>const server = createAskableMcpServer({
+  provider: createAskableMcpContextProvider(ctx, {
+    history: 3,
+    includeViewport: true,
+    sources: ['accounts']
+  })
+});</pre>
+          </article>
+          <article class="mcp-card">
+            <h4>Claude</h4>
+            <p>Add the public remote MCP URL in Claude clients or the Anthropic Messages API MCP connector.</p>
+            <pre>{
+  "type": "url",
+  "name": "askable-context",
+  "url": "https://your-app.com/mcp"
+}</pre>
+          </article>
+          <article class="mcp-card">
+            <h4>ChatGPT</h4>
+            <p>Create an app from your remote MCP server in ChatGPT developer mode, or pass the URL as a remote MCP server in the Responses API.</p>
+            <pre>{
+  "type": "mcp",
+  "server_label": "askable",
+  "server_url": "https://your-app.com/mcp"
+}</pre>
+          </article>
         </div>
       </div>
     </section>
