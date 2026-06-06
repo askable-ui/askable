@@ -51,8 +51,9 @@ const server = createAskableMcpServer({
 });
 ```
 
-Transports are intentionally left to the host app so the same server factory can
-be used with stdio, Streamable HTTP, or an embedded web runtime.
+Use `createAskableMcpServer()` when you want to attach your own MCP transport.
+For web runtimes, `createAskableMcpWebHandler()` creates a stateless Streamable
+HTTP `Request -> Response` handler.
 
 ## Web MCP for Claude and ChatGPT
 
@@ -62,7 +63,9 @@ Keep authentication, rate limits, tenancy checks, and consent handling in the
 host app.
 
 ```ts
-const server = createAskableMcpServer({
+import { createAskableMcpContextProvider, createAskableMcpWebHandler } from '@askable-ui/mcp';
+
+const handler = createAskableMcpWebHandler({
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,
@@ -70,7 +73,9 @@ const server = createAskableMcpServer({
   }),
 });
 
-// Attach `server` to the Streamable HTTP or SSE transport supported by your MCP runtime.
+export const GET = handler;
+export const POST = handler;
+export const DELETE = handler;
 ```
 
 Claude clients can connect to the public MCP URL as a remote MCP server. The

@@ -3,6 +3,7 @@ import { createWebContextPacket } from '@askable-ui/context';
 import {
   createAskableMcpContextProvider,
   createAskableMcpServer,
+  createAskableMcpWebHandler,
   defaultPromptFormatter,
   type AskableMcpContextProvider,
   type AskableMcpSourceContext,
@@ -218,6 +219,121 @@ describe('createAskableMcpServer', () => {
     expect(result.content[0].text).toContain('Context mode: element-focus');
     expect(result.content[0].text).toContain('User intent: test');
     expect(result.content[0].text).toContain('URL: https://example.com');
+  });
+});
+
+describe('createAskableMcpWebHandler', () => {
+  it('handles stateless Streamable HTTP tool calls', async () => {
+    const packet = createWebContextPacket({
+      source: { app: 'dashboard' },
+      capture: { mode: 'region' },
+      privacy: { consent: 'explicit' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const handler = createAskableMcpWebHandler({ provider });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'MCP-Protocol-Version': '2025-06-18',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: {
+          name: 'get_current_context',
+          arguments: { intent: 'inspect selected dashboard' },
+        },
+      }),
+    }));
+
+    expect(response.status).toBe(200);
+    const body = await response.json() as {
+      result: { content: Array<{ type: string; text: string }> };
+    };
+    expect(body.result.content[0].type).toBe('text');
+    expect(JSON.parse(body.result.content[0].text)).toMatchObject({
+      source: { app: 'dashboard' },
+      capture: { mode: 'region' },
+      privacy: { consent: 'explicit' },
+    });
+    expect(provider.getContext).toHaveBeenCalledWith(
+      expect.objectContaining({ intent: 'inspect selected dashboard' }),
+    );
+  });
+
+  it('accepts per-request transport options', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(createWebContextPacket({
+        capture: { mode: 'semantic' },
+      })),
+    };
+    const handler = createAskableMcpWebHandler({
+      provider,
+      requestOptions: () => ({
+        parsedBody: {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/call',
+          params: { name: 'get_current_context', arguments: {} },
+        },
+      }),
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'MCP-Protocol-Version': '2025-06-18',
+      },
+      body: 'not-json',
+    }));
+
+    expect(response.status).toBe(200);
+    expect(provider.getContext).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns a JSON-RPC error response when setup fails', async () => {
+    const onError = vi.fn();
+    const handler = createAskableMcpWebHandler({
+      provider: {
+        getContext: vi.fn(),
+      },
+      requestOptions: () => {
+        throw new Error('request setup failed');
+      },
+      onError,
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-06-18',
+          capabilities: {},
+          clientInfo: { name: 'test', version: '1.0.0' },
+        },
+      }),
+    }));
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { message: 'Askable MCP handler failed.' },
+    });
+    expect(onError).toHaveBeenCalledTimes(1);
   });
 });
 
