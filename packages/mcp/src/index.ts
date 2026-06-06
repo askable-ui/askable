@@ -76,6 +76,7 @@ export type AskableMcpWebOutcome =
   | 'preflight'
   | 'cors_rejected'
   | 'unauthorized'
+  | 'payload_too_large'
   | 'error';
 
 export interface AskableMcpWebTelemetryEvent {
@@ -97,6 +98,7 @@ export interface AskableMcpWebHandlerOptions extends AskableMcpServerOptions {
   transport?: AskableMcpStatelessTransportOptions;
   authorize?: (request: Request) => AskableMcpAuthorizeResult | Promise<AskableMcpAuthorizeResult>;
   cors?: boolean | AskableMcpCorsOptions;
+  maxRequestBodyBytes?: number | false;
   responseHeaders?: AskableMcpWebResponseHeaders;
   telemetry?: AskableMcpWebTelemetry;
   requestOptions?:
@@ -116,6 +118,8 @@ const defaultWebResponseHeaders = {
   'Cache-Control': 'no-store',
   'X-Content-Type-Options': 'nosniff',
 };
+
+const defaultMaxRequestBodyBytes = 1_048_576;
 
 const contextOptionsShape = {
   scope: z.string().optional(),
@@ -308,6 +312,13 @@ export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions)
         );
       }
 
+      if (isRequestBodyTooLarge(request, resolveMaxRequestBodyBytes(options.maxRequestBodyBytes))) {
+        return finalize(
+          createAskableMcpErrorResponse(413, -32004, 'MCP request body is too large.'),
+          'payload_too_large',
+        );
+      }
+
       const authorization = options.authorize ? await options.authorize(request) : undefined;
       if (authorization instanceof Response) {
         return finalize(authorization, authorization.status >= 400 ? 'unauthorized' : 'success');
@@ -460,6 +471,26 @@ function createAskableMcpErrorResponse(status: number, code: number, message: st
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+function resolveMaxRequestBodyBytes(value: AskableMcpWebHandlerOptions['maxRequestBodyBytes']): number | false {
+  if (value === false) return false;
+  if (typeof value === 'number') return Math.max(0, Math.floor(value));
+  return defaultMaxRequestBodyBytes;
+}
+
+function isRequestBodyTooLarge(request: Request, maxRequestBodyBytes: number | false): boolean {
+  if (maxRequestBodyBytes === false || !requestMayHaveBody(request)) return false;
+
+  const contentLength = request.headers.get('Content-Length');
+  if (!contentLength) return false;
+
+  const bytes = Number(contentLength);
+  return Number.isFinite(bytes) && bytes > maxRequestBodyBytes;
+}
+
+function requestMayHaveBody(request: Request): boolean {
+  return !['GET', 'HEAD', 'OPTIONS'].includes(request.method.toUpperCase());
 }
 
 async function resolveCorsHeaders(

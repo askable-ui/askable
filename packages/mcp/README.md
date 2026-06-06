@@ -81,6 +81,7 @@ const handler = createAskableMcpWebHandler({
     origin: ['https://app.example'],
     headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
   },
+  maxRequestBodyBytes: 256 * 1024,
   telemetry: (event) => {
     metrics.timing('askable.mcp.duration', event.durationMs, {
       outcome: event.outcome,
@@ -106,6 +107,11 @@ shape, or return MCP request options such as `authInfo`.
 `cors` handles browser preflight requests before context is read. Web responses
 also receive `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`
 unless the response already set those headers.
+
+`maxRequestBodyBytes` rejects oversized MCP requests with a JSON-RPC `413`
+before authorization, server setup, or MCP body parsing runs. The default is
+1 MiB. Pass `false` to disable the built-in guard when another layer already
+enforces request limits.
 
 `telemetry` receives sanitized request metadata such as method, path, status,
 outcome, duration, origin, user agent, and request ID. It does not include MCP
