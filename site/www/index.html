@@ -1241,6 +1241,7 @@ ctx.push(meta, text);</pre>
             <pre>const handler = createAskableMcpWebHandler({
   authorize: (request) =>
     Boolean(request.headers.get('Authorization')),
+  cors: { origin: ['https://app.example'] },
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,

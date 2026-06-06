@@ -50,9 +50,32 @@ export type AskableMcpAuthorizeResult =
   | HandleRequestOptions
   | void;
 
+export type AskableMcpCorsOriginResult = boolean | string | null | undefined;
+
+export type AskableMcpCorsOrigin =
+  | boolean
+  | string
+  | string[]
+  | ((origin: string | null, request: Request) => AskableMcpCorsOriginResult | Promise<AskableMcpCorsOriginResult>);
+
+export interface AskableMcpCorsOptions {
+  origin?: AskableMcpCorsOrigin;
+  methods?: string[];
+  headers?: string[];
+  exposedHeaders?: string[];
+  credentials?: boolean;
+  maxAge?: number;
+}
+
+export type AskableMcpWebResponseHeaders =
+  | HeadersInit
+  | ((request: Request, response: Response) => HeadersInit | void | Promise<HeadersInit | void>);
+
 export interface AskableMcpWebHandlerOptions extends AskableMcpServerOptions {
   transport?: AskableMcpStatelessTransportOptions;
   authorize?: (request: Request) => AskableMcpAuthorizeResult | Promise<AskableMcpAuthorizeResult>;
+  cors?: boolean | AskableMcpCorsOptions;
+  responseHeaders?: AskableMcpWebResponseHeaders;
   requestOptions?:
     | HandleRequestOptions
     | ((request: Request) => HandleRequestOptions | Promise<HandleRequestOptions>);
@@ -65,6 +88,11 @@ export type AskableMcpSourceContext = Pick<AskableContext, 'toContextPacket' | '
   Partial<Pick<AskableContext, 'toContextPacketAsync' | 'toContextAsync'>>;
 
 export interface CreateAskableMcpContextProviderOptions extends AskableMcpContextOptions {}
+
+const defaultWebResponseHeaders = {
+  'Cache-Control': 'no-store',
+  'X-Content-Type-Options': 'nosniff',
+};
 
 const contextOptionsShape = {
   scope: z.string().optional(),
@@ -226,13 +254,40 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
 
 export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions): AskableMcpWebHandler {
   return async (request) => {
+    let corsHeaders: Headers | undefined;
     try {
+      const cors = await resolveCorsHeaders(options.cors, request);
+      if (cors === false) {
+        return finalizeAskableMcpWebResponse(
+          request,
+          request.method === 'OPTIONS'
+            ? new Response(null, { status: 403 })
+            : createAskableMcpErrorResponse(403, -32003, 'CORS origin not allowed.'),
+          options,
+        );
+      }
+      corsHeaders = cors;
+
+      if (request.method === 'OPTIONS' && options.cors) {
+        return finalizeAskableMcpWebResponse(
+          request,
+          new Response(null, { status: 204 }),
+          options,
+          corsHeaders,
+        );
+      }
+
       const authorization = options.authorize ? await options.authorize(request) : undefined;
       if (authorization instanceof Response) {
-        return authorization;
+        return finalizeAskableMcpWebResponse(request, authorization, options, corsHeaders);
       }
       if (authorization === false) {
-        return createAskableMcpErrorResponse(401, -32001, 'Unauthorized MCP request.');
+        return finalizeAskableMcpWebResponse(
+          request,
+          createAskableMcpErrorResponse(401, -32001, 'Unauthorized MCP request.'),
+          options,
+          corsHeaders,
+        );
       }
 
       const server = createAskableMcpServer(options);
@@ -250,10 +305,20 @@ export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions)
         configuredRequestOptions,
       );
 
-      return transport.handleRequest(request, requestOptions);
+      return finalizeAskableMcpWebResponse(
+        request,
+        await transport.handleRequest(request, requestOptions),
+        options,
+        corsHeaders,
+      );
     } catch (error) {
       options.onError?.(error, request);
-      return createAskableMcpErrorResponse(500, -32000, 'Askable MCP handler failed.');
+      return finalizeAskableMcpWebResponse(
+        request,
+        createAskableMcpErrorResponse(500, -32000, 'Askable MCP handler failed.'),
+        options,
+        corsHeaders,
+      );
     }
   };
 }
@@ -370,4 +435,112 @@ function createAskableMcpErrorResponse(status: number, code: number, message: st
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+async function resolveCorsHeaders(
+  cors: AskableMcpWebHandlerOptions['cors'],
+  request: Request,
+): Promise<Headers | undefined | false> {
+  if (!cors) return undefined;
+
+  const config = cors === true ? {} : cors;
+  const origin = request.headers.get('Origin');
+  const allowedOrigin = await resolveAllowedOrigin(config.origin ?? true, origin, request);
+  if (!allowedOrigin) return origin ? false : undefined;
+
+  const headers = new Headers();
+  headers.set('Access-Control-Allow-Origin', allowedOrigin);
+  if (allowedOrigin !== '*') headers.set('Vary', 'Origin');
+  if (config.credentials) headers.set('Access-Control-Allow-Credentials', 'true');
+
+  if (request.method === 'OPTIONS') {
+    headers.set('Access-Control-Allow-Methods', (config.methods ?? [
+      'GET',
+      'POST',
+      'DELETE',
+      'OPTIONS',
+    ]).join(', '));
+    headers.set(
+      'Access-Control-Allow-Headers',
+      (config.headers ?? request.headers.get('Access-Control-Request-Headers')?.split(',').map((header) => header.trim()).filter(Boolean) ?? [
+        'Authorization',
+        'Content-Type',
+        'MCP-Protocol-Version',
+      ]).join(', '),
+    );
+    if (typeof config.maxAge === 'number') {
+      headers.set('Access-Control-Max-Age', String(config.maxAge));
+    }
+  }
+
+  if (config.exposedHeaders?.length) {
+    headers.set('Access-Control-Expose-Headers', config.exposedHeaders.join(', '));
+  }
+
+  return headers;
+}
+
+async function resolveAllowedOrigin(
+  allowed: AskableMcpCorsOrigin,
+  origin: string | null,
+  request: Request,
+): Promise<string | undefined> {
+  if (typeof allowed === 'function') {
+    const result = await allowed(origin, request);
+    if (typeof result === 'string') return result;
+    if (result === true) return origin ?? '*';
+    return undefined;
+  }
+
+  if (allowed === true) return origin ?? '*';
+  if (allowed === false) return undefined;
+  if (typeof allowed === 'string') return origin === allowed ? allowed : undefined;
+  return origin && allowed.includes(origin) ? origin : undefined;
+}
+
+async function finalizeAskableMcpWebResponse(
+  request: Request,
+  response: Response,
+  options: AskableMcpWebHandlerOptions,
+  corsHeaders?: Headers,
+): Promise<Response> {
+  const headers = new Headers(response.headers);
+  setMissingHeaders(headers, defaultWebResponseHeaders);
+  if (corsHeaders) mergeHeaders(headers, corsHeaders);
+
+  const configuredHeaders = typeof options.responseHeaders === 'function'
+    ? await options.responseHeaders(request, response)
+    : options.responseHeaders;
+  if (configuredHeaders) mergeHeaders(headers, new Headers(configuredHeaders));
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function setMissingHeaders(headers: Headers, next: HeadersInit): void {
+  for (const [key, value] of new Headers(next)) {
+    if (!headers.has(key)) headers.set(key, value);
+  }
+}
+
+function mergeHeaders(headers: Headers, next: Headers): void {
+  for (const [key, value] of next) {
+    if (key.toLowerCase() === 'vary' && headers.has('Vary')) {
+      headers.set('Vary', mergeHeaderValues(headers.get('Vary'), value));
+    } else {
+      headers.set(key, value);
+    }
+  }
+}
+
+function mergeHeaderValues(first: string | null, second: string): string {
+  const values = new Set([
+    ...(first?.split(',') ?? []),
+    ...second.split(','),
+  ].map((value) => value.trim()).filter(Boolean));
+
+  return Array.from(values).join(', ');
 }

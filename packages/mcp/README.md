@@ -77,6 +77,10 @@ const handler = createAskableMcpWebHandler({
       },
     };
   },
+  cors: {
+    origin: ['https://app.example'],
+    headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
+  },
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,
@@ -92,6 +96,10 @@ export const DELETE = handler;
 `authorize` runs before context is read. Return `false` for the built-in `401`
 JSON-RPC response, return a custom `Response` when the host app owns the error
 shape, or return MCP request options such as `authInfo`.
+
+`cors` handles browser preflight requests before context is read. Web responses
+also receive `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`
+unless the response already set those headers.
 
 Claude clients can connect to the public MCP URL as a remote MCP server. The
 Anthropic Messages API MCP connector uses an object like:
