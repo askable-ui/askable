@@ -109,6 +109,74 @@ export interface AskableMcpWebHandlerOptions extends AskableMcpServerOptions {
 
 export type AskableMcpWebHandler = (request: Request) => Promise<Response>;
 
+export const ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL = 'askable.mcp.page_bridge';
+export const ASKABLE_MCP_PAGE_BRIDGE_VERSION = '0.1';
+export const ASKABLE_MCP_PAGE_BRIDGE_CHANNEL = 'askable:mcp';
+
+export type AskableMcpPageBridgeRequestType =
+  | 'get_current_context'
+  | 'format_context_for_prompt';
+
+export interface AskableMcpPageBridgeRequest {
+  protocol: typeof ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL;
+  version: typeof ASKABLE_MCP_PAGE_BRIDGE_VERSION;
+  channel?: string;
+  type: AskableMcpPageBridgeRequestType;
+  requestId: string;
+  options?: AskableMcpContextOptions;
+}
+
+export interface AskableMcpPageBridgeSuccessResponse {
+  protocol: typeof ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL;
+  version: typeof ASKABLE_MCP_PAGE_BRIDGE_VERSION;
+  channel?: string;
+  type: `${AskableMcpPageBridgeRequestType}:result`;
+  requestId: string;
+  packet?: WebContextPacket;
+  text?: string;
+}
+
+export interface AskableMcpPageBridgeErrorResponse {
+  protocol: typeof ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL;
+  version: typeof ASKABLE_MCP_PAGE_BRIDGE_VERSION;
+  channel?: string;
+  type: `${AskableMcpPageBridgeRequestType}:error`;
+  requestId: string;
+  error: {
+    message: string;
+  };
+}
+
+export type AskableMcpPageBridgeResponse =
+  | AskableMcpPageBridgeSuccessResponse
+  | AskableMcpPageBridgeErrorResponse;
+
+export type AskableMcpPageBridgeAllowedOrigins =
+  | string[]
+  | ((origin: string, event: MessageEvent) => boolean | Promise<boolean>);
+
+export interface AskableMcpPageBridgeWindow {
+  addEventListener(type: 'message', listener: (event: MessageEvent) => void): void;
+  removeEventListener(type: 'message', listener: (event: MessageEvent) => void): void;
+  postMessage(message: AskableMcpPageBridgeResponse, targetOrigin: string): void;
+  location?: {
+    origin?: string;
+  };
+}
+
+export interface AskableMcpPageBridgeOptions {
+  provider: AskableMcpContextProvider;
+  channel?: string;
+  targetOrigin?: string;
+  allowedOrigins?: AskableMcpPageBridgeAllowedOrigins;
+  window?: AskableMcpPageBridgeWindow;
+  onError?: (error: unknown, event: MessageEvent) => void;
+}
+
+export interface AskableMcpPageBridge {
+  dispose(): void;
+}
+
 export type AskableMcpSourceContext = Pick<AskableContext, 'toContextPacket' | 'toContext'> &
   Partial<Pick<AskableContext, 'toContextPacketAsync' | 'toContextAsync'>>;
 
@@ -359,6 +427,26 @@ export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions)
   };
 }
 
+export function createAskableMcpPageBridge(options: AskableMcpPageBridgeOptions): AskableMcpPageBridge {
+  const bridgeWindow = options.window ?? getBrowserWindow();
+  if (!bridgeWindow) {
+    return { dispose() {} };
+  }
+
+  const channel = options.channel ?? ASKABLE_MCP_PAGE_BRIDGE_CHANNEL;
+  const listener = (event: MessageEvent) => {
+    void handleAskableMcpPageBridgeMessage(event, bridgeWindow, options, channel);
+  };
+
+  bridgeWindow.addEventListener('message', listener);
+
+  return {
+    dispose() {
+      bridgeWindow.removeEventListener('message', listener);
+    },
+  };
+}
+
 export function defaultPromptFormatter(packet: WebContextPacket): string {
   const parts = [
     `Context mode: ${packet.capture.mode}`,
@@ -373,6 +461,110 @@ export function defaultPromptFormatter(packet: WebContextPacket): string {
   ];
 
   return parts.filter((part): part is string => Boolean(part)).join('\n');
+}
+
+function getBrowserWindow(): AskableMcpPageBridgeWindow | undefined {
+  return typeof window === 'undefined'
+    ? undefined
+    : window;
+}
+
+async function handleAskableMcpPageBridgeMessage(
+  event: MessageEvent,
+  bridgeWindow: AskableMcpPageBridgeWindow,
+  options: AskableMcpPageBridgeOptions,
+  channel: string,
+): Promise<void> {
+  const request = parseAskableMcpPageBridgeRequest(event.data, channel);
+  if (!request) return;
+
+  if (!await isAskableMcpPageBridgeOriginAllowed(event, bridgeWindow, options.allowedOrigins)) {
+    return;
+  }
+
+  try {
+    const packet = await options.provider.getContext(request.options);
+    const responseBase = createAskableMcpPageBridgeResponseBase(request);
+    const response: AskableMcpPageBridgeSuccessResponse = request.type === 'format_context_for_prompt'
+      ? {
+          ...responseBase,
+          type: 'format_context_for_prompt:result',
+          text: options.provider.formatContextForPrompt
+            ? await options.provider.formatContextForPrompt(packet, request.options)
+            : defaultPromptFormatter(packet),
+        }
+      : {
+          ...responseBase,
+          type: 'get_current_context:result',
+          packet,
+        };
+
+    bridgeWindow.postMessage(response, resolveAskableMcpPageBridgeTargetOrigin(event, options));
+  } catch (error) {
+    options.onError?.(error, event);
+    bridgeWindow.postMessage({
+      ...createAskableMcpPageBridgeResponseBase(request),
+      type: `${request.type}:error`,
+      error: { message: 'Askable MCP page bridge failed.' },
+    }, resolveAskableMcpPageBridgeTargetOrigin(event, options));
+  }
+}
+
+function parseAskableMcpPageBridgeRequest(
+  data: unknown,
+  channel: string,
+): AskableMcpPageBridgeRequest | undefined {
+  if (!isRecord(data)) return undefined;
+  if (data.protocol !== ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL) return undefined;
+  if (data.version !== ASKABLE_MCP_PAGE_BRIDGE_VERSION) return undefined;
+  if ((data.channel ?? ASKABLE_MCP_PAGE_BRIDGE_CHANNEL) !== channel) return undefined;
+  if (data.type !== 'get_current_context' && data.type !== 'format_context_for_prompt') return undefined;
+  if (typeof data.requestId !== 'string' || !data.requestId) return undefined;
+  if (data.options !== undefined && !isRecord(data.options)) return undefined;
+
+  return {
+    ...data,
+    channel: data.channel ?? ASKABLE_MCP_PAGE_BRIDGE_CHANNEL,
+  } as unknown as AskableMcpPageBridgeRequest;
+}
+
+async function isAskableMcpPageBridgeOriginAllowed(
+  event: MessageEvent,
+  bridgeWindow: AskableMcpPageBridgeWindow,
+  allowedOrigins: AskableMcpPageBridgeAllowedOrigins | undefined,
+): Promise<boolean> {
+  const origin = event.origin || bridgeWindow.location?.origin || '';
+  if (!allowedOrigins) {
+    return !bridgeWindow.location?.origin || origin === bridgeWindow.location.origin;
+  }
+
+  if (Array.isArray(allowedOrigins)) {
+    return allowedOrigins.includes(origin);
+  }
+
+  return allowedOrigins(origin, event);
+}
+
+function createAskableMcpPageBridgeResponseBase(
+  request: AskableMcpPageBridgeRequest,
+): Omit<AskableMcpPageBridgeSuccessResponse, 'type'> {
+  return {
+    protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+    version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+    ...(request.channel ? { channel: request.channel } : {}),
+    requestId: request.requestId,
+  };
+}
+
+function resolveAskableMcpPageBridgeTargetOrigin(
+  event: MessageEvent,
+  options: AskableMcpPageBridgeOptions,
+): string {
+  return options.targetOrigin ?? (event.origin || '*');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function mergeContextOptions(

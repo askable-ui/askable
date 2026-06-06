@@ -247,3 +247,60 @@ requests can also pass the endpoint as a remote MCP server:
 For current client setup details, check the official
 [Anthropic MCP connector docs](https://docs.anthropic.com/en/docs/agents-and-tools/mcp-connector)
 and [OpenAI remote MCP docs](https://platform.openai.com/docs/guides/tools-remote-mcp).
+
+## `createAskableMcpPageBridge(options)`
+
+Creates the page-side handoff for browser-local MCP workflows. This is separate
+from hosted Web MCP: a normal webpage cannot expose MCP directly to local Claude
+or ChatGPT clients. It needs a trusted browser extension or local companion
+process that can receive page context and expose its own local MCP server.
+
+`createAskableMcpPageBridge()` listens for versioned `window.postMessage()`
+requests and returns either the current Context packet or prompt-ready text.
+
+```ts
+import { createAskableMcpContextProvider, createAskableMcpPageBridge } from '@askable-ui/mcp';
+
+const bridge = createAskableMcpPageBridge({
+  provider: createAskableMcpContextProvider(ctx, {
+    history: 3,
+    includeViewport: true,
+    sources: ['accounts'],
+  }),
+  allowedOrigins: [window.location.origin],
+  onError: (error) => reportBridgeError(error),
+});
+
+bridge.dispose();
+```
+
+| Option | Type | Description |
+|---|---|---|
+| `provider` | `AskableMcpContextProvider` | Supplies packets and optional prompt formatting |
+| `channel` | `string` | Optional message channel. Defaults to `askable:mcp` |
+| `targetOrigin` | `string` | Optional response target origin for `postMessage()` |
+| `allowedOrigins` | `string[] \| (origin, event) => boolean` | Optional origin gate. Defaults to the current page origin |
+| `window` | `AskableMcpPageBridgeWindow` | Optional window-like object for tests or custom browser surfaces |
+| `onError` | `(error, event) => void` | Optional bridge error reporter |
+
+Trusted extensions or local companions request context with:
+
+```ts
+window.postMessage({
+  protocol: 'askable.mcp.page_bridge',
+  version: '0.1',
+  channel: 'askable:mcp',
+  type: 'get_current_context',
+  requestId: crypto.randomUUID(),
+  options: { sources: ['accounts'], history: 3 },
+}, window.location.origin);
+```
+
+Use `type: 'format_context_for_prompt'` to receive prompt-ready text. Responses
+preserve `protocol`, `version`, `channel`, and `requestId`, and return
+`get_current_context:result`, `format_context_for_prompt:result`, or
+`*:error` message types.
+
+Enable this bridge only when the user or host app has opted into local browser
+MCP. The extension or companion should own installation trust, user consent,
+local MCP server authentication, and any storage or forwarding rules.
