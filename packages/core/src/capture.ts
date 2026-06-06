@@ -32,6 +32,10 @@ export type AskableRegionCaptureStyle = Partial<CSSStyleDeclaration>;
 export interface AskableRegionCapturePromptOptions {
   /** Placeholder shown in the anchored prompt input. */
   placeholder?: string;
+  /** Initial prompt input value, useful for suggested follow-up questions. */
+  initialValue?: string;
+  /** Focus and select the prompt input after rendering. Defaults to true. */
+  autoFocus?: boolean;
   /** Accessible label/title for the submit button. */
   submitLabel?: string;
   /** Class added to the prompt container. */
@@ -481,6 +485,7 @@ export function createAskableRegionCapture(
     if (prompt) root.appendChild(createPrompt(prompt, packet, selection));
 
     document.body.appendChild(root);
+    if (prompt?.autoFocus !== false) focusPromptInput(root);
   }
 
   function createSelectionMarker(selection: AskableRegionCaptureSelection): HTMLElement | SVGSVGElement {
@@ -548,7 +553,8 @@ export function createAskableRegionCapture(
   ): HTMLFormElement {
     const form = document.createElement('form');
     if (prompt.className) form.className = prompt.className;
-    const placeAbove = selection.bounds.y + selection.bounds.height + 56 > window.innerHeight;
+    const viewport = viewportSize(document);
+    const placeAbove = selection.bounds.y + selection.bounds.height + 56 > viewport.height;
     form.style.cssText = [
       'position:absolute',
       'left:0',
@@ -570,6 +576,7 @@ export function createAskableRegionCapture(
     const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = prompt.placeholder ?? 'Ask about this selection...';
+    input.value = prompt.initialValue ?? '';
     if (prompt.inputClassName) input.className = prompt.inputClassName;
     input.style.cssText = [
       'min-width:0',
@@ -608,6 +615,21 @@ export function createAskableRegionCapture(
     });
     return form;
   }
+}
+
+function focusPromptInput(root: HTMLElement): void {
+  const input = root.querySelector('input');
+  const view = root.ownerDocument.defaultView;
+  if (!input || !view || !(input instanceof view.HTMLInputElement)) return;
+  input.focus({ preventScroll: true });
+  input.select();
+}
+
+function viewportSize(doc: Document): { height: number } {
+  const view = doc.defaultView;
+  return {
+    height: view?.innerHeight ?? 768,
+  };
 }
 
 function resolveRegionCaptureTheme(theme?: Partial<AskableRegionCaptureTheme>): AskableRegionCaptureTheme {

@@ -423,6 +423,7 @@ describe('createAskableRegionCapture', () => {
       selectionAffordance: {
         prompt: {
           placeholder: 'Ask here',
+          initialValue: 'Summarize this selection',
           submitLabel: 'Send question',
           onSubmit,
         },
@@ -439,6 +440,8 @@ describe('createAskableRegionCapture', () => {
     const affordance = document.getElementById('askable-region-selection-affordance')!;
     const input = affordance.querySelector('input')!;
     const button = affordance.querySelector('button')!;
+    expect(input.value).toBe('Summarize this selection');
+    expect(document.activeElement).toBe(input);
     input.value = 'What changed here?';
     button.click();
 

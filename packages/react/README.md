@@ -284,6 +284,16 @@ function RegionTools() {
   const capture = useAskableRegionCapture({
     ctx,
     includeViewport: true,
+    selectionAffordance: {
+      label: 'Selected context',
+      prompt: {
+        placeholder: 'Ask about this area...',
+        initialValue: 'What should I notice here?',
+        onSubmit(question, packet) {
+          sendToAgent({ question, context: packet });
+        },
+      },
+    },
     theme: {
       lassoStrokeWidth: 4,
       lassoGlowRadius: 12,
@@ -313,6 +323,8 @@ function RegionTools() {
 The lasso overlay ships with the core `ASKABLE_REGION_CAPTURE_THEME`. Pass
 `theme` through `useAskableRegionCapture()` to override the overlay,
 region/circle fill, or lasso gradient for your app.
+Use `selectionAffordance` to keep the selected area visible and optionally show
+an anchored prompt that focuses by default.
 
 Use `once: false` when the capture control should stay active for repeated
 region, circle, or lasso selections. The hook keeps `active` true until
@@ -330,6 +342,16 @@ function SelectionTools() {
   const selection = useAskableTextSelectionCapture({
     includeViewport: true,
     intent: 'answer using the highlighted text',
+    selectionAffordance: {
+      label: 'Selected text',
+      prompt: {
+        placeholder: 'Ask about this text...',
+        initialValue: 'Explain this quote',
+        onSubmit(question, packet) {
+          sendToAgent({ question, context: packet });
+        },
+      },
+    },
     onCapture(packet) {
       sendToAgent(packet);
     },

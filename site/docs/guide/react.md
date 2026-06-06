@@ -169,6 +169,7 @@ function RegionTools() {
       label: 'Selected context',
       prompt: {
         placeholder: 'Ask about this area...',
+        initialValue: 'What should I notice here?',
         onSubmit(question, packet) {
           sendToAgent({ question, context: packet });
         },
@@ -211,6 +212,8 @@ The default lasso overlay uses the core `ASKABLE_REGION_CAPTURE_THEME`; pass
 `theme` when you need brand-specific overlay colors, line styling, or
 selected-state defaults. Use `selectionAffordance` to keep the selected area
 visible after capture and optionally attach a small prompt input to it.
+The prompt focuses by default so the user can immediately revise or submit the
+suggested question.
 
 ## Text selection capture
 
@@ -227,6 +230,7 @@ function TextSelectionTools() {
       label: 'Selected text',
       prompt: {
         placeholder: 'Ask about this text...',
+        initialValue: 'Explain this quote',
         onSubmit(question, packet) {
           sendToAgent({ question, context: packet });
         },
