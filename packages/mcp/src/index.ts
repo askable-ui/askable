@@ -1,7 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
 import { webContextPacketSchema } from '@askable-ui/context';
 import type { WebContextPacket } from '@askable-ui/context';
+import type {
+  HandleRequestOptions,
+  WebStandardStreamableHTTPServerTransportOptions,
+} from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type {
   AskableAsyncContextOutputOptions,
   AskableAsyncContextPacketOptions,
@@ -33,6 +38,21 @@ export interface AskableMcpServerOptions {
   version?: string;
   provider: AskableMcpContextProvider;
 }
+
+export type AskableMcpStatelessTransportOptions = Omit<
+  WebStandardStreamableHTTPServerTransportOptions,
+  'sessionIdGenerator' | 'onsessioninitialized' | 'onsessionclosed'
+>;
+
+export interface AskableMcpWebHandlerOptions extends AskableMcpServerOptions {
+  transport?: AskableMcpStatelessTransportOptions;
+  requestOptions?:
+    | HandleRequestOptions
+    | ((request: Request) => HandleRequestOptions | Promise<HandleRequestOptions>);
+  onError?: (error: unknown, request: Request) => void;
+}
+
+export type AskableMcpWebHandler = (request: Request) => Promise<Response>;
 
 export type AskableMcpSourceContext = Pick<AskableContext, 'toContextPacket' | 'toContext'> &
   Partial<Pick<AskableContext, 'toContextPacketAsync' | 'toContextAsync'>>;
@@ -195,6 +215,38 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
   );
 
   return server;
+}
+
+export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions): AskableMcpWebHandler {
+  return async (request) => {
+    try {
+      const server = createAskableMcpServer(options);
+      const transport = new WebStandardStreamableHTTPServerTransport({
+        enableJsonResponse: true,
+        ...options.transport,
+        sessionIdGenerator: undefined,
+      });
+      await server.connect(transport);
+      const requestOptions = typeof options.requestOptions === 'function'
+        ? await options.requestOptions(request)
+        : options.requestOptions;
+
+      return transport.handleRequest(request, requestOptions);
+    } catch (error) {
+      options.onError?.(error, request);
+      return new Response(JSON.stringify({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: 'Askable MCP handler failed.',
+        },
+        id: null,
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  };
 }
 
 export function defaultPromptFormatter(packet: WebContextPacket): string {

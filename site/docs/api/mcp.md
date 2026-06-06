@@ -69,6 +69,35 @@ Creates an MCP server with tools/resources for reading structured Context packet
 | `name` | `string` | MCP server name |
 | `version` | `string` | MCP server version |
 
+## `createAskableMcpWebHandler(options)`
+
+Creates a stateless Streamable HTTP handler for Web Standards runtimes. Use this
+for `Request -> Response` route handlers in Next.js, Vercel, Cloudflare Workers,
+Bun, Deno, and Node 18+ runtimes.
+
+```ts
+import { createAskableMcpContextProvider, createAskableMcpWebHandler } from '@askable-ui/mcp';
+
+const handler = createAskableMcpWebHandler({
+  provider: createAskableMcpContextProvider(ctx, {
+    history: 3,
+    includeViewport: true,
+    sources: ['accounts'],
+  }),
+});
+
+export const GET = handler;
+export const POST = handler;
+export const DELETE = handler;
+```
+
+| Option | Type | Description |
+|---|---|---|
+| `provider` | `AskableMcpContextProvider` | Supplies packets and optional prompt formatting |
+| `transport` | `AskableMcpStatelessTransportOptions` | Optional stateless MCP transport options |
+| `requestOptions` | `HandleRequestOptions \| (request) => HandleRequestOptions` | Optional per-request parsed body or auth info |
+| `onError` | `(error, request) => void` | Optional setup error reporter |
+
 ## Tool options
 
 `get_current_context` and `format_context_for_prompt` accept common context
@@ -111,7 +140,9 @@ HTTPS endpoint such as `https://your-app.com/mcp`. The app hosting that endpoint
 should own authentication, rate limits, tenancy checks, and consent boundaries.
 
 ```ts
-const server = createAskableMcpServer({
+import { createAskableMcpContextProvider, createAskableMcpWebHandler } from '@askable-ui/mcp';
+
+const handler = createAskableMcpWebHandler({
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,
@@ -119,7 +150,9 @@ const server = createAskableMcpServer({
   }),
 });
 
-// Attach `server` to the Streamable HTTP or SSE transport supported by your MCP runtime.
+export const GET = handler;
+export const POST = handler;
+export const DELETE = handler;
 ```
 
 Claude clients can connect to the URL as a remote MCP server. The Anthropic
