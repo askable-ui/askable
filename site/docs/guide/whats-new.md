@@ -1,10 +1,80 @@
-# What’s New in v0.12.0
+# What’s New in v0.13.1
+
+askable-ui v0.13.1 adds production-ready Web MCP support and stronger agent
+request wiring, so approved Claude and ChatGPT clients can request selected UI
+context through a hosted MCP endpoint.
+
+## Highlights
+
+### Web MCP endpoint support
+
+`@askable-ui/mcp` now ships `createAskableMcpWebHandler()`, a stateless
+Streamable HTTP `Request -> Response` handler for Next.js, Vercel, Cloudflare
+Workers, Bun, Deno, and Node 18+ runtimes.
+
+```ts
+import { createAskableMcpContextProvider, createAskableMcpWebHandler } from '@askable-ui/mcp';
+
+const handler = createAskableMcpWebHandler({
+  authorize: async (request) => {
+    const token = await verifyMcpToken(request);
+    if (!token) return false;
+    return {
+      authInfo: {
+        token: token.value,
+        clientId: token.clientId,
+        scopes: token.scopes,
+      },
+    };
+  },
+  cors: {
+    origin: ['https://app.example'],
+    headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
+  },
+  telemetry: (event) => metrics.timing('askable.mcp.duration', event.durationMs),
+  provider: createAskableMcpContextProvider(ctx, {
+    history: 3,
+    includeViewport: true,
+    sources: ['accounts'],
+  }),
+});
+
+export const GET = handler;
+export const POST = handler;
+export const DELETE = handler;
+```
+
+The web handler supports authorization, browser preflight handling, custom
+response headers, default `no-store`/`nosniff` headers, and sanitized telemetry
+that omits request bodies, Context packets, prompt text, and query strings.
+
+Related docs:
+
+- [@askable-ui/mcp API](/api/mcp)
+- [AI SDK integration patterns](/examples/ai-sdk)
+
+### Agent request validation
+
+`@askable-ui/core` now exports `isAskableAgentRequest()` so server routes can
+validate agent request payloads before using prompt context, packets, selected
+source options, or user questions.
+
+```ts
+import { isAskableAgentRequest } from '@askable-ui/core';
+
+if (!isAskableAgentRequest(body)) {
+  return new Response('Invalid Askable request', { status: 400 });
+}
+```
+
+Agent requests can also preserve packet-backed selections and source requests,
+which keeps app-owned context available to downstream AI handlers.
+
+## Also in v0.12.0
 
 askable-ui v0.12.0 adds generic app-owned context sources and refines explicit
 selection capture, so users can freehand lasso irregular areas, keep selected
 text highlighted, and send richer page context to agents.
-
-## Highlights
 
 ### Freehand lasso selection
 
@@ -168,8 +238,8 @@ browser tools, and agent runtimes.
 
 ### Starter and docs version alignment
 
-`npm create @askable-ui/app` now scaffolds projects pinned to `^0.12.0`, and the
-versioned docs have been advanced to `/docs/v0.12.0/`.
+`npm create @askable-ui/app` now scaffolds projects pinned to `^0.13.1`, and the
+versioned docs have been advanced to `/docs/v0.13.1/`.
 
 ## Recommended next step
 
@@ -181,7 +251,7 @@ If you are integrating Askable into an AI or agent runtime, start here:
 
 ## Version note
 
-The current published docs track **v0.12.0** at both:
+The current published docs track **v0.13.1** at both:
 
 - `/docs/`
-- `/docs/v0.12.0/`
+- `/docs/v0.13.1/`
