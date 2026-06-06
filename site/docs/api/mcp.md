@@ -103,3 +103,47 @@ options:
 
 The package does not start a transport. Connect the returned server with the MCP
 transport that fits your runtime.
+
+## Web MCP for Claude and ChatGPT
+
+For user-owned Claude or ChatGPT clients, host the MCP server behind a public
+HTTPS endpoint such as `https://your-app.com/mcp`. The app hosting that endpoint
+should own authentication, rate limits, tenancy checks, and consent boundaries.
+
+```ts
+const server = createAskableMcpServer({
+  provider: createAskableMcpContextProvider(ctx, {
+    history: 3,
+    includeViewport: true,
+    sources: ['accounts'],
+  }),
+});
+
+// Attach `server` to the Streamable HTTP or SSE transport supported by your MCP runtime.
+```
+
+Claude clients can connect to the URL as a remote MCP server. The Anthropic
+Messages API MCP connector uses:
+
+```json
+{
+  "type": "url",
+  "name": "askable-context",
+  "url": "https://your-app.com/mcp"
+}
+```
+
+ChatGPT developer mode can create an app from a remote MCP server. OpenAI API
+requests can also pass the endpoint as a remote MCP server:
+
+```json
+{
+  "type": "mcp",
+  "server_label": "askable",
+  "server_url": "https://your-app.com/mcp"
+}
+```
+
+For current client setup details, check the official
+[Anthropic MCP connector docs](https://docs.anthropic.com/en/docs/agents-and-tools/mcp-connector)
+and [OpenAI remote MCP docs](https://platform.openai.com/docs/guides/tools-remote-mcp).
