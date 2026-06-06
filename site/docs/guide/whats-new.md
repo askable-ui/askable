@@ -50,6 +50,12 @@ request body limits, response headers, default `no-store`/`nosniff` headers,
 and sanitized telemetry that omits request bodies, Context packets, prompt text,
 and query strings.
 
+`@askable-ui/mcp` also includes `createAskableMcpPageBridge()` for browser-local
+MCP workflows. This is the page-side handoff for trusted extensions or local
+companions: the page answers versioned `window.postMessage()` requests with a
+Context packet or prompt-ready text, while the extension or companion exposes
+the local MCP server.
+
 Related docs:
 
 - [@askable-ui/mcp API](/api/mcp)

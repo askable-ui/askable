@@ -1,11 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createWebContextPacket } from '@askable-ui/context';
 import {
+  ASKABLE_MCP_PAGE_BRIDGE_CHANNEL,
+  ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+  ASKABLE_MCP_PAGE_BRIDGE_VERSION,
   createAskableMcpContextProvider,
+  createAskableMcpPageBridge,
   createAskableMcpServer,
   createAskableMcpWebHandler,
   defaultPromptFormatter,
   type AskableMcpContextProvider,
+  type AskableMcpPageBridgeResponse,
+  type AskableMcpPageBridgeWindow,
   type AskableMcpSourceContext,
 } from '../index.js';
 
@@ -20,6 +26,34 @@ function getToolHandler(provider: AskableMcpContextProvider, toolName: string): 
   const tool = tools[toolName];
   if (!tool) throw new Error(`Tool ${toolName} not registered`);
   return tool.handler;
+}
+
+class FakePageBridgeWindow implements AskableMcpPageBridgeWindow {
+  location = { origin: 'https://app.example' };
+  listeners = new Set<(event: MessageEvent) => void>();
+  posted: Array<{ message: AskableMcpPageBridgeResponse; targetOrigin: string }> = [];
+
+  addEventListener(_type: 'message', listener: (event: MessageEvent) => void): void {
+    this.listeners.add(listener);
+  }
+
+  removeEventListener(_type: 'message', listener: (event: MessageEvent) => void): void {
+    this.listeners.delete(listener);
+  }
+
+  postMessage(message: AskableMcpPageBridgeResponse, targetOrigin: string): void {
+    this.posted.push({ message, targetOrigin });
+  }
+
+  emit(data: unknown, origin = this.location.origin): void {
+    for (const listener of this.listeners) {
+      listener({ data, origin } as MessageEvent);
+    }
+  }
+}
+
+function flushPageBridge(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 describe('createAskableMcpContextProvider', () => {
@@ -804,6 +838,164 @@ describe('createAskableMcpWebHandler', () => {
       error: { message: 'Askable MCP handler failed.' },
     });
     expect(onError).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('createAskableMcpPageBridge', () => {
+  it('responds to same-origin page bridge context requests', async () => {
+    const packet = createWebContextPacket({
+      source: { app: 'dashboard' },
+      capture: { mode: 'region' },
+      privacy: { consent: 'explicit' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const fakeWindow = new FakePageBridgeWindow();
+    createAskableMcpPageBridge({ provider, window: fakeWindow });
+
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      channel: ASKABLE_MCP_PAGE_BRIDGE_CHANNEL,
+      type: 'get_current_context',
+      requestId: 'req-1',
+      options: { intent: 'inspect selected chart', history: 2 },
+    });
+    await flushPageBridge();
+
+    expect(provider.getContext).toHaveBeenCalledWith({
+      intent: 'inspect selected chart',
+      history: 2,
+    });
+    expect(fakeWindow.posted).toEqual([
+      {
+        targetOrigin: 'https://app.example',
+        message: expect.objectContaining({
+          protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+          version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+          channel: ASKABLE_MCP_PAGE_BRIDGE_CHANNEL,
+          type: 'get_current_context:result',
+          requestId: 'req-1',
+          packet,
+        }),
+      },
+    ]);
+  });
+
+  it('formats context for prompt requests', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'text-selection' },
+      target: { text: 'Quarterly revenue rose 12%' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+      formatContextForPrompt: vi.fn().mockResolvedValue('Prompt-ready selection'),
+    };
+    const fakeWindow = new FakePageBridgeWindow();
+    createAskableMcpPageBridge({
+      provider,
+      window: fakeWindow,
+      targetOrigin: 'https://extension.example',
+    });
+
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      type: 'format_context_for_prompt',
+      requestId: 'req-2',
+      options: { maxTokens: 100 },
+    });
+    await flushPageBridge();
+
+    expect(provider.formatContextForPrompt).toHaveBeenCalledWith(packet, { maxTokens: 100 });
+    expect(fakeWindow.posted[0]).toEqual({
+      targetOrigin: 'https://extension.example',
+      message: expect.objectContaining({
+        type: 'format_context_for_prompt:result',
+        requestId: 'req-2',
+        text: 'Prompt-ready selection',
+      }),
+    });
+  });
+
+  it('ignores invalid channels and disallowed origins', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn(),
+    };
+    const fakeWindow = new FakePageBridgeWindow();
+    createAskableMcpPageBridge({
+      provider,
+      window: fakeWindow,
+      channel: 'private-channel',
+      allowedOrigins: ['https://trusted.example'],
+    });
+
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      channel: 'wrong-channel',
+      type: 'get_current_context',
+      requestId: 'req-3',
+    }, 'https://trusted.example');
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      channel: 'private-channel',
+      type: 'get_current_context',
+      requestId: 'req-4',
+    }, 'https://evil.example');
+    await flushPageBridge();
+
+    expect(provider.getContext).not.toHaveBeenCalled();
+    expect(fakeWindow.posted).toHaveLength(0);
+  });
+
+  it('posts a bridge error response when provider resolution fails', async () => {
+    const onError = vi.fn();
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockRejectedValue(new Error('context unavailable')),
+    };
+    const fakeWindow = new FakePageBridgeWindow();
+    createAskableMcpPageBridge({ provider, window: fakeWindow, onError });
+
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      type: 'get_current_context',
+      requestId: 'req-5',
+    });
+    await flushPageBridge();
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(fakeWindow.posted[0]).toEqual({
+      targetOrigin: 'https://app.example',
+      message: expect.objectContaining({
+        type: 'get_current_context:error',
+        requestId: 'req-5',
+        error: { message: 'Askable MCP page bridge failed.' },
+      }),
+    });
+  });
+
+  it('removes the page bridge listener on dispose', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn(),
+    };
+    const fakeWindow = new FakePageBridgeWindow();
+    const bridge = createAskableMcpPageBridge({ provider, window: fakeWindow });
+    bridge.dispose();
+
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      type: 'get_current_context',
+      requestId: 'req-6',
+    });
+    await flushPageBridge();
+
+    expect(provider.getContext).not.toHaveBeenCalled();
+    expect(fakeWindow.listeners.size).toBe(0);
   });
 });
 
