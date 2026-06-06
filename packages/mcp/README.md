@@ -81,6 +81,12 @@ const handler = createAskableMcpWebHandler({
     origin: ['https://app.example'],
     headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
   },
+  telemetry: (event) => {
+    metrics.timing('askable.mcp.duration', event.durationMs, {
+      outcome: event.outcome,
+      status: event.status,
+    });
+  },
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,
@@ -100,6 +106,10 @@ shape, or return MCP request options such as `authInfo`.
 `cors` handles browser preflight requests before context is read. Web responses
 also receive `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`
 unless the response already set those headers.
+
+`telemetry` receives sanitized request metadata such as method, path, status,
+outcome, duration, origin, user agent, and request ID. It does not include MCP
+request bodies, Context packets, or prompt text.
 
 Claude clients can connect to the public MCP URL as a remote MCP server. The
 Anthropic Messages API MCP connector uses an object like:

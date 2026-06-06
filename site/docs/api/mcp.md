@@ -94,6 +94,12 @@ const handler = createAskableMcpWebHandler({
     origin: ['https://app.example'],
     headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
   },
+  telemetry: (event) => {
+    metrics.timing('askable.mcp.duration', event.durationMs, {
+      outcome: event.outcome,
+      status: event.status,
+    });
+  },
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,
@@ -112,6 +118,7 @@ export const DELETE = handler;
 | `authorize` | `(request) => AskableMcpAuthorizeResult \| Promise<AskableMcpAuthorizeResult>` | Optional request gate before context is read |
 | `cors` | `boolean \| AskableMcpCorsOptions` | Optional CORS and browser preflight handling |
 | `responseHeaders` | `HeadersInit \| (request, response) => HeadersInit` | Optional response headers for the web endpoint |
+| `telemetry` | `(event) => void \| Promise<void>` | Optional sanitized request outcome reporting |
 | `transport` | `AskableMcpStatelessTransportOptions` | Optional stateless MCP transport options |
 | `requestOptions` | `HandleRequestOptions \| (request) => HandleRequestOptions` | Optional per-request parsed body or auth info |
 | `onError` | `(error, request) => void` | Optional setup error reporter |
@@ -123,6 +130,10 @@ a custom `Response` for app-owned auth errors, or return request options such as
 When `cors` is configured, preflight requests are answered before auth or context
 reads. Web responses also receive `Cache-Control: no-store` and
 `X-Content-Type-Options: nosniff` unless the response already set those headers.
+
+`telemetry` receives sanitized request metadata such as method, path, status,
+outcome, duration, origin, user agent, and request ID. It does not include MCP
+request bodies, Context packets, or prompt text.
 
 ## Tool options
 
@@ -184,6 +195,12 @@ const handler = createAskableMcpWebHandler({
   cors: {
     origin: ['https://app.example'],
     headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
+  },
+  telemetry: (event) => {
+    metrics.timing('askable.mcp.duration', event.durationMs, {
+      outcome: event.outcome,
+      status: event.status,
+    });
   },
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,

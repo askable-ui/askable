@@ -1242,6 +1242,7 @@ ctx.push(meta, text);</pre>
   authorize: (request) =>
     Boolean(request.headers.get('Authorization')),
   cors: { origin: ['https://app.example'] },
+  telemetry: (event) => metrics.track(event),
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,

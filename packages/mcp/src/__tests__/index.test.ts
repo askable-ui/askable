@@ -529,6 +529,164 @@ describe('createAskableMcpWebHandler', () => {
     expect(response.headers.get('X-Mcp-Status')).toBe('401');
   });
 
+  it('emits sanitized telemetry for successful MCP responses', async () => {
+    const telemetry = vi.fn();
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(createWebContextPacket({
+        capture: { mode: 'semantic' },
+      })),
+    };
+    const handler = createAskableMcpWebHandler({
+      provider,
+      telemetry,
+    });
+
+    const response = await handler(new Request('https://example.com/mcp?token=secret', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'MCP-Protocol-Version': '2025-06-18',
+        Origin: 'https://app.example',
+        'User-Agent': 'test-agent',
+        'X-Request-Id': 'req-1',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: { name: 'get_current_context', arguments: {} },
+      }),
+    }));
+
+    expect(response.status).toBe(200);
+    expect(telemetry).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'POST',
+      url: 'https://example.com/mcp',
+      path: '/mcp',
+      status: 200,
+      outcome: 'success',
+      origin: 'https://app.example',
+      userAgent: 'test-agent',
+      requestId: 'req-1',
+    }));
+    expect(telemetry.mock.calls[0][0].durationMs).toEqual(expect.any(Number));
+    expect(telemetry.mock.calls[0][0].url).not.toContain('secret');
+    expect(telemetry.mock.calls[0][0]).not.toHaveProperty('body');
+    expect(telemetry.mock.calls[0][0]).not.toHaveProperty('packet');
+  });
+
+  it('emits telemetry for preflight and rejected requests', async () => {
+    const telemetry = vi.fn();
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn(),
+    };
+    const handler = createAskableMcpWebHandler({
+      provider,
+      authorize: () => false,
+      cors: { origin: ['https://app.example'] },
+      telemetry,
+    });
+
+    await handler(new Request('https://example.com/mcp', {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://app.example' },
+    }));
+    await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        Origin: 'https://evil.example',
+      },
+      body: '{}',
+    }));
+    await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        Origin: 'https://app.example',
+      },
+      body: '{}',
+    }));
+
+    expect(telemetry).toHaveBeenCalledTimes(3);
+    expect(telemetry.mock.calls[0][0]).toMatchObject({
+      method: 'OPTIONS',
+      status: 204,
+      outcome: 'preflight',
+    });
+    expect(telemetry.mock.calls[1][0]).toMatchObject({
+      method: 'POST',
+      status: 403,
+      outcome: 'cors_rejected',
+      origin: 'https://evil.example',
+    });
+    expect(telemetry.mock.calls[2][0]).toMatchObject({
+      method: 'POST',
+      status: 401,
+      outcome: 'unauthorized',
+      origin: 'https://app.example',
+    });
+    expect(provider.getContext).not.toHaveBeenCalled();
+  });
+
+  it('emits telemetry for setup errors', async () => {
+    const telemetry = vi.fn();
+    const handler = createAskableMcpWebHandler({
+      provider: {
+        getContext: vi.fn(),
+      },
+      requestOptions: () => {
+        throw new Error('request setup failed');
+      },
+      telemetry,
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+    }));
+
+    expect(response.status).toBe(500);
+    expect(telemetry).toHaveBeenCalledWith(expect.objectContaining({
+      status: 500,
+      outcome: 'error',
+      path: '/mcp',
+    }));
+  });
+
+  it('does not fail the response when telemetry throws', async () => {
+    const onError = vi.fn();
+    const handler = createAskableMcpWebHandler({
+      provider: {
+        getContext: vi.fn(),
+      },
+      authorize: () => false,
+      telemetry: () => {
+        throw new Error('telemetry unavailable');
+      },
+      onError,
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+    }));
+
+    expect(response.status).toBe(401);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
   it('returns a JSON-RPC error response when setup fails', async () => {
     const onError = vi.fn();
     const handler = createAskableMcpWebHandler({
