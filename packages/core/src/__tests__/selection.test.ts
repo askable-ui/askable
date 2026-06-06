@@ -111,6 +111,48 @@ describe('createAskableTextSelectionCapture', () => {
     ctx.destroy();
   });
 
+  it('can dismiss a persisted selected text affordance', () => {
+    const ctx = createAskableContext();
+    const onDismiss = vi.fn();
+    const capture = createAskableTextSelectionCapture(ctx, {
+      source: { app: 'reader' },
+      selectionAffordance: {
+        label: 'Quoted text',
+        dismissible: true,
+        dismissLabel: 'Clear selected text',
+        dismissClassName: 'clear-text-selection',
+        dismissStyle: { color: 'rgb(124, 58, 237)' },
+        onDismiss,
+      },
+    });
+
+    selectText('Selected sentence.');
+    capture.captureNow();
+
+    const affordance = document.getElementById('askable-text-selection-affordance')!;
+    const button = affordance.querySelector('button[aria-label="Clear selected text"]') as HTMLButtonElement;
+    expect(button).toBeInstanceOf(HTMLButtonElement);
+    expect(button.className).toBe('clear-text-selection');
+    expect(button.style.color).toBe('rgb(124, 58, 237)');
+
+    button.click();
+
+    expect(document.getElementById('askable-text-selection-affordance')).toBeNull();
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(onDismiss.mock.calls[0][0]).toMatchObject({
+      source: { app: 'reader' },
+      capture: { mode: 'text-selection' },
+      target: { text: 'Selected sentence.' },
+    });
+    expect(onDismiss.mock.calls[0][1]).toMatchObject({
+      text: 'Selected sentence.',
+      bounds: { x: 12, y: 20, width: 80, height: 18 },
+    });
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
   it('renders an anchored selected text prompt and calls onSubmit with the captured packet', () => {
     const ctx = createAskableContext();
     const onSubmit = vi.fn();

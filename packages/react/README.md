@@ -286,6 +286,7 @@ function RegionTools() {
     includeViewport: true,
     selectionAffordance: {
       label: 'Selected context',
+      dismissible: true,
       prompt: {
         placeholder: 'Ask about this area...',
         initialValue: 'What should I notice here?',
@@ -324,7 +325,8 @@ The lasso overlay ships with the core `ASKABLE_REGION_CAPTURE_THEME`. Pass
 `theme` through `useAskableRegionCapture()` to override the overlay,
 region/circle fill, or lasso gradient for your app.
 Use `selectionAffordance` to keep the selected area visible and optionally show
-an anchored prompt that focuses by default.
+an anchored prompt that focuses by default. Pass `dismissible: true` to include
+a built-in clear button.
 
 Use `once: false` when the capture control should stay active for repeated
 region, circle, or lasso selections. The hook keeps `active` true until
@@ -344,6 +346,7 @@ function SelectionTools() {
     intent: 'answer using the highlighted text',
     selectionAffordance: {
       label: 'Selected text',
+      dismissible: true,
       prompt: {
         placeholder: 'Ask about this text...',
         initialValue: 'Explain this quote',

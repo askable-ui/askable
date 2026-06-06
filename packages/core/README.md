@@ -65,6 +65,7 @@ const capture = createAskableRegionCapture(ctx, {
   selectionAffordance: {
     label: 'Selected context',
     className: 'my-selection-marker',
+    dismissible: true,
     prompt: {
       placeholder: 'Ask about this area...',
       initialValue: 'What should I notice here?',
@@ -99,6 +100,9 @@ accepts class names, inline style hooks, and a custom `render()` escape hatch.
 Prompt inputs focus and select their initial value by default. Pass
 `prompt.autoFocus: false` to keep focus where it is, or `prompt.initialValue`
 to seed a suggested question.
+Pass `dismissible: true` to add a small built-in clear button, or use
+`dismissClassName`, `dismissStyle`, and `onDismiss(packet, selection)` to match
+your own selected-context UX.
 Set `once: false` to keep the overlay mounted for repeated captures. The handle
 reports active until `cancel()` or `destroy()` runs, and `clearSelection()`
 removes only the persisted selected-state UI.
@@ -123,6 +127,7 @@ const selection = createAskableTextSelectionCapture(ctx, {
   includeViewport: true,
   selectionAffordance: {
     label: 'Selected text',
+    dismissible: true,
     prompt: {
       placeholder: 'Ask about this text...',
       initialValue: 'Explain this quote',
@@ -152,6 +157,8 @@ accepts class names, inline styles, theme overrides, and a custom `render()`
 escape hatch.
 Prompt inputs focus and select their initial value by default. Pass
 `prompt.autoFocus: false` to opt out.
+Pass `dismissible: true` to add a built-in clear button, or use `onDismiss` to
+sync dismissed selected text with your chat composer state.
 
 ## API Reference
 

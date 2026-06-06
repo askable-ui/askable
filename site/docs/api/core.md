@@ -781,6 +781,7 @@ const capture = createAskableRegionCapture(ctx, {
   includeViewport: true,
   selectionAffordance: {
     label: 'Selected context',
+    dismissible: true,
     prompt: {
       placeholder: 'Ask about this area...',
       initialValue: 'What should I notice here?',
@@ -833,6 +834,10 @@ question.
 Prompt inputs focus and select their initial value by default. Use
 `prompt.initialValue` for suggested questions and `prompt.autoFocus: false` to
 keep focus where it is.
+Pass `dismissible: true` to add a small built-in clear button. Use
+`dismissClassName`, `dismissStyle`, `dismissLabel`, and
+`onDismiss(packet, selection)` when the selected-context UI needs to update
+external chat composer state.
 
 Square captures are constrained to equal width and height. They serialize with
 `capture.mode: 'region'` and `target.metadata.shape: 'square'` so existing
@@ -867,6 +872,7 @@ const selection = createAskableTextSelectionCapture(ctx, {
   includeViewport: true,
   selectionAffordance: {
     label: 'Selected text',
+    dismissible: true,
     prompt: {
       placeholder: 'Ask about this text...',
       initialValue: 'Explain this quote',
@@ -911,6 +917,9 @@ immediately anchor a follow-up chat question.
 Prompt inputs focus and select their initial value by default. Use
 `prompt.initialValue` for suggested questions and `prompt.autoFocus: false` to
 keep focus where it is.
+Pass `dismissible: true` to add a built-in clear button. Use
+`dismissClassName`, `dismissStyle`, `dismissLabel`, and
+`onDismiss(packet, selection)` to keep external selected-context state in sync.
 
 When browser range geometry is available, the selection includes aggregate
 `bounds` plus `rects` for multi-line selected text. Packets include

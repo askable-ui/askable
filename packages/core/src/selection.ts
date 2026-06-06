@@ -53,6 +53,10 @@ export interface AskableTextSelectionCaptureAffordanceOptions {
   persist?: boolean;
   /** Render a compact prompt input anchored to the selected text. Defaults to false. */
   prompt?: boolean | AskableTextSelectionCapturePromptOptions;
+  /** Show a small dismiss button for the persisted selected text. Defaults to false. */
+  dismissible?: boolean;
+  /** Accessible label/title for the dismiss button. */
+  dismissLabel?: string;
   /** Optional label shown beside the selected text. */
   label?: string;
   /** Class added to the selected-text affordance root. */
@@ -63,6 +67,15 @@ export interface AskableTextSelectionCaptureAffordanceOptions {
   labelClassName?: string;
   /** Inline styles applied to the selected-text label. */
   labelStyle?: AskableTextSelectionCaptureStyle;
+  /** Class added to the dismiss button. */
+  dismissClassName?: string;
+  /** Inline styles applied to the dismiss button. */
+  dismissStyle?: AskableTextSelectionCaptureStyle;
+  /** Called after the selected-text affordance is dismissed. */
+  onDismiss?: (
+    packet: WebContextPacket,
+    selection: AskableTextSelectionCaptureSelection,
+  ) => void;
   /** Replace the built-in selected-text affordance with consumer-rendered DOM. */
   render?: (
     packet: WebContextPacket,
@@ -338,6 +351,7 @@ export function createAskableTextSelectionCapture(
 
     const prompt = resolvePromptOptions(selectionAffordance.prompt);
     if (prompt) rootEl.appendChild(createPrompt(prompt, packet, selection));
+    if (selectionAffordance.dismissible) rootEl.appendChild(createDismissButton(packet, selection));
 
     ownerDocument.body.appendChild(rootEl);
     if (prompt?.autoFocus !== false) focusPromptInput(rootEl);
@@ -453,6 +467,42 @@ export function createAskableTextSelectionCapture(
       input.value = '';
     });
     return form;
+  }
+
+  function createDismissButton(
+    packet: WebContextPacket,
+    selection: AskableTextSelectionCaptureSelection,
+  ): HTMLButtonElement {
+    const bounds = selection.bounds;
+    const button = ownerDocument.createElement('button');
+    button.type = 'button';
+    button.textContent = 'x';
+    button.setAttribute('aria-label', selectionAffordance?.dismissLabel ?? 'Dismiss selected text context');
+    if (selectionAffordance?.dismissClassName) button.className = selectionAffordance.dismissClassName;
+    button.style.cssText = [
+      'position:fixed',
+      `left:${bounds ? Math.max(8, bounds.x + bounds.width - 10) : 8}px`,
+      `top:${bounds ? Math.max(8, bounds.y - 12) : 8}px`,
+      'width:22px',
+      'height:22px',
+      'display:grid',
+      'place-items:center',
+      'border-radius:999px',
+      `border:1px solid ${theme.promptBorder}`,
+      `background:${theme.promptBackground}`,
+      `color:${theme.promptText}`,
+      'box-shadow:0 8px 20px rgba(15,23,42,0.14)',
+      'font:700 14px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+      'cursor:pointer',
+      'pointer-events:auto',
+      'padding:0',
+    ].join(';');
+    assignStyles(button, selectionAffordance?.dismissStyle);
+    button.addEventListener('click', () => {
+      removeAffordance();
+      selectionAffordance?.onDismiss?.(packet, selection);
+    });
+    return button;
   }
 }
 
