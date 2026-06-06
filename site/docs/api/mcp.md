@@ -94,6 +94,7 @@ const handler = createAskableMcpWebHandler({
     origin: ['https://app.example'],
     headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
   },
+  maxRequestBodyBytes: 256 * 1024,
   telemetry: (event) => {
     metrics.timing('askable.mcp.duration', event.durationMs, {
       outcome: event.outcome,
@@ -117,6 +118,7 @@ export const DELETE = handler;
 | `provider` | `AskableMcpContextProvider` | Supplies packets and optional prompt formatting |
 | `authorize` | `(request) => AskableMcpAuthorizeResult \| Promise<AskableMcpAuthorizeResult>` | Optional request gate before context is read |
 | `cors` | `boolean \| AskableMcpCorsOptions` | Optional CORS and browser preflight handling |
+| `maxRequestBodyBytes` | `number \| false` | Maximum request body size before the MCP transport parses the body. Defaults to 1 MiB |
 | `responseHeaders` | `HeadersInit \| (request, response) => HeadersInit` | Optional response headers for the web endpoint |
 | `telemetry` | `(event) => void \| Promise<void>` | Optional sanitized request outcome reporting |
 | `transport` | `AskableMcpStatelessTransportOptions` | Optional stateless MCP transport options |
@@ -130,6 +132,11 @@ a custom `Response` for app-owned auth errors, or return request options such as
 When `cors` is configured, preflight requests are answered before auth or context
 reads. Web responses also receive `Cache-Control: no-store` and
 `X-Content-Type-Options: nosniff` unless the response already set those headers.
+
+`maxRequestBodyBytes` rejects oversized MCP requests with a JSON-RPC `413`
+before authorization, server setup, or MCP body parsing runs. The default is
+1 MiB. Pass `false` to disable the built-in guard when another layer already
+enforces request limits.
 
 `telemetry` receives sanitized request metadata such as method, path, status,
 outcome, duration, origin, user agent, and request ID. It does not include MCP
@@ -196,6 +203,7 @@ const handler = createAskableMcpWebHandler({
     origin: ['https://app.example'],
     headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
   },
+  maxRequestBodyBytes: 256 * 1024,
   telemetry: (event) => {
     metrics.timing('askable.mcp.duration', event.durationMs, {
       outcome: event.outcome,

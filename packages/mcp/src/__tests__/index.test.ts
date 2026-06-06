@@ -461,6 +461,88 @@ describe('createAskableMcpWebHandler', () => {
     expect(provider.getContext).not.toHaveBeenCalled();
   });
 
+  it('rejects oversized MCP requests before authorization or context is read', async () => {
+    const telemetry = vi.fn();
+    const authorize = vi.fn();
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn(),
+    };
+    const handler = createAskableMcpWebHandler({
+      provider,
+      authorize,
+      telemetry,
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'Content-Length': '1048577',
+      },
+      body: '{}',
+    }));
+
+    expect(response.status).toBe(413);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: -32004, message: 'MCP request body is too large.' },
+    });
+    expect(authorize).not.toHaveBeenCalled();
+    expect(provider.getContext).not.toHaveBeenCalled();
+    expect(telemetry).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'POST',
+      status: 413,
+      outcome: 'payload_too_large',
+    }));
+  });
+
+  it('supports custom and disabled MCP request body limits', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'semantic' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const smallLimit = createAskableMcpWebHandler({
+      provider,
+      maxRequestBodyBytes: 10,
+    });
+    const disabledLimit = createAskableMcpWebHandler({
+      provider,
+      maxRequestBodyBytes: false,
+    });
+    const body = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: { name: 'get_current_context', arguments: {} },
+    });
+
+    const rejected = await smallLimit(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'Content-Length': String(body.length),
+      },
+      body,
+    }));
+    const accepted = await disabledLimit(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'MCP-Protocol-Version': '2025-06-18',
+        'Content-Length': String(body.length),
+      },
+      body,
+    }));
+
+    expect(rejected.status).toBe(413);
+    expect(accepted.status).toBe(200);
+    expect(provider.getContext).toHaveBeenCalledTimes(1);
+  });
+
   it('adds CORS and response headers to MCP responses', async () => {
     const provider: AskableMcpContextProvider = {
       getContext: vi.fn().mockResolvedValue(createWebContextPacket({

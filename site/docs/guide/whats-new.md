@@ -31,6 +31,7 @@ const handler = createAskableMcpWebHandler({
     origin: ['https://app.example'],
     headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
   },
+  maxRequestBodyBytes: 256 * 1024,
   telemetry: (event) => metrics.timing('askable.mcp.duration', event.durationMs),
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
@@ -45,8 +46,9 @@ export const DELETE = handler;
 ```
 
 The web handler supports authorization, browser preflight handling, custom
-response headers, default `no-store`/`nosniff` headers, and sanitized telemetry
-that omits request bodies, Context packets, prompt text, and query strings.
+request body limits, response headers, default `no-store`/`nosniff` headers,
+and sanitized telemetry that omits request bodies, Context packets, prompt text,
+and query strings.
 
 Related docs:
 
