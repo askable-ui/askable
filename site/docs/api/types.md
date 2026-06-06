@@ -381,6 +381,10 @@ interface AskableAgentRequest {
   metadata?: Record<string, unknown>;
   timestamp: number;
 }
+
+function isAskableAgentRequest(
+  value: unknown
+): value is AskableAgentRequest;
 ```
 
 ```ts

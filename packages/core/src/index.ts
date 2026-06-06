@@ -1,4 +1,5 @@
 export { createAskableInspector } from './inspector.js';
+export { isAskableAgentRequest } from './agent-request.js';
 export { ASKABLE_REGION_CAPTURE_THEME, createAskableRegionCapture } from './capture.js';
 export { ASKABLE_TEXT_SELECTION_CAPTURE_THEME, createAskableTextSelectionCapture } from './selection.js';
 export { a11yTextExtractor } from './a11y.js';

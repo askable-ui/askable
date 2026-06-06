@@ -522,6 +522,22 @@ await fetch('/api/chat', {
 });
 ```
 
+On the server, use `isAskableAgentRequest()` before trusting an incoming JSON
+body:
+
+```ts
+import { isAskableAgentRequest } from '@askable-ui/core';
+
+export async function POST(req: Request) {
+  const body = await req.json();
+  if (!isAskableAgentRequest(body)) {
+    return Response.json({ error: 'Invalid Askable request' }, { status: 400 });
+  }
+
+  return askWithContext(body.question, body.context, body.packet);
+}
+```
+
 The returned object includes:
 
 | Field | Description |
