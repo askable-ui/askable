@@ -79,6 +79,17 @@ Bun, Deno, and Node 18+ runtimes.
 import { createAskableMcpContextProvider, createAskableMcpWebHandler } from '@askable-ui/mcp';
 
 const handler = createAskableMcpWebHandler({
+  authorize: async (request) => {
+    const token = await verifyMcpToken(request);
+    if (!token) return false;
+    return {
+      authInfo: {
+        token: token.value,
+        clientId: token.clientId,
+        scopes: token.scopes,
+      },
+    };
+  },
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,
@@ -94,9 +105,14 @@ export const DELETE = handler;
 | Option | Type | Description |
 |---|---|---|
 | `provider` | `AskableMcpContextProvider` | Supplies packets and optional prompt formatting |
+| `authorize` | `(request) => AskableMcpAuthorizeResult \| Promise<AskableMcpAuthorizeResult>` | Optional request gate before context is read |
 | `transport` | `AskableMcpStatelessTransportOptions` | Optional stateless MCP transport options |
 | `requestOptions` | `HandleRequestOptions \| (request) => HandleRequestOptions` | Optional per-request parsed body or auth info |
 | `onError` | `(error, request) => void` | Optional setup error reporter |
+
+When `authorize` returns `false`, the handler returns a JSON-RPC `401`. Return
+a custom `Response` for app-owned auth errors, or return request options such as
+`authInfo` to pass validated auth metadata to MCP handlers.
 
 ## Tool options
 
@@ -130,8 +146,9 @@ options:
 | `get_context_schema` | Tool | Returns the packet JSON Schema |
 | `format_context_for_prompt` | Tool | Returns prompt-ready text |
 
-The package does not start a transport. Connect the returned server with the MCP
-transport that fits your runtime.
+`createAskableMcpServer()` does not start a transport. Connect the returned
+server with the MCP transport that fits your runtime, or use
+`createAskableMcpWebHandler()` for Web Standards route handlers.
 
 ## Web MCP for Claude and ChatGPT
 
@@ -143,6 +160,17 @@ should own authentication, rate limits, tenancy checks, and consent boundaries.
 import { createAskableMcpContextProvider, createAskableMcpWebHandler } from '@askable-ui/mcp';
 
 const handler = createAskableMcpWebHandler({
+  authorize: async (request) => {
+    const token = await verifyMcpToken(request);
+    if (!token) return false;
+    return {
+      authInfo: {
+        token: token.value,
+        clientId: token.clientId,
+        scopes: token.scopes,
+      },
+    };
+  },
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,

@@ -1239,6 +1239,8 @@ ctx.push(meta, text);</pre>
             <h4>Server</h4>
             <p>Adapt the same Askable context your app already uses. Keep auth, rate limits, and tenancy in your host app.</p>
             <pre>const handler = createAskableMcpWebHandler({
+  authorize: (request) =>
+    Boolean(request.headers.get('Authorization')),
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,

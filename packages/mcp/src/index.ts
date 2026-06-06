@@ -44,8 +44,15 @@ export type AskableMcpStatelessTransportOptions = Omit<
   'sessionIdGenerator' | 'onsessioninitialized' | 'onsessionclosed'
 >;
 
+export type AskableMcpAuthorizeResult =
+  | boolean
+  | Response
+  | HandleRequestOptions
+  | void;
+
 export interface AskableMcpWebHandlerOptions extends AskableMcpServerOptions {
   transport?: AskableMcpStatelessTransportOptions;
+  authorize?: (request: Request) => AskableMcpAuthorizeResult | Promise<AskableMcpAuthorizeResult>;
   requestOptions?:
     | HandleRequestOptions
     | ((request: Request) => HandleRequestOptions | Promise<HandleRequestOptions>);
@@ -220,6 +227,14 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
 export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions): AskableMcpWebHandler {
   return async (request) => {
     try {
+      const authorization = options.authorize ? await options.authorize(request) : undefined;
+      if (authorization instanceof Response) {
+        return authorization;
+      }
+      if (authorization === false) {
+        return createAskableMcpErrorResponse(401, -32001, 'Unauthorized MCP request.');
+      }
+
       const server = createAskableMcpServer(options);
       const transport = new WebStandardStreamableHTTPServerTransport({
         enableJsonResponse: true,
@@ -227,24 +242,18 @@ export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions)
         sessionIdGenerator: undefined,
       });
       await server.connect(transport);
-      const requestOptions = typeof options.requestOptions === 'function'
+      const configuredRequestOptions = typeof options.requestOptions === 'function'
         ? await options.requestOptions(request)
         : options.requestOptions;
+      const requestOptions = mergeHandleRequestOptions(
+        authorization && typeof authorization === 'object' ? authorization : undefined,
+        configuredRequestOptions,
+      );
 
       return transport.handleRequest(request, requestOptions);
     } catch (error) {
       options.onError?.(error, request);
-      return new Response(JSON.stringify({
-        jsonrpc: '2.0',
-        error: {
-          code: -32000,
-          message: 'Askable MCP handler failed.',
-        },
-        id: null,
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return createAskableMcpErrorResponse(500, -32000, 'Askable MCP handler failed.');
     }
   };
 }
@@ -331,4 +340,34 @@ function toPacketOptions(options: AskableMcpContextOptions): AskableMcpContextOp
   } = options;
 
   return packetOptions;
+}
+
+function mergeHandleRequestOptions(
+  first?: HandleRequestOptions,
+  second?: HandleRequestOptions,
+): HandleRequestOptions | undefined {
+  if (!first) return second;
+  if (!second) return first;
+
+  return {
+    ...first,
+    ...second,
+    ...(first.authInfo || second.authInfo
+      ? { authInfo: second.authInfo ?? first.authInfo }
+      : {}),
+  };
+}
+
+function createAskableMcpErrorResponse(status: number, code: number, message: string): Response {
+  return new Response(JSON.stringify({
+    jsonrpc: '2.0',
+    error: {
+      code,
+      message,
+    },
+    id: null,
+  }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }

@@ -299,6 +299,101 @@ describe('createAskableMcpWebHandler', () => {
     expect(provider.getContext).toHaveBeenCalledTimes(1);
   });
 
+  it('rejects unauthorized requests before context is read', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn(),
+    };
+    const handler = createAskableMcpWebHandler({
+      provider,
+      authorize: () => false,
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: { name: 'get_current_context', arguments: {} },
+      }),
+    }));
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: -32001, message: 'Unauthorized MCP request.' },
+    });
+    expect(provider.getContext).not.toHaveBeenCalled();
+  });
+
+  it('allows custom authorization responses', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn(),
+    };
+    const handler = createAskableMcpWebHandler({
+      provider,
+      authorize: () => new Response('token expired', {
+        status: 403,
+        headers: { 'WWW-Authenticate': 'Bearer error="invalid_token"' },
+      }),
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+    }));
+
+    expect(response.status).toBe(403);
+    expect(response.headers.get('WWW-Authenticate')).toBe('Bearer error="invalid_token"');
+    await expect(response.text()).resolves.toBe('token expired');
+    expect(provider.getContext).not.toHaveBeenCalled();
+  });
+
+  it('uses authorized request options before reading the request body', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(createWebContextPacket({
+        capture: { mode: 'semantic' },
+      })),
+    };
+    const handler = createAskableMcpWebHandler({
+      provider,
+      authorize: (request) => ({
+        parsedBody: {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/call',
+          params: {
+            name: 'get_current_context',
+            arguments: { intent: request.headers.get('x-intent') ?? undefined },
+          },
+        },
+      }),
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'MCP-Protocol-Version': '2025-06-18',
+        'x-intent': 'inspect authorized context',
+      },
+      body: 'not-json',
+    }));
+
+    expect(response.status).toBe(200);
+    expect(provider.getContext).toHaveBeenCalledWith(
+      expect.objectContaining({ intent: 'inspect authorized context' }),
+    );
+  });
+
   it('returns a JSON-RPC error response when setup fails', async () => {
     const onError = vi.fn();
     const handler = createAskableMcpWebHandler({
