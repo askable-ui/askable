@@ -586,10 +586,11 @@ export class AskableContextImpl implements AskableContext {
       selectionFromPacket = false,
       ...contextOptions
     } = options ?? {};
+    const sourceContextOptions = this.agentRequestSourceOptions(contextOptions, selectionFromPacket);
     let packet: WebContextPacket | undefined;
     if (packetOption) {
       if (packetOption === true) {
-        packet = await this.toContextPacketAsync(this.agentRequestOptionsToPacketOptions(contextOptions));
+        packet = await this.toContextPacketAsync(this.agentRequestOptionsToPacketOptions(sourceContextOptions));
       } else if (isWebContextPacket(packetOption)) {
         packet = packetOption;
       } else {
@@ -600,14 +601,14 @@ export class AskableContextImpl implements AskableContext {
       ? this.packetToSourceSelection(packet)
       : undefined;
     const context = contextFromPacket && packet
-      ? await this.toPacketContextAsync(packet, contextOptions, defaultSourceSelection)
-      : await this.toContextAsyncWithSourceSelection(contextOptions, defaultSourceSelection);
+      ? await this.toPacketContextAsync(packet, sourceContextOptions, defaultSourceSelection)
+      : await this.toContextAsyncWithSourceSelection(sourceContextOptions, defaultSourceSelection);
 
     return {
       ...(requestId ? { requestId } : {}),
       question,
       context,
-      focus: this.serializeFocus(contextOptions),
+      focus: this.serializeFocus(sourceContextOptions),
       ...(packet ? { packet } : {}),
       ...(metadata ? { metadata } : {}),
       timestamp: Date.now(),
@@ -1024,6 +1025,14 @@ export class AskableContextImpl implements AskableContext {
       ...packetOptions
     } = options;
     return packetOptions;
+  }
+
+  private agentRequestSourceOptions(
+    options: AskableAsyncContextOutputOptions,
+    selectionFromPacket: boolean,
+  ): AskableAsyncContextOutputOptions {
+    if (!selectionFromPacket || options.sourceMode !== undefined) return options;
+    return { ...options, sourceMode: 'selected' };
   }
 
   private async toPacketContextAsync(

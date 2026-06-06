@@ -550,7 +550,9 @@ Set `selectionFromPacket: true` when registered sources should receive the
 packet target as their `selection` input. This lets a source resolve backing app
 state for a selected table row, document range, chart region, map feature, or
 canvas shape. Explicit `selection` values on individual source requests still
-take precedence.
+take precedence. When `selectionFromPacket` is enabled, string source includes
+use `mode: 'selected'` by default; pass `sourceMode` or an explicit source request
+when another mode is needed.
 
 Use `isAskablePacketSourceSelection()` inside a resolver when you need to narrow
 that generic `selection` payload:
@@ -585,7 +587,7 @@ async function submit(question: string) {
     packet: pendingPacket ?? true,
     contextFromPacket: Boolean(pendingPacket),
     selectionFromPacket: Boolean(pendingPacket),
-    sources: [{ id: 'accounts', mode: 'selected' }],
+    sources: ['accounts'],
   });
 }
 ```

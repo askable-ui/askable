@@ -479,7 +479,8 @@ that exact packet to the request. Set `contextFromPacket: true` when the
 prompt-ready `context` string should be generated from the pinned selection
 instead of the current hover/click focus. Set `selectionFromPacket: true` when
 registered sources should receive the packet target as their `selection` input
-so app-owned state can resolve the full selected data.
+so app-owned state can resolve the full selected data. String source includes
+use `mode: 'selected'` by default when `selectionFromPacket` is enabled.
 
 ```ts
 import { isAskablePacketSourceSelection } from '@askable-ui/core';
