@@ -71,11 +71,34 @@ export type AskableMcpWebResponseHeaders =
   | HeadersInit
   | ((request: Request, response: Response) => HeadersInit | void | Promise<HeadersInit | void>);
 
+export type AskableMcpWebOutcome =
+  | 'success'
+  | 'preflight'
+  | 'cors_rejected'
+  | 'unauthorized'
+  | 'error';
+
+export interface AskableMcpWebTelemetryEvent {
+  method: string;
+  url: string;
+  path: string;
+  status: number;
+  outcome: AskableMcpWebOutcome;
+  durationMs: number;
+  origin?: string;
+  userAgent?: string;
+  requestId?: string;
+}
+
+export type AskableMcpWebTelemetry =
+  (event: AskableMcpWebTelemetryEvent) => void | Promise<void>;
+
 export interface AskableMcpWebHandlerOptions extends AskableMcpServerOptions {
   transport?: AskableMcpStatelessTransportOptions;
   authorize?: (request: Request) => AskableMcpAuthorizeResult | Promise<AskableMcpAuthorizeResult>;
   cors?: boolean | AskableMcpCorsOptions;
   responseHeaders?: AskableMcpWebResponseHeaders;
+  telemetry?: AskableMcpWebTelemetry;
   requestOptions?:
     | HandleRequestOptions
     | ((request: Request) => HandleRequestOptions | Promise<HandleRequestOptions>);
@@ -254,39 +277,45 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
 
 export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions): AskableMcpWebHandler {
   return async (request) => {
+    const startedAt = Date.now();
     let corsHeaders: Headers | undefined;
+    const finalize = (
+      response: Response,
+      outcome: AskableMcpWebOutcome,
+      nextCorsHeaders = corsHeaders,
+    ) => finalizeAskableMcpWebResponse(request, response, options, {
+      corsHeaders: nextCorsHeaders,
+      outcome,
+      startedAt,
+    });
+
     try {
       const cors = await resolveCorsHeaders(options.cors, request);
       if (cors === false) {
-        return finalizeAskableMcpWebResponse(
-          request,
+        return finalize(
           request.method === 'OPTIONS'
             ? new Response(null, { status: 403 })
             : createAskableMcpErrorResponse(403, -32003, 'CORS origin not allowed.'),
-          options,
+          'cors_rejected',
         );
       }
       corsHeaders = cors;
 
       if (request.method === 'OPTIONS' && options.cors) {
-        return finalizeAskableMcpWebResponse(
-          request,
+        return finalize(
           new Response(null, { status: 204 }),
-          options,
-          corsHeaders,
+          'preflight',
         );
       }
 
       const authorization = options.authorize ? await options.authorize(request) : undefined;
       if (authorization instanceof Response) {
-        return finalizeAskableMcpWebResponse(request, authorization, options, corsHeaders);
+        return finalize(authorization, authorization.status >= 400 ? 'unauthorized' : 'success');
       }
       if (authorization === false) {
-        return finalizeAskableMcpWebResponse(
-          request,
+        return finalize(
           createAskableMcpErrorResponse(401, -32001, 'Unauthorized MCP request.'),
-          options,
-          corsHeaders,
+          'unauthorized',
         );
       }
 
@@ -305,19 +334,15 @@ export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions)
         configuredRequestOptions,
       );
 
-      return finalizeAskableMcpWebResponse(
-        request,
+      return finalize(
         await transport.handleRequest(request, requestOptions),
-        options,
-        corsHeaders,
+        'success',
       );
     } catch (error) {
       options.onError?.(error, request);
-      return finalizeAskableMcpWebResponse(
-        request,
+      return finalize(
         createAskableMcpErrorResponse(500, -32000, 'Askable MCP handler failed.'),
-        options,
-        corsHeaders,
+        'error',
       );
     }
   };
@@ -502,22 +527,57 @@ async function finalizeAskableMcpWebResponse(
   request: Request,
   response: Response,
   options: AskableMcpWebHandlerOptions,
-  corsHeaders?: Headers,
+  metadata: {
+    corsHeaders?: Headers;
+    outcome: AskableMcpWebOutcome;
+    startedAt: number;
+  },
 ): Promise<Response> {
   const headers = new Headers(response.headers);
   setMissingHeaders(headers, defaultWebResponseHeaders);
-  if (corsHeaders) mergeHeaders(headers, corsHeaders);
+  if (metadata.corsHeaders) mergeHeaders(headers, metadata.corsHeaders);
 
   const configuredHeaders = typeof options.responseHeaders === 'function'
     ? await options.responseHeaders(request, response)
     : options.responseHeaders;
   if (configuredHeaders) mergeHeaders(headers, new Headers(configuredHeaders));
 
-  return new Response(response.body, {
+  const finalized = new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers,
   });
+  await emitAskableMcpTelemetry(request, finalized, options, metadata);
+  return finalized;
+}
+
+async function emitAskableMcpTelemetry(
+  request: Request,
+  response: Response,
+  options: AskableMcpWebHandlerOptions,
+  metadata: {
+    outcome: AskableMcpWebOutcome;
+    startedAt: number;
+  },
+): Promise<void> {
+  if (!options.telemetry) return;
+
+  const url = new URL(request.url);
+  try {
+    await options.telemetry({
+      method: request.method,
+      url: `${url.origin}${url.pathname}`,
+      path: url.pathname,
+      status: response.status,
+      outcome: metadata.outcome,
+      durationMs: Math.max(0, Date.now() - metadata.startedAt),
+      ...(request.headers.get('Origin') ? { origin: request.headers.get('Origin') ?? undefined } : {}),
+      ...(request.headers.get('User-Agent') ? { userAgent: request.headers.get('User-Agent') ?? undefined } : {}),
+      ...(request.headers.get('X-Request-Id') ? { requestId: request.headers.get('X-Request-Id') ?? undefined } : {}),
+    });
+  } catch (error) {
+    options.onError?.(error, request);
+  }
 }
 
 function setMissingHeaders(headers: Headers, next: HeadersInit): void {
