@@ -237,15 +237,21 @@ function AskButton() {
 Server routes can read the same payload shape regardless of provider:
 
 ```ts
+import { isAskableAgentRequest } from '@askable-ui/core';
+
 export async function POST(req: Request) {
-  const { question, context, packet, focus, requestId } = await req.json();
-  const answer = await askWithContext(question, context);
+  const body = await req.json();
+  if (!isAskableAgentRequest(body)) {
+    return Response.json({ error: 'Invalid Askable request' }, { status: 400 });
+  }
+
+  const answer = await askWithContext(body.question, body.context);
 
   return Response.json({
     answer,
-    requestId,
-    receivedContextPacket: Boolean(packet),
-    focusMeta: focus?.meta ?? null,
+    requestId: body.requestId,
+    receivedContextPacket: Boolean(body.packet),
+    focusMeta: body.focus?.meta ?? null,
   });
 }
 ```
