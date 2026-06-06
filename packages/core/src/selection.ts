@@ -22,6 +22,10 @@ export type AskableTextSelectionCaptureStyle = Partial<CSSStyleDeclaration>;
 export interface AskableTextSelectionCapturePromptOptions {
   /** Placeholder shown in the anchored prompt input. */
   placeholder?: string;
+  /** Initial prompt input value, useful for suggested follow-up questions. */
+  initialValue?: string;
+  /** Focus and select the prompt input after rendering. Defaults to true. */
+  autoFocus?: boolean;
   /** Accessible label/title for the submit button. */
   submitLabel?: string;
   /** Class added to the prompt container. */
@@ -336,6 +340,7 @@ export function createAskableTextSelectionCapture(
     if (prompt) rootEl.appendChild(createPrompt(prompt, packet, selection));
 
     ownerDocument.body.appendChild(rootEl);
+    if (prompt?.autoFocus !== false) focusPromptInput(rootEl);
   }
 
   function createTextMark(rect: WebContextRect): HTMLSpanElement {
@@ -385,13 +390,14 @@ export function createAskableTextSelectionCapture(
     const bounds = selection.bounds;
     const form = ownerDocument.createElement('form');
     if (prompt.className) form.className = prompt.className;
-    const placeAbove = bounds ? bounds.y + bounds.height + 56 > window.innerHeight : false;
+    const viewport = viewportSize(ownerDocument);
+    const placeAbove = bounds ? bounds.y + bounds.height + 56 > viewport.height : false;
     form.style.cssText = [
       'position:fixed',
-      `left:${bounds ? Math.max(8, Math.min(bounds.x, window.innerWidth - 240)) : 8}px`,
+      `left:${bounds ? Math.max(8, Math.min(bounds.x, viewport.width - 240)) : 8}px`,
       bounds && placeAbove
         ? `top:${Math.max(8, bounds.y - 48)}px`
-        : `top:${bounds ? Math.min(window.innerHeight - 48, bounds.y + bounds.height + 10) : 8}px`,
+        : `top:${bounds ? Math.min(viewport.height - 48, bounds.y + bounds.height + 10) : 8}px`,
       'display:flex',
       'align-items:center',
       'gap:6px',
@@ -409,6 +415,7 @@ export function createAskableTextSelectionCapture(
     const input = ownerDocument.createElement('input');
     input.type = 'text';
     input.placeholder = prompt.placeholder ?? 'Ask about this text...';
+    input.value = prompt.initialValue ?? '';
     if (prompt.inputClassName) input.className = prompt.inputClassName;
     input.style.cssText = [
       'min-width:0',
@@ -447,6 +454,22 @@ export function createAskableTextSelectionCapture(
     });
     return form;
   }
+}
+
+function focusPromptInput(root: HTMLElement): void {
+  const input = root.querySelector('input');
+  const view = root.ownerDocument.defaultView;
+  if (!input || !view || !(input instanceof view.HTMLInputElement)) return;
+  input.focus({ preventScroll: true });
+  input.select();
+}
+
+function viewportSize(doc: Document): { width: number; height: number } {
+  const view = doc.defaultView;
+  return {
+    width: view?.innerWidth ?? 1024,
+    height: view?.innerHeight ?? 768,
+  };
 }
 
 function resolveDocument(root?: Document | HTMLElement): Document | null {

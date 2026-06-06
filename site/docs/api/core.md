@@ -783,6 +783,7 @@ const capture = createAskableRegionCapture(ctx, {
     label: 'Selected context',
     prompt: {
       placeholder: 'Ask about this area...',
+      initialValue: 'What should I notice here?',
       onSubmit(question, packet) {
         sendToAgent({ question, context: packet });
       },
@@ -829,6 +830,9 @@ after capture, or pass an object with `className`, `style`, `label`, `prompt`,
 and `render()` hooks. `prompt.onSubmit(question, packet, selection)` is useful
 when the selected area should immediately become the anchor for a follow-up chat
 question.
+Prompt inputs focus and select their initial value by default. Use
+`prompt.initialValue` for suggested questions and `prompt.autoFocus: false` to
+keep focus where it is.
 
 Square captures are constrained to equal width and height. They serialize with
 `capture.mode: 'region'` and `target.metadata.shape: 'square'` so existing
@@ -865,6 +869,7 @@ const selection = createAskableTextSelectionCapture(ctx, {
     label: 'Selected text',
     prompt: {
       placeholder: 'Ask about this text...',
+      initialValue: 'Explain this quote',
       onSubmit(question, packet) {
         sendToAgent({ question, context: packet });
       },
@@ -903,6 +908,9 @@ selection.captureNow();
 or pass an object with `className`, `style`, `label`, `prompt`, and `render()`
 hooks. `prompt.onSubmit(question, packet, selection)` lets a highlighted range
 immediately anchor a follow-up chat question.
+Prompt inputs focus and select their initial value by default. Use
+`prompt.initialValue` for suggested questions and `prompt.autoFocus: false` to
+keep focus where it is.
 
 When browser range geometry is available, the selection includes aggregate
 `bounds` plus `rects` for multi-line selected text. Packets include

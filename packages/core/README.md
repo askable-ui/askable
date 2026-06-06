@@ -67,6 +67,7 @@ const capture = createAskableRegionCapture(ctx, {
     className: 'my-selection-marker',
     prompt: {
       placeholder: 'Ask about this area...',
+      initialValue: 'What should I notice here?',
       onSubmit(question, packet) {
         sendToAgent({ question, context: packet });
       },
@@ -95,6 +96,9 @@ The built-in lasso overlay uses `ASKABLE_REGION_CAPTURE_THEME` by default; pass
 Set `selectionAffordance` to keep the selected shape visible after capture and,
 optionally, render a small prompt anchored to the selected area. The affordance
 accepts class names, inline style hooks, and a custom `render()` escape hatch.
+Prompt inputs focus and select their initial value by default. Pass
+`prompt.autoFocus: false` to keep focus where it is, or `prompt.initialValue`
+to seed a suggested question.
 Set `once: false` to keep the overlay mounted for repeated captures. The handle
 reports active until `cancel()` or `destroy()` runs, and `clearSelection()`
 removes only the persisted selected-state UI.
@@ -121,6 +125,7 @@ const selection = createAskableTextSelectionCapture(ctx, {
     label: 'Selected text',
     prompt: {
       placeholder: 'Ask about this text...',
+      initialValue: 'Explain this quote',
       onSubmit(question, packet) {
         sendToAgent({ question, context: packet });
       },
@@ -145,6 +150,8 @@ Set `selectionAffordance` to keep selected text visually marked after capture
 and optionally attach a small prompt to the highlighted range. The affordance
 accepts class names, inline styles, theme overrides, and a custom `render()`
 escape hatch.
+Prompt inputs focus and select their initial value by default. Pass
+`prompt.autoFocus: false` to opt out.
 
 ## API Reference
 

@@ -119,6 +119,7 @@ describe('createAskableTextSelectionCapture', () => {
       selectionAffordance: {
         prompt: {
           placeholder: 'Ask about quote',
+          initialValue: 'Explain this quote',
           submitLabel: 'Send text question',
           onSubmit,
         },
@@ -131,6 +132,8 @@ describe('createAskableTextSelectionCapture', () => {
     const affordance = document.getElementById('askable-text-selection-affordance')!;
     const input = affordance.querySelector('input')!;
     const button = affordance.querySelector('button')!;
+    expect(input.value).toBe('Explain this quote');
+    expect(document.activeElement).toBe(input);
     input.value = 'What does this mean?';
     button.click();
 
