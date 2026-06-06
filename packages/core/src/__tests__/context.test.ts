@@ -585,10 +585,12 @@ describe('createAskableContext', () => {
   it('passes packet selection data into agent request source resolvers', async () => {
     const ctx = createAskableContext();
     ctx.push({ widget: 'accounts-table' }, 'Accounts table');
+    let resolverMode: unknown;
     let resolverSelection: unknown;
     ctx.registerSource('accounts', {
       kind: 'collection',
-      resolve: ({ selection }) => {
+      resolve: ({ mode, selection }) => {
+        resolverMode = mode;
         resolverSelection = selection;
         return { selectedRows: selection };
       },
@@ -614,6 +616,7 @@ describe('createAskableContext', () => {
       sources: ['accounts'],
     });
 
+    expect(resolverMode).toBe('selected');
     expect(resolverSelection).toMatchObject({
       capture: { mode: 'lasso', gesture: 'drag' },
       target: {
@@ -627,6 +630,32 @@ describe('createAskableContext', () => {
     });
     expect(request.context).toContain('Context sources');
     expect(request.context).toContain('"selectedItems":[{"company":"Acme Corp","mrr":"$8,400"}]');
+
+    ctx.destroy();
+  });
+
+  it('respects explicit sourceMode when packet selection is enabled', async () => {
+    const ctx = createAskableContext();
+    let resolverMode: unknown;
+    ctx.registerSource('accounts', {
+      resolve: ({ mode }) => {
+        resolverMode = mode;
+        return { mode };
+      },
+    });
+    const packet = ctx.toContextPacket({
+      mode: 'circle',
+      target: { label: 'circled accounts' },
+    });
+
+    await ctx.toAgentRequest('Summarize these accounts', {
+      packet,
+      selectionFromPacket: true,
+      sources: ['accounts'],
+      sourceMode: 'summary',
+    });
+
+    expect(resolverMode).toBe('summary');
 
     ctx.destroy();
   });

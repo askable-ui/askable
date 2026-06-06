@@ -151,6 +151,8 @@ Set `contextFromPacket: true` when the prompt string should be generated from
 that pinned selection instead of the current hover or click focus.
 Set `selectionFromPacket: true` when registered sources should use that packet
 target to resolve selected app data that may not be visible in the DOM.
+String source includes use `mode: 'selected'` by default in this flow unless
+`sourceMode` is set explicitly.
 
 ### Region, circle, lasso, and text capture together
 

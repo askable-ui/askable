@@ -172,7 +172,7 @@ await ctx.toAgentRequest(userMessage, {
   packet: pendingSelectionPacket,
   contextFromPacket: true,
   selectionFromPacket: true,
-  sources: [{ id: 'accounts', mode: 'selected' }],
+  sources: ['accounts'],
 });
 ```
 
