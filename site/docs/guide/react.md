@@ -167,6 +167,7 @@ function RegionTools() {
     includeViewport: true,
     selectionAffordance: {
       label: 'Selected context',
+      dismissible: true,
       prompt: {
         placeholder: 'Ask about this area...',
         initialValue: 'What should I notice here?',
@@ -213,7 +214,8 @@ The default lasso overlay uses the core `ASKABLE_REGION_CAPTURE_THEME`; pass
 selected-state defaults. Use `selectionAffordance` to keep the selected area
 visible after capture and optionally attach a small prompt input to it.
 The prompt focuses by default so the user can immediately revise or submit the
-suggested question.
+suggested question. Pass `dismissible: true` when users should be able to clear
+the selected-context chip directly.
 
 ## Text selection capture
 
@@ -228,6 +230,7 @@ function TextSelectionTools() {
     intent: 'answer using the highlighted text',
     selectionAffordance: {
       label: 'Selected text',
+      dismissible: true,
       prompt: {
         placeholder: 'Ask about this text...',
         initialValue: 'Explain this quote',

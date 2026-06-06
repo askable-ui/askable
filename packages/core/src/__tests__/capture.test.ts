@@ -415,6 +415,51 @@ describe('createAskableRegionCapture', () => {
     ctx.destroy();
   });
 
+  it('can dismiss a persisted selected region affordance', () => {
+    const ctx = createAskableContext();
+    const onDismiss = vi.fn();
+    const capture = createAskableRegionCapture(ctx, {
+      source: { app: 'dashboard' },
+      selectionAffordance: {
+        label: 'Selected area',
+        dismissible: true,
+        dismissLabel: 'Clear selected area',
+        dismissClassName: 'clear-region',
+        dismissStyle: { color: 'rgb(124, 58, 237)' },
+        onDismiss,
+      },
+    });
+
+    capture.start();
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    overlay.dispatchEvent(pointerEvent('pointerdown', 10, 20));
+    overlay.dispatchEvent(pointerEvent('pointermove', 80, 90));
+    overlay.dispatchEvent(pointerEvent('pointerup', 80, 90));
+
+    const affordance = document.getElementById('askable-region-selection-affordance')!;
+    const button = affordance.querySelector('button[aria-label="Clear selected area"]') as HTMLButtonElement;
+    expect(button).toBeInstanceOf(HTMLButtonElement);
+    expect(button.className).toBe('clear-region');
+    expect(button.style.color).toBe('rgb(124, 58, 237)');
+
+    button.click();
+
+    expect(document.getElementById('askable-region-selection-affordance')).toBeNull();
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(onDismiss.mock.calls[0][0]).toMatchObject({
+      source: { app: 'dashboard' },
+      capture: { mode: 'region' },
+    });
+    expect(onDismiss.mock.calls[0][1]).toMatchObject({
+      shape: 'region',
+      bounds: { x: 10, y: 20, width: 70, height: 70 },
+    });
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
   it('renders an anchored prompt and calls onSubmit with the captured packet', () => {
     const ctx = createAskableContext();
     const onSubmit = vi.fn();

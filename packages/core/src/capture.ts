@@ -63,6 +63,10 @@ export interface AskableRegionCaptureSelectionAffordanceOptions {
   persist?: boolean;
   /** Render a compact prompt input anchored to the selected shape. Defaults to false. */
   prompt?: boolean | AskableRegionCapturePromptOptions;
+  /** Show a small dismiss button for the persisted selected shape. Defaults to false. */
+  dismissible?: boolean;
+  /** Accessible label/title for the dismiss button. */
+  dismissLabel?: string;
   /** Optional label shown beside the selected area. */
   label?: string;
   /** Class added to the selected-area affordance root. */
@@ -73,6 +77,15 @@ export interface AskableRegionCaptureSelectionAffordanceOptions {
   labelClassName?: string;
   /** Inline styles applied to the selected-area label. */
   labelStyle?: AskableRegionCaptureStyle;
+  /** Class added to the dismiss button. */
+  dismissClassName?: string;
+  /** Inline styles applied to the dismiss button. */
+  dismissStyle?: AskableRegionCaptureStyle;
+  /** Called after the selected-area affordance is dismissed. */
+  onDismiss?: (
+    packet: WebContextPacket,
+    selection: AskableRegionCaptureSelection,
+  ) => void;
   /** Replace the built-in selected-area affordance with consumer-rendered DOM. */
   render?: (
     packet: WebContextPacket,
@@ -483,6 +496,7 @@ export function createAskableRegionCapture(
 
     const prompt = resolvePromptOptions(selectionAffordance.prompt);
     if (prompt) root.appendChild(createPrompt(prompt, packet, selection));
+    if (selectionAffordance.dismissible) root.appendChild(createDismissButton(packet, selection));
 
     document.body.appendChild(root);
     if (prompt?.autoFocus !== false) focusPromptInput(root);
@@ -614,6 +628,41 @@ export function createAskableRegionCapture(
       input.value = '';
     });
     return form;
+  }
+
+  function createDismissButton(
+    packet: WebContextPacket,
+    selection: AskableRegionCaptureSelection,
+  ): HTMLButtonElement {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'x';
+    button.setAttribute('aria-label', selectionAffordance?.dismissLabel ?? 'Dismiss selected context');
+    if (selectionAffordance?.dismissClassName) button.className = selectionAffordance.dismissClassName;
+    button.style.cssText = [
+      'position:absolute',
+      'right:-10px',
+      'top:-10px',
+      'width:22px',
+      'height:22px',
+      'display:grid',
+      'place-items:center',
+      'border-radius:999px',
+      `border:1px solid ${theme.promptBorder}`,
+      `background:${theme.promptBackground}`,
+      `color:${theme.promptText}`,
+      'box-shadow:0 8px 20px rgba(15,23,42,0.14)',
+      'font:700 14px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+      'cursor:pointer',
+      'pointer-events:auto',
+      'padding:0',
+    ].join(';');
+    assignStyles(button, selectionAffordance?.dismissStyle);
+    button.addEventListener('click', () => {
+      removeAffordance();
+      selectionAffordance?.onDismiss?.(packet, selection);
+    });
+    return button;
   }
 }
 
