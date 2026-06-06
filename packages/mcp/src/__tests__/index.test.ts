@@ -394,6 +394,141 @@ describe('createAskableMcpWebHandler', () => {
     );
   });
 
+  it('handles CORS preflight requests without reading context', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn(),
+    };
+    const handler = createAskableMcpWebHandler({
+      provider,
+      cors: {
+        origin: 'https://app.example',
+        headers: ['Authorization', 'Content-Type'],
+        credentials: true,
+        maxAge: 600,
+      },
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://app.example',
+        'Access-Control-Request-Headers': 'Authorization, Content-Type',
+      },
+    }));
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, DELETE, OPTIONS');
+    expect(response.headers.get('Access-Control-Allow-Headers')).toBe('Authorization, Content-Type');
+    expect(response.headers.get('Access-Control-Allow-Credentials')).toBe('true');
+    expect(response.headers.get('Access-Control-Max-Age')).toBe('600');
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(provider.getContext).not.toHaveBeenCalled();
+  });
+
+  it('rejects disallowed CORS origins before authorization runs', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn(),
+    };
+    const authorize = vi.fn();
+    const handler = createAskableMcpWebHandler({
+      provider,
+      authorize,
+      cors: { origin: ['https://app.example'] },
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        Origin: 'https://evil.example',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: { name: 'get_current_context', arguments: {} },
+      }),
+    }));
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: -32003, message: 'CORS origin not allowed.' },
+    });
+    expect(authorize).not.toHaveBeenCalled();
+    expect(provider.getContext).not.toHaveBeenCalled();
+  });
+
+  it('adds CORS and response headers to MCP responses', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(createWebContextPacket({
+        capture: { mode: 'semantic' },
+      })),
+    };
+    const handler = createAskableMcpWebHandler({
+      provider,
+      cors: {
+        origin: true,
+        exposedHeaders: ['Mcp-Session-Id'],
+      },
+      responseHeaders: {
+        'X-Askable-Deployment': 'production',
+      },
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'MCP-Protocol-Version': '2025-06-18',
+        Origin: 'https://app.example',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: { name: 'get_current_context', arguments: {} },
+      }),
+    }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example');
+    expect(response.headers.get('Access-Control-Expose-Headers')).toBe('Mcp-Session-Id');
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(response.headers.get('X-Askable-Deployment')).toBe('production');
+    expect(provider.getContext).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets responseHeaders derive headers from the request and response', async () => {
+    const handler = createAskableMcpWebHandler({
+      provider: {
+        getContext: vi.fn(),
+      },
+      authorize: () => false,
+      responseHeaders: (request, response) => ({
+        'X-Mcp-Path': new URL(request.url).pathname,
+        'X-Mcp-Status': String(response.status),
+      }),
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+    }));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get('X-Mcp-Path')).toBe('/mcp');
+    expect(response.headers.get('X-Mcp-Status')).toBe('401');
+  });
+
   it('returns a JSON-RPC error response when setup fails', async () => {
     const onError = vi.fn();
     const handler = createAskableMcpWebHandler({

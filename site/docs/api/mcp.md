@@ -90,6 +90,10 @@ const handler = createAskableMcpWebHandler({
       },
     };
   },
+  cors: {
+    origin: ['https://app.example'],
+    headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
+  },
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
     includeViewport: true,
@@ -106,6 +110,8 @@ export const DELETE = handler;
 |---|---|---|
 | `provider` | `AskableMcpContextProvider` | Supplies packets and optional prompt formatting |
 | `authorize` | `(request) => AskableMcpAuthorizeResult \| Promise<AskableMcpAuthorizeResult>` | Optional request gate before context is read |
+| `cors` | `boolean \| AskableMcpCorsOptions` | Optional CORS and browser preflight handling |
+| `responseHeaders` | `HeadersInit \| (request, response) => HeadersInit` | Optional response headers for the web endpoint |
 | `transport` | `AskableMcpStatelessTransportOptions` | Optional stateless MCP transport options |
 | `requestOptions` | `HandleRequestOptions \| (request) => HandleRequestOptions` | Optional per-request parsed body or auth info |
 | `onError` | `(error, request) => void` | Optional setup error reporter |
@@ -113,6 +119,10 @@ export const DELETE = handler;
 When `authorize` returns `false`, the handler returns a JSON-RPC `401`. Return
 a custom `Response` for app-owned auth errors, or return request options such as
 `authInfo` to pass validated auth metadata to MCP handlers.
+
+When `cors` is configured, preflight requests are answered before auth or context
+reads. Web responses also receive `Cache-Control: no-store` and
+`X-Content-Type-Options: nosniff` unless the response already set those headers.
 
 ## Tool options
 
@@ -170,6 +180,10 @@ const handler = createAskableMcpWebHandler({
         scopes: token.scopes,
       },
     };
+  },
+  cors: {
+    origin: ['https://app.example'],
+    headers: ['Authorization', 'Content-Type', 'MCP-Protocol-Version'],
   },
   provider: createAskableMcpContextProvider(ctx, {
     history: 3,
