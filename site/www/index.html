@@ -795,7 +795,7 @@
         <h1>Your model knows what <em>the user means.</em></h1>
         <p>
           Mark a clicked element, drawn region, circled anomaly, lassoed area, or highlighted text,
-          then pass <code>askable.toPromptContext()</code> or a structured Context packet at the AI boundary.
+          then package the user's question with <code>askable.toAgentRequest()</code> at the AI boundary.
           The assistant gets explicit user intent instead of guessing from the whole page.
         </p>
         <div class="hero-patterns" aria-label="Supported interaction patterns">
@@ -954,7 +954,7 @@ ctx.push(meta, text);</pre>
         <article class="insight-card">
           <div class="insight-eyebrow">App-owned sources</div>
           <h3>Use real state, not just visible DOM</h3>
-          <p>Register redacted, timeout-safe resolvers for paginated tables, documents, maps, charts, calendars, or custom state so prompts include the right data.</p>
+          <p>Register redacted, timeout-safe resolvers for paginated tables, documents, maps, charts, calendars, or custom state so selected context resolves the right backing data.</p>
         </article>
         <article class="insight-card">
           <div class="insight-eyebrow">Any stack</div>
@@ -1134,11 +1134,14 @@ ctx.push(meta, text);</pre>
         <article class="step">
           <div class="step-num">3</div>
           <h3>Inject</h3>
-          <p>At the AI boundary, send <code>askable.toPromptContext()</code>, resolve app sources, or emit a Context packet. The assistant now knows what the user actually meant.</p>
-          <pre class="step-code">const context = await askable.toPromptContextAsync({
+          <p>At the AI boundary, package the user's question with prompt context, the selected packet, and app-owned sources. The assistant now knows what the user actually meant.</p>
+          <pre class="step-code">const request = await askable.toAgentRequest(question, {
+  packet: selectedPacket,
+  contextFromPacket: true,
+  selectionFromPacket: true,
   sources: ['accounts']
 });
-// → "User is focused on: metric: MRR, value: $128K"</pre>
+// → { question, context, packet, focus, timestamp }</pre>
         </article>
       </div>
     </section>
@@ -1184,7 +1187,7 @@ ctx.push(meta, text);</pre>
     <section id="integrations" class="section">
       <p class="section-label">Integrations</p>
       <h2 class="section-title">Plugs into your AI layer.</h2>
-      <p class="section-sub"><code>toPromptContext()</code> returns a plain string. Pass it to any LLM framework or API — no adapter needed.</p>
+      <p class="section-sub"><code>toAgentRequest()</code> returns a JSON-ready request with prompt text, packet data, selected source context, and tracing metadata.</p>
       <div class="pkg-grid" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
         <div class="pkg-card" style="cursor:default;">
           <div class="pkg-badge">Framework</div>
