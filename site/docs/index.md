@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.12.0**.
+> Current npm release: **v0.13.1**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,7 +59,16 @@ features:
   </video>
 </div>
 
-## Latest in v0.12.0
+## Latest in v0.13.1
+
+- remote Web MCP support with `createAskableMcpWebHandler()` for stateless Streamable HTTP endpoints
+- Web MCP production controls for authorization, CORS/preflight, response headers, and sanitized telemetry
+- MCP docs and homepage examples for connecting approved Claude and ChatGPT clients
+- server-side agent request validation with `isAskableAgentRequest()`
+- packet-backed agent requests that preserve structured source selections for downstream AI handlers
+- typed packet source selections and default packet sources based on selected interaction mode
+
+## Also in v0.12.0
 
 - lasso capture via `shape: 'lasso'` for freehand-selected page regions
 - generic `registerSource()` resolvers plus source helper factories for app-owned context
@@ -68,7 +77,7 @@ features:
 - agent request packaging with `toAgentRequest()`
 - source-backed live subscriptions with `subscribeAsync()`
 - point-path metadata on lasso Context packets
-- starter app dependency pins advanced to `^0.12.0`
+- starter app dependency pins advanced to `^0.13.1`
 - continued support for region/circle/text capture, MCP Context packets, and framework wrappers
 
 ## Interaction patterns
@@ -89,7 +98,7 @@ Every pattern can produce a prompt string with `toPromptContext()` or a structur
 
 Start here:
 
-- [What’s New in v0.12.0](/guide/whats-new)
+- [What’s New in v0.13.1](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [React interaction patterns](/guide/react#region-circle-and-lasso-capture)
 - [AI SDK integration patterns](/examples/ai-sdk)
