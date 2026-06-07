@@ -85,7 +85,9 @@ describe('createAskableTextSelectionCapture', () => {
 
   it('can persist selected text affordance after capture', () => {
     const ctx = createAskableContext();
+    const onSelectionChange = vi.fn();
     const capture = createAskableTextSelectionCapture(ctx, {
+      onSelectionChange,
       selectionAffordance: {
         label: 'Quoted text',
         className: 'custom-text-affordance',
@@ -114,10 +116,19 @@ describe('createAskableTextSelectionCapture', () => {
       },
       element: affordance,
     });
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    expect(onSelectionChange.mock.calls[0][0]).toMatchObject({
+      selection: {
+        text: 'Selected sentence.',
+        bounds: { x: 12, y: 20, width: 80, height: 18 },
+      },
+      element: affordance,
+    });
 
     capture.clearSelection();
     expect(document.getElementById('askable-text-selection-affordance')).toBeNull();
     expect(capture.getSelection()).toBeNull();
+    expect(onSelectionChange).toHaveBeenLastCalledWith(null);
 
     capture.destroy();
     ctx.destroy();
@@ -126,8 +137,10 @@ describe('createAskableTextSelectionCapture', () => {
   it('can dismiss a persisted selected text affordance', () => {
     const ctx = createAskableContext();
     const onDismiss = vi.fn();
+    const onSelectionChange = vi.fn();
     const capture = createAskableTextSelectionCapture(ctx, {
       source: { app: 'reader' },
+      onSelectionChange,
       selectionAffordance: {
         label: 'Quoted text',
         dismissible: true,
@@ -151,6 +164,7 @@ describe('createAskableTextSelectionCapture', () => {
 
     expect(document.getElementById('askable-text-selection-affordance')).toBeNull();
     expect(capture.getSelection()).toBeNull();
+    expect(onSelectionChange).toHaveBeenLastCalledWith(null);
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(onDismiss.mock.calls[0][0]).toMatchObject({
       source: { app: 'reader' },
@@ -206,6 +220,25 @@ describe('createAskableTextSelectionCapture', () => {
       bounds: { x: 12, y: 20, width: 80, height: 18 },
     });
     expect(input.value).toBe('');
+
+    capture.destroy();
+    ctx.destroy();
+  });
+
+  it('uses captureNow override selection change callbacks', () => {
+    const ctx = createAskableContext();
+    const onSelectionChange = vi.fn();
+    const capture = createAskableTextSelectionCapture(ctx);
+
+    selectText('Override callback text.');
+    capture.captureNow({ onSelectionChange });
+
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    expect(onSelectionChange.mock.calls[0][0]).toMatchObject({
+      selection: {
+        text: 'Override callback text.',
+      },
+    });
 
     capture.destroy();
     ctx.destroy();

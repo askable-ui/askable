@@ -77,6 +77,9 @@ export function useAskableTextSelectionCapture(
         }
         optionsRef.current.onCapture?.(packet, selection);
       },
+      onSelectionChange(state) {
+        optionsRef.current.onSelectionChange?.(state);
+      },
       onCancel() {
         handleRef.current = null;
         setActive(false);

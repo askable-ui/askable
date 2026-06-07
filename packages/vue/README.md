@@ -158,6 +158,8 @@ The result includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`,
 `cancel()`, `clearSelection()`, `getSelection()`, `destroy()`, `isActive()`,
 and `ctx`. Use `getSelection()` to read the current pinned packet, selection
 geometry, and affordance element.
+Use `onSelectionChange(state)` to mirror pinned context into external composer
+state.
 Pass `once: false` when the capture control should stay active for repeated
 region, circle, or lasso selections. The composable keeps `active` true until
 `cancel()` or `destroy()` runs.
@@ -195,6 +197,8 @@ The result includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`,
 `captureNow(overrides)`, `cancel()`, `clearSelection()`, `getSelection()`,
 `destroy()`, `isActive()`, and `ctx`. Use `getSelection()` to read the current
 pinned text packet, selected range metadata, and affordance element.
+Use `onSelectionChange(state)` to keep chat input state aligned with the pinned
+text selection.
 
 ### "Ask AI" button pattern
 

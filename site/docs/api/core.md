@@ -823,6 +823,7 @@ capture.start();
 | `theme` | `Partial<AskableRegionCaptureTheme>` | `ASKABLE_REGION_CAPTURE_THEME` | Overlay colors, selection fill/stroke, and lasso gradient/glow styling |
 | `selectionAffordance` | `boolean \| AskableRegionCaptureSelectionAffordanceOptions` | `false` | Keep selected geometry visible after capture, optionally with an anchored prompt |
 | `onCapture` | `(packet, selection) => void` | — | Called with the Context packet and selection geometry |
+| `onSelectionChange` | `(state) => void` | — | Called with the current pinned packet/selection/element, or `null` when cleared |
 | `onCancel` | `() => void` | — | Called when the capture is cancelled |
 | _...most `AskableContextPacketOptions`_ | | | Passed through to `toContextPacket()` |
 
@@ -848,6 +849,8 @@ geometry, and persisted affordance element. It returns `null` after
 `clearSelection()`, dismiss, cancel, or destroy. `lastSelection` values exposed
 by framework wrappers remain historical, while `getSelection()` reflects the
 currently pinned selected context.
+`onSelectionChange(state)` is the push-style equivalent for chat composers and
+stores that should mirror selected context automatically.
 
 Square captures are constrained to equal width and height. They serialize with
 `capture.mode: 'region'` and `target.metadata.shape: 'square'` so existing
@@ -917,6 +920,7 @@ selection.captureNow();
 | `theme` | `Partial<AskableTextSelectionCaptureTheme>` | `ASKABLE_TEXT_SELECTION_CAPTURE_THEME` | Selected-text mark and anchored prompt styling |
 | `selectionAffordance` | `boolean \| AskableTextSelectionCaptureAffordanceOptions` | `false` | Keep highlighted text visible after capture, optionally with an anchored prompt |
 | `onCapture` | `(packet, selection) => void` | — | Called with the Context packet and selected text details |
+| `onSelectionChange` | `(state) => void` | — | Called with the current pinned packet/selection/element, or `null` when cleared |
 | `onCancel` | `() => void` | — | Called when active capture is cancelled |
 | _...most `AskableContextPacketOptions`_ | | | Passed through to `toContextPacket()` |
 
@@ -933,6 +937,8 @@ Pass `dismissible: true` to add a built-in clear button. Use
 Use `getSelection()` on the handle to read the current pinned packet, selected
 text details, and persisted affordance element. It returns `null` after
 `clearSelection()`, dismiss, cancel, or destroy.
+Use `onSelectionChange(state)` when an external composer should mirror selected
+text context automatically.
 
 When browser range geometry is available, the selection includes aggregate
 `bounds` plus `rects` for multi-line selected text. Packets include

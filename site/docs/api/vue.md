@@ -245,6 +245,7 @@ capture.cancel();
 | `name` | `string` | Optional shared context name when `ctx` is not provided |
 | `events` | `AskableEvent[]` | Observation events for the underlying `useAskable()` context |
 | `onCapture` | `(packet, selection) => void` | Called after a region, circle, or lasso is accepted |
+| `onSelectionChange` | `(state) => void` | Called when pinned selected context changes or is cleared |
 | `onCancel` | `() => void` | Called after active capture is cancelled |
 
 **Returns:**
@@ -288,7 +289,8 @@ selection.cancel();
 ```
 
 **Options:** `root`, `minLength`, `debounce`, `once`, `dedupe`, `source`,
-`intent`, `ctx`, `name`, `events`, `onCapture`, and `onCancel`.
+`intent`, `ctx`, `name`, `events`, `onCapture`, `onSelectionChange`, and
+`onCancel`.
 
 **Returns:** `active`, `lastPacket`, `lastSelection`, `start(overrides?)`,
 `captureNow(overrides?)`, `cancel()`, `clearSelection()`, `getSelection()`,

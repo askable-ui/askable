@@ -108,6 +108,8 @@ reports active until `cancel()` or `destroy()` runs, and `clearSelection()`
 removes only the persisted selected-state UI. Use `getSelection()` to read the
 current pinned packet, geometry, and affordance element when a chat composer or
 external state store needs to stay aligned with the selected area.
+Use `onSelectionChange(state)` when that state should be pushed into your
+composer automatically; it receives `null` when the selection is cleared.
 
 ## Text Selection Capture
 
@@ -164,6 +166,8 @@ sync dismissed selected text with your chat composer state.
 Use `getSelection()` to read the current pinned text packet, selected range
 metadata, and affordance element. It returns `null` after `clearSelection()`,
 dismiss, cancel, or destroy.
+Use `onSelectionChange(state)` to mirror the current pinned text context into
+your own composer state; it receives `null` when the selection is cleared.
 
 ## API Reference
 
