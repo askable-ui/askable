@@ -81,6 +81,9 @@ export function useAskableRegionCapture(
         // was called still fires correctly.
         optionsRef.current.onCapture?.(packet, selection);
       },
+      onSelectionChange(state) {
+        optionsRef.current.onSelectionChange?.(state);
+      },
       onCancel() {
         setActive(false);
         optionsRef.current.onCancel?.();

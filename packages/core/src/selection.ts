@@ -126,6 +126,8 @@ export interface AskableTextSelectionCaptureOptions extends Omit<AskableContextP
   selectionAffordance?: boolean | AskableTextSelectionCaptureAffordanceOptions;
   /** Called after selected text is serialized to a Context packet. */
   onCapture?: (packet: WebContextPacket, selection: AskableTextSelectionCaptureSelection) => void;
+  /** Called whenever the pinned selection state changes or is cleared. */
+  onSelectionChange?: (state: AskableTextSelectionCaptureState | null) => void;
   /** Called when active selection capture is cancelled. */
   onCancel?: () => void;
 }
@@ -254,8 +256,9 @@ export function createAskableTextSelectionCapture(
       },
     });
 
-    currentSelection = { packet, selection };
-    renderSelectionAffordance(packet, selection);
+    const nextSelection: AskableTextSelectionCaptureState = { packet, selection };
+    renderSelectionAffordance(packet, selection, nextSelection);
+    setCurrentSelection(nextSelection, currentOptions.onSelectionChange);
     currentOptions.onCapture?.(packet, selection);
     if (currentOnce) stopListening();
     return packet;
@@ -301,7 +304,16 @@ export function createAskableTextSelectionCapture(
 
   const removeAffordance = (clearState = true) => {
     ownerDocument.getElementById(AFFORDANCE_ID)?.remove();
-    if (clearState) currentSelection = null;
+    if (clearState) setCurrentSelection(null);
+  };
+
+  const setCurrentSelection = (
+    state: AskableTextSelectionCaptureState | null,
+    onSelectionChange = options.onSelectionChange,
+  ) => {
+    if (currentSelection === state) return;
+    currentSelection = state;
+    onSelectionChange?.(state);
   };
 
   function stopListening() {
@@ -333,7 +345,11 @@ export function createAskableTextSelectionCapture(
     isActive: () => active,
   };
 
-  function renderSelectionAffordance(packet: WebContextPacket, selection: AskableTextSelectionCaptureSelection) {
+  function renderSelectionAffordance(
+    packet: WebContextPacket,
+    selection: AskableTextSelectionCaptureSelection,
+    state: AskableTextSelectionCaptureState,
+  ) {
     if (!selectionAffordance || selectionAffordance.persist === false || !selection.bounds) return;
     removeAffordance(false);
 
@@ -342,7 +358,7 @@ export function createAskableTextSelectionCapture(
       custom.id = custom.id || AFFORDANCE_ID;
       custom.setAttribute(AFFORDANCE_ATTR, 'true');
       ownerDocument.body.appendChild(custom);
-      currentSelection = { packet, selection, element: custom };
+      state.element = custom;
       return;
     }
 
@@ -370,7 +386,7 @@ export function createAskableTextSelectionCapture(
     if (selectionAffordance.dismissible) rootEl.appendChild(createDismissButton(packet, selection));
 
     ownerDocument.body.appendChild(rootEl);
-    currentSelection = { packet, selection, element: rootEl };
+    state.element = rootEl;
     if (prompt?.autoFocus !== false) focusPromptInput(rootEl);
   }
 

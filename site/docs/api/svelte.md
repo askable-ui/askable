@@ -264,6 +264,7 @@ onDestroy(capture.destroy);
 | `ctx` | `AskableContext` | Optional context to share with other Svelte stores/components |
 | `events` | `AskableEvent[]` | Observation events for the underlying store context |
 | `onCapture` | `(packet, selection) => void` | Called after a region, circle, or lasso is accepted |
+| `onSelectionChange` | `(state) => void` | Called when pinned selected context changes or is cleared |
 | `onCancel` | `() => void` | Called after active capture is cancelled |
 
 **Returns:**
@@ -309,7 +310,7 @@ selection.cancel();
 Always call `destroy()` in `onDestroy`.
 
 **Options:** `root`, `minLength`, `debounce`, `once`, `dedupe`, `source`,
-`intent`, `ctx`, `events`, `onCapture`, and `onCancel`.
+`intent`, `ctx`, `events`, `onCapture`, `onSelectionChange`, and `onCancel`.
 
 **Returns:** `active`, `lastPacket`, `lastSelection`, `start(overrides?)`,
 `captureNow(overrides?)`, `cancel()`, `clearSelection()`, `getSelection()`,

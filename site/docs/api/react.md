@@ -419,6 +419,7 @@ function DashboardCapture() {
 | `once` | `boolean` | Remove the overlay after the first accepted capture |
 | `theme` | `Partial<AskableRegionCaptureTheme>` | Override overlay colors, selection fill/stroke, and lasso gradient/glow styling |
 | `onCapture` | `(packet, selection) => void` | Called when the user completes a selection |
+| `onSelectionChange` | `(state) => void` | Called when pinned selected context changes or is cleared |
 | `onCancel` | `() => void` | Called when selection is cancelled |
 | `ctx` | `AskableContext` | Reuse an existing context |
 | `includeViewport` | `boolean` | Include visible annotated elements in the emitted packet |
@@ -473,7 +474,7 @@ function TextSelectionCapture() {
 ```
 
 **Options:** `root`, `minLength`, `debounce`, `once`, `dedupe`, `onCapture`,
-`onCancel`, `ctx`, and packet options such as `includeViewport`, `source`,
+`onSelectionChange`, `onCancel`, `ctx`, and packet options such as `includeViewport`, `source`,
 `intent`, `privacy`, and `provenance`.
 
 **Returns:** `ctx`, `active`, `lastPacket`, `lastSelection`, `start(overrides?)`,

@@ -381,7 +381,9 @@ describe('createAskableRegionCapture', () => {
 
   it('can persist a selected region affordance after capture', () => {
     const ctx = createAskableContext();
+    const onSelectionChange = vi.fn();
     const capture = createAskableRegionCapture(ctx, {
+      onSelectionChange,
       selectionAffordance: {
         label: 'Selected area',
         className: 'custom-affordance',
@@ -417,10 +419,19 @@ describe('createAskableRegionCapture', () => {
       },
       element: affordance,
     });
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    expect(onSelectionChange.mock.calls[0][0]).toMatchObject({
+      selection: {
+        shape: 'region',
+        bounds: { x: 10, y: 20, width: 70, height: 70 },
+      },
+      element: affordance,
+    });
 
     capture.clearSelection();
     expect(document.getElementById('askable-region-selection-affordance')).toBeNull();
     expect(capture.getSelection()).toBeNull();
+    expect(onSelectionChange).toHaveBeenLastCalledWith(null);
 
     capture.destroy();
     ctx.destroy();
@@ -429,8 +440,10 @@ describe('createAskableRegionCapture', () => {
   it('can dismiss a persisted selected region affordance', () => {
     const ctx = createAskableContext();
     const onDismiss = vi.fn();
+    const onSelectionChange = vi.fn();
     const capture = createAskableRegionCapture(ctx, {
       source: { app: 'dashboard' },
+      onSelectionChange,
       selectionAffordance: {
         label: 'Selected area',
         dismissible: true,
@@ -458,6 +471,7 @@ describe('createAskableRegionCapture', () => {
 
     expect(document.getElementById('askable-region-selection-affordance')).toBeNull();
     expect(capture.getSelection()).toBeNull();
+    expect(onSelectionChange).toHaveBeenLastCalledWith(null);
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(onDismiss.mock.calls[0][0]).toMatchObject({
       source: { app: 'dashboard' },

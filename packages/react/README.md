@@ -328,6 +328,8 @@ Use `selectionAffordance` to keep the selected area visible and optionally show
 an anchored prompt that focuses by default. Pass `dismissible: true` to include
 a built-in clear button. Call `capture.getSelection()` when the chat composer
 needs the current pinned packet, selection geometry, and affordance element.
+Use `onSelectionChange(state)` to mirror that pinned context into external
+state; it receives `null` when the selection is cleared.
 
 Use `once: false` when the capture control should stay active for repeated
 region, circle, or lasso selections. The hook keeps `active` true until
@@ -374,6 +376,8 @@ function SelectionTools() {
 `selection.getSelection()` returns the current pinned text packet, selected
 range metadata, and affordance element. It returns `null` after the selection is
 cleared, dismissed, cancelled, or destroyed.
+Use `onSelectionChange(state)` to keep chat input state aligned with the pinned
+text selection.
 
 ## License
 
