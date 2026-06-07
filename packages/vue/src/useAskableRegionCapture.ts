@@ -19,6 +19,7 @@ export interface UseAskableRegionCaptureResult {
   active: ReturnType<typeof ref<boolean>>;
   lastPacket: ReturnType<typeof shallowRef<WebContextPacket | null>>;
   lastSelection: ReturnType<typeof shallowRef<AskableRegionCaptureSelection | null>>;
+  selectionState: ReturnType<typeof shallowRef<AskableRegionCaptureState | null>>;
   start: (overrides?: Partial<AskableRegionCaptureOptions>) => void;
   cancel: () => void;
   clearSelection: () => void;
@@ -34,22 +35,26 @@ export function useAskableRegionCapture(
   const active = ref(false);
   const lastPacket = shallowRef<WebContextPacket | null>(null);
   const lastSelection = shallowRef<AskableRegionCaptureSelection | null>(null);
+  const selectionState = shallowRef<AskableRegionCaptureState | null>(null);
   let handle: AskableRegionCaptureHandle | null = null;
 
   function destroy() {
     handle?.destroy();
     handle = null;
     active.value = false;
+    selectionState.value = null;
   }
 
   function cancel() {
     handle?.cancel();
     handle = null;
     active.value = false;
+    selectionState.value = null;
   }
 
   function clearSelection() {
     handle?.clearSelection();
+    if (!handle) selectionState.value = null;
   }
 
   function getSelection() {
@@ -81,6 +86,10 @@ export function useAskableRegionCapture(
         active.value = false;
         currentOptions.onCancel?.();
       },
+      onSelectionChange(state) {
+        selectionState.value = state;
+        currentOptions.onSelectionChange?.(state);
+      },
     });
 
     handle.start();
@@ -98,6 +107,7 @@ export function useAskableRegionCapture(
     active,
     lastPacket,
     lastSelection,
+    selectionState,
     start,
     cancel,
     clearSelection,

@@ -274,6 +274,7 @@ onDestroy(capture.destroy);
 | `active` | `Readable<boolean>` | Whether the overlay is active |
 | `lastPacket` | `Readable<WebContextPacket \| null>` | Last captured Context packet |
 | `lastSelection` | `Readable<AskableRegionCaptureSelection \| null>` | Last raw region/circle/lasso selection geometry |
+| `selectionState` | `Readable<AskableRegionCaptureState \| null>` | Reactive pinned packet, selection, and selected-state affordance element for rendering confirmation UI |
 | `start` | `(overrides?) => void` | Starts capture, optionally overriding options for one capture |
 | `cancel` | `() => void` | Cancels the active overlay |
 | `clearSelection` | `() => void` | Removes the current persisted selected-state UI |
@@ -285,6 +286,10 @@ onDestroy(capture.destroy);
 For persistent capture tools, pass `once: false`. The overlay and `active` store
 stay on after each accepted capture until the user cancels or the store is
 destroyed.
+
+Use `selectionState` when a Svelte component should visibly confirm selected
+context or render an inline question input. It mirrors `getSelection()` and
+updates when capture pins, clears, or dismisses selected context.
 
 ---
 
@@ -312,6 +317,10 @@ Always call `destroy()` in `onDestroy`.
 **Options:** `root`, `minLength`, `debounce`, `once`, `dedupe`, `source`,
 `intent`, `ctx`, `events`, `onCapture`, `onSelectionChange`, and `onCancel`.
 
-**Returns:** `active`, `lastPacket`, `lastSelection`, `start(overrides?)`,
-`captureNow(overrides?)`, `cancel()`, `clearSelection()`, `getSelection()`,
-`destroy()`, `isActive()`, and `ctx`.
+**Returns:** `active`, `lastPacket`, `lastSelection`, `selectionState`,
+`start(overrides?)`, `captureNow(overrides?)`, `cancel()`, `clearSelection()`,
+`getSelection()`, `destroy()`, `isActive()`, and `ctx`.
+
+Use `selectionState` for app-rendered selected-text confirmation and inline
+chat inputs. It mirrors `getSelection()` and updates when text context is
+pinned, cleared, dismissed, cancelled, or destroyed.

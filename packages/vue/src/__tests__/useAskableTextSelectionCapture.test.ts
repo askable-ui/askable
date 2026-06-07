@@ -100,15 +100,22 @@ describe('useAskableTextSelectionCapture (Vue)', () => {
           intent: 'summarize selection',
         });
         const packet = computed(() => capture.lastPacket.value ? JSON.stringify(capture.lastPacket.value) : 'null');
+        const selectionState = computed(() =>
+          capture.selectionState.value ? JSON.stringify(capture.selectionState.value.selection) : 'null'
+        );
         return {
           packet,
+          selectionState,
           captureNow: capture.captureNow,
+          clearSelection: capture.clearSelection,
         };
       },
       template: `
         <div>
           <button type="button" @click="captureNow()">Capture</button>
+          <button type="button" data-testid="clear" @click="clearSelection()">Clear</button>
           <span data-testid="packet">{{ packet }}</span>
+          <span data-testid="selection-state">{{ selectionState }}</span>
         </div>
       `,
     });
@@ -121,6 +128,7 @@ describe('useAskableTextSelectionCapture (Vue)', () => {
     await flushAll();
 
     const packet = JSON.parse(wrapper.find('[data-testid="packet"]').text());
+    const selectionState = JSON.parse(wrapper.find('[data-testid="selection-state"]').text());
     expect(packet).toMatchObject({
       source: { app: 'vue-test' },
       capture: {
@@ -134,5 +142,13 @@ describe('useAskableTextSelectionCapture (Vue)', () => {
       },
       privacy: { consent: 'explicit' },
     });
+    expect(selectionState).toMatchObject({
+      text: 'Selected Vue copy',
+      selector: '#vue-selection',
+    });
+
+    await wrapper.find('[data-testid="clear"]').trigger('click');
+    await flushAll();
+    expect(wrapper.find('[data-testid="selection-state"]').text()).toBe('null');
   });
 });

@@ -45,6 +45,7 @@ export interface AskableRegionCaptureStore {
   active: ReturnType<typeof readonly>;
   lastPacket: ReturnType<typeof readonly>;
   lastSelection: ReturnType<typeof readonly>;
+  selectionState: ReturnType<typeof readonly>;
   ctx: AskableContext;
   start: (overrides?: Partial<AskableRegionCaptureOptions>) => void;
   cancel: () => void;
@@ -60,6 +61,7 @@ export interface AskableTextSelectionCaptureStore {
   active: ReturnType<typeof readonly>;
   lastPacket: ReturnType<typeof readonly>;
   lastSelection: ReturnType<typeof readonly>;
+  selectionState: ReturnType<typeof readonly>;
   ctx: AskableContext;
   start: (overrides?: Partial<AskableTextSelectionCaptureOptions>) => void;
   captureNow: (overrides?: Partial<AskableTextSelectionCaptureOptions>) => WebContextPacket | null;
@@ -205,12 +207,14 @@ export function createAskableRegionCaptureStore(
   const _active = writable(false);
   const _lastPacket = writable<WebContextPacket | null>(null);
   const _lastSelection = writable<AskableRegionCaptureSelection | null>(null);
+  const _selectionState = writable<AskableRegionCaptureState | null>(null);
   let handle: AskableRegionCaptureHandle | null = null;
 
   function destroyCapture() {
     handle?.destroy();
     handle = null;
     _active.set(false);
+    _selectionState.set(null);
   }
 
   function start(overrides?: Partial<AskableRegionCaptureOptions>) {
@@ -238,6 +242,10 @@ export function createAskableRegionCaptureStore(
         _active.set(false);
         currentOptions.onCancel?.();
       },
+      onSelectionChange(state) {
+        _selectionState.set(state);
+        currentOptions.onSelectionChange?.(state);
+      },
     });
 
     handle.start();
@@ -248,10 +256,12 @@ export function createAskableRegionCaptureStore(
     handle?.cancel();
     handle = null;
     _active.set(false);
+    _selectionState.set(null);
   }
 
   function clearSelection() {
     handle?.clearSelection();
+    if (!handle) _selectionState.set(null);
   }
 
   function getSelection() {
@@ -271,6 +281,7 @@ export function createAskableRegionCaptureStore(
     active: readonly(_active),
     lastPacket: readonly(_lastPacket),
     lastSelection: readonly(_lastSelection),
+    selectionState: readonly(_selectionState),
     ctx: askable.ctx,
     start,
     cancel,
@@ -289,12 +300,14 @@ export function createAskableTextSelectionCaptureStore(
   const _active = writable(false);
   const _lastPacket = writable<WebContextPacket | null>(null);
   const _lastSelection = writable<AskableTextSelectionCaptureSelection | null>(null);
+  const _selectionState = writable<AskableTextSelectionCaptureState | null>(null);
   let handle: AskableTextSelectionCaptureHandle | null = null;
 
   function destroyCapture() {
     handle?.destroy();
     handle = null;
     _active.set(false);
+    _selectionState.set(null);
   }
 
   function ensureHandle(overrides?: Partial<AskableTextSelectionCaptureOptions>) {
@@ -320,6 +333,10 @@ export function createAskableTextSelectionCaptureStore(
         _active.set(false);
         currentOptions.onCancel?.();
       },
+      onSelectionChange(state) {
+        _selectionState.set(state);
+        currentOptions.onSelectionChange?.(state);
+      },
     });
 
     return handle;
@@ -344,10 +361,12 @@ export function createAskableTextSelectionCaptureStore(
     handle?.cancel();
     handle = null;
     _active.set(false);
+    _selectionState.set(null);
   }
 
   function clearSelection() {
     handle?.clearSelection();
+    if (!handle) _selectionState.set(null);
   }
 
   function getSelection() {
@@ -367,6 +386,7 @@ export function createAskableTextSelectionCaptureStore(
     active: readonly(_active),
     lastPacket: readonly(_lastPacket),
     lastSelection: readonly(_lastSelection),
+    selectionState: readonly(_selectionState),
     ctx: askable.ctx,
     start,
     captureNow,
