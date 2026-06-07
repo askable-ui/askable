@@ -285,6 +285,7 @@ user meant; the source resolver supplies what the app knows.
 | Field | Type | Description |
 |---|---|---|
 | `kind` | `string` | Optional category, such as `collection`, `document`, `chart`, `map`, or `custom` |
+| `modes` | `readonly AskableContextSourceMode[]` | Advertised modes for source pickers, inspectors, chat controls, and MCP bridges |
 | `describe` | `string \| () => string \| Promise<string>` | Human-readable source description |
 | `getState` | `() => unknown \| Promise<unknown>` | Current state, such as filters, sort, page, route, or viewport |
 | `modes` | `Record<string, value \| resolver>` | Named slices for `summary`, `selected`, `all`, or app-defined source modes |
@@ -313,7 +314,11 @@ unregister or notify a newer source with the same id.
 
 Use `ctx.hasSource(id)` and `ctx.listSources()` to drive source pickers,
 diagnostics, or chat controls without resolving source data. `listSources()`
-returns each source id, optional kind, registration time, and last update time.
+returns each source id, optional kind, advertised modes, registration time, and
+last update time. Helper factories infer modes from configured resolvers:
+collection sources can advertise `summary`, `visible`, `selected`, and `all`;
+generic sources advertise keys from their `modes` map. Pass
+`advertisedModes` to expose custom slices such as `next-actions` or `export`.
 
 Use `ctx.resolveSources()` when an agent bridge, chat endpoint, or debug surface
 needs source data as structured objects instead of prompt text. It resolves all

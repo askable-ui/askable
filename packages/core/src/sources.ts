@@ -23,6 +23,8 @@ export function isAskablePacketSourceSelection(
 export interface AskableCreateSourceOptions<TData = unknown, TState = unknown> {
   /** Source category. Examples: "document", "collection", "chart", "map", "canvas". */
   kind?: string;
+  /** Additional modes this source advertises for pickers and agent controls. */
+  advertisedModes?: readonly AskableContextSourceMode[];
   /** Human-readable source description. */
   describe?: string | (() => string | Promise<string>);
   /** Current app state for this source. */
@@ -49,6 +51,8 @@ export interface AskableCollectionSourceData<TItem = unknown> {
 export interface AskableCreateCollectionSourceOptions<TItem = unknown, TState = unknown> {
   /** Source category. Defaults to "collection". */
   kind?: string;
+  /** Additional modes this collection advertises for pickers and agent controls. */
+  advertisedModes?: readonly AskableContextSourceMode[];
   /** Human-readable source description. */
   describe?: string | (() => string | Promise<string>);
   /** Current collection state, such as filters, sort, page, route, or query. */
@@ -96,6 +100,7 @@ export function createAskableSource<TData = unknown, TState = unknown>(
 
   return {
     kind: options.kind,
+    modes: inferGenericSourceModes(options),
     describe: options.describe,
     getState: options.state === undefined
       ? undefined
@@ -132,6 +137,7 @@ export function createAskableCollectionSource<TItem = unknown, TState = unknown>
 ): AskableContextSource {
   return {
     kind: options.kind ?? 'collection',
+    modes: inferCollectionSourceModes(options),
     describe: options.describe,
     getState: options.getState,
     resolve: async (request) => {
@@ -142,6 +148,43 @@ export function createAskableCollectionSource<TItem = unknown, TState = unknown>
     },
     sanitize: options.sanitize,
   };
+}
+
+function normalizeSourceModes(
+  modes: Iterable<AskableContextSourceMode | undefined>
+): AskableContextSourceMode[] | undefined {
+  const normalized: AskableContextSourceMode[] = [];
+  const seen = new Set<string>();
+  for (const mode of modes) {
+    const value = typeof mode === 'string' ? mode.trim() as AskableContextSourceMode : undefined;
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    normalized.push(value);
+  }
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function inferGenericSourceModes<TData, TState>(
+  options: AskableCreateSourceOptions<TData, TState>
+): AskableContextSourceMode[] | undefined {
+  return normalizeSourceModes([
+    ...(options.state === undefined ? [] : ['state' as const]),
+    ...(Object.keys(options.modes ?? {}) as AskableContextSourceMode[]),
+    ...(options.advertisedModes ?? []),
+  ]);
+}
+
+function inferCollectionSourceModes<TItem, TState>(
+  options: AskableCreateCollectionSourceOptions<TItem, TState>
+): AskableContextSourceMode[] | undefined {
+  return normalizeSourceModes([
+    ...(options.getState ? ['state' as const] : []),
+    ...(options.getSummary ? ['summary' as const] : []),
+    ...(options.getVisibleItems ? ['visible' as const] : []),
+    ...(options.getSelectedItems ? ['selected' as const] : []),
+    ...(options.getItems ? ['all' as const] : []),
+    ...(options.advertisedModes ?? []),
+  ]);
 }
 
 async function resolveSourceValue<T>(value: AskableSourceValue<T>): Promise<T> {

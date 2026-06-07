@@ -40,6 +40,8 @@ describe('createAskablePageSource', () => {
     const ctx = createAskableContext();
     ctx.registerSource('page', createAskablePageSource({ includeLinks: true }));
 
+    expect(ctx.listSources()[0].modes).toEqual(['state', 'summary', 'selected', 'all']);
+
     const source = await ctx.resolveSource('page', { mode: 'summary' });
 
     expect(source).toMatchObject({

@@ -344,6 +344,7 @@ export class AskableContextImpl implements AskableContext {
     return Array.from(this.sources.entries()).map(([id, entry]) => ({
       id,
       ...(entry.source.kind ? { kind: entry.source.kind } : {}),
+      ...(entry.source.modes?.length ? { modes: [...entry.source.modes] } : {}),
       registeredAt: entry.registeredAt,
       updatedAt: entry.updatedAt,
     }));

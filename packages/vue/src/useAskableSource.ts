@@ -43,6 +43,9 @@ export function useAskableSource(
       get kind() {
         return source.kind;
       },
+      get modes() {
+        return source.modes;
+      },
       describe: () => {
         const describe = source.describe;
         if (typeof describe === 'function') return describe();
