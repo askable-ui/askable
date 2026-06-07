@@ -22,6 +22,15 @@ export interface AskableRegionCaptureSelection {
   endedAt: string;
 }
 
+export interface AskableRegionCaptureState {
+  /** Captured Context packet for the current selected region, circle, square, or lasso. */
+  packet: WebContextPacket;
+  /** Raw selected geometry for the current selected context. */
+  selection: AskableRegionCaptureSelection;
+  /** Persisted selected-state affordance root, when `selectionAffordance` rendered one. */
+  element?: HTMLElement;
+}
+
 export interface AskableRegionCaptureGradientStop {
   offset: string;
   color: string;
@@ -147,6 +156,7 @@ export interface AskableRegionCaptureHandle {
   start(): void;
   cancel(): void;
   clearSelection(): void;
+  getSelection(): AskableRegionCaptureState | null;
   destroy(): void;
   isActive(): boolean;
 }
@@ -214,6 +224,7 @@ export function createAskableRegionCapture(
       start: () => undefined,
       cancel: () => undefined,
       clearSelection: () => undefined,
+      getSelection: () => null,
       destroy: () => undefined,
       isActive: () => false,
     };
@@ -228,6 +239,7 @@ export function createAskableRegionCapture(
   let startedAt = '';
   let pointerType: string | undefined;
   let active = false;
+  let currentSelection: AskableRegionCaptureState | null = null;
 
   const shape = options.shape ?? 'region';
   const minSize = options.minSize ?? 6;
@@ -235,8 +247,9 @@ export function createAskableRegionCapture(
   const theme = resolveRegionCaptureTheme(options.theme);
   const selectionAffordance = resolveSelectionAffordance(options.selectionAffordance);
 
-  const removeAffordance = () => {
+  const removeAffordance = (clearState = true) => {
     document.getElementById(AFFORDANCE_ID)?.remove();
+    if (clearState) currentSelection = null;
   };
 
   const removeOverlay = () => {
@@ -436,6 +449,7 @@ export function createAskableRegionCapture(
       if (lassoSvg) lassoSvg.style.display = 'none';
     }
 
+    currentSelection = { packet, selection };
     renderSelectionAffordance(packet, selection);
     options.onCapture?.(packet, selection);
   }
@@ -454,6 +468,7 @@ export function createAskableRegionCapture(
     },
     cancel,
     clearSelection: removeAffordance,
+    getSelection: () => currentSelection,
     destroy() {
       removeOverlay();
       removeAffordance();
@@ -463,13 +478,14 @@ export function createAskableRegionCapture(
 
   function renderSelectionAffordance(packet: WebContextPacket, selection: AskableRegionCaptureSelection) {
     if (!selectionAffordance || selectionAffordance.persist === false) return;
-    removeAffordance();
+    removeAffordance(false);
 
     const custom = selectionAffordance.render?.(packet, selection);
     if (custom instanceof HTMLElement) {
       custom.id = custom.id || AFFORDANCE_ID;
       custom.setAttribute(AFFORDANCE_ATTR, selection.shape);
       document.body.appendChild(custom);
+      currentSelection = { packet, selection, element: custom };
       return;
     }
 
@@ -499,6 +515,7 @@ export function createAskableRegionCapture(
     if (selectionAffordance.dismissible) root.appendChild(createDismissButton(packet, selection));
 
     document.body.appendChild(root);
+    currentSelection = { packet, selection, element: root };
     if (prompt?.autoFocus !== false) focusPromptInput(root);
   }
 

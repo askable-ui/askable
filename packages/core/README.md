@@ -105,7 +105,9 @@ Pass `dismissible: true` to add a small built-in clear button, or use
 your own selected-context UX.
 Set `once: false` to keep the overlay mounted for repeated captures. The handle
 reports active until `cancel()` or `destroy()` runs, and `clearSelection()`
-removes only the persisted selected-state UI.
+removes only the persisted selected-state UI. Use `getSelection()` to read the
+current pinned packet, geometry, and affordance element when a chat composer or
+external state store needs to stay aligned with the selected area.
 
 ## Text Selection Capture
 
@@ -159,6 +161,9 @@ Prompt inputs focus and select their initial value by default. Pass
 `prompt.autoFocus: false` to opt out.
 Pass `dismissible: true` to add a built-in clear button, or use `onDismiss` to
 sync dismissed selected text with your chat composer state.
+Use `getSelection()` to read the current pinned text packet, selected range
+metadata, and affordance element. It returns `null` after `clearSelection()`,
+dismiss, cancel, or destroy.
 
 ## API Reference
 

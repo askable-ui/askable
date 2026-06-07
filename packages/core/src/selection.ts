@@ -17,6 +17,15 @@ export interface AskableTextSelectionCaptureSelection {
   capturedAt: string;
 }
 
+export interface AskableTextSelectionCaptureState {
+  /** Captured Context packet for the current selected text. */
+  packet: WebContextPacket;
+  /** Raw selected text details for the current selected context. */
+  selection: AskableTextSelectionCaptureSelection;
+  /** Persisted selected-text affordance root, when `selectionAffordance` rendered one. */
+  element?: HTMLElement;
+}
+
 export type AskableTextSelectionCaptureStyle = Partial<CSSStyleDeclaration>;
 
 export interface AskableTextSelectionCapturePromptOptions {
@@ -126,6 +135,7 @@ export interface AskableTextSelectionCaptureHandle {
   captureNow(overrides?: Partial<AskableTextSelectionCaptureOptions>): WebContextPacket | null;
   cancel(): void;
   clearSelection(): void;
+  getSelection(): AskableTextSelectionCaptureState | null;
   destroy(): void;
   isActive(): boolean;
 }
@@ -178,6 +188,7 @@ export function createAskableTextSelectionCapture(
       captureNow: () => null,
       cancel: () => undefined,
       clearSelection: () => undefined,
+      getSelection: () => null,
       destroy: () => undefined,
       isActive: () => false,
     };
@@ -195,6 +206,7 @@ export function createAskableTextSelectionCapture(
   let timer: ReturnType<typeof setTimeout> | null = null;
   let lastInteraction: LastInteraction = { gesture: 'programmatic' };
   let lastSignature = '';
+  let currentSelection: AskableTextSelectionCaptureState | null = null;
 
   const clearTimer = () => {
     if (timer !== null) {
@@ -242,6 +254,7 @@ export function createAskableTextSelectionCapture(
       },
     });
 
+    currentSelection = { packet, selection };
     renderSelectionAffordance(packet, selection);
     currentOptions.onCapture?.(packet, selection);
     if (currentOnce) stopListening();
@@ -286,8 +299,9 @@ export function createAskableTextSelectionCapture(
     ownerDocument.addEventListener('keyup', onKeyUp);
   }
 
-  const removeAffordance = () => {
+  const removeAffordance = (clearState = true) => {
     ownerDocument.getElementById(AFFORDANCE_ID)?.remove();
+    if (clearState) currentSelection = null;
   };
 
   function stopListening() {
@@ -314,19 +328,21 @@ export function createAskableTextSelectionCapture(
     captureNow: capture,
     cancel,
     clearSelection: removeAffordance,
+    getSelection: () => currentSelection,
     destroy,
     isActive: () => active,
   };
 
   function renderSelectionAffordance(packet: WebContextPacket, selection: AskableTextSelectionCaptureSelection) {
     if (!selectionAffordance || selectionAffordance.persist === false || !selection.bounds) return;
-    removeAffordance();
+    removeAffordance(false);
 
     const custom = selectionAffordance.render?.(packet, selection);
     if (custom instanceof HTMLElement) {
       custom.id = custom.id || AFFORDANCE_ID;
       custom.setAttribute(AFFORDANCE_ATTR, 'true');
       ownerDocument.body.appendChild(custom);
+      currentSelection = { packet, selection, element: custom };
       return;
     }
 
@@ -354,6 +370,7 @@ export function createAskableTextSelectionCapture(
     if (selectionAffordance.dismissible) rootEl.appendChild(createDismissButton(packet, selection));
 
     ownerDocument.body.appendChild(rootEl);
+    currentSelection = { packet, selection, element: rootEl };
     if (prompt?.autoFocus !== false) focusPromptInput(rootEl);
   }
 

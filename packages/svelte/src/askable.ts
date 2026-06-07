@@ -17,9 +17,11 @@ import type {
   AskableRegionCaptureHandle,
   AskableRegionCaptureOptions,
   AskableRegionCaptureSelection,
+  AskableRegionCaptureState,
   AskableTextSelectionCaptureHandle,
   AskableTextSelectionCaptureOptions,
   AskableTextSelectionCaptureSelection,
+  AskableTextSelectionCaptureState,
   AskableResolvedContextSource,
   WebContextPacket,
 } from '@askable-ui/core';
@@ -47,6 +49,7 @@ export interface AskableRegionCaptureStore {
   start: (overrides?: Partial<AskableRegionCaptureOptions>) => void;
   cancel: () => void;
   clearSelection: () => void;
+  getSelection: () => AskableRegionCaptureState | null;
   destroy: () => void;
   isActive: () => boolean;
 }
@@ -62,6 +65,7 @@ export interface AskableTextSelectionCaptureStore {
   captureNow: (overrides?: Partial<AskableTextSelectionCaptureOptions>) => WebContextPacket | null;
   cancel: () => void;
   clearSelection: () => void;
+  getSelection: () => AskableTextSelectionCaptureState | null;
   destroy: () => void;
   isActive: () => boolean;
 }
@@ -250,6 +254,10 @@ export function createAskableRegionCaptureStore(
     handle?.clearSelection();
   }
 
+  function getSelection() {
+    return handle?.getSelection() ?? null;
+  }
+
   function destroy() {
     destroyCapture();
     askable.destroy();
@@ -267,6 +275,7 @@ export function createAskableRegionCaptureStore(
     start,
     cancel,
     clearSelection,
+    getSelection,
     destroy,
     isActive,
   };
@@ -341,6 +350,10 @@ export function createAskableTextSelectionCaptureStore(
     handle?.clearSelection();
   }
 
+  function getSelection() {
+    return handle?.getSelection() ?? null;
+  }
+
   function destroy() {
     destroyCapture();
     askable.destroy();
@@ -359,6 +372,7 @@ export function createAskableTextSelectionCaptureStore(
     captureNow,
     cancel,
     clearSelection,
+    getSelection,
     destroy,
     isActive,
   };

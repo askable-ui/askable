@@ -256,6 +256,8 @@ capture.cancel();
 | `lastSelection` | `ShallowRef<AskableRegionCaptureSelection \| null>` | Last raw region/circle/lasso selection geometry |
 | `start` | `(overrides?) => void` | Starts capture, optionally overriding options for one capture |
 | `cancel` | `() => void` | Cancels the active overlay |
+| `clearSelection` | `() => void` | Removes the current persisted selected-state UI |
+| `getSelection` | `() => AskableRegionCaptureState \| null` | Reads the currently pinned packet, selection, and affordance element |
 | `destroy` | `() => void` | Cancels capture and removes overlay listeners |
 | `isActive` | `() => boolean` | Reads the current overlay state |
 | `ctx` | `AskableContext` | Shared or provided context instance |
@@ -289,4 +291,5 @@ selection.cancel();
 `intent`, `ctx`, `name`, `events`, `onCapture`, and `onCancel`.
 
 **Returns:** `active`, `lastPacket`, `lastSelection`, `start(overrides?)`,
-`captureNow(overrides?)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
+`captureNow(overrides?)`, `cancel()`, `clearSelection()`, `getSelection()`,
+`destroy()`, `isActive()`, and `ctx`.

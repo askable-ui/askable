@@ -87,6 +87,7 @@ describe('useAskableTextSelectionCapture', () => {
             Capture
           </button>
           <span data-testid="packet">{capture.lastPacket ? JSON.stringify(capture.lastPacket) : 'null'}</span>
+          <span data-testid="selected">{capture.getSelection() ? JSON.stringify(capture.getSelection()?.selection) : 'null'}</span>
         </div>
       );
     }
@@ -100,6 +101,7 @@ describe('useAskableTextSelectionCapture', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('packet').textContent).not.toBe('null');
+      expect(screen.getByTestId('selected').textContent).not.toBe('null');
     });
 
     const packet = JSON.parse(screen.getByTestId('packet').textContent!);
@@ -115,6 +117,10 @@ describe('useAskableTextSelectionCapture', () => {
         selector: '#react-selection',
       },
       privacy: { consent: 'explicit' },
+    });
+    expect(JSON.parse(screen.getByTestId('selected').textContent!)).toMatchObject({
+      text: 'Selected React copy',
+      selector: '#react-selection',
     });
   });
 });

@@ -40,6 +40,7 @@ export type {
   AskableRegionCaptureSelection,
   AskableRegionCaptureSelectionAffordanceOptions,
   AskableRegionCaptureShape,
+  AskableRegionCaptureState,
   AskableRegionCaptureStyle,
   AskableRegionCaptureTheme,
 } from './capture.js';
@@ -49,6 +50,7 @@ export type {
   AskableTextSelectionCaptureOptions,
   AskableTextSelectionCapturePromptOptions,
   AskableTextSelectionCaptureSelection,
+  AskableTextSelectionCaptureState,
   AskableTextSelectionCaptureStyle,
   AskableTextSelectionCaptureTheme,
 } from './selection.js';

@@ -434,6 +434,8 @@ function DashboardCapture() {
 | `lastSelection` | `AskableRegionCaptureSelection \| null` | Last captured geometry; lasso includes point path metadata |
 | `start(overrides?)` | `function` | Start capture, optionally overriding shape/intent/etc. |
 | `cancel()` | `function` | Cancel the active overlay |
+| `clearSelection()` | `function` | Remove the current persisted selected-state UI |
+| `getSelection()` | `function` | Read the currently pinned packet, selection, and affordance element |
 | `destroy()` | `function` | Remove the overlay without firing cancel |
 | `isActive()` | `function` | Read active state from the live capture handle |
 
@@ -475,4 +477,5 @@ function TextSelectionCapture() {
 `intent`, `privacy`, and `provenance`.
 
 **Returns:** `ctx`, `active`, `lastPacket`, `lastSelection`, `start(overrides?)`,
-`captureNow(overrides?)`, `cancel()`, `destroy()`, and `isActive()`.
+`captureNow(overrides?)`, `cancel()`, `clearSelection()`, `getSelection()`,
+`destroy()`, and `isActive()`.
