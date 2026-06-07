@@ -224,6 +224,16 @@ describe('createAskableTextSelectionCaptureStore', () => {
       text: 'Selected Svelte copy',
       selector: '#svelte-selection',
     });
+    expect(get(capture.selectionState)).toMatchObject({
+      packet,
+      selection: {
+        text: 'Selected Svelte copy',
+        selector: '#svelte-selection',
+      },
+    });
+
+    capture.clearSelection();
+    expect(get(capture.selectionState)).toBeNull();
 
     capture.destroy();
   });
@@ -382,6 +392,16 @@ describe('createAskableRegionCaptureStore', () => {
       },
       privacy: { consent: 'explicit' },
     });
+    expect(get(capture.selectionState)).toMatchObject({
+      packet: get(capture.lastPacket),
+      selection: {
+        shape: 'region',
+        bounds: { x: 20, y: 30, width: 60, height: 60 },
+      },
+    });
+
+    capture.clearSelection();
+    expect(get(capture.selectionState)).toBeNull();
 
     capture.destroy();
   });

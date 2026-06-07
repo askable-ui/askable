@@ -145,7 +145,7 @@ Starts an explicit region, circle, or lasso selection overlay and exposes the ca
     source: { app: 'analytics-dashboard' },
     intent: 'answer with this selected area as context',
   });
-  const { active, lastPacket } = capture;
+  const { active, lastPacket, selectionState } = capture;
 
   onDestroy(capture.destroy);
 </script>
@@ -160,12 +160,22 @@ Starts an explicit region, circle, or lasso selection overlay and exposes the ca
 {#if $lastPacket}
   <pre>{JSON.stringify($lastPacket, null, 2)}</pre>
 {/if}
+
+{#if $selectionState}
+  <SelectionComposer
+    packet={$selectionState.packet}
+    selection={$selectionState.selection}
+    onClear={capture.clearSelection}
+  />
+{/if}
 ```
 
-The store includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`,
-`cancel()`, `clearSelection()`, `getSelection()`, `destroy()`, `isActive()`,
-and `ctx`. Use `getSelection()` to read the current pinned packet, selection
-geometry, and affordance element.
+The store includes `active`, `lastPacket`, `lastSelection`, `selectionState`,
+`start(overrides)`, `cancel()`, `clearSelection()`, `getSelection()`,
+`destroy()`, `isActive()`, and `ctx`. Use `selectionState` to render selected
+context confirmation, inline question input, or a custom composer. Use
+`getSelection()` when non-render code needs the current pinned packet,
+selection geometry, and affordance element.
 Use `onSelectionChange(state)` to mirror pinned context into external composer
 state.
 Pass `once: false` when the capture control should stay active for repeated
@@ -187,7 +197,7 @@ Svelte stores.
     source: { app: 'analytics-dashboard' },
     intent: 'answer using the highlighted text',
   });
-  const { active, lastPacket } = selection;
+  const { active, lastPacket, selectionState } = selection;
 
   onDestroy(selection.destroy);
 </script>
@@ -201,12 +211,22 @@ Svelte stores.
 {#if $lastPacket}
   <pre>{JSON.stringify($lastPacket, null, 2)}</pre>
 {/if}
+
+{#if $selectionState}
+  <SelectedTextComposer
+    packet={$selectionState.packet}
+    selection={$selectionState.selection}
+    onClear={selection.clearSelection}
+  />
+{/if}
 ```
 
-The store includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`,
-`captureNow(overrides)`, `cancel()`, `clearSelection()`, `getSelection()`,
-`destroy()`, `isActive()`, and `ctx`. Use `getSelection()` to read the current
-pinned text packet, selected range metadata, and affordance element.
+The store includes `active`, `lastPacket`, `lastSelection`, `selectionState`,
+`start(overrides)`, `captureNow(overrides)`, `cancel()`, `clearSelection()`,
+`getSelection()`, `destroy()`, `isActive()`, and `ctx`. Use `selectionState` to
+render selected-text confirmation and inline chat inputs. Use `getSelection()`
+when imperative code needs the current pinned text packet, selected range
+metadata, and affordance element.
 Use `onSelectionChange(state)` to keep chat input state aligned with the pinned
 text selection.
 

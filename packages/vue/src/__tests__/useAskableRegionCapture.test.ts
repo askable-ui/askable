@@ -36,17 +36,24 @@ describe('useAskableRegionCapture (Vue)', () => {
           intent: 'explain selected area',
         });
         const packet = computed(() => capture.lastPacket.value ? JSON.stringify(capture.lastPacket.value) : 'null');
+        const selectionState = computed(() =>
+          capture.selectionState.value ? JSON.stringify(capture.selectionState.value.selection) : 'null'
+        );
         return {
           active: capture.active,
           packet,
+          selectionState,
           start: capture.start,
+          clearSelection: capture.clearSelection,
         };
       },
       template: `
         <div>
           <button type="button" @click="start()">Start</button>
+          <button type="button" data-testid="clear" @click="clearSelection()">Clear</button>
           <span data-testid="active">{{ String(active) }}</span>
           <span data-testid="packet">{{ packet }}</span>
+          <span data-testid="selection-state">{{ selectionState }}</span>
         </div>
       `,
     });
@@ -66,6 +73,7 @@ describe('useAskableRegionCapture (Vue)', () => {
 
     expect(wrapper.find('[data-testid="active"]').text()).toBe('false');
     const packet = JSON.parse(wrapper.find('[data-testid="packet"]').text());
+    const selectionState = JSON.parse(wrapper.find('[data-testid="selection-state"]').text());
     expect(packet).toMatchObject({
       protocol: 'askable.context',
       source: { app: 'vue-test' },
@@ -80,6 +88,14 @@ describe('useAskableRegionCapture (Vue)', () => {
       },
       privacy: { consent: 'explicit' },
     });
+    expect(selectionState).toMatchObject({
+      shape: 'region',
+      bounds: { x: 20, y: 30, width: 60, height: 60 },
+    });
+
+    await wrapper.find('[data-testid="clear"]').trigger('click');
+    await flushAll();
+    expect(wrapper.find('[data-testid="selection-state"]').text()).toBe('null');
   });
 
   it('supports circle capture overrides at start time', async () => {

@@ -151,13 +151,21 @@ const selectedContext = computed(() =>
   <button @click="capture.start({ shape: 'lasso' })">Lasso area</button>
   <button v-if="capture.active.value" @click="capture.cancel()">Cancel</button>
   <pre v-if="selectedContext">{{ selectedContext }}</pre>
+  <SelectionComposer
+    v-if="capture.selectionState.value"
+    :packet="capture.selectionState.value.packet"
+    :selection="capture.selectionState.value.selection"
+    @clear="capture.clearSelection()"
+  />
 </template>
 ```
 
-The result includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`,
-`cancel()`, `clearSelection()`, `getSelection()`, `destroy()`, `isActive()`,
-and `ctx`. Use `getSelection()` to read the current pinned packet, selection
-geometry, and affordance element.
+The result includes `active`, `lastPacket`, `lastSelection`, `selectionState`,
+`start(overrides)`, `cancel()`, `clearSelection()`, `getSelection()`,
+`destroy()`, `isActive()`, and `ctx`. Use `selectionState` to render selected
+context confirmation, inline question input, or a custom composer. Use
+`getSelection()` when non-render code needs the current pinned packet,
+selection geometry, and affordance element.
 Use `onSelectionChange(state)` to mirror pinned context into external composer
 state.
 Pass `once: false` when the capture control should stay active for repeated
@@ -190,13 +198,21 @@ const selectedContext = computed(() =>
   <button @click="selection.captureNow()">Send selected text</button>
   <button v-if="selection.active.value" @click="selection.cancel()">Cancel</button>
   <pre v-if="selectedContext">{{ selectedContext }}</pre>
+  <SelectedTextComposer
+    v-if="selection.selectionState.value"
+    :packet="selection.selectionState.value.packet"
+    :selection="selection.selectionState.value.selection"
+    @clear="selection.clearSelection()"
+  />
 </template>
 ```
 
-The result includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`,
-`captureNow(overrides)`, `cancel()`, `clearSelection()`, `getSelection()`,
-`destroy()`, `isActive()`, and `ctx`. Use `getSelection()` to read the current
-pinned text packet, selected range metadata, and affordance element.
+The result includes `active`, `lastPacket`, `lastSelection`, `selectionState`,
+`start(overrides)`, `captureNow(overrides)`, `cancel()`, `clearSelection()`,
+`getSelection()`, `destroy()`, `isActive()`, and `ctx`. Use `selectionState` to
+render selected-text confirmation and inline chat inputs. Use `getSelection()`
+when imperative code needs the current pinned text packet, selected range
+metadata, and affordance element.
 Use `onSelectionChange(state)` to keep chat input state aligned with the pinned
 text selection.
 
