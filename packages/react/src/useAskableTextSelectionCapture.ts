@@ -19,6 +19,7 @@ export interface UseAskableTextSelectionCaptureResult {
   active: boolean;
   lastPacket: WebContextPacket | null;
   lastSelection: AskableTextSelectionCaptureSelection | null;
+  selectionState: AskableTextSelectionCaptureState | null;
   start: (overrides?: Partial<AskableTextSelectionCaptureOptions>) => void;
   captureNow: (overrides?: Partial<AskableTextSelectionCaptureOptions>) => WebContextPacket | null;
   cancel: () => void;
@@ -37,6 +38,7 @@ export function useAskableTextSelectionCapture(
   const [active, setActive] = useState(false);
   const [lastPacket, setLastPacket] = useState<WebContextPacket | null>(null);
   const [lastSelection, setLastSelection] = useState<AskableTextSelectionCaptureSelection | null>(null);
+  const [selectionState, setSelectionState] = useState<AskableTextSelectionCaptureState | null>(null);
 
   useEffect(() => {
     optionsRef.current = options;
@@ -46,12 +48,14 @@ export function useAskableTextSelectionCapture(
     handleRef.current?.destroy();
     handleRef.current = null;
     setActive(false);
+    setSelectionState(null);
   }, []);
 
   const cancel = useCallback(() => {
     handleRef.current?.cancel();
     handleRef.current = null;
     setActive(false);
+    setSelectionState(null);
   }, []);
 
   const clearSelection = useCallback(() => {
@@ -78,6 +82,7 @@ export function useAskableTextSelectionCapture(
         optionsRef.current.onCapture?.(packet, selection);
       },
       onSelectionChange(state) {
+        setSelectionState(state);
         optionsRef.current.onSelectionChange?.(state);
       },
       onCancel() {
@@ -115,6 +120,7 @@ export function useAskableTextSelectionCapture(
     active,
     lastPacket,
     lastSelection,
+    selectionState,
     start,
     captureNow,
     cancel,

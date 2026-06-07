@@ -19,6 +19,7 @@ export interface UseAskableRegionCaptureResult {
   active: boolean;
   lastPacket: WebContextPacket | null;
   lastSelection: AskableRegionCaptureSelection | null;
+  selectionState: AskableRegionCaptureState | null;
   start: (overrides?: Partial<AskableRegionCaptureOptions>) => void;
   cancel: () => void;
   clearSelection: () => void;
@@ -36,6 +37,7 @@ export function useAskableRegionCapture(
   const [active, setActive] = useState(false);
   const [lastPacket, setLastPacket] = useState<WebContextPacket | null>(null);
   const [lastSelection, setLastSelection] = useState<AskableRegionCaptureSelection | null>(null);
+  const [selectionState, setSelectionState] = useState<AskableRegionCaptureState | null>(null);
 
   useEffect(() => {
     optionsRef.current = options;
@@ -45,12 +47,14 @@ export function useAskableRegionCapture(
     handleRef.current?.destroy();
     handleRef.current = null;
     setActive(false);
+    setSelectionState(null);
   }, []);
 
   const cancel = useCallback(() => {
     handleRef.current?.cancel();
     handleRef.current = null;
     setActive(false);
+    setSelectionState(null);
   }, []);
 
   const clearSelection = useCallback(() => {
@@ -82,6 +86,7 @@ export function useAskableRegionCapture(
         optionsRef.current.onCapture?.(packet, selection);
       },
       onSelectionChange(state) {
+        setSelectionState(state);
         optionsRef.current.onSelectionChange?.(state);
       },
       onCancel() {
@@ -104,6 +109,7 @@ export function useAskableRegionCapture(
     active,
     lastPacket,
     lastSelection,
+    selectionState,
     start,
     cancel,
     clearSelection,

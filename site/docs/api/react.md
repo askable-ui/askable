@@ -405,6 +405,13 @@ function DashboardCapture() {
         Lasso area
       </button>
       {capture.active && <button onClick={capture.cancel}>Cancel</button>}
+      {capture.selectionState && (
+        <SelectedContextComposer
+          packet={capture.selectionState.packet}
+          selection={capture.selectionState.selection}
+          onClear={capture.clearSelection}
+        />
+      )}
     </>
   );
 }
@@ -433,6 +440,7 @@ function DashboardCapture() {
 | `active` | `boolean` | Whether the overlay is currently active |
 | `lastPacket` | `WebContextPacket \| null` | Last captured packet |
 | `lastSelection` | `AskableRegionCaptureSelection \| null` | Last captured geometry; lasso includes point path metadata |
+| `selectionState` | `AskableRegionCaptureState \| null` | Reactive pinned packet, selection, and selected-state affordance element for rendering confirmation UI |
 | `start(overrides?)` | `function` | Start capture, optionally overriding shape/intent/etc. |
 | `cancel()` | `function` | Cancel the active overlay |
 | `clearSelection()` | `function` | Remove the current persisted selected-state UI |
@@ -468,6 +476,13 @@ function TextSelectionCapture() {
       <button onClick={() => selection.start()}>Watch selection</button>
       <button onClick={() => selection.captureNow()}>Send selected text</button>
       {selection.active && <button onClick={selection.cancel}>Cancel</button>}
+      {selection.selectionState && (
+        <SelectedTextComposer
+          packet={selection.selectionState.packet}
+          selection={selection.selectionState.selection}
+          onClear={selection.clearSelection}
+        />
+      )}
     </>
   );
 }
@@ -477,6 +492,10 @@ function TextSelectionCapture() {
 `onSelectionChange`, `onCancel`, `ctx`, and packet options such as `includeViewport`, `source`,
 `intent`, `privacy`, and `provenance`.
 
-**Returns:** `ctx`, `active`, `lastPacket`, `lastSelection`, `start(overrides?)`,
-`captureNow(overrides?)`, `cancel()`, `clearSelection()`, `getSelection()`,
-`destroy()`, and `isActive()`.
+**Returns:** `ctx`, `active`, `lastPacket`, `lastSelection`, `selectionState`,
+`start(overrides?)`, `captureNow(overrides?)`, `cancel()`, `clearSelection()`,
+`getSelection()`, `destroy()`, and `isActive()`.
+
+Use `selectionState` when a React component should visibly confirm selected
+context or show an inline question input. It mirrors `getSelection()` but
+updates reactively when capture pins, clears, or dismisses selected context.

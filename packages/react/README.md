@@ -316,6 +316,13 @@ function RegionTools() {
         Lasso area
       </button>
       {capture.active && <button onClick={capture.cancel}>Cancel</button>}
+      {capture.selectionState && (
+        <SelectionComposer
+          packet={capture.selectionState.packet}
+          selection={capture.selectionState.selection}
+          onClear={capture.clearSelection}
+        />
+      )}
     </>
   );
 }
@@ -326,8 +333,10 @@ The lasso overlay ships with the core `ASKABLE_REGION_CAPTURE_THEME`. Pass
 region/circle fill, or lasso gradient for your app.
 Use `selectionAffordance` to keep the selected area visible and optionally show
 an anchored prompt that focuses by default. Pass `dismissible: true` to include
-a built-in clear button. Call `capture.getSelection()` when the chat composer
-needs the current pinned packet, selection geometry, and affordance element.
+a built-in clear button. Read `capture.selectionState` when React should render
+a confirmation chip, inline question input, or custom composer for the pinned
+selection. Call `capture.getSelection()` when non-render code needs the current
+pinned packet, selection geometry, and affordance element.
 Use `onSelectionChange(state)` to mirror that pinned context into external
 state; it receives `null` when the selection is cleared.
 
@@ -368,14 +377,23 @@ function SelectionTools() {
       <button onClick={() => selection.start()}>Watch selection</button>
       <button onClick={() => selection.captureNow()}>Send selected text</button>
       {selection.active && <button onClick={selection.cancel}>Cancel</button>}
+      {selection.selectionState && (
+        <SelectedTextComposer
+          packet={selection.selectionState.packet}
+          selection={selection.selectionState.selection}
+          onClear={selection.clearSelection}
+        />
+      )}
     </>
   );
 }
 ```
 
-`selection.getSelection()` returns the current pinned text packet, selected
-range metadata, and affordance element. It returns `null` after the selection is
-cleared, dismissed, cancelled, or destroyed.
+`selection.selectionState` updates when text is pinned, cleared, dismissed,
+cancelled, or destroyed. Use it for app-rendered selected-text confirmation and
+inline chat inputs. `selection.getSelection()` returns the same current pinned
+text packet, selected range metadata, and affordance element for imperative
+code.
 Use `onSelectionChange(state)` to keep chat input state aligned with the pinned
 text selection.
 
