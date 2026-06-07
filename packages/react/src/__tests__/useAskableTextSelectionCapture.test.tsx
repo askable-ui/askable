@@ -88,6 +88,7 @@ describe('useAskableTextSelectionCapture', () => {
           </button>
           <span data-testid="packet">{capture.lastPacket ? JSON.stringify(capture.lastPacket) : 'null'}</span>
           <span data-testid="selected">{capture.getSelection() ? JSON.stringify(capture.getSelection()?.selection) : 'null'}</span>
+          <span data-testid="selection-state">{capture.selectionState ? JSON.stringify(capture.selectionState.selection) : 'null'}</span>
         </div>
       );
     }
@@ -102,6 +103,7 @@ describe('useAskableTextSelectionCapture', () => {
     await waitFor(() => {
       expect(screen.getByTestId('packet').textContent).not.toBe('null');
       expect(screen.getByTestId('selected').textContent).not.toBe('null');
+      expect(screen.getByTestId('selection-state').textContent).not.toBe('null');
     });
 
     const packet = JSON.parse(screen.getByTestId('packet').textContent!);
@@ -121,6 +123,49 @@ describe('useAskableTextSelectionCapture', () => {
     expect(JSON.parse(screen.getByTestId('selected').textContent!)).toMatchObject({
       text: 'Selected React copy',
       selector: '#react-selection',
+    });
+    expect(JSON.parse(screen.getByTestId('selection-state').textContent!)).toMatchObject({
+      text: 'Selected React copy',
+      selector: '#react-selection',
+    });
+  });
+
+  it('exposes pinned selected text state and clears it from React state', async () => {
+    function Consumer() {
+      const capture = useAskableTextSelectionCapture({
+        selectionAffordance: true,
+      });
+
+      return (
+        <div>
+          <button type="button" onClick={() => capture.captureNow()}>
+            Capture
+          </button>
+          <button type="button" onClick={() => capture.clearSelection()}>
+            Clear
+          </button>
+          <span data-testid="selection-state">{capture.selectionState?.selection.text ?? 'null'}</span>
+        </div>
+      );
+    }
+
+    render(<Consumer />);
+    selectText('Pinned React text');
+
+    act(() => {
+      fireEvent.click(screen.getByText('Capture'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('selection-state').textContent).toBe('Pinned React text');
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByText('Clear'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('selection-state').textContent).toBe('null');
     });
   });
 });

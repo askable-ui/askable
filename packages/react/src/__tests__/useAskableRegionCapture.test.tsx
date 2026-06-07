@@ -33,6 +33,7 @@ describe('useAskableRegionCapture', () => {
           <span data-testid="active">{String(capture.active)}</span>
           <span data-testid="packet">{capture.lastPacket ? JSON.stringify(capture.lastPacket) : 'null'}</span>
           <span data-testid="selected">{capture.getSelection() ? JSON.stringify(capture.getSelection()?.selection) : 'null'}</span>
+          <span data-testid="selection-state">{capture.selectionState ? JSON.stringify(capture.selectionState.selection) : 'null'}</span>
         </div>
       );
     }
@@ -56,6 +57,7 @@ describe('useAskableRegionCapture', () => {
       expect(screen.getByTestId('active').textContent).toBe('false');
       expect(screen.getByTestId('packet').textContent).not.toBe('null');
       expect(screen.getByTestId('selected').textContent).not.toBe('null');
+      expect(screen.getByTestId('selection-state').textContent).not.toBe('null');
     });
 
     const packet = JSON.parse(screen.getByTestId('packet').textContent!);
@@ -76,6 +78,53 @@ describe('useAskableRegionCapture', () => {
     expect(JSON.parse(screen.getByTestId('selected').textContent!)).toMatchObject({
       shape: 'region',
       bounds: { x: 20, y: 30, width: 60, height: 60 },
+    });
+    expect(JSON.parse(screen.getByTestId('selection-state').textContent!)).toMatchObject({
+      shape: 'region',
+      bounds: { x: 20, y: 30, width: 60, height: 60 },
+    });
+  });
+
+  it('exposes pinned selection state and clears it from React state', async () => {
+    function Consumer() {
+      const capture = useAskableRegionCapture({ selectionAffordance: true });
+
+      return (
+        <div>
+          <button type="button" onClick={() => capture.start()}>
+            Start
+          </button>
+          <button type="button" onClick={() => capture.clearSelection()}>
+            Clear
+          </button>
+          <span data-testid="selection-state">{capture.selectionState ? capture.selectionState.selection.shape : 'null'}</span>
+        </div>
+      );
+    }
+
+    render(<Consumer />);
+
+    act(() => {
+      fireEvent.click(screen.getByText('Start'));
+    });
+
+    const overlay = document.getElementById('askable-region-capture')!;
+    act(() => {
+      overlay.dispatchEvent(pointerEvent('pointerdown', 20, 30));
+      overlay.dispatchEvent(pointerEvent('pointermove', 80, 90));
+      overlay.dispatchEvent(pointerEvent('pointerup', 80, 90));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('selection-state').textContent).toBe('region');
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByText('Clear'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('selection-state').textContent).toBe('null');
     });
   });
 
