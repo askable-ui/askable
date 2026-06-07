@@ -843,6 +843,11 @@ Pass `dismissible: true` to add a small built-in clear button. Use
 `dismissClassName`, `dismissStyle`, `dismissLabel`, and
 `onDismiss(packet, selection)` when the selected-context UI needs to update
 external chat composer state.
+Use `getSelection()` on the handle to read the current pinned packet, selection
+geometry, and persisted affordance element. It returns `null` after
+`clearSelection()`, dismiss, cancel, or destroy. `lastSelection` values exposed
+by framework wrappers remain historical, while `getSelection()` reflects the
+currently pinned selected context.
 
 Square captures are constrained to equal width and height. They serialize with
 `capture.mode: 'region'` and `target.metadata.shape: 'square'` so existing
@@ -853,7 +858,7 @@ editors. The overlay stays mounted after each accepted capture, and
 `isActive()` remains `true` until `cancel()` or `destroy()` is called.
 
 **Returns:** `AskableRegionCaptureHandle` — object with `start()`, `cancel()`,
-`clearSelection()`, `destroy()`, and `isActive()` methods.
+`clearSelection()`, `getSelection()`, `destroy()`, and `isActive()` methods.
 
 ---
 
@@ -925,14 +930,17 @@ keep focus where it is.
 Pass `dismissible: true` to add a built-in clear button. Use
 `dismissClassName`, `dismissStyle`, `dismissLabel`, and
 `onDismiss(packet, selection)` to keep external selected-context state in sync.
+Use `getSelection()` on the handle to read the current pinned packet, selected
+text details, and persisted affordance element. It returns `null` after
+`clearSelection()`, dismiss, cancel, or destroy.
 
 When browser range geometry is available, the selection includes aggregate
 `bounds` plus `rects` for multi-line selected text. Packets include
 `target.metadata.rectCount` when rects are present.
 
 **Returns:** `AskableTextSelectionCaptureHandle` — object with `start()`,
-`captureNow()`, `cancel()`, `clearSelection()`, `destroy()`, and `isActive()`
-methods.
+`captureNow()`, `cancel()`, `clearSelection()`, `getSelection()`, `destroy()`,
+and `isActive()` methods.
 
 ---
 

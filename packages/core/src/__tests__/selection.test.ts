@@ -103,9 +103,21 @@ describe('createAskableTextSelectionCapture', () => {
     expect(affordance.style.opacity).toBe('0.9');
     expect(affordance.textContent).toContain('Quoted text');
     expect(affordance.querySelectorAll('span').length).toBeGreaterThanOrEqual(2);
+    expect(capture.getSelection()).toMatchObject({
+      packet: {
+        capture: { mode: 'text-selection' },
+        target: { text: 'Selected sentence.' },
+      },
+      selection: {
+        text: 'Selected sentence.',
+        bounds: { x: 12, y: 20, width: 80, height: 18 },
+      },
+      element: affordance,
+    });
 
     capture.clearSelection();
     expect(document.getElementById('askable-text-selection-affordance')).toBeNull();
+    expect(capture.getSelection()).toBeNull();
 
     capture.destroy();
     ctx.destroy();
@@ -138,6 +150,7 @@ describe('createAskableTextSelectionCapture', () => {
     button.click();
 
     expect(document.getElementById('askable-text-selection-affordance')).toBeNull();
+    expect(capture.getSelection()).toBeNull();
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(onDismiss.mock.calls[0][0]).toMatchObject({
       source: { app: 'reader' },

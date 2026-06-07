@@ -5,6 +5,7 @@ import {
   type AskableRegionCaptureHandle,
   type AskableRegionCaptureOptions,
   type AskableRegionCaptureSelection,
+  type AskableRegionCaptureState,
   type WebContextPacket,
 } from '@askable-ui/core';
 import { useAskable, type UseAskableOptions } from './useAskable.js';
@@ -21,6 +22,7 @@ export interface UseAskableRegionCaptureResult {
   start: (overrides?: Partial<AskableRegionCaptureOptions>) => void;
   cancel: () => void;
   clearSelection: () => void;
+  getSelection: () => AskableRegionCaptureState | null;
   destroy: () => void;
   isActive: () => boolean;
 }
@@ -48,6 +50,10 @@ export function useAskableRegionCapture(
 
   function clearSelection() {
     handle?.clearSelection();
+  }
+
+  function getSelection() {
+    return handle?.getSelection() ?? null;
   }
 
   function start(overrides?: Partial<AskableRegionCaptureOptions>) {
@@ -95,6 +101,7 @@ export function useAskableRegionCapture(
     start,
     cancel,
     clearSelection,
+    getSelection,
     destroy,
     isActive,
   };

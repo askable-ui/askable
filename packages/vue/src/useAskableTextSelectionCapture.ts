@@ -5,6 +5,7 @@ import {
   type AskableTextSelectionCaptureHandle,
   type AskableTextSelectionCaptureOptions,
   type AskableTextSelectionCaptureSelection,
+  type AskableTextSelectionCaptureState,
   type WebContextPacket,
 } from '@askable-ui/core';
 import { useAskable, type UseAskableOptions } from './useAskable.js';
@@ -22,6 +23,7 @@ export interface UseAskableTextSelectionCaptureResult {
   captureNow: (overrides?: Partial<AskableTextSelectionCaptureOptions>) => WebContextPacket | null;
   cancel: () => void;
   clearSelection: () => void;
+  getSelection: () => AskableTextSelectionCaptureState | null;
   destroy: () => void;
   isActive: () => boolean;
 }
@@ -49,6 +51,10 @@ export function useAskableTextSelectionCapture(
 
   function clearSelection() {
     handle?.clearSelection();
+  }
+
+  function getSelection() {
+    return handle?.getSelection() ?? null;
   }
 
   function ensureHandle(overrides?: Partial<AskableTextSelectionCaptureOptions>) {
@@ -109,6 +115,7 @@ export function useAskableTextSelectionCapture(
     captureNow,
     cancel,
     clearSelection,
+    getSelection,
     destroy,
     isActive,
   };

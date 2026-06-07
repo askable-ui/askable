@@ -407,9 +407,20 @@ describe('createAskableRegionCapture', () => {
     expect(affordance.style.height).toBe('70px');
     expect(affordance.style.opacity).toBe('0.92');
     expect(affordance.textContent).toContain('Selected area');
+    expect(capture.getSelection()).toMatchObject({
+      packet: {
+        capture: { mode: 'region' },
+      },
+      selection: {
+        shape: 'region',
+        bounds: { x: 10, y: 20, width: 70, height: 70 },
+      },
+      element: affordance,
+    });
 
     capture.clearSelection();
     expect(document.getElementById('askable-region-selection-affordance')).toBeNull();
+    expect(capture.getSelection()).toBeNull();
 
     capture.destroy();
     ctx.destroy();
@@ -446,6 +457,7 @@ describe('createAskableRegionCapture', () => {
     button.click();
 
     expect(document.getElementById('askable-region-selection-affordance')).toBeNull();
+    expect(capture.getSelection()).toBeNull();
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(onDismiss.mock.calls[0][0]).toMatchObject({
       source: { app: 'dashboard' },
@@ -528,9 +540,17 @@ describe('createAskableRegionCapture', () => {
     expect(affordance.style.left).toBe('10px');
     expect(affordance.style.top).toBe('20px');
     expect(path.getAttribute('d')).toBe('M0 0 L20 25 L60 15 L70 55');
+    expect(capture.getSelection()).toMatchObject({
+      selection: {
+        shape: 'lasso',
+        bounds: { x: 10, y: 20, width: 70, height: 55 },
+      },
+      element: affordance,
+    });
 
     capture.destroy();
     expect(document.getElementById('askable-region-selection-affordance')).toBeNull();
+    expect(capture.getSelection()).toBeNull();
     ctx.destroy();
   });
 });

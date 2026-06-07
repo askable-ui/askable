@@ -162,7 +162,10 @@ Starts an explicit region, circle, or lasso selection overlay and exposes the ca
 {/if}
 ```
 
-The store includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
+The store includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`,
+`cancel()`, `clearSelection()`, `getSelection()`, `destroy()`, `isActive()`,
+and `ctx`. Use `getSelection()` to read the current pinned packet, selection
+geometry, and affordance element.
 Pass `once: false` when the capture control should stay active for repeated
 region, circle, or lasso selections. The store keeps `active` true until
 `cancel()` or `destroy()` runs.
@@ -198,7 +201,10 @@ Svelte stores.
 {/if}
 ```
 
-The store includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`, `captureNow(overrides)`, `cancel()`, `destroy()`, `isActive()`, and `ctx`.
+The store includes `active`, `lastPacket`, `lastSelection`, `start(overrides)`,
+`captureNow(overrides)`, `cancel()`, `clearSelection()`, `getSelection()`,
+`destroy()`, `isActive()`, and `ctx`. Use `getSelection()` to read the current
+pinned text packet, selected range metadata, and affordance element.
 
 ### "Ask AI" button pattern
 

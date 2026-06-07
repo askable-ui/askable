@@ -326,7 +326,8 @@ The lasso overlay ships with the core `ASKABLE_REGION_CAPTURE_THEME`. Pass
 region/circle fill, or lasso gradient for your app.
 Use `selectionAffordance` to keep the selected area visible and optionally show
 an anchored prompt that focuses by default. Pass `dismissible: true` to include
-a built-in clear button.
+a built-in clear button. Call `capture.getSelection()` when the chat composer
+needs the current pinned packet, selection geometry, and affordance element.
 
 Use `once: false` when the capture control should stay active for repeated
 region, circle, or lasso selections. The hook keeps `active` true until
@@ -369,6 +370,10 @@ function SelectionTools() {
   );
 }
 ```
+
+`selection.getSelection()` returns the current pinned text packet, selected
+range metadata, and affordance element. It returns `null` after the selection is
+cleared, dismissed, cancelled, or destroyed.
 
 ## License
 

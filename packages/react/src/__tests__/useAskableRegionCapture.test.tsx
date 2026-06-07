@@ -32,6 +32,7 @@ describe('useAskableRegionCapture', () => {
           </button>
           <span data-testid="active">{String(capture.active)}</span>
           <span data-testid="packet">{capture.lastPacket ? JSON.stringify(capture.lastPacket) : 'null'}</span>
+          <span data-testid="selected">{capture.getSelection() ? JSON.stringify(capture.getSelection()?.selection) : 'null'}</span>
         </div>
       );
     }
@@ -54,6 +55,7 @@ describe('useAskableRegionCapture', () => {
     await waitFor(() => {
       expect(screen.getByTestId('active').textContent).toBe('false');
       expect(screen.getByTestId('packet').textContent).not.toBe('null');
+      expect(screen.getByTestId('selected').textContent).not.toBe('null');
     });
 
     const packet = JSON.parse(screen.getByTestId('packet').textContent!);
@@ -70,6 +72,10 @@ describe('useAskableRegionCapture', () => {
         metadata: { shape: 'region', pointerType: 'mouse' },
       },
       privacy: { consent: 'explicit' },
+    });
+    expect(JSON.parse(screen.getByTestId('selected').textContent!)).toMatchObject({
+      shape: 'region',
+      bounds: { x: 20, y: 30, width: 60, height: 60 },
     });
   });
 
