@@ -48,6 +48,8 @@ export interface AskableCollectionSourceData<TItem = unknown> {
   truncated?: boolean;
 }
 
+export type AskableCollectionItemId = string | number;
+
 export interface AskableCreateCollectionSourceOptions<TItem = unknown, TState = unknown> {
   /** Source category. Defaults to "collection". */
   kind?: string;
@@ -63,6 +65,23 @@ export interface AskableCreateCollectionSourceOptions<TItem = unknown, TState = 
   getVisibleItems?: () => readonly TItem[] | Promise<readonly TItem[]>;
   /** Items explicitly selected by the user or active app state. */
   getSelectedItems?: (request: AskableContextSourceResolveRequest) => readonly TItem[] | Promise<readonly TItem[]>;
+  /**
+   * Stable item id used to resolve packet-selected ids or labels back to full
+   * app-owned collection items. This lets selected DOM/region/lasso packets
+   * include records beyond the currently visible page.
+   */
+  getItemId?: (
+    item: TItem,
+    request: AskableContextSourceResolveRequest,
+  ) => AskableCollectionItemId | null | undefined;
+  /**
+   * Optional mapper for app-specific selected item metadata. By default Askable
+   * reads primitive ids and common object keys such as `id`, `key`, and `label`.
+   */
+  getSelectionItemId?: (
+    selectionItem: unknown,
+    request: AskableContextSourceResolveRequest,
+  ) => AskableCollectionItemId | null | undefined;
   /** Lightweight aggregate summary for prompt budgets. */
   getSummary?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
   /** Fallback for custom modes. */
@@ -181,7 +200,7 @@ function inferCollectionSourceModes<TItem, TState>(
     ...(options.getState ? ['state' as const] : []),
     ...(options.getSummary ? ['summary' as const] : []),
     ...(options.getVisibleItems ? ['visible' as const] : []),
-    ...(options.getSelectedItems ? ['selected' as const] : []),
+    ...(options.getSelectedItems || (options.getItems && options.getItemId) ? ['selected' as const] : []),
     ...(options.getItems ? ['all' as const] : []),
     ...(options.advertisedModes ?? []),
   ]);
@@ -236,6 +255,21 @@ async function resolveCustomCollectionMode<TItem, TState>(
     return collectionItemsResult(await options.getSelectedItems(request), options, request);
   }
 
+  if (request.mode === 'selected' && options.getItems && options.getItemId) {
+    const selectedIds = extractSelectedCollectionItemIds(request, options);
+    if (selectedIds.size > 0) {
+      const items = await options.getItems();
+      return collectionItemsResult(
+        items.filter((item) => {
+          const id = options.getItemId?.(item, request);
+          return id !== null && id !== undefined && selectedIds.has(normalizeCollectionItemId(id));
+        }),
+        options,
+        request,
+      );
+    }
+  }
+
   if (request.mode === 'all' && options.getItems) {
     return collectionItemsResult(await options.getItems(), options, request);
   }
@@ -245,6 +279,85 @@ async function resolveCustomCollectionMode<TItem, TState>(
   }
 
   return undefined;
+}
+
+function extractSelectedCollectionItemIds<TItem>(
+  request: AskableContextSourceResolveRequest,
+  options: AskableCreateCollectionSourceOptions<TItem>,
+): Set<string> {
+  const ids = new Set<string>();
+
+  function add(value: unknown): void {
+    const id = extractCollectionItemId(value, request, options.getSelectionItemId);
+    if (id === null || id === undefined) return;
+    ids.add(normalizeCollectionItemId(id));
+  }
+
+  function addMany(value: unknown): void {
+    if (Array.isArray(value)) {
+      value.forEach(add);
+      return;
+    }
+    add(value);
+  }
+
+  function readContainer(value: unknown): void {
+    if (!value || typeof value !== 'object') {
+      addMany(value);
+      return;
+    }
+
+    const record = value as Record<string, unknown>;
+    for (const key of ['selectedIds', 'selectedItemIds', 'ids', 'itemIds', 'selectedKeys', 'keys']) {
+      addMany(record[key]);
+    }
+    for (const key of ['selectedItems', 'items']) {
+      const selectedItems = record[key];
+      if (Array.isArray(selectedItems)) selectedItems.forEach(add);
+    }
+  }
+
+  readContainer(request.selection);
+  if (isAskablePacketSourceSelection(request.selection)) {
+    readContainer(request.selection.target?.metadata);
+  }
+
+  return ids;
+}
+
+function extractCollectionItemId(
+  value: unknown,
+  request: AskableContextSourceResolveRequest,
+  getSelectionItemId?: (
+    selectionItem: unknown,
+    request: AskableContextSourceResolveRequest,
+  ) => AskableCollectionItemId | null | undefined,
+): AskableCollectionItemId | null | undefined {
+  const custom = getSelectionItemId?.(value, request);
+  if (custom !== null && custom !== undefined) return custom;
+  if (typeof value === 'string' || typeof value === 'number') return value;
+  if (!value || typeof value !== 'object') return undefined;
+
+  const record = value as Record<string, unknown>;
+  for (const key of ['id', 'key', 'label']) {
+    const candidate = record[key];
+    if (typeof candidate === 'string' || typeof candidate === 'number') return candidate;
+  }
+
+  const meta = record.meta;
+  if (meta && typeof meta === 'object') {
+    const metaRecord = meta as Record<string, unknown>;
+    for (const key of ['id', 'key', 'label']) {
+      const candidate = metaRecord[key];
+      if (typeof candidate === 'string' || typeof candidate === 'number') return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+function normalizeCollectionItemId(id: AskableCollectionItemId): string {
+  return String(id);
 }
 
 async function collectionItemsResult<TItem>(

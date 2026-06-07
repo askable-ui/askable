@@ -60,18 +60,31 @@
     /* NAV */
     nav {
       position: sticky;
-      top: 0;
+      top: 1.25rem;
       z-index: 40;
-      height: 52px;
+      width: min(calc(100% - 2rem), 1280px);
+      height: auto;
+      min-height: 3rem;
+      margin: 1.25rem auto 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 2rem;
-      background: rgba(255,255,255,0.88);
-      backdrop-filter: blur(10px) saturate(1.4);
-      border-bottom: 1px solid rgba(0,0,0,0.06);
+      gap: 1rem;
+      padding: 0;
+      background: transparent;
+      border: 0;
     }
     .nav-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      min-height: 2.8rem;
+      padding: 0 .95rem;
+      border: 1px solid rgba(0,0,0,0.07);
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 12px 34px rgba(15,23,42,0.1);
+      backdrop-filter: blur(16px) saturate(1.25);
       font-size: 1.05rem;
       font-weight: 800;
       color: var(--ink);
@@ -79,13 +92,24 @@
       letter-spacing: -.04em;
     }
     .nav-logo .spark { color: var(--accent); }
-    .nav-links { display: flex; align-items: center; gap: .3rem; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      min-height: 3rem;
+      padding: .32rem .38rem;
+      border: 1px solid rgba(0,0,0,0.07);
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 12px 34px rgba(15,23,42,0.1);
+      backdrop-filter: blur(16px) saturate(1.25);
+    }
     .nav-link {
       text-decoration: none;
-      color: var(--ink-3);
+      color: var(--ink-2);
       font-size: .84rem;
-      font-weight: 500;
-      padding: .38rem .72rem;
+      font-weight: 600;
+      padding: .5rem .78rem;
       border-radius: var(--radius-pill);
       transition: color .15s, background .15s;
     }
@@ -101,7 +125,7 @@
       background: var(--ink);
       color: #fff;
       text-decoration: none;
-      margin-left: .5rem;
+      margin-left: .15rem;
       transition: opacity .15s;
     }
     .nav-gh:hover { opacity: .82; }
@@ -715,7 +739,16 @@
       .pkg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
     }
     @media (max-width: 720px) {
-      nav { padding: 0 1rem; }
+      nav {
+        top: .75rem;
+        width: min(calc(100% - 1.5rem), 1280px);
+        min-height: 2.8rem;
+        margin-top: .75rem;
+        padding: 0;
+      }
+      .nav-logo { min-height: 2.6rem; padding: 0 .8rem; }
+      .nav-links { min-height: 2.6rem; padding: .24rem; }
+      .nav-gh { width: 2.05rem; height: 2.05rem; margin-left: 0; }
       .nav-link { display: none; }
       .page-shell { padding: 0 1rem 4rem; }
       .hero { padding-top: 3.5rem; }
@@ -1228,57 +1261,53 @@ ctx.push(meta, text);</pre>
       <div class="mcp-panel">
         <div class="mcp-panel-head">
           <div>
-            <p class="section-label" style="margin-bottom:.55rem">Web MCP</p>
-            <h3>Expose selected UI context to Claude and ChatGPT.</h3>
-            <p>Use hosted Web MCP for public HTTPS endpoints, or the page bridge for trusted browser extensions and local MCP companions.</p>
+            <p class="section-label" style="margin-bottom:.55rem">WebMCP + hosted MCP</p>
+            <h3>Put Askable context on the page, then let MCP clients read it.</h3>
+            <p>WebMCP is the browser-local path: a page widget connects to a local MCP server and exposes approved page tools, prompts, and resources. Hosted MCP is the separate HTTPS endpoint path for remote MCP clients.</p>
           </div>
-          <div class="mcp-endpoint">https://your-app.com/mcp</div>
+          <div class="mcp-endpoint">page widget ↔ local MCP client</div>
         </div>
         <div class="mcp-grid">
           <article class="mcp-card">
-            <h4>Server</h4>
-            <p>Adapt the same Askable context your app already uses. Keep auth, rate limits, and tenancy in your host app.</p>
-            <pre>const handler = createAskableMcpWebHandler({
-  authorize: (request) =>
-    Boolean(request.headers.get('Authorization')),
-  cors: { origin: ['https://app.example'] },
-  maxRequestBodyBytes: 256 * 1024,
-  telemetry: (event) => metrics.track(event),
-  provider: createAskableMcpContextProvider(ctx, {
-    history: 3,
-    includeViewport: true,
-    sources: ['accounts']
-  })
-});
-
-export const POST = handler;</pre>
-          </article>
-          <article class="mcp-card">
-            <h4>Claude</h4>
-            <p>Add the public remote MCP URL in Claude clients or the Anthropic Messages API MCP connector.</p>
-            <pre>{
-  "type": "url",
-  "name": "askable-context",
-  "url": "https://your-app.com/mcp"
-}</pre>
-          </article>
-          <article class="mcp-card">
-            <h4>ChatGPT</h4>
-            <p>Create an app from your remote MCP server in ChatGPT developer mode, or pass the URL as a remote MCP server in the Responses API.</p>
-            <pre>{
-  "type": "mcp",
-  "server_label": "askable",
-  "server_url": "https://your-app.com/mcp"
-}</pre>
-          </article>
-          <article class="mcp-card">
-            <h4>Browser local</h4>
-            <p>Add a page bridge for approved extensions or local companions. They receive context from the page, then expose their own local MCP server.</p>
+            <h4>WebMCP page</h4>
+            <p>Add a page-side bridge that exposes the current Askable packet, prompt text, and approved app sources as page-owned context.</p>
             <pre>createAskableMcpPageBridge({
   provider,
   allowedOrigins: [
     window.location.origin
   ]
+});</pre>
+          </article>
+          <article class="mcp-card">
+            <h4>Local client</h4>
+            <p>The user runs a local WebMCP MCP server in their client, creates a token, then connects the page widget with that token.</p>
+            <pre>{
+  "mcpServers": {
+    "webmcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jason.today/webmcp@latest",
+        "--mcp"
+      ]
+    }
+  }
+}</pre>
+          </article>
+          <article class="mcp-card">
+            <h4>Page resources</h4>
+            <p>Askable can provide the selected element, lassoed region, highlighted text, viewport, or app-owned source as a resource or tool result.</p>
+            <pre>resource: "askable://current"
+text: ctx.toPromptContext()
+packet: ctx.toContextPacket()</pre>
+          </article>
+          <article class="mcp-card">
+            <h4>Hosted MCP</h4>
+            <p>For server-side use, expose the same provider through a secure HTTPS MCP route with auth, CORS, request limits, and tenancy checks.</p>
+            <pre>createAskableMcpWebHandler({
+  authorize,
+  provider,
+  maxRequestBodyBytes: 256 * 1024
 });</pre>
           </article>
         </div>

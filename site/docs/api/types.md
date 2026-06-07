@@ -325,6 +325,8 @@ interface AskableCreateCollectionSourceOptions<TItem = unknown, TState = unknown
   getItems?: () => readonly TItem[] | Promise<readonly TItem[]>;
   getVisibleItems?: () => readonly TItem[] | Promise<readonly TItem[]>;
   getSelectedItems?: (request: AskableContextSourceResolveRequest) => readonly TItem[] | Promise<readonly TItem[]>;
+  getItemId?: (item: TItem, request: AskableContextSourceResolveRequest) => string | number | null | undefined;
+  getSelectionItemId?: (selectionItem: unknown, request: AskableContextSourceResolveRequest) => string | number | null | undefined;
   getSummary?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
   resolve?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
   maxItems?: number;

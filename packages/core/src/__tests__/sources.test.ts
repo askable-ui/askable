@@ -160,6 +160,119 @@ describe('source helpers', () => {
     ctx.destroy();
   });
 
+  it('resolves packet-selected ids to full collection items', async () => {
+    const accounts = [
+      { id: 'a1', company: 'Everlane Ops', mrr: 8400, secret: 'token-a' },
+      { id: 'b2', company: 'Mercury Labs', mrr: 5200, secret: 'token-b' },
+      { id: 'c3', company: 'Northstar Clinic', mrr: 2100, secret: 'token-c' },
+    ];
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', createAskableCollectionSource({
+      getItems: () => accounts,
+      getItemId: (account) => account.id,
+      sanitizeItem: ({ secret: _secret, ...safe }) => safe,
+    }));
+
+    expect(ctx.listSources()[0].modes).toEqual(['selected', 'all']);
+
+    const selected = await ctx.resolveSource('accounts', {
+      mode: 'selected',
+      selection: {
+        capture: { mode: 'lasso', gesture: 'drag' },
+        source: { timestamp: '2026-06-05T00:00:00.000Z', route: '/accounts' },
+        target: {
+          metadata: {
+            selectedIds: ['b2', 'c3'],
+          },
+        },
+      },
+    });
+
+    expect(selected.data).toEqual({
+      mode: 'selected',
+      items: [
+        { id: 'b2', company: 'Mercury Labs', mrr: 5200 },
+        { id: 'c3', company: 'Northstar Clinic', mrr: 2100 },
+      ],
+      totalCount: 2,
+      returnedCount: 2,
+      truncated: false,
+    });
+    expect(JSON.stringify(selected)).not.toContain('token-b');
+
+    ctx.destroy();
+  });
+
+  it('resolves packet-selected item labels to full collection items', async () => {
+    const accounts = [
+      { company: 'Everlane Ops', mrr: 8400 },
+      { company: 'Mercury Labs', mrr: 5200 },
+    ];
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', createAskableCollectionSource({
+      getItems: () => accounts,
+      getItemId: (account) => account.company,
+    }));
+
+    const selected = await ctx.resolveSource('accounts', {
+      mode: 'selected',
+      selection: {
+        capture: { mode: 'region', gesture: 'drag' },
+        source: { timestamp: '2026-06-05T00:00:00.000Z', route: '/accounts' },
+        target: {
+          metadata: {
+            selectedItems: [{ label: 'Mercury Labs' }],
+          },
+        },
+      },
+    });
+
+    expect(selected.data).toMatchObject({
+      mode: 'selected',
+      items: [{ company: 'Mercury Labs', mrr: 5200 }],
+      returnedCount: 1,
+    });
+
+    ctx.destroy();
+  });
+
+  it('supports custom selected item id mapping for app-specific metadata', async () => {
+    const accounts = [
+      { id: 'acct_1', company: 'Everlane Ops' },
+      { id: 'acct_2', company: 'Mercury Labs' },
+    ];
+    const ctx = createAskableContext();
+    ctx.registerSource('accounts', createAskableCollectionSource({
+      getItems: () => accounts,
+      getItemId: (account) => account.id,
+      getSelectionItemId: (selectionItem) => {
+        if (!selectionItem || typeof selectionItem !== 'object') return undefined;
+        const meta = (selectionItem as { meta?: { accountId?: unknown } }).meta;
+        return typeof meta?.accountId === 'string' ? meta.accountId : undefined;
+      },
+    }));
+
+    const selected = await ctx.resolveSource('accounts', {
+      mode: 'selected',
+      selection: {
+        capture: { mode: 'lasso', gesture: 'drag' },
+        source: { timestamp: '2026-06-05T00:00:00.000Z', route: '/accounts' },
+        target: {
+          metadata: {
+            selectedItems: [{ label: 'Mercury Labs', meta: { accountId: 'acct_2' } }],
+          },
+        },
+      },
+    });
+
+    expect(selected.data).toMatchObject({
+      mode: 'selected',
+      items: [{ id: 'acct_2', company: 'Mercury Labs' }],
+    });
+
+    ctx.destroy();
+  });
+
   it('advertises custom source modes without resolving data', () => {
     const ctx = createAskableContext();
     const resolve = () => ({ ok: true });

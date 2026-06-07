@@ -324,6 +324,7 @@ const accountsSource = ctx.registerSource('accounts', createAskableCollectionSou
   getState: () => ({ filters, sort, page, pageSize, totalCount }),
   getVisibleItems: () => table.getVisibleRows(),
   getSelectedItems: ({ selection }) => getAccountsByIds(selection),
+  getItemId: (account) => account.id,
   getItems: () => accountStore.getAllMatching({ filters, sort }),
   getSummary: ({ maxItems }) => summarizeAccounts({ filters, sort, maxItems }),
   maxItems: 50,
@@ -371,6 +372,10 @@ named slices such as `summary`, `selected`, `all`, or app-defined modes, while
 result has more data than the DOM currently renders. Use
 `createAskablePageSource()` when an extension, fallback bridge, or unannotated
 page still needs selected text, headings, optional links, and full-page text.
+For packet-driven selections, `getItemId` lets Askable map selected ids or
+selected item labels from region, circle, square, lasso, or text packets back to
+full app-owned collection items. Use `getSelectionItemId` when your selected
+item metadata stores the id in an app-specific shape.
 Failed or timed-out sources are represented with a safe unavailable marker by
 default; use `sourceErrorMode: 'omit'` or `'throw'` for stricter runtimes.
 

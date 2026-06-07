@@ -55,6 +55,7 @@ export type {
   AskableTextSelectionCaptureTheme,
 } from './selection.js';
 export type {
+  AskableCollectionItemId,
   AskableCollectionSourceData,
   AskableCreateCollectionSourceOptions,
   AskableCreateSourceOptions,
