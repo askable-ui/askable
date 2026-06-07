@@ -239,6 +239,7 @@ const handle = ctx.registerSource('accounts', createAskableCollectionSource({
   }),
   getVisibleItems: () => table.getVisibleRows(),
   getSelectedItems: ({ selection }) => getSelectedAccounts(selection),
+  getItemId: (account) => account.id,
   getItems: () => accountStore.getAllMatching({ filters, sort }),
   getSummary: ({ focus, maxItems }) => summarizeAccounts({ filters, sort, focus, maxItems }),
   maxItems: 50,
@@ -298,9 +299,14 @@ Use its `modes` map when the source can expose named slices without a custom
 switch statement; `resolve` remains available for advanced behavior and
 overrides both `modes` and `data`.
 `createAskableCollectionSource()` adds `getItems`, `getVisibleItems`,
-`getSelectedItems`, `getSummary`, `maxItems`, and `sanitizeItem` so paginated or
-virtualized collections can expose more than the rows currently mounted in the
-DOM without a table-specific API.
+`getSelectedItems`, `getItemId`, `getSummary`, `maxItems`, and `sanitizeItem`
+so paginated or virtualized collections can expose more than the rows currently
+mounted in the DOM without a table-specific API.
+When `getItemId` and `getItems` are present, `selected` mode can resolve packet
+metadata such as `selectedIds`, `selectedItemIds`, or `selectedItems` from
+region, circle, square, or lasso captures back to full collection items. Use
+`getSelectionItemId` when selected item metadata stores the id under an
+app-specific key.
 `createAskablePageSource()` snapshots unannotated pages for extension and
 fallback contexts. It supports `summary`, `selected`, and `all` modes for page
 title, URL, selected text, headings, optional links, and capped full-page text.

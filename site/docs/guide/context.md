@@ -68,6 +68,7 @@ ctx.registerSource('accounts', createAskableCollectionSource({
   describe: 'Customer accounts matching the active filters',
   getState: () => ({ filters, sort, page, pageSize, totalCount }),
   getVisibleItems: () => table.getRowModel().rows.map((row) => row.original),
+  getItemId: (account) => account.id,
   getItems: () => accountStore.getAllMatching({ filters, sort }),
   getSummary: ({ maxItems }) => summarizeAccounts({ filters, sort, maxItems }),
   sanitizeItem: redactAccountFields,
