@@ -87,6 +87,9 @@ Each source becomes a `WebContextTarget` with the source id in `label`, source
 kind in `role`, source description in `text`, and resolved state/data in
 `metadata`. Failed sources use a safe unavailable marker by default so packet
 consumers do not receive stack traces or secret-bearing error messages.
+Use `ctx.listSources()` when the MCP endpoint, browser-local bridge, or chat UI
+needs to show available sources and advertised modes before resolving source
+data.
 
 ## MCP bridge
 

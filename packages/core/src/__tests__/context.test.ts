@@ -1904,13 +1904,14 @@ describe('createAskableContext', () => {
       const ctx = createAskableContext();
       const resolve = vi.fn(() => ({ count: 2 }));
 
-      ctx.registerSource('accounts', { kind: 'collection', resolve });
+      ctx.registerSource('accounts', { kind: 'collection', modes: ['summary', 'all'], resolve });
 
       expect(ctx.hasSource(' accounts ')).toBe(true);
       expect(ctx.hasSource('calendar')).toBe(false);
       expect(ctx.listSources()).toEqual([{
         id: 'accounts',
         kind: 'collection',
+        modes: ['summary', 'all'],
         registeredAt: Date.parse('2026-06-01T12:00:00Z'),
         updatedAt: Date.parse('2026-06-01T12:00:00Z'),
       }]);
@@ -1922,6 +1923,7 @@ describe('createAskableContext', () => {
       expect(ctx.listSources()[0]).toEqual({
         id: 'accounts',
         kind: 'collection',
+        modes: ['summary', 'all'],
         registeredAt: Date.parse('2026-06-01T12:00:00Z'),
         updatedAt: Date.parse('2026-06-01T12:00:02Z'),
       });

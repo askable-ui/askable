@@ -168,11 +168,15 @@ asks that source for the logical collection, while `maxItems` keeps prompt
 budgets explicit. `createAskableSource()` covers non-collection state like
 documents, charts, maps, canvases, or workflows; use `modes` to expose named
 slices such as `summary`, `selected`, `all`, or app-defined modes without
-writing a custom resolver switch. Source output can be redacted with
-`sanitizeItem`, a source-level `sanitize` hook, or a context-level
-`sanitizeSource` hook. Failed or timed-out sources are represented with a safe
-unavailable marker by default; use `sourceErrorMode: 'omit'` or `'throw'` when
-your runtime needs stricter behavior.
+writing a custom resolver switch. `ctx.listSources()` returns advertised modes
+without resolving data, so chat controls and bridges can offer the right source
+mode before sending a prompt. Add `advertisedModes` when a custom resolver
+supports modes that are not visible from the factory options.
+Source output can be redacted with `sanitizeItem`, a source-level `sanitize`
+hook, or a context-level `sanitizeSource` hook. Failed or timed-out sources are
+represented with a safe unavailable marker by default; use
+`sourceErrorMode: 'omit'` or `'throw'` when your runtime needs stricter
+behavior.
 
 For browser extensions and other clients that cannot change the site code,
 `createAskablePageSource()` can still expose the page title, URL, selected

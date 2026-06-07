@@ -230,6 +230,7 @@ type AskableContextSourceMode =
 
 interface AskableContextSource {
   kind?: string;
+  modes?: readonly AskableContextSourceMode[];
   describe?: string | (() => string | Promise<string>);
   getState?: () => unknown | Promise<unknown>;
   resolve?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
@@ -280,6 +281,7 @@ interface AskableContextSourceHandle {
 interface AskableContextSourceInfo {
   id: string;
   kind?: string;
+  modes?: readonly AskableContextSourceMode[];
   registeredAt: number;
   updatedAt: number;
 }
@@ -297,9 +299,11 @@ type AskableSourceValue<T> = T | (() => T | Promise<T>);
 
 interface AskableCreateSourceOptions<TData = unknown, TState = unknown> {
   kind?: string;
+  advertisedModes?: readonly AskableContextSourceMode[];
   describe?: string | (() => string | Promise<string>);
   state?: AskableSourceValue<TState>;
   data?: TData | ((request: AskableContextSourceResolveRequest) => TData | Promise<TData>);
+  modes?: Record<string, unknown | ((request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>)>;
   resolve?: (request: AskableContextSourceResolveRequest) => unknown | Promise<unknown>;
   sanitize?: (source: AskableResolvedContextSource) => AskableResolvedContextSource | Promise<AskableResolvedContextSource>;
 }
@@ -315,6 +319,7 @@ interface AskableCollectionSourceData<TItem = unknown> {
 
 interface AskableCreateCollectionSourceOptions<TItem = unknown, TState = unknown> {
   kind?: string;
+  advertisedModes?: readonly AskableContextSourceMode[];
   describe?: string | (() => string | Promise<string>);
   getState?: () => TState | Promise<TState>;
   getItems?: () => readonly TItem[] | Promise<readonly TItem[]>;

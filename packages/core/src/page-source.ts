@@ -56,6 +56,7 @@ export interface AskableCreatePageSourceOptions {
 export function createAskablePageSource(options: AskableCreatePageSourceOptions = {}): AskableContextSource {
   return {
     kind: options.kind ?? 'page',
+    modes: ['state', 'summary', 'selected', 'all'],
     describe: options.describe ?? 'Current page',
     getState: () => {
       const root = resolveRoot(options.root);

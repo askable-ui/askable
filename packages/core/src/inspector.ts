@@ -142,6 +142,7 @@ function buildSourcesHTML(sources: AskableContextSourceInfo[]): string {
         <div style="min-width:0">
           <code style="display:block;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(source.id)}</code>
           ${source.kind ? `<span style="color:#8b949e;font-size:11px">${escapeHtml(source.kind)}</span>` : ''}
+          ${source.modes?.length ? `<span style="display:block;color:#8b949e;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">modes: ${escapeHtml(source.modes.join(', '))}</span>` : ''}
         </div>
         <span title="Last updated" style="color:#8b949e;font-size:11px;white-space:nowrap">${escapeHtml(renderTime(source.updatedAt))}</span>
       </div>

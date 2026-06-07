@@ -64,6 +64,8 @@ describe('source helpers', () => {
       },
     }));
 
+    expect(ctx.listSources()[0].modes).toEqual(['state', 'summary', 'selected', 'all']);
+
     await expect(ctx.resolveSource('forecast', { mode: 'summary' })).resolves.toMatchObject({
       data: { totalPipeline: 420000, risk: 'medium' },
     });
@@ -116,10 +118,13 @@ describe('source helpers', () => {
       describe: 'Accounts matching active filters',
       getState: () => ({ page: 1, pageSize: 1, totalCount: accounts.length }),
       getVisibleItems: () => accounts.slice(0, 1),
+      getSelectedItems: () => accounts.slice(1, 2),
       getItems: () => accounts,
       getSummary: () => ({ totalMrr: 17400 }),
       sanitizeItem: ({ secret: _secret, ...safe }) => safe,
     }));
+
+    expect(ctx.listSources()[0].modes).toEqual(['state', 'summary', 'visible', 'selected', 'all']);
 
     await expect(ctx.resolveSource('accounts', { mode: 'visible' })).resolves.toMatchObject({
       data: {
@@ -151,6 +156,39 @@ describe('source helpers', () => {
         summary: { totalMrr: 17400 },
       },
     });
+
+    ctx.destroy();
+  });
+
+  it('advertises custom source modes without resolving data', () => {
+    const ctx = createAskableContext();
+    const resolve = () => ({ ok: true });
+    ctx.registerSource('workflow', createAskableSource({
+      kind: 'workflow',
+      advertisedModes: ['summary', 'next-actions', 'summary', ' ' as any],
+      resolve,
+    }));
+    ctx.registerSource('accounts', createAskableCollectionSource({
+      advertisedModes: ['export'],
+      resolve,
+    }));
+
+    expect(ctx.listSources().map((source) => ({
+      id: source.id,
+      kind: source.kind,
+      modes: source.modes,
+    }))).toEqual([
+      {
+        id: 'workflow',
+        kind: 'workflow',
+        modes: ['summary', 'next-actions'],
+      },
+      {
+        id: 'accounts',
+        kind: 'collection',
+        modes: ['export'],
+      },
+    ]);
 
     ctx.destroy();
   });

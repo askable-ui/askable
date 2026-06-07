@@ -102,6 +102,7 @@ describe('createAskableInspector', () => {
     const ctx = createAskableContext();
     ctx.registerSource('accounts', {
       kind: 'collection',
+      modes: ['state', 'summary', 'all'],
       resolve: () => ({ total: 12 }),
     });
     const inspector = createAskableInspector(ctx);
@@ -110,6 +111,7 @@ describe('createAskableInspector', () => {
     expect(panel.textContent).toContain('Context sources');
     expect(panel.textContent).toContain('accounts');
     expect(panel.textContent).toContain('collection');
+    expect(panel.textContent).toContain('modes: state, summary, all');
 
     inspector.destroy();
     ctx.destroy();

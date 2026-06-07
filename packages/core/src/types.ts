@@ -189,6 +189,8 @@ export type AskableContextSourceErrorMode = 'include' | 'omit' | 'throw';
 export interface AskableContextSource {
   /** Source category. Examples: "collection", "document", "chart", "map", "canvas", "custom". */
   kind?: string;
+  /** Modes this source can resolve, for source pickers, inspectors, and agent controls. */
+  modes?: readonly AskableContextSourceMode[];
   /** Human-readable source description. */
   describe?: string | (() => string | Promise<string>);
   /** Current app state for this source, such as filters, sort, page, route, or viewport. */
@@ -210,6 +212,8 @@ export interface AskableContextSourceInfo {
   id: string;
   /** Source category, when provided by the source. */
   kind?: string;
+  /** Modes this source advertises without resolving source data. */
+  modes?: readonly AskableContextSourceMode[];
   /** Unix timestamp (ms) when this source id was last registered. */
   registeredAt: number;
   /** Unix timestamp (ms) when this source was last registered or notified as changed. */
