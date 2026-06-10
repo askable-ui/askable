@@ -1312,10 +1312,13 @@ ctx.push(meta, text);</pre>
           </article>
           <article class="mcp-card">
             <h4>Page resources</h4>
-            <p>Askable can provide the selected element, lassoed region, highlighted text, viewport, or app-owned source as a resource or tool result.</p>
-            <pre>resource: "askable://current"
-text: ctx.toPromptContext()
-packet: ctx.toContextPacket()</pre>
+            <p>Askable can provide the selected element, lassoed region, highlighted text, viewport, or app-owned source as an <code>askable://current</code> page resource.</p>
+            <pre>window.postMessage({
+  type: "read_current_resource",
+  options: {
+    resource: { uri: "askable://current" }
+  }
+});</pre>
           </article>
           <article class="mcp-card">
             <h4>Hosted MCP</h4>

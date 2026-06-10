@@ -256,7 +256,8 @@ or ChatGPT clients. It needs a trusted browser extension or local companion
 process that can receive page context and expose its own local MCP server.
 
 `createAskableMcpPageBridge()` listens for versioned `window.postMessage()`
-requests and returns either the current Context packet or prompt-ready text.
+requests and returns the current Context packet, prompt-ready text, or a
+resource-shaped `askable://current` payload.
 
 ```ts
 import { createAskableMcpContextProvider, createAskableMcpPageBridge } from '@askable-ui/mcp';
@@ -296,10 +297,48 @@ window.postMessage({
 }, window.location.origin);
 ```
 
-Use `type: 'format_context_for_prompt'` to receive prompt-ready text. Responses
-preserve `protocol`, `version`, `channel`, and `requestId`, and return
-`get_current_context:result`, `format_context_for_prompt:result`, or
-`*:error` message types.
+Use `type: 'format_context_for_prompt'` to receive prompt-ready text.
+
+Use `type: 'read_current_resource'` when a browser extension or local companion
+wants a response that can map directly to MCP `resources/read` content:
+
+```ts
+window.postMessage({
+  protocol: 'askable.mcp.page_bridge',
+  version: '0.1',
+  channel: 'askable:mcp',
+  type: 'read_current_resource',
+  requestId: crypto.randomUUID(),
+  options: {
+    sources: ['accounts'],
+    resource: {
+      uri: 'askable://current',
+      format: 'packet',
+    },
+  },
+}, window.location.origin);
+```
+
+The response includes:
+
+```ts
+{
+  type: 'read_current_resource:result',
+  resource: {
+    uri: 'askable://current',
+    name: 'current_context',
+    title: 'Current Askable context',
+    mimeType: 'application/json',
+    text: '{ ...packet json... }'
+  }
+}
+```
+
+Set `resource.format` to `prompt` for `text/plain` prompt context, or pass a
+custom `resource.uri` such as `askable://current.txt`. Responses preserve
+`protocol`, `version`, `channel`, and `requestId`, and return
+`get_current_context:result`, `format_context_for_prompt:result`,
+`read_current_resource:result`, or `*:error` message types.
 
 Enable this bridge only when the user or host app has opted into local browser
 MCP. The extension or companion should own installation trust, user consent,

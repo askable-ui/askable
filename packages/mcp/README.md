@@ -145,9 +145,9 @@ Hosted Web MCP is the server-side path. For local browser workflows, a page
 cannot expose MCP directly to Claude or ChatGPT by itself. It needs a trusted
 browser extension or local companion process. `createAskableMcpPageBridge()`
 adds the page-side handoff: the page listens for approved bridge requests and
-returns the current packet or prompt-ready text through `window.postMessage()`.
-The extension or companion can then expose that data through its own local MCP
-server.
+returns the current packet, prompt-ready text, or a resource-shaped
+`askable://current` payload through `window.postMessage()`. The extension or
+companion can then expose that data through its own local MCP server.
 
 ```ts
 import { createAskableMcpContextProvider, createAskableMcpPageBridge } from '@askable-ui/mcp';
@@ -181,6 +181,29 @@ window.postMessage({
 ```
 
 Use `type: 'format_context_for_prompt'` when the bridge needs prompt-ready text
-instead of the structured packet. Keep user consent and installation trust in
+instead of the structured packet.
+
+Use `type: 'read_current_resource'` when the extension or companion wants a
+resource-shaped response that can map directly to MCP `resources/read` output:
+
+```ts
+window.postMessage({
+  protocol: 'askable.mcp.page_bridge',
+  version: '0.1',
+  channel: 'askable:mcp',
+  type: 'read_current_resource',
+  requestId: crypto.randomUUID(),
+  options: {
+    sources: ['accounts'],
+    resource: {
+      uri: 'askable://current',
+      format: 'packet',
+    },
+  },
+}, window.location.origin);
+```
+
+Set `resource.format` to `prompt` to receive `text/plain` prompt context at a
+URI such as `askable://current.txt`. Keep user consent and installation trust in
 the extension or companion, and enable the page bridge only when the app wants
 to participate in local browser MCP workflows.
