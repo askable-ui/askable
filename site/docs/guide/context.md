@@ -121,6 +121,11 @@ The MCP package does not choose a transport. Use the returned MCP server with
 stdio, Streamable HTTP, or an embedded runtime depending on where context is
 captured.
 
+For browser-local MCP, `createAskableMcpPageBridge()` can also answer
+`read_current_resource` page messages with an `askable://current` resource.
+That gives a trusted extension or local companion a resource-shaped payload it
+can expose through its own local MCP server without scraping the page.
+
 ## Privacy
 
 Packets reflect the same sanitizers as prompt serialization:

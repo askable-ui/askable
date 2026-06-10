@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createWebContextPacket } from '@askable-ui/context';
 import {
+  ASKABLE_MCP_CURRENT_CONTEXT_RESOURCE_URI,
   ASKABLE_MCP_PAGE_BRIDGE_CHANNEL,
   ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
   ASKABLE_MCP_PAGE_BRIDGE_VERSION,
@@ -915,6 +916,97 @@ describe('createAskableMcpPageBridge', () => {
         type: 'format_context_for_prompt:result',
         requestId: 'req-2',
         text: 'Prompt-ready selection',
+      }),
+    });
+  });
+
+  it('reads current context as a page resource', async () => {
+    const packet = createWebContextPacket({
+      source: { app: 'dashboard' },
+      capture: { mode: 'lasso', intent: 'explain selected accounts' },
+      target: { text: 'Selected accounts' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const fakeWindow = new FakePageBridgeWindow();
+    createAskableMcpPageBridge({ provider, window: fakeWindow });
+
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      channel: ASKABLE_MCP_PAGE_BRIDGE_CHANNEL,
+      type: 'read_current_resource',
+      requestId: 'req-resource-1',
+      options: {
+        intent: 'explain selected accounts',
+        resource: { includePacket: true },
+      },
+    });
+    await flushPageBridge();
+
+    expect(provider.getContext).toHaveBeenCalledWith({
+      intent: 'explain selected accounts',
+    });
+    expect(fakeWindow.posted[0]).toEqual({
+      targetOrigin: 'https://app.example',
+      message: expect.objectContaining({
+        type: 'read_current_resource:result',
+        requestId: 'req-resource-1',
+        resource: expect.objectContaining({
+          uri: ASKABLE_MCP_CURRENT_CONTEXT_RESOURCE_URI,
+          name: 'current_context',
+          title: 'Current Askable context',
+          mimeType: 'application/json',
+          packet,
+        }),
+      }),
+    });
+    expect(fakeWindow.posted[0]?.message.resource?.text).toBe(JSON.stringify(packet, null, 2));
+  });
+
+  it('reads current context as a prompt-ready page resource', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'text-selection' },
+      target: { text: 'Usage grew 18%' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+      formatContextForPrompt: vi.fn().mockResolvedValue('Usage grew 18% selected on the dashboard'),
+    };
+    const fakeWindow = new FakePageBridgeWindow();
+    createAskableMcpPageBridge({ provider, window: fakeWindow });
+
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      type: 'read_current_resource',
+      requestId: 'req-resource-2',
+      options: {
+        maxTokens: 200,
+        resource: {
+          uri: 'askable://current.txt',
+          format: 'prompt',
+          title: 'Prompt-ready page context',
+        },
+      },
+    });
+    await flushPageBridge();
+
+    expect(provider.formatContextForPrompt).toHaveBeenCalledWith(packet, { maxTokens: 200 });
+    expect(fakeWindow.posted[0]).toEqual({
+      targetOrigin: 'https://app.example',
+      message: expect.objectContaining({
+        type: 'read_current_resource:result',
+        requestId: 'req-resource-2',
+        resource: {
+          uri: 'askable://current.txt',
+          name: 'current_context',
+          title: 'Prompt-ready page context',
+          description: 'Approved context from the active page.',
+          mimeType: 'text/plain',
+          text: 'Usage grew 18% selected on the dashboard',
+        },
       }),
     });
   });

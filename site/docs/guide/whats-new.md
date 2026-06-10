@@ -1,10 +1,51 @@
-# What’s New in v0.13.1
+# What’s New in v0.14.0
+
+askable-ui v0.14.0 adds browser-local MCP page resources, so trusted
+extensions and local companions can read approved page context as
+`askable://current` without scraping the DOM.
+
+## Highlights
+
+### Browser-local MCP page resources
+
+`@askable-ui/mcp` now supports `read_current_resource` in
+`createAskableMcpPageBridge()`. The page can answer a versioned
+`window.postMessage()` request with a resource-shaped payload that maps cleanly
+to MCP `resources/read` output.
+
+```ts
+window.postMessage({
+  protocol: 'askable.mcp.page_bridge',
+  version: '0.1',
+  channel: 'askable:mcp',
+  type: 'read_current_resource',
+  requestId: crypto.randomUUID(),
+  options: {
+    sources: ['accounts'],
+    resource: {
+      uri: 'askable://current',
+      format: 'packet',
+    },
+  },
+}, window.location.origin);
+```
+
+Set `resource.format` to `prompt` when the local companion needs `text/plain`
+prompt context instead of packet JSON. Resource options are stripped before the
+context provider runs, so existing providers continue to receive only normal
+context options.
+
+### Website and starter alignment
+
+The main website navigation now uses a compact split-pill header, and the WebMCP
+section calls out `read_current_resource` alongside hosted MCP. New starter apps
+now pin Askable packages to `^0.14.0`.
+
+## Also in v0.13.1
 
 askable-ui v0.13.1 adds production-ready Web MCP support and stronger agent
 request wiring, so approved Claude and ChatGPT clients can request selected UI
 context through a hosted MCP endpoint.
-
-## Highlights
 
 ### Web MCP endpoint support
 
@@ -53,8 +94,8 @@ and query strings.
 `@askable-ui/mcp` also includes `createAskableMcpPageBridge()` for browser-local
 MCP workflows. This is the page-side handoff for trusted extensions or local
 companions: the page answers versioned `window.postMessage()` requests with a
-Context packet or prompt-ready text, while the extension or companion exposes
-the local MCP server.
+Context packet, prompt-ready text, or an `askable://current` resource while the
+extension or companion exposes the local MCP server.
 
 Related docs:
 
@@ -247,8 +288,8 @@ browser tools, and agent runtimes.
 
 ### Starter and docs version alignment
 
-`npm create @askable-ui/app` now scaffolds projects pinned to `^0.13.1`, and the
-versioned docs have been advanced to `/docs/v0.13.1/`.
+`npm create @askable-ui/app` now scaffolds projects pinned to `^0.14.0`, and the
+versioned docs have been advanced to `/docs/v0.14.0/`.
 
 ## Recommended next step
 
@@ -260,7 +301,7 @@ If you are integrating Askable into an AI or agent runtime, start here:
 
 ## Version note
 
-The current published docs track **v0.13.1** at both:
+The current published docs track **v0.14.0** at both:
 
 - `/docs/`
-- `/docs/v0.13.1/`
+- `/docs/v0.14.0/`

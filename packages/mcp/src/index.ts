@@ -112,10 +112,28 @@ export type AskableMcpWebHandler = (request: Request) => Promise<Response>;
 export const ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL = 'askable.mcp.page_bridge';
 export const ASKABLE_MCP_PAGE_BRIDGE_VERSION = '0.1';
 export const ASKABLE_MCP_PAGE_BRIDGE_CHANNEL = 'askable:mcp';
+export const ASKABLE_MCP_CURRENT_CONTEXT_RESOURCE_URI = 'askable://current';
 
 export type AskableMcpPageBridgeRequestType =
   | 'get_current_context'
-  | 'format_context_for_prompt';
+  | 'format_context_for_prompt'
+  | 'read_current_resource';
+
+export type AskableMcpPageResourceFormat = 'packet' | 'prompt';
+
+export interface AskableMcpPageResourceOptions {
+  uri?: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  mimeType?: string;
+  format?: AskableMcpPageResourceFormat;
+  includePacket?: boolean;
+}
+
+export interface AskableMcpPageBridgeRequestOptions extends AskableMcpContextOptions {
+  resource?: AskableMcpPageResourceOptions;
+}
 
 export interface AskableMcpPageBridgeRequest {
   protocol: typeof ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL;
@@ -123,7 +141,17 @@ export interface AskableMcpPageBridgeRequest {
   channel?: string;
   type: AskableMcpPageBridgeRequestType;
   requestId: string;
-  options?: AskableMcpContextOptions;
+  options?: AskableMcpPageBridgeRequestOptions;
+}
+
+export interface AskableMcpPageResource {
+  uri: string;
+  name: string;
+  title: string;
+  description?: string;
+  mimeType: string;
+  text: string;
+  packet?: WebContextPacket;
 }
 
 export interface AskableMcpPageBridgeSuccessResponse {
@@ -134,6 +162,7 @@ export interface AskableMcpPageBridgeSuccessResponse {
   requestId: string;
   packet?: WebContextPacket;
   text?: string;
+  resource?: AskableMcpPageResource;
 }
 
 export interface AskableMcpPageBridgeErrorResponse {
@@ -483,21 +512,35 @@ async function handleAskableMcpPageBridgeMessage(
   }
 
   try {
-    const packet = await options.provider.getContext(request.options);
+    const contextOptions = getAskableMcpPageBridgeContextOptions(request.options);
+    const packet = await options.provider.getContext(contextOptions);
     const responseBase = createAskableMcpPageBridgeResponseBase(request);
-    const response: AskableMcpPageBridgeSuccessResponse = request.type === 'format_context_for_prompt'
-      ? {
-          ...responseBase,
-          type: 'format_context_for_prompt:result',
-          text: options.provider.formatContextForPrompt
-            ? await options.provider.formatContextForPrompt(packet, request.options)
-            : defaultPromptFormatter(packet),
-        }
-      : {
-          ...responseBase,
-          type: 'get_current_context:result',
+    let response: AskableMcpPageBridgeSuccessResponse;
+
+    if (request.type === 'format_context_for_prompt') {
+      response = {
+        ...responseBase,
+        type: 'format_context_for_prompt:result',
+        text: await formatAskableMcpContextForPrompt(options.provider, packet, contextOptions),
+      };
+    } else if (request.type === 'read_current_resource') {
+      response = {
+        ...responseBase,
+        type: 'read_current_resource:result',
+        resource: await createAskableMcpCurrentContextPageResource(
+          options.provider,
           packet,
-        };
+          contextOptions,
+          request.options?.resource,
+        ),
+      };
+    } else {
+      response = {
+        ...responseBase,
+        type: 'get_current_context:result',
+        packet,
+      };
+    }
 
     bridgeWindow.postMessage(response, resolveAskableMcpPageBridgeTargetOrigin(event, options));
   } catch (error) {
@@ -518,14 +561,83 @@ function parseAskableMcpPageBridgeRequest(
   if (data.protocol !== ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL) return undefined;
   if (data.version !== ASKABLE_MCP_PAGE_BRIDGE_VERSION) return undefined;
   if ((data.channel ?? ASKABLE_MCP_PAGE_BRIDGE_CHANNEL) !== channel) return undefined;
-  if (data.type !== 'get_current_context' && data.type !== 'format_context_for_prompt') return undefined;
+  if (
+    data.type !== 'get_current_context'
+    && data.type !== 'format_context_for_prompt'
+    && data.type !== 'read_current_resource'
+  ) return undefined;
   if (typeof data.requestId !== 'string' || !data.requestId) return undefined;
   if (data.options !== undefined && !isRecord(data.options)) return undefined;
+  if (!isValidAskableMcpPageBridgeResourceOptions(data.options)) return undefined;
 
   return {
     ...data,
     channel: data.channel ?? ASKABLE_MCP_PAGE_BRIDGE_CHANNEL,
   } as unknown as AskableMcpPageBridgeRequest;
+}
+
+function getAskableMcpPageBridgeContextOptions(
+  options: AskableMcpPageBridgeRequestOptions | undefined,
+): AskableMcpContextOptions | undefined {
+  if (!options) return undefined;
+  const { resource: _resource, ...contextOptions } = options;
+  return contextOptions;
+}
+
+async function formatAskableMcpContextForPrompt(
+  provider: AskableMcpContextProvider,
+  packet: WebContextPacket,
+  options: AskableMcpContextOptions | undefined,
+): Promise<string> {
+  return provider.formatContextForPrompt
+    ? provider.formatContextForPrompt(packet, options)
+    : defaultPromptFormatter(packet);
+}
+
+async function createAskableMcpCurrentContextPageResource(
+  provider: AskableMcpContextProvider,
+  packet: WebContextPacket,
+  contextOptions: AskableMcpContextOptions | undefined,
+  resourceOptions: AskableMcpPageResourceOptions | undefined,
+): Promise<AskableMcpPageResource> {
+  const format = resourceOptions?.format ?? 'packet';
+  const text = format === 'prompt'
+    ? await formatAskableMcpContextForPrompt(provider, packet, contextOptions)
+    : JSON.stringify(packet, null, 2);
+  const mimeType = resourceOptions?.mimeType
+    ?? (format === 'prompt' ? 'text/plain' : 'application/json');
+  const resource: AskableMcpPageResource = {
+    uri: resourceOptions?.uri ?? ASKABLE_MCP_CURRENT_CONTEXT_RESOURCE_URI,
+    name: resourceOptions?.name ?? 'current_context',
+    title: resourceOptions?.title ?? 'Current Askable context',
+    description: resourceOptions?.description ?? 'Approved context from the active page.',
+    mimeType,
+    text,
+  };
+
+  return resourceOptions?.includePacket ? { ...resource, packet } : resource;
+}
+
+function isValidAskableMcpPageBridgeResourceOptions(options: unknown): boolean {
+  if (options === undefined) return true;
+  if (!isRecord(options)) return false;
+  if (options.resource === undefined) return true;
+  if (!isRecord(options.resource)) return false;
+
+  const resource = options.resource;
+  if (resource.uri !== undefined && typeof resource.uri !== 'string') return false;
+  if (resource.name !== undefined && typeof resource.name !== 'string') return false;
+  if (resource.title !== undefined && typeof resource.title !== 'string') return false;
+  if (resource.description !== undefined && typeof resource.description !== 'string') return false;
+  if (resource.mimeType !== undefined && typeof resource.mimeType !== 'string') return false;
+  if (
+    resource.format !== undefined
+    && resource.format !== 'packet'
+    && resource.format !== 'prompt'
+  ) return false;
+  if (resource.includePacket !== undefined && typeof resource.includePacket !== 'boolean') return false;
+
+  return true;
 }
 
 async function isAskableMcpPageBridgeOriginAllowed(
