@@ -42,10 +42,10 @@
     "@askable-ui/core": "^0.14.0"
   },
   "devDependencies": {
-    "@vue/test-utils": "^2.4.10",
+    "@vue/test-utils": "^2.4.11",
     "jsdom": "^29.1.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7",
+    "vitest": "^4.1.8",
     "vue": "^3.5.35"
   }
 }
