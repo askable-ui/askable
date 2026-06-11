@@ -69,6 +69,7 @@ export type {
   AskablePageSourceLink,
   AskablePageSourceSnapshot,
 } from './page-source.js';
+export { asMeta } from './types.js';
 export type {
   AskableContext,
   AskableAgentRequest,
@@ -111,6 +112,7 @@ export type {
   AskableSerializedFocus,
   AskableSerializedFocusSegment,
   AskableTargetStrategy,
+  TypedAskableFocus,
 } from './types.js';
 
 import { AskableContextImpl } from './context.js';

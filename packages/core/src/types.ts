@@ -531,3 +531,37 @@ export interface AskableContext {
   /** Clean up all listeners and observers */
   destroy(): void;
 }
+
+// ── Typed meta utilities ────────────────────────────────────────────────────
+
+/**
+ * A narrowed version of AskableFocus where `meta` is typed to T.
+ *
+ * Use with `asMeta<T>(focus)` to get type-safe access to structured metadata.
+ *
+ * @example
+ * ```ts
+ * interface KpiMeta { metric: string; value: string; delta: string }
+ * const typed = asMeta<KpiMeta>(focus);
+ * console.log(typed.meta.value); // string, not unknown
+ * ```
+ */
+export type TypedAskableFocus<T extends Record<string, unknown>> = Omit<AskableFocus, 'meta'> & { meta: T };
+
+/**
+ * Cast a focus object to a typed version with a concrete meta type.
+ * Does not validate at runtime — use when you control the annotations.
+ *
+ * @example
+ * ```ts
+ * interface DealMeta { company: string; stage: string; value: string }
+ * const { focus } = useAskable();
+ * if (focus) {
+ *   const deal = asMeta<DealMeta>(focus);
+ *   console.log(deal.meta.company);
+ * }
+ * ```
+ */
+export function asMeta<T extends Record<string, unknown>>(focus: AskableFocus): TypedAskableFocus<T> {
+  return focus as unknown as TypedAskableFocus<T>;
+}
