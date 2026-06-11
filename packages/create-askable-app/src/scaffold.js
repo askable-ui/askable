@@ -40,6 +40,12 @@ const TEMPLATES = {
     ],
     tip: 'Add ANTHROPIC_API_KEY to .env.local to enable streaming AI responses.',
   },
+  solid: {
+    label: 'SolidJS + Vite',
+    dir: path.resolve(__dirname, '..', 'template-solid'),
+    postInstall: ['npm run dev'],
+    tip: null,
+  },
 };
 
 export function toPackageName(rawName) {
