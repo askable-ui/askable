@@ -1,0 +1,30 @@
+:root {
+  --bg: #07111f;
+  --surface: #0e1f35;
+  --surface-2: #152843;
+  --border: rgba(99, 179, 237, 0.12);
+  --accent: #4f46e5;
+  --accent-glow: rgba(79, 70, 229, 0.18);
+  --text: #e5eefb;
+  --text-muted: #7ba3c8;
+  --text-dim: #4a7a9b;
+  --green: #34d399;
+  --red: #f87171;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+code, pre {
+  font-family: 'SFMono-Regular', ui-monospace, Menlo, monospace;
+}
+
+button, input { font: inherit; }
