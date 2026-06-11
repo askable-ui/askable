@@ -4,6 +4,7 @@ export {
   createAskableSourceStore,
   createAskableStore,
   createAskableTextSelectionCaptureStore,
+  createAskableViewportStore,
 } from './askable.js';
 export type {
   AskableRegionCaptureStore,
@@ -14,6 +15,8 @@ export type {
   AskableStoreOptions,
   AskableTextSelectionCaptureStore,
   AskableTextSelectionCaptureStoreOptions,
+  AskableViewportStore,
+  AskableViewportStoreOptions,
 } from './askable.js';
 
 // Svelte 5 runes-based API:
