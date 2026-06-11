@@ -19,6 +19,27 @@ const TEMPLATES = {
     ],
     tip: 'Add OPENAI_API_KEY to .env to enable the CopilotKit AI runtime.',
   },
+  vue: {
+    label: 'Vue 3 + Vite',
+    dir: path.resolve(__dirname, '..', 'template-vue'),
+    postInstall: ['npm run dev'],
+    tip: null,
+  },
+  svelte: {
+    label: 'Svelte 5 + Vite',
+    dir: path.resolve(__dirname, '..', 'template-svelte'),
+    postInstall: ['npm run dev'],
+    tip: null,
+  },
+  nextjs: {
+    label: 'Next.js 15 App Router + Vercel AI SDK',
+    dir: path.resolve(__dirname, '..', 'template-nextjs'),
+    postInstall: [
+      'cp .env.example .env.local',
+      'npm run dev',
+    ],
+    tip: 'Add ANTHROPIC_API_KEY to .env.local to enable streaming AI responses.',
+  },
 };
 
 export function toPackageName(rawName) {
@@ -75,7 +96,7 @@ export async function runCli(args) {
   if (!projectArg || projectArg === '--help' || projectArg === '-h') {
     console.log('create-askable-app\n');
     console.log('Usage:');
-    console.log('  npm create @askable-ui/app <project-name> [--template react]\n');
+    console.log('  npm create @askable-ui/app <project-name> [--template react|vue|svelte|nextjs]\n');
     console.log('Templates:');
     for (const [key, t] of Object.entries(TEMPLATES)) {
       console.log(`  ${key.padEnd(12)} ${t.label}`);

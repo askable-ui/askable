@@ -1,0 +1,19 @@
+{
+  "name": "__PACKAGE_NAME__",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@askable-ui/svelte": "^__ASKABLE_VERSION__",
+    "svelte": "^5.28.1"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}
