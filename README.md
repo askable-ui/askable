@@ -321,6 +321,7 @@ if (focus) {
 | React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
 | Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |
 | Vanilla JS | `@askable-ui/core` | `createAskableContext()`, zero dependencies |
 
@@ -393,6 +394,29 @@ npm install @askable-ui/svelte
 <Askable meta={{ metric: kpi.name, value: kpi.value, delta: kpi.delta }}>
   <KPICard data={kpi} />
 </Askable>
+```
+
+</details>
+
+<details>
+<summary><strong>SolidJS</strong></summary>
+
+```bash
+npm install @askable-ui/solid
+```
+
+```tsx
+import { Askable, useAskable } from '@askable-ui/solid';
+
+function KPICard(props: { kpi: { name: string; value: string; delta: string } }) {
+  const { promptContext } = useAskable();
+
+  return (
+    <Askable meta={{ metric: props.kpi.name, value: props.kpi.value, delta: props.kpi.delta }}>
+      <article>{props.kpi.value}</article>
+    </Askable>
+  );
+}
 ```
 
 </details>

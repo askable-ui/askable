@@ -43,6 +43,7 @@ body:
         - "@askable-ui/react"
         - "@askable-ui/vue"
         - "@askable-ui/svelte"
+        - "@askable-ui/solid"
         - "@askable-ui/react-native"
         - "@askable-ui/mcp"
         - "@askable-ui/create-app"

@@ -1,0 +1,62 @@
+{
+  "name": "@askable-ui/solid",
+  "version": "0.14.0",
+  "description": "SolidJS primitives to give AI assistants real-time context about what users see and interact with",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/askable-ui/askable.git",
+    "directory": "packages/solid"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "mcp",
+    "model-context-protocol",
+    "context",
+    "claude",
+    "cursor",
+    "copilot",
+    "solid",
+    "solidjs",
+    "solid-js",
+    "agentic",
+    "data-askable",
+    "web",
+    "selection",
+    "viewport"
+  ],
+  "homepage": "https://askable-ui.com",
+  "license": "MIT",
+  "peerDependencies": {
+    "solid-js": ">=1.0.0"
+  },
+  "dependencies": {
+    "@askable-ui/core": "^0.14.0"
+  },
+  "devDependencies": {
+    "@solidjs/testing-library": "^0.8.10",
+    "jsdom": "^29.1.1",
+    "solid-js": "^1.9.7",
+    "typescript": "^6.0.3",
+    "vite-plugin-solid": "^2.11.12",
+    "vitest": "^4.1.8"
+  }
+}
