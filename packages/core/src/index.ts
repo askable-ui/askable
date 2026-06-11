@@ -5,6 +5,7 @@ export { ASKABLE_TEXT_SELECTION_CAPTURE_THEME, createAskableTextSelectionCapture
 export { a11yTextExtractor } from './a11y.js';
 export { createAskableCollectionSource, createAskableSource, isAskablePacketSourceSelection } from './sources.js';
 export { createAskablePageSource } from './page-source.js';
+export { createAskableFormSource } from './form-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -69,6 +70,11 @@ export type {
   AskablePageSourceLink,
   AskablePageSourceSnapshot,
 } from './page-source.js';
+export type {
+  AskableCreateFormSourceOptions,
+  AskableFormFieldSnapshot,
+  AskableFormSourceSnapshot,
+} from './form-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,
