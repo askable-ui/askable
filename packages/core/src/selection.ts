@@ -259,8 +259,12 @@ export function createAskableTextSelectionCapture(
     const nextSelection: AskableTextSelectionCaptureState = { packet, selection };
     renderSelectionAffordance(packet, selection, nextSelection);
     setCurrentSelection(nextSelection, currentOptions.onSelectionChange);
-    currentOptions.onCapture?.(packet, selection);
     if (currentOnce) stopListening();
+    try {
+      currentOptions.onCapture?.(packet, selection);
+    } catch (err) {
+      console.error('[askable] onCapture callback threw:', err);
+    }
     return packet;
   };
 
@@ -332,7 +336,13 @@ export function createAskableTextSelectionCapture(
   function cancel() {
     const wasActive = active;
     destroy();
-    if (wasActive) options.onCancel?.();
+    if (wasActive) {
+      try {
+        options.onCancel?.();
+      } catch (err) {
+        console.error('[askable] onCancel callback threw:', err);
+      }
+    }
   }
 
   return {

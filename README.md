@@ -5,8 +5,8 @@
 <h1 align="center">askable-ui</h1>
 
 <p align="center">
-  <strong>Two lines of code to give your LLM eyes.</strong><br />
-  One attribute. Zero prompt engineering. It knows exactly what the user sees.
+  <strong>Your LLM doesn't know what the user is looking at. Fix that in two lines.</strong><br />
+  One attribute. Real-time UI context. Works with every LLM SDK and MCP client.
 </p>
 
 <p align="center">
@@ -16,7 +16,6 @@
   <a href="https://www.npmjs.com/package/@askable-ui/core">
     <img src="https://img.shields.io/npm/dw/@askable-ui/core?color=4f46e5&label=downloads" alt="npm downloads" />
   </a>
-
   <a href="./LICENSE">
     <img src="https://img.shields.io/npm/l/@askable-ui/core?color=4f46e5" alt="MIT license" />
   </a>
@@ -31,16 +30,60 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start">Quick Start</a> &nbsp;·&nbsp;
-  <a href="#why">Why</a> &nbsp;·&nbsp;
+  <a href="#what-the-ai-receives">What the AI receives</a> &nbsp;·&nbsp;
+  <a href="#quick-start">Quick start</a> &nbsp;·&nbsp;
+  <a href="#mcp-claude-desktop--cursor">MCP</a> &nbsp;·&nbsp;
   <a href="#how-it-works">How it works</a> &nbsp;·&nbsp;
-  <a href="#works-with">Works with</a> &nbsp;·&nbsp;
-  <a href="#features">Features</a> &nbsp;·&nbsp;
+  <a href="#capture-modes">Capture modes</a> &nbsp;·&nbsp;
   <a href="#packages">Packages</a> &nbsp;·&nbsp;
   <a href="https://askable-ui.com/docs/">Docs</a> &nbsp;·&nbsp;
-  <a href="https://askable-ui.com/docs/guide/agents">Agent Templates</a> &nbsp;·&nbsp;
   <a href="https://askable-mu.vercel.app/">Live Demo</a>
 </p>
+
+---
+
+## What the AI receives
+
+When a user clicks a KPI card in your dashboard, the AI gets this — automatically, with no extra code:
+
+```
+User is focused on: metric=net revenue retention, value=118%, delta=+6pp QoQ
+Page: Analytics Dashboard · Q3 2024
+Visible: pipeline coverage 3.9x, support backlog 24 tickets (−31%)
+History: support backlog → pipeline coverage → net revenue retention
+```
+
+Not a screenshot. Not a stale system prompt. The real data the user sees, updated on every interaction.
+
+---
+
+## The problem it solves
+
+**Before askable-ui** — you write this (and update it every time the UI changes):
+
+```ts
+const system = `You are an analytics assistant. The dashboard shows:
+  - Revenue KPI (updates monthly from Salesforce)
+  - Pipeline coverage metric (target: 3.5x)
+  - Support backlog counter (SLA: < 50 tickets)
+  - Deal pipeline table (12 open deals)
+  The user might be looking at any of these.`
+
+// User: "explain this"
+// AI: "Could you clarify which metric you're referring to?"
+```
+
+**With askable-ui** — annotate once, the AI always knows:
+
+```tsx
+<Askable meta={{ metric: 'net revenue retention', value: '118%', delta: '+6pp' }}>
+  <NRRCard data={data} />
+</Askable>
+
+// User: "explain this"
+// AI: "NRR at 118% means your existing customers are spending 18% more than last period.
+//       The +6pp trend indicates your recent expansion motion is working..."
+```
 
 ---
 
@@ -53,46 +96,77 @@ npm install @askable-ui/react
 ```tsx
 import { Askable, useAskable } from '@askable-ui/react';
 
-function Dashboard({ kpi }) {
+function Dashboard({ metrics }) {
   const { promptContext } = useAskable();
-  // promptContext: "User is focused on: metric=revenue, value=$2.3M, delta=+12%"
 
   return (
-    <Askable meta={{ metric: kpi.name, value: kpi.value, delta: kpi.delta }}>
-      <KPICard data={kpi} />
-    </Askable>
+    <>
+      {metrics.map(m => (
+        <Askable key={m.id} meta={{ metric: m.name, value: m.value, delta: m.delta }}>
+          <MetricCard data={m} />
+        </Askable>
+      ))}
+
+      {/* promptContext updates automatically as the user interacts */}
+      <AIChat systemPrompt={`You are a helpful assistant.\n\n${promptContext}`} />
+    </>
   );
 }
 ```
 
-That's it. `promptContext` updates automatically as the user interacts. Pass it to any LLM.
+`promptContext` is a plain string. Pass it to any LLM.
 
-Need a runnable starter app with Askable and CopilotKit?
+**Need a full runnable app?**
 
 ```bash
 npm create @askable-ui/app my-app
-cd my-app
-npm install
-npm run dev
+cd my-app && npm install && npm run dev
 ```
 
+React + Vite + CopilotKit, wired up and ready to go.
 
 ---
 
-## Why
+## MCP — Claude Desktop, Cursor, and any MCP client
 
-AI copilots ask users to _describe_ what they're looking at.
-That's friction — and it's imprecise.
+Expose your app's live UI context as an MCP server. Any agent that connects can ask what the user currently sees.
 
-askable-ui solves this with one HTML attribute. Mark any element with `data-askable`, and the library tracks user focus and serializes it into a prompt-ready string. The model gets the user's exact visual context — not a guess, the real thing.
+```bash
+npm install @askable-ui/mcp
+```
 
-No page scraping. No DOM serialization. No prompt bloat. **Lightweight and zero-dependency.**
+```ts
+import { createAskableMcpServer, createAskableMcpContextProvider } from '@askable-ui/mcp';
+
+const server = createAskableMcpServer({
+  provider: createAskableMcpContextProvider(ctx),
+});
+
+server.connect(transport);
+```
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "my-app": {
+      "command": "node",
+      "args": ["path/to/your/mcp-server.js"]
+    }
+  }
+}
+```
+
+Claude Desktop can now call `get_current_context` and `format_context_for_prompt` — it sees exactly what your user sees, without screenshots or manual description.
+
+→ **[MCP integration guide](https://askable-ui.com/docs/guide/mcp)**
 
 ---
 
 ## How it works
 
-**1. Annotate** — same data that renders your chart feeds the AI
+**1. Annotate** — your existing data, on your existing elements
 
 ```tsx
 <Askable meta={{ metric: 'revenue', value: '$2.3M', delta: '+12%', period: 'Q3' }}>
@@ -100,27 +174,76 @@ No page scraping. No DOM serialization. No prompt bloat. **Lightweight and zero-
 </Askable>
 ```
 
-**2. Observe** — automatic, zero config
+**2. Observe** — zero config, one call
 
 ```tsx
-const { ctx, promptContext } = useAskable();
-// promptContext updates whenever the user clicks, hovers, or focuses
-
-const { ctx: tableCtx } = useAskable({ name: 'table' });
-const { ctx: chartCtx } = useAskable({ name: 'chart' });
-// named contexts stay isolated for multi-region pages
-
-const { ctx: screenCtx } = useAskable({ viewport: true });
-// screenCtx.toViewportContext() serializes currently visible annotated elements
+const { promptContext } = useAskable();
+// Updates on click, hover, focus — any user interaction
 ```
 
-**3. Inject** — at the AI boundary, one line
+**3. Inject** — at the LLM boundary
 
 ```ts
+// Vercel AI SDK
 const result = await streamText({
   model: openai('gpt-4o'),
-  system: `You are a helpful analytics assistant.\n\n${promptContext}`,
+  system: `You are a helpful assistant.\n\n${promptContext}`,
   messages,
+});
+
+// Anthropic SDK
+const msg = await anthropic.messages.create({
+  model: 'claude-opus-4-8',
+  system: `You are a helpful assistant.\n\n${promptContext}`,
+  messages,
+});
+
+// CopilotKit
+useCopilotReadable({ description: 'UI context', value: promptContext }, [promptContext]);
+```
+
+---
+
+## Capture modes
+
+Beyond passive focus tracking, askable-ui has explicit capture tools that let users point the AI at exactly what they mean.
+
+### Region & lasso capture
+
+The user draws a rectangle, circle, or freehand lasso. The AI receives the context of every annotated element inside that selection.
+
+```tsx
+const regionCapture = useAskableRegionCapture({
+  onCapture(packet, selection) {
+    sendToAI(JSON.stringify(packet));
+  },
+});
+
+<button onClick={() => regionCapture.start({ shape: 'lasso' })}>
+  Circle it for the AI
+</button>
+```
+
+### Text selection capture
+
+The user highlights any text on the page. The AI receives the selection with its surrounding context.
+
+```tsx
+const textCapture = useAskableTextSelectionCapture({
+  onCapture(packet) {
+    sendToAI(JSON.stringify(packet));
+  },
+});
+```
+
+### Scroll & viewport context
+
+For infinite lists and dashboards — track which item the user is currently reading.
+
+```tsx
+const { scrollCtx } = useAskableScrollView({
+  selectVisible: (items) => items[0], // top visible item
+  getMeta: (item) => ({ id: item.id, title: item.title }),
 });
 ```
 
@@ -128,73 +251,33 @@ const result = await streamText({
 
 ## Works with
 
-**LLM SDKs** — OpenAI · Anthropic · Vercel AI SDK · CopilotKit · LangChain · any SDK
+**LLM SDKs**
 
-**Frameworks** — React · Vue 3 · Svelte · Vanilla JS · Next.js · Nuxt · SvelteKit
+| SDK | Integration |
+|---|---|
+| [Vercel AI SDK](https://sdk.vercel.ai/) | Pass `promptContext` to `system` in `streamText` / `generateText` |
+| [CopilotKit](https://copilotkit.ai/) | `useCopilotReadable({ value: promptContext })` |
+| [Anthropic SDK](https://github.com/anthropic-ai/sdk-python) | Pass `promptContext` to `system` in `messages.create` |
+| [OpenAI SDK](https://github.com/openai/openai-node) | Pass `promptContext` to the system message |
+| [LangChain.js](https://js.langchain.com/) | Inject via `SystemMessage` |
+| Any MCP client | Use `@askable-ui/mcp` to expose as MCP tools |
 
-askable-ui is the context layer. It doesn't replace your LLM SDK — it gives it eyes.
+**Frameworks**
 
----
-
-## Features
-
-- **Zero config** — one attribute, works with any DOM structure, styling system, or component library
-- **React, Vue, Svelte** — idiomatic hooks and components; core is framework-agnostic
-- **SSR safe** — defers to client lifecycle, no `window is not defined`
-- **"Ask AI" button** — `ctx.select(element)` pins focus to any element programmatically
-- **Conversation history** — `ctx.toHistoryContext(n)` for multi-turn context
-- **Viewport awareness** — `ctx.getVisibleElements()` / `ctx.toViewportContext()` for on-screen context
-- **Structured Context packets** — `ctx.toContextPacket()` for agent/MCP-ready page context
-- **Explicit capture tools** — region, circle, lasso, and highlighted text capture for user-selected context
-- **Redaction hooks** — strip sensitive fields before data reaches serialization
-- **Inspector panel** — `<AskableInspector />` or `useAskable({ inspector: true })` for a live dev overlay
-- **Agent templates** — reusable `AGENTS.md` guidance and copy-paste prompts for coding-agent-driven adoption
-- **Lightweight core** — zero runtime dependencies
-
----
-
-## Packages
-
-| Package | Version | Use when |
+| | Package | |
 |---|---|---|
-| [`@askable-ui/core`](https://www.npmjs.com/package/@askable-ui/core) | [![npm](https://img.shields.io/npm/v/@askable-ui/core?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/core) | Vanilla JS, custom framework, or as a peer dep |
-| [`@askable-ui/context`](https://www.npmjs.com/package/@askable-ui/context) | [![npm](https://img.shields.io/npm/v/@askable-ui/context?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/context) | Shared Context packet types, schema, and validators |
-| [`@askable-ui/react`](https://www.npmjs.com/package/@askable-ui/react) | [![npm](https://img.shields.io/npm/v/@askable-ui/react?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react) | React 18+ |
-| [`@askable-ui/react-native`](https://www.npmjs.com/package/@askable-ui/react-native) | [![npm](https://img.shields.io/npm/v/@askable-ui/react-native?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react-native) | React Native (initial press-driven adapter) |
-| [`@askable-ui/vue`](https://www.npmjs.com/package/@askable-ui/vue) | [![npm](https://img.shields.io/npm/v/@askable-ui/vue?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/vue) | Vue 3 |
-| [`@askable-ui/svelte`](https://www.npmjs.com/package/@askable-ui/svelte) | [![npm](https://img.shields.io/npm/v/@askable-ui/svelte?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/svelte) | Svelte 4 & 5 |
-| [`@askable-ui/mcp`](https://www.npmjs.com/package/@askable-ui/mcp) | [![npm](https://img.shields.io/npm/v/@askable-ui/mcp?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/mcp) | MCP bridge for exposing Context packets to agents |
-| [`@askable-ui/create-app`](https://www.npmjs.com/package/@askable-ui/create-app) | [![npm](https://img.shields.io/npm/v/@askable-ui/create-app?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/create-app) | React + Vite + CopilotKit starter scaffold |
+| React 18+ | `@askable-ui/react` | `useAskable()`, `<Askable>`, `useAskableRegionCapture()` |
+| Vue 3 | `@askable-ui/vue` | `useAskable()`, `<Askable>`, composables |
+| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `<Askable>` |
+| React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |
+| Vanilla JS | `@askable-ui/core` | `createAskableContext()`, zero dependencies |
+
+---
+
+## Framework quick starts
 
 <details>
-<summary><strong>Framework quick starts</strong></summary>
-
-### React Native
-
-```bash
-npm install @askable-ui/react-native
-```
-
-```tsx
-import { Pressable, Text } from 'react-native';
-import { Askable, useAskable } from '@askable-ui/react-native';
-
-function RevenueCard() {
-  const { ctx, promptContext } = useAskable();
-
-  return (
-    <Askable ctx={ctx} meta={{ widget: 'revenue' }} text="Revenue card">
-      <Pressable>
-        <Text>Revenue</Text>
-      </Pressable>
-    </Askable>
-  );
-}
-```
-
-For a runnable mobile demo, see [`examples/react-native-expo`](./examples/react-native-expo).
-
-### Vue 3
+<summary><strong>Vue 3</strong></summary>
 
 ```bash
 npm install @askable-ui/vue
@@ -208,13 +291,16 @@ const props = defineProps(['kpi']);
 </script>
 
 <template>
-  <Askable :meta="{ metric: kpi.name, value: kpi.value }">
+  <Askable :meta="{ metric: kpi.name, value: kpi.value, delta: kpi.delta }">
     <KPICard :data="kpi" />
   </Askable>
 </template>
 ```
 
-### Svelte
+</details>
+
+<details>
+<summary><strong>Svelte 4 & 5</strong></summary>
 
 ```bash
 npm install @askable-ui/svelte
@@ -227,12 +313,42 @@ npm install @askable-ui/svelte
   export let kpi;
 </script>
 
-<Askable meta={{ metric: kpi.name, value: kpi.value }}>
+<Askable meta={{ metric: kpi.name, value: kpi.value, delta: kpi.delta }}>
   <KPICard data={kpi} />
 </Askable>
 ```
 
-### Vanilla JS
+</details>
+
+<details>
+<summary><strong>React Native</strong></summary>
+
+```bash
+npm install @askable-ui/react-native
+```
+
+```tsx
+import { Askable, useAskable } from '@askable-ui/react-native';
+
+function RevenueCard({ data }) {
+  const { promptContext } = useAskable();
+
+  return (
+    <Askable meta={{ metric: 'revenue', value: data.value }}>
+      <Pressable>
+        <Text>{data.value}</Text>
+      </Pressable>
+    </Askable>
+  );
+}
+```
+
+See [`examples/react-native-expo`](./examples/react-native-expo) for a full runnable app.
+
+</details>
+
+<details>
+<summary><strong>Vanilla JS</strong></summary>
 
 ```bash
 npm install @askable-ui/core
@@ -245,12 +361,50 @@ const ctx = createAskableContext();
 ctx.observe(document.body);
 
 ctx.on('focus', () => {
-  console.log(ctx.toPromptContext());
-  // "User is focused on: — metric: revenue, value: $2.3M"
+  const context = ctx.toContext();
+  // "User is focused on: metric=revenue, value=$2.3M"
+  fetch('/api/chat', {
+    method: 'POST',
+    body: JSON.stringify({ context, message: userMessage }),
+  });
 });
 ```
 
+Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html) directly in a browser — zero build step, zero install, works offline.
+
 </details>
+
+---
+
+## Packages
+
+| Package | Version | Description |
+|---|---|---|
+| [`@askable-ui/core`](https://www.npmjs.com/package/@askable-ui/core) | [![npm](https://img.shields.io/npm/v/@askable-ui/core?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/core) | Framework-agnostic core. Zero runtime deps. |
+| [`@askable-ui/context`](https://www.npmjs.com/package/@askable-ui/context) | [![npm](https://img.shields.io/npm/v/@askable-ui/context?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/context) | Context packet types, schema, validators |
+| [`@askable-ui/react`](https://www.npmjs.com/package/@askable-ui/react) | [![npm](https://img.shields.io/npm/v/@askable-ui/react?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react) | React 18+ hooks and components |
+| [`@askable-ui/vue`](https://www.npmjs.com/package/@askable-ui/vue) | [![npm](https://img.shields.io/npm/v/@askable-ui/vue?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/vue) | Vue 3 composables and components |
+| [`@askable-ui/svelte`](https://www.npmjs.com/package/@askable-ui/svelte) | [![npm](https://img.shields.io/npm/v/@askable-ui/svelte?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/svelte) | Svelte 4 & 5 stores and components |
+| [`@askable-ui/react-native`](https://www.npmjs.com/package/@askable-ui/react-native) | [![npm](https://img.shields.io/npm/v/@askable-ui/react-native?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react-native) | React Native adapter |
+| [`@askable-ui/mcp`](https://www.npmjs.com/package/@askable-ui/mcp) | [![npm](https://img.shields.io/npm/v/@askable-ui/mcp?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/mcp) | MCP server — expose UI context to Claude, Cursor, etc. |
+| [`create-@askable-ui/app`](https://www.npmjs.com/package/@askable-ui/create-app) | [![npm](https://img.shields.io/npm/v/@askable-ui/create-app?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/create-app) | Starter scaffold: React + Vite + CopilotKit |
+
+---
+
+## Features
+
+- **Zero config** — one attribute, works with any DOM structure or component library
+- **Real-time updates** — context refreshes on click, hover, focus, scroll — any interaction
+- **Structured packets** — `ctx.toContextPacket()` emits typed, validated JSON for agent pipelines
+- **Conversation history** — `ctx.toHistoryContext(n)` for multi-turn awareness
+- **Viewport awareness** — `ctx.toViewportContext()` serializes all currently visible annotated elements
+- **Named contexts** — isolate `table`, `chart`, and `form` contexts independently on the same page
+- **Explicit capture** — region, circle, lasso, and text-selection capture for user-directed AI
+- **Privacy & redaction** — strip sensitive fields before data leaves the page
+- **MCP bridge** — expose any context as `get_current_context` and `format_context_for_prompt` MCP tools
+- **Dev inspector** — `<AskableInspector />` overlay showing live context packets and source data
+- **SSR safe** — defers to client lifecycle, no `window is not defined`
+- **Zero runtime dependencies** in core
 
 ---
 
@@ -258,32 +412,24 @@ ctx.on('focus', () => {
 
 - **Docs:** [askable-ui.com/docs](https://askable-ui.com/docs/)
 - **Analytics dashboard demo:** [askable-mu.vercel.app](https://askable-mu.vercel.app/)
-
----
-
-## Documentation
-
-**[askable-ui.com/docs](https://askable-ui.com/docs/)**
-
-| Guide | |
-|---|---|
-| [Getting started](https://askable-ui.com/docs/guide/getting-started) | Install, observe, inject |
-| [Annotating elements](https://askable-ui.com/docs/guide/annotating) | `data-askable`, nesting, priority |
-| [React](https://askable-ui.com/docs/guide/react) · [Vue](https://askable-ui.com/docs/guide/vue) · [Svelte](https://askable-ui.com/docs/guide/svelte) | Framework guides |
-| [CopilotKit integration](https://askable-ui.com/docs/guide/copilotkit) | Context-in-input pattern |
-| [API reference](https://askable-ui.com/docs/api/core) | Full type docs |
+- **Zero-install vanilla demo:** [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html) — open directly in browser, no install
+- **Vue 3 example:** [`examples/vue-dashboard/`](./examples/vue-dashboard/) — `npm install && npm run dev`
+- **React + Next.js example:** [`examples/analytics-dashboard-react/`](./examples/analytics-dashboard-react/)
+- **React Native example:** [`examples/react-native-expo/`](./examples/react-native-expo/)
 
 ---
 
 ## Using with coding agents
 
-[`AGENTS.md`](./AGENTS.md) contains copy-pasteable instructions for Claude, Cursor, Codex, and similar tools. Drop it into your project root and your coding agent will know how to integrate `askable-ui` correctly — annotation patterns, passive vs explicit flows, sanitization, and common mistakes.
+[`AGENTS.md`](./AGENTS.md) has copy-pasteable instructions for Claude, Cursor, Codex, and similar tools. Drop it into your project root and your coding agent will annotate elements correctly, avoid common mistakes, and wire up the full context pipeline.
 
 ---
 
 ## Contributing
 
-PRs welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions.
+PRs welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+The easiest contribution: a framework adapter. If you use Angular, Solid, Qwik, or HTMX, the adapter pattern is nearly mechanical — see any of the existing framework packages as a template and open an issue to claim it.
 
 ## License
 

@@ -37,6 +37,13 @@ export interface AskableMcpServerOptions {
   name?: string;
   version?: string;
   provider: AskableMcpContextProvider;
+  /**
+   * When `true`, tool calls that return a packet with `privacy.redacted === false`
+   * will fail with an error instead of forwarding potentially-unredacted data to
+   * the MCP client. Defaults to `false` for backwards compatibility — set to `true`
+   * when your app captures user-entered or sensitive content in `data-askable` attributes.
+   */
+  requireRedacted?: boolean;
 }
 
 export type AskableMcpStatelessTransportOptions = Omit<
@@ -304,6 +311,13 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
     async (args) => {
       try {
         const packet = await options.provider.getContext(args);
+        if (options.requireRedacted && packet.privacy?.redacted === false) {
+          console.warn('[askable-mcp] get_current_context blocked: packet has privacy.redacted=false');
+          return {
+            isError: true,
+            content: [{ type: 'text', text: 'Context packet has not been redacted. Configure a sanitizer or set requireRedacted: false.' }],
+          };
+        }
         return {
           content: [
             {
@@ -351,6 +365,13 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
     async (args) => {
       try {
         const packet = await options.provider.getContext(args);
+        if (options.requireRedacted && packet.privacy?.redacted === false) {
+          console.warn('[askable-mcp] format_context_for_prompt blocked: packet has privacy.redacted=false');
+          return {
+            isError: true,
+            content: [{ type: 'text', text: 'Context packet has not been redacted. Configure a sanitizer or set requireRedacted: false.' }],
+          };
+        }
         const text = options.provider.formatContextForPrompt
           ? await options.provider.formatContextForPrompt(packet, args)
           : defaultPromptFormatter(packet);

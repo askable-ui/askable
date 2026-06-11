@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>askable-ui — Vanilla JS Demo</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --surface: #0e1f35;
+      --surface-2: #152843;
+      --border: rgba(99, 179, 237, 0.12);
+      --accent: #4f46e5;
+      --accent-glow: rgba(79, 70, 229, 0.25);
+      --text: #e5eefb;
+      --text-muted: #7ba3c8;
+      --text-dim: #4a7a9b;
+      --green: #34d399;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      color-scheme: dark;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(7, 17, 31, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header .logo {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    header .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: var(--accent-glow);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      letter-spacing: 0.02em;
+    }
+
+    header .header-hint {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    header .header-hint strong {
+      color: var(--text-muted);
+    }
+
+    main {
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    /* KPI grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .kpi-card:hover, .kpi-card.active {
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    .kpi-card:hover::before, .kpi-card.active::before { opacity: 1; }
+    .kpi-card.active { border-color: #6366f1; }
+
+    .kpi-card .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      letter-spacing: 0.02em;
+    }
+
+    .kpi-card .value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 8px;
+      position: relative;
+    }
+
+    .kpi-card .delta {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .delta.up { color: var(--green); }
+    .delta.down { color: var(--red); }
+    .delta.neutral { color: var(--yellow); }
+
+    .kpi-card .ask-hint {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .kpi-card:hover .ask-hint, .kpi-card.active .ask-hint { opacity: 1; }
+
+    /* Deals table */
+    .deals-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .deals-header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .deals-header h3 { font-size: 13px; font-weight: 600; }
+    .deals-header span { font-size: 12px; color: var(--text-muted); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr.deal-row {
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    tr.deal-row:hover, tr.deal-row.active {
+      background: var(--surface-2);
+    }
+
+    tr.deal-row.active {
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+
+    td {
+      padding: 12px 18px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(99, 179, 237, 0.06);
+    }
+
+    td .company { font-weight: 500; }
+    td .stage { color: var(--text-muted); font-size: 12px; }
+    td .amount { font-weight: 600; color: var(--green); }
+    td .owner { color: var(--text-muted); }
+
+    /* Sidebar */
+    aside {
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 53px);
+      position: sticky;
+      top: 53px;
+    }
+
+    .context-panel {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .context-panel .panel-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .context-panel .panel-title .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      transition: background 0.2s;
+    }
+
+    .context-panel .panel-title .dot.live {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .context-box {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'SFMono-Regular', ui-monospace, Menlo, monospace;
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: #a5d6ff;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 80px;
+      transition: all 0.2s;
+    }
+
+    .context-box.empty {
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      font-style: italic;
+    }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      width: fit-content;
+    }
+
+    .copy-btn:hover {
+      border-color: rgba(99, 179, 237, 0.3);
+      color: var(--text);
+    }
+
+    .copy-btn.copied {
+      color: var(--green);
+      border-color: rgba(52, 211, 153, 0.3);
+    }
+
+    /* Chat panel */
+    .chat-panel {
+      display: flex;
+      flex-direction: column;
+      height: 50%;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .message .role {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .message.user .role { color: #818cf8; }
+    .message.ai .role { color: var(--green); }
+
+    .message .bubble {
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .message.user .bubble {
+      background: rgba(79, 70, 229, 0.15);
+      border-color: rgba(99, 102, 241, 0.25);
+      color: #e0e7ff;
+    }
+
+    .message.ai .bubble strong {
+      color: #67e8f9;
+    }
+
+    .message.ai.thinking .bubble {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .chat-input-area {
+      padding: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 6px;
+    }
+
+    .chat-input-area input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .chat-input-area input:focus {
+      border-color: rgba(99, 102, 241, 0.5);
+    }
+
+    .chat-input-area input::placeholder { color: var(--text-dim); }
+
+    .chat-input-area button {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .chat-input-area button:hover { opacity: 0.85; }
+    .chat-input-area button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .empty-state p {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .empty-state p strong {
+      display: block;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .how-it-works {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+
+    .how-it-works h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .how-it-works ol {
+      padding-left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .how-it-works li {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .how-it-works code {
+      font-family: 'SFMono-Regular', ui-monospace, Menlo, monospace;
+      font-size: 11px;
+      background: rgba(0,0,0,0.3);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: #a5d6ff;
+    }
+
+    .source-link {
+      margin-top: 12px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .source-link a {
+      font-size: 12px;
+      color: #818cf8;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .source-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">askable-ui</span>
+  <span class="badge">Vanilla JS Demo</span>
+  <span class="header-hint">Click any card or row · Watch <strong>What the AI sees</strong> update · Ask a question</span>
+</header>
+
+<main>
+  <div>
+    <div class="section-label">KPI metrics · click any card</div>
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card" id="card-nrr"
+        data-askable='{"metric":"net revenue retention","value":"118%","delta":"+6pp QoQ","target":"110%","status":"above target"}'
+        tabindex="0" role="button" aria-label="Net Revenue Retention KPI card">
+        <span class="ask-hint">?</span>
+        <div class="label">Net Revenue Retention</div>
+        <div class="value">118%</div>
+        <div class="delta up">↑ +6pp quarter over quarter</div>
+      </div>
+      <div class="kpi-card" id="card-pipeline"
+        data-askable='{"metric":"pipeline coverage","value":"3.9x","delta":"+0.4x WoW","target":"3.5x","status":"above target","totalValue":"$12.3M"}'
+        tabindex="0" role="button" aria-label="Pipeline Coverage KPI card">
+        <span class="ask-hint">?</span>
+        <div class="label">Pipeline Coverage</div>
+        <div class="value">3.9x</div>
+        <div class="delta up">↑ +0.4x week over week</div>
+      </div>
+      <div class="kpi-card" id="card-backlog"
+        data-askable='{"metric":"support backlog","value":"24 tickets","delta":"-31% since Friday","sla":"<50 tickets","status":"healthy","p1Count":2}'
+        tabindex="0" role="button" aria-label="Support Backlog KPI card">
+        <span class="ask-hint">?</span>
+        <div class="label">Support Backlog</div>
+        <div class="value">24</div>
+        <div class="delta up">↓ −31% since last Friday</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Open deals · click any row</div>
+    <div class="deals-card">
+      <div class="deals-header">
+        <h3>Deal pipeline</h3>
+        <span>4 deals · $315k total</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Stage</th>
+            <th>Value</th>
+            <th>Owner</th>
+          </tr>
+        </thead>
+        <tbody id="deals-tbody">
+          <tr class="deal-row" id="deal-acme"
+            data-askable='{"company":"Acme Foods","stage":"Security review","value":"$84k","owner":"Nina","daysInStage":12,"riskFlag":"procurement delay"}'
+            tabindex="0" role="button">
+            <td><span class="company">Acme Foods</span></td>
+            <td><span class="stage">Security review</span></td>
+            <td><span class="amount">$84k</span></td>
+            <td><span class="owner">Nina</span></td>
+          </tr>
+          <tr class="deal-row" id="deal-northstar"
+            data-askable='{"company":"Northstar Health","stage":"Champion identified","value":"$122k","owner":"Sam","daysInStage":5,"nextAction":"exec call this week"}'
+            tabindex="0" role="button">
+            <td><span class="company">Northstar Health</span></td>
+            <td><span class="stage">Champion identified</span></td>
+            <td><span class="amount">$122k</span></td>
+            <td><span class="owner">Sam</span></td>
+          </tr>
+          <tr class="deal-row" id="deal-lattice"
+            data-askable='{"company":"Lattice Cloud","stage":"Commercials","value":"$61k","owner":"Aria","daysInStage":8,"discount":"requested 15%"}'
+            tabindex="0" role="button">
+            <td><span class="company">Lattice Cloud</span></td>
+            <td><span class="stage">Commercials</span></td>
+            <td><span class="amount">$61k</span></td>
+            <td><span class="owner">Aria</span></td>
+          </tr>
+          <tr class="deal-row" id="deal-meridian"
+            data-askable='{"company":"Meridian Retail","stage":"Pilot live","value":"$48k","owner":"Jon","daysInStage":21,"pilotUsers":47}'
+            tabindex="0" role="button">
+            <td><span class="company">Meridian Retail</span></td>
+            <td><span class="stage">Pilot live</span></td>
+            <td><span class="amount">$48k</span></td>
+            <td><span class="owner">Jon</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="how-it-works">
+    <h3>How this demo works</h3>
+    <ol>
+      <li>Every card and row has a <code>data-askable</code> attribute with structured JSON data.</li>
+      <li><code>createAskableContext()</code> watches for focus/click events and tracks which element is active.</li>
+      <li><code>ctx.toContext()</code> serializes the focused element's metadata into a prompt-ready string.</li>
+      <li>The mock AI uses that string to answer questions about exactly what you selected.</li>
+    </ol>
+    <div class="source-link">
+      <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener">★ Star on GitHub</a>
+      <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener">→ Read the docs</a>
+      <a href="https://www.npmjs.com/package/@askable-ui/core" target="_blank" rel="noopener">↓ npm install</a>
+    </div>
+  </div>
+</main>
+
+<aside>
+  <div class="context-panel">
+    <div class="panel-title">
+      <span class="dot" id="context-dot"></span>
+      What the AI sees
+    </div>
+    <div class="context-box empty" id="context-display">
+      Click any card or row above to see what the AI receives...
+    </div>
+    <button class="copy-btn" id="copy-btn" style="display:none">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      Copy context
+    </button>
+  </div>
+
+  <div class="chat-panel">
+    <div class="messages" id="messages">
+      <div class="empty-state">
+        <p>
+          <strong>Select something first</strong>
+          Click a KPI card or deal row, then ask a question about it.
+        </p>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" id="chat-input" placeholder="Ask about what you selected..." disabled />
+      <button id="send-btn" disabled>Ask</button>
+    </div>
+  </div>
+</aside>
+
+<script type="module">
+// ─── Load askable-ui/core from CDN ───────────────────────────────────────────
+// In a real app: import { createAskableContext } from '@askable-ui/core';
+import { createAskableContext } from 'https://esm.sh/@askable-ui/core@0.13.1';
+
+const ctx = createAskableContext();
+
+// ─── DOM refs ────────────────────────────────────────────────────────────────
+const contextDisplay = document.getElementById('context-display');
+const contextDot     = document.getElementById('context-dot');
+const copyBtn        = document.getElementById('copy-btn');
+const messages       = document.getElementById('messages');
+const chatInput      = document.getElementById('chat-input');
+const sendBtn        = document.getElementById('send-btn');
+
+let currentContext = '';
+let activeEl = null;
+
+// ─── Observe annotated elements ──────────────────────────────────────────────
+ctx.observe(document.body);
+
+// ─── Handle focus changes ────────────────────────────────────────────────────
+ctx.on('focus', () => {
+  const text = ctx.toContext();
+  if (!text) return;
+
+  currentContext = text;
+  contextDisplay.textContent = text;
+  contextDisplay.classList.remove('empty');
+  contextDot.classList.add('live');
+  copyBtn.style.display = 'flex';
+  chatInput.disabled = false;
+  sendBtn.disabled = false;
+  chatInput.placeholder = 'Ask about what you selected...';
+});
+
+// ─── Click to select ─────────────────────────────────────────────────────────
+document.querySelectorAll('[data-askable]').forEach(el => {
+  function activate() {
+    // Update active styles
+    document.querySelectorAll('.kpi-card.active, .deal-row.active').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+    activeEl = el;
+    ctx.select(el);
+  }
+
+  el.addEventListener('click', activate);
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); } });
+});
+
+// ─── Copy button ─────────────────────────────────────────────────────────────
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(currentContext).then(() => {
+    copyBtn.textContent = '✓ Copied';
+    copyBtn.classList.add('copied');
+    setTimeout(() => {
+      copyBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy context`;
+      copyBtn.classList.remove('copied');
+    }, 2000);
+  });
+});
+
+// ─── Mock AI responses ────────────────────────────────────────────────────────
+// In a real app, you'd pass currentContext to your LLM API.
+// This demo generates realistic responses from the actual data-askable values.
+
+function getMockResponse(question, contextText) {
+  const lower = question.toLowerCase();
+  const data = parseCurrentData();
+
+  if (!data) {
+    return "I don't have enough context. Please click a metric or deal row first.";
+  }
+
+  // NRR responses
+  if (data.metric === 'net revenue retention') {
+    if (lower.includes('why') || lower.includes('mean') || lower.includes('explain') || lower.includes('what')) {
+      return `**Net Revenue Retention at ${data.value}** means your existing customers are generating ${parseInt(data.value) - 100}% more revenue this period than last period — after accounting for any churn or downgrades.\n\nAt ${data.value}, you're well above the ${data.target || '100%'} break-even point. The **${data.delta}** improvement quarter-over-quarter suggests your expansion motion (upsells, seat growth, tier upgrades) is accelerating. Most SaaS companies target >110% NRR — you're tracking ahead of that.`;
+    }
+    if (lower.includes('good') || lower.includes('bad') || lower.includes('target')) {
+      return `${data.value} NRR is strong — your target is ${data.target || 'not set'} and you're ${data.status || 'above target'}. Industry benchmark for top-quartile SaaS is 120%+ at scale. The ${data.delta} trend is the more important signal: it means the expansion motion is improving, not just holding.`;
+    }
+  }
+
+  // Pipeline coverage responses
+  if (data.metric === 'pipeline coverage') {
+    if (lower.includes('why') || lower.includes('mean') || lower.includes('explain') || lower.includes('what')) {
+      return `**Pipeline coverage at ${data.value}** means you have ${data.value} of pipeline for every $1 of quota. With ${data.totalValue || 'significant'} total pipeline value, you have a healthy buffer above the ${data.target || '3x'} target.\n\nThe **${data.delta}** increase week-over-week is encouraging — it means more deals are entering the pipeline than are being lost or won. Watch stage distribution: coverage alone doesn't tell you if deals are bunched in early stages.`;
+    }
+    if (lower.includes('risk') || lower.includes('concern')) {
+      return `Main risk with ${data.value} coverage: stage concentration. If most of the pipeline is in early stages (prospecting, discovery), the real close-weighted coverage is lower. Ask your team for a stage-weighted view. The ${data.delta} WoW growth is healthy — just verify it's not all new pipeline with long cycles.`;
+    }
+  }
+
+  // Support backlog responses
+  if (data.metric === 'support backlog') {
+    if (lower.includes('why') || lower.includes('explain') || lower.includes('what')) {
+      return `**Support backlog at ${data.value}** is ${data.status || 'within SLA'}. The **${data.delta}** reduction means your team is clearing tickets faster than new ones arrive — likely from the self-serve and routing improvements.\n\n${data.p1Count ? `There are ${data.p1Count} P1 tickets in the queue — those need same-day response regardless of overall backlog health.` : ''}`;
+    }
+    if (lower.includes('good') || lower.includes('target') || lower.includes('sla')) {
+      return `${data.value} is ${data.status || 'healthy'} — SLA is ${data.sla || '<50 tickets'}. The ${data.delta} improvement is significant. If this trend holds another week, you'll be at or below the 15-ticket target from last sprint's OKR. Main watch-out: make sure the reduction is from resolution, not from tickets being closed prematurely.`;
+    }
+  }
+
+  // Deal responses
+  if (data.company) {
+    if (lower.includes('risk') || lower.includes('concern') || lower.includes('worried')) {
+      const risks = [];
+      if (data.riskFlag) risks.push(data.riskFlag);
+      if (data.daysInStage > 14) risks.push(`${data.daysInStage} days in ${data.stage} — longer than typical`);
+      if (data.discount) risks.push(`discount request: ${data.discount}`);
+      if (risks.length === 0) risks.push('no immediate flags in the data');
+      return `**${data.company}** (${data.value}) — risk factors:\n${risks.map(r => `• ${r}`).join('\n')}\n\nStage: ${data.stage}. Owner: ${data.owner}. ${data.nextAction ? `Next action: ${data.nextAction}.` : ''}`;
+    }
+    if (lower.includes('next') || lower.includes('action') || lower.includes('do')) {
+      return `**${data.company}** is in **${data.stage}** (${data.value}, ${data.owner}).\n\n${data.nextAction ? `Next action already identified: ${data.nextAction}.` : `No next action tagged — ${data.owner} should log the next step in CRM.`}${data.daysInStage ? ` Deal has been in this stage ${data.daysInStage} days.` : ''}${data.riskFlag ? ` Watch out for: ${data.riskFlag}.` : ''}`;
+    }
+    if (lower.includes('explain') || lower.includes('tell') || lower.includes('what') || lower.includes('about')) {
+      return `**${data.company}** — ${data.value} deal owned by ${data.owner}, currently in **${data.stage}**.\n\n${data.daysInStage ? `In stage for ${data.daysInStage} days. ` : ''}${data.riskFlag ? `Risk flag: ${data.riskFlag}. ` : ''}${data.nextAction ? `Next action: ${data.nextAction}. ` : ''}${data.pilotUsers ? `${data.pilotUsers} users active in pilot. ` : ''}${data.discount ? `Discount request: ${data.discount}.` : ''}`;
+    }
+  }
+
+  // Generic fallback using whatever data we have
+  const keys = Object.entries(data).slice(0, 4).map(([k, v]) => `${k}: ${v}`).join(', ');
+  return `Based on the current context (${keys}): I can answer questions about this data — try asking about risks, next steps, what the number means, or whether it's good or bad.`;
+}
+
+function parseCurrentData() {
+  if (!activeEl) return null;
+  try {
+    const raw = activeEl.getAttribute('data-askable');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Chat ────────────────────────────────────────────────────────────────────
+function addMessage(role, text) {
+  // Remove empty state
+  const emptyState = messages.querySelector('.empty-state');
+  if (emptyState) emptyState.remove();
+
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+
+  const roleLabel = document.createElement('div');
+  roleLabel.className = 'role';
+  roleLabel.textContent = role === 'user' ? 'You' : 'AI (using your context)';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  // Render **bold** markdown
+  bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+
+  div.appendChild(roleLabel);
+  div.appendChild(bubble);
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+  return div;
+}
+
+async function handleSend() {
+  const q = chatInput.value.trim();
+  if (!q || !currentContext) return;
+
+  chatInput.value = '';
+  sendBtn.disabled = true;
+  chatInput.disabled = true;
+
+  addMessage('user', q);
+
+  const thinking = addMessage('ai thinking', 'Reading context...');
+
+  // Simulate LLM latency
+  await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+
+  thinking.remove();
+
+  const response = getMockResponse(q, currentContext);
+  addMessage('ai', response);
+
+  sendBtn.disabled = false;
+  chatInput.disabled = false;
+  chatInput.focus();
+}
+
+sendBtn.addEventListener('click', handleSend);
+chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
+</script>
+</body>
+</html>
