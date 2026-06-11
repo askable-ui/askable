@@ -28,6 +28,7 @@ export type { TypedAskableFocus } from '@askable-ui/core';
 
 // Svelte 5 runes-based API:
 //   import { useAskable } from '@askable-ui/svelte/useAskable.svelte'
+//   import { useAskableCompose } from '@askable-ui/svelte/useAskableCompose.svelte'
 // Askable components:
 //   import Askable  from '@askable-ui/svelte/Askable.svelte'   (Svelte 4)
 //   import Askable5 from '@askable-ui/svelte/Askable5.svelte'  (Svelte 5)
