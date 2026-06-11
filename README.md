@@ -322,6 +322,7 @@ if (focus) {
 | Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
 | React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |
 | Vanilla JS | `@askable-ui/core` | `createAskableContext()`, zero dependencies |
 
@@ -422,6 +423,41 @@ function KPICard(props: { kpi: { name: string; value: string; delta: string } })
 </details>
 
 <details>
+<summary><strong>Angular 16+</strong></summary>
+
+```bash
+npm install @askable-ui/angular
+```
+
+```ts
+// app.component.ts
+import { Component, computed, inject } from '@angular/core';
+import { AskableService, AskableDirective, useAskableCompose } from '@askable-ui/angular';
+
+@Component({
+  standalone: true,
+  imports: [AskableDirective],
+  template: `
+    <article [askable]="{ metric: 'Revenue', value: '$1.2M' }" askableScope="kpis">
+      $1.2M
+    </article>
+    <p>{{ promptContext() }}</p>
+  `,
+})
+export class AppComponent {
+  private askable = inject(AskableService);
+
+  sections = computed(() => [
+    { label: 'Focused element', value: this.askable.promptContext() },
+  ]);
+
+  { promptContext } = useAskableCompose(this.sections);
+}
+```
+
+</details>
+
+<details>
 <summary><strong>React Native</strong></summary>
 
 ```bash
@@ -486,6 +522,8 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 | [`@askable-ui/react`](https://www.npmjs.com/package/@askable-ui/react) | [![npm](https://img.shields.io/npm/v/@askable-ui/react?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react) | React 18+ hooks and components |
 | [`@askable-ui/vue`](https://www.npmjs.com/package/@askable-ui/vue) | [![npm](https://img.shields.io/npm/v/@askable-ui/vue?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/vue) | Vue 3 composables and components |
 | [`@askable-ui/svelte`](https://www.npmjs.com/package/@askable-ui/svelte) | [![npm](https://img.shields.io/npm/v/@askable-ui/svelte?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/svelte) | Svelte 4 & 5 stores and components |
+| [`@askable-ui/solid`](https://www.npmjs.com/package/@askable-ui/solid) | [![npm](https://img.shields.io/npm/v/@askable-ui/solid?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/solid) | SolidJS primitives and components |
+| [`@askable-ui/angular`](https://www.npmjs.com/package/@askable-ui/angular) | [![npm](https://img.shields.io/npm/v/@askable-ui/angular?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/angular) | Angular 16+ injectable service and directive |
 | [`@askable-ui/react-native`](https://www.npmjs.com/package/@askable-ui/react-native) | [![npm](https://img.shields.io/npm/v/@askable-ui/react-native?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react-native) | React Native adapter |
 | [`@askable-ui/mcp`](https://www.npmjs.com/package/@askable-ui/mcp) | [![npm](https://img.shields.io/npm/v/@askable-ui/mcp?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/mcp) | MCP server — expose UI context to Claude, Cursor, etc. |
 | [`create-@askable-ui/app`](https://www.npmjs.com/package/@askable-ui/create-app) | [![npm](https://img.shields.io/npm/v/@askable-ui/create-app?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/create-app) | Starter scaffold: React + Vite + CopilotKit |
@@ -520,6 +558,7 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 | [`vue-dashboard`](./examples/vue-dashboard/) | Vue 3 · Vite | Vue composables + live context panel |
 | [`svelte-dashboard`](./examples/svelte-dashboard/) | Svelte 5 · Vite | Runes API + live context panel |
 | [`solid-dashboard`](./examples/solid-dashboard/) | SolidJS · Vite | SolidJS signals + context inspector sidebar |
+| [`angular-dashboard`](./examples/angular-dashboard/) | Angular 19 · standalone | Angular signals + injectable services |
 | [`mcp-server`](./examples/mcp-server/) | Node.js · Express | Standalone MCP server — connect Claude Desktop in 5 min |
 | [`vanilla-chat`](./examples/vanilla-chat/) | Vanilla JS | Zero-install HTML demo, opens in a browser |
 | [`react-native-expo`](./examples/react-native-expo/) | React Native · Expo | Mobile scroll context |
@@ -547,7 +586,7 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 
 PRs welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-The easiest contribution: a framework adapter. If you use Angular, Solid, Qwik, or HTMX, the adapter pattern is nearly mechanical — see any of the existing framework packages as a template and open an issue to claim it.
+The easiest contribution: a framework adapter. If you use Qwik, HTMX, Lit, or Stencil, the adapter pattern is nearly mechanical — see any of the existing framework packages as a template and open an issue to claim it.
 
 ## License
 

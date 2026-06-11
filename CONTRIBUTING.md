@@ -22,6 +22,7 @@ packages/
   vue/              — Vue 3 composables (useAskable, <Askable>)
   svelte/           — Svelte 4 stores + Svelte 5 runes (createAskableStore, useAskable.svelte)
   solid/            — SolidJS primitives (useAskable, useAskableViewport, <Askable>)
+  angular/          — Angular 16+ injectable service + directive (AskableService, AskableDirective)
   react-native/     — React Native scroll context hook
   mcp/              — MCP server, web handler, page bridge
   create-askable-app/ — CLI scaffolder (npm create @askable-ui/app)
@@ -30,6 +31,7 @@ examples/
   vercel-ai-sdk/              — minimal Next.js + Vercel AI SDK integration
   vue-dashboard/              — Vue 3 + Vite dashboard
   solid-dashboard/            — SolidJS + Vite dashboard
+  angular-dashboard/          — Angular 19 + standalone components
   svelte-dashboard/           — Svelte 5 runes dashboard
   vanilla-chat/               — zero-dependency HTML demo
   mcp-server/                 — standalone MCP server + Express quickstart
@@ -72,7 +74,7 @@ node packages/core/bench/perf.mjs
 
 ## Good first contributions
 
-- **Add a framework example** — we have React, Vue, Svelte. An Angular or SolidJS example would be great.
+- **Add a framework example** — we have React, Vue, Svelte, SolidJS, Angular. A Qwik or HTMX example would be great.
 - **Improve the vanilla demo** — `examples/vanilla-chat/` is self-contained HTML. Easy to fork and extend.
 - **Add a recipe** — show how to wire askable-ui with a specific LLM SDK (Vercel AI SDK, LangChain, etc.)
 - **Fix a bug** — check [open issues](https://github.com/askable-ui/askable/issues) labeled `bug`.

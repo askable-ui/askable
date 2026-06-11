@@ -1,0 +1,64 @@
+{
+  "name": "@askable-ui/angular",
+  "version": "0.14.0",
+  "description": "Angular service and directive to give AI assistants real-time context about what users see and select",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/askable-ui/askable.git",
+    "directory": "packages/angular"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "mcp",
+    "model-context-protocol",
+    "context",
+    "claude",
+    "cursor",
+    "copilot",
+    "angular",
+    "signals",
+    "agentic",
+    "data-askable"
+  ],
+  "homepage": "https://askable-ui.com",
+  "license": "MIT",
+  "peerDependencies": {
+    "@angular/common": ">=16.0.0",
+    "@angular/core": ">=16.0.0"
+  },
+  "dependencies": {
+    "@askable-ui/core": "^0.14.0"
+  },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^1.18.3",
+    "@angular/build": "^19.2.27",
+    "@angular/common": "^19.2.0",
+    "@angular/compiler-cli": "^19.2.25",
+    "@angular/core": "^19.2.0",
+    "@angular/platform-browser": "^19.2.0",
+    "@angular/platform-browser-dynamic": "^19.2.25",
+    "jsdom": "^29.1.1",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.8",
+    "zone.js": "^0.15.0"
+  }
+}
