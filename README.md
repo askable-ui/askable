@@ -357,6 +357,7 @@ function AskButton() {
 | Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
+| Qwik | `@askable-ui/qwik` | `useAskable()`, `<Askable>` for Qwik City apps |
 | Web Component | `@askable-ui/web-component` | `<askable-context>` custom element, works in HTMX, Ember, vanilla HTML |
 | React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |
 | Vanilla JS | `@askable-ui/core` | `createAskableContext()`, zero dependencies |
@@ -493,6 +494,30 @@ export class AppComponent {
 </details>
 
 <details>
+<summary><strong>Qwik</strong></summary>
+
+```bash
+npm install @askable-ui/qwik
+```
+
+```tsx
+import { component$ } from '@builder.io/qwik';
+import { Askable, useAskable } from '@askable-ui/qwik';
+
+export const KPICard = component$<{ kpi: { metric: string; value: string } }>((props) => {
+  const { promptContext } = useAskable();
+
+  return (
+    <Askable meta={{ metric: props.kpi.metric, value: props.kpi.value }}>
+      <article>{props.kpi.value}</article>
+    </Askable>
+  );
+});
+```
+
+</details>
+
+<details>
 <summary><strong>Web Component (HTMX / Ember / Vanilla)</strong></summary>
 
 ```bash
@@ -588,6 +613,7 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 | [`@askable-ui/svelte`](https://www.npmjs.com/package/@askable-ui/svelte) | [![npm](https://img.shields.io/npm/v/@askable-ui/svelte?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/svelte) | Svelte 4 & 5 stores and components |
 | [`@askable-ui/solid`](https://www.npmjs.com/package/@askable-ui/solid) | [![npm](https://img.shields.io/npm/v/@askable-ui/solid?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/solid) | SolidJS primitives and components |
 | [`@askable-ui/angular`](https://www.npmjs.com/package/@askable-ui/angular) | [![npm](https://img.shields.io/npm/v/@askable-ui/angular?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/angular) | Angular 16+ injectable service and directive |
+| [`@askable-ui/qwik`](https://www.npmjs.com/package/@askable-ui/qwik) | [![npm](https://img.shields.io/npm/v/@askable-ui/qwik?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/qwik) | Qwik adapter with useAskable() and `<Askable>` |
 | [`@askable-ui/web-component`](https://www.npmjs.com/package/@askable-ui/web-component) | [![npm](https://img.shields.io/npm/v/@askable-ui/web-component?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/web-component) | `<askable-context>` custom element — HTMX, Ember, vanilla |
 | [`@askable-ui/react-native`](https://www.npmjs.com/package/@askable-ui/react-native) | [![npm](https://img.shields.io/npm/v/@askable-ui/react-native?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react-native) | React Native adapter |
 | [`@askable-ui/mcp`](https://www.npmjs.com/package/@askable-ui/mcp) | [![npm](https://img.shields.io/npm/v/@askable-ui/mcp?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/mcp) | MCP server — expose UI context to Claude, Cursor, etc. |

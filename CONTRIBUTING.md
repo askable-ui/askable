@@ -23,6 +23,7 @@ packages/
   svelte/           — Svelte 4 stores + Svelte 5 runes (createAskableStore, useAskable.svelte)
   solid/            — SolidJS primitives (useAskable, useAskableViewport, <Askable>)
   angular/          — Angular 16+ injectable service + directive (AskableService, AskableDirective)
+  qwik/             — Qwik adapter (useAskable, <Askable>)
   web-component/    — <askable-context> custom element (zero build step, any framework)
   react-native/     — React Native scroll context hook
   mcp/              — MCP server, web handler, page bridge
@@ -76,7 +77,7 @@ node packages/core/bench/perf.mjs
 
 ## Good first contributions
 
-- **Add a framework example** — we have React, Vue, Svelte, SolidJS, Angular. A Qwik or HTMX example would be great.
+- **Add a framework example** — we have React, Vue, Svelte, SolidJS, Angular, Qwik. An HTMX or Lit example would be great.
 - **Improve the vanilla demo** — `examples/vanilla-chat/` is self-contained HTML. Easy to fork and extend.
 - **Add a recipe** — show how to wire askable-ui with a specific LLM SDK (Vercel AI SDK, LangChain, etc.)
 - **Fix a bug** — check [open issues](https://github.com/askable-ui/askable/issues) labeled `bug`.

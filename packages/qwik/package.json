@@ -1,0 +1,57 @@
+{
+  "name": "@askable-ui/qwik",
+  "version": "0.14.0",
+  "description": "Qwik hooks and components to give AI assistants real-time context about what users see and select",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/askable-ui/askable.git",
+    "directory": "packages/qwik"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "mcp",
+    "model-context-protocol",
+    "context",
+    "claude",
+    "cursor",
+    "copilot",
+    "qwik",
+    "qwikjs",
+    "qwik-city",
+    "agentic",
+    "data-askable"
+  ],
+  "homepage": "https://askable-ui.com",
+  "license": "MIT",
+  "peerDependencies": {
+    "@builder.io/qwik": ">=1.0.0"
+  },
+  "dependencies": {
+    "@askable-ui/core": "^0.14.0"
+  },
+  "devDependencies": {
+    "@builder.io/qwik": "^1.14.1",
+    "jsdom": "^29.1.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}
