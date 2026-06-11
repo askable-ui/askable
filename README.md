@@ -94,7 +94,7 @@ npm install @askable-ui/react
 ```
 
 ```tsx
-import { Askable, useAskable } from '@askable/react';
+import { Askable, useAskable } from '@askable-ui/react';
 
 function Dashboard({ metrics }) {
   const { promptContext } = useAskable();
@@ -412,7 +412,10 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 
 - **Docs:** [askable-ui.com/docs](https://askable-ui.com/docs/)
 - **Analytics dashboard demo:** [askable-mu.vercel.app](https://askable-mu.vercel.app/)
-- **Zero-install demo:** [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
+- **Zero-install vanilla demo:** [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html) — open directly in browser, no install
+- **Vue 3 example:** [`examples/vue-dashboard/`](./examples/vue-dashboard/) — `npm install && npm run dev`
+- **React + Next.js example:** [`examples/analytics-dashboard-react/`](./examples/analytics-dashboard-react/)
+- **React Native example:** [`examples/react-native-expo/`](./examples/react-native-expo/)
 
 ---
 
