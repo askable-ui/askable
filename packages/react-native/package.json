@@ -1,7 +1,7 @@
 {
   "name": "@askable-ui/react-native",
   "version": "0.14.0",
-  "description": "React Native bindings for askable — LLM-aware UI context",
+  "description": "React Native hooks to give AI assistants real-time scroll context for mobile apps",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -26,12 +26,16 @@
     "test": "vitest run"
   },
   "keywords": [
+    "ai",
     "llm",
     "context",
+    "claude",
+    "copilot",
     "react-native",
+    "expo",
     "mobile",
-    "ui",
-    "focus"
+    "agentic",
+    "data-askable"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",

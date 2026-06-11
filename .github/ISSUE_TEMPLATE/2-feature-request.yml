@@ -43,10 +43,12 @@ body:
         - "@askable-ui/react"
         - "@askable-ui/vue"
         - "@askable-ui/svelte"
-        - "askable-django"
-        - "askable-streamlit"
+        - "@askable-ui/react-native"
+        - "@askable-ui/mcp"
+        - "@askable-ui/create-app"
+        - "examples"
         - "Documentation"
-        - "New package"
+        - "New package / framework adapter"
         - "Other"
     validations:
       required: true

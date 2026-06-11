@@ -27,11 +27,18 @@
   },
   "keywords": [
     "ai",
-    "context",
-    "web",
+    "llm",
     "mcp",
+    "model-context-protocol",
+    "context",
+    "claude",
+    "cursor",
+    "copilot",
+    "web",
     "selection",
-    "viewport"
+    "viewport",
+    "data-askable",
+    "agentic"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",
