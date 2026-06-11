@@ -773,6 +773,60 @@ const { send } = useAskableAgent({
 
 ---
 
+## Streaming LLM responses — `useAskableStream`
+
+`useAskableStream` handles a single streaming response. It accumulates text chunks into a reactive `content` string and exposes `abort()` to cancel mid-stream. Use it when you want a fire-and-forget streaming button, not a full conversation.
+
+### React
+
+```tsx
+import { useAskableStream } from '@askable-ui/react';
+
+function AskButton() {
+  const { stream, content, isStreaming, reset } = useAskableStream({
+    onSuccess: (text) => console.log('Finished:', text.length, 'chars'),
+  });
+
+  return (
+    <>
+      {content && <p>{content}</p>}
+      <button disabled={isStreaming} onClick={() =>
+        stream('Summarize what I see', async (req, emit) => {
+          const res = await fetch('/api/stream', {
+            method: 'POST',
+            body: JSON.stringify(req),
+          });
+          const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            emit(value);
+          }
+        })
+      }>
+        {isStreaming ? 'Streaming…' : 'Ask AI'}
+      </button>
+      {content && <button onClick={reset}>Clear</button>}
+    </>
+  );
+}
+```
+
+Use `streamFrom()` to pipe a `ReadableStream<string>` or `AsyncIterable<string>` directly:
+
+```ts
+// Vercel AI SDK textStream
+const { output } = streamText({ model, system, messages });
+await streamFrom('Summarize this', output.textStream);
+
+// AsyncIterable (Anthropic SDK, LangChain, etc.)
+await streamFrom('Summarize this', anthropicStream);
+```
+
+Available in React, Vue 3, SolidJS, Svelte 5, and React Native.
+
+---
+
 ## Multi-turn chat — `useAskableChat`
 
 `useAskableChat` manages a full conversation thread with automatic context injection on every turn. Each call to `append()` bundles the current UI focus, history, and sources into the request — the AI always knows what the user is looking at, across the entire conversation.
@@ -948,6 +1002,43 @@ const request = await ctx.toAgentRequest('Explain this selection', {
   packet: capturedPacket,
 });
 ```
+
+---
+
+## Server-side request validation
+
+Use `isAskableAgentRequest` to validate incoming requests in your API route before trusting them:
+
+```ts
+import { isAskableAgentRequest } from '@askable-ui/core';
+
+// Next.js App Router
+export async function POST(req: Request) {
+  const body = await req.json();
+
+  if (!isAskableAgentRequest(body)) {
+    return new Response('Invalid request', { status: 400 });
+  }
+
+  // body.question, body.context, body.focus, body.timestamp are all validated
+  const result = await streamText({
+    model: anthropic('claude-sonnet-4-6'),
+    system: body.context,
+    messages: [{ role: 'user', content: body.question }],
+  });
+
+  return result.toTextStreamResponse();
+}
+```
+
+`isAskableAgentRequest` checks:
+- `question` is a non-empty string
+- `context` is a string
+- `focus` is `null` or an object
+- `timestamp` is a finite number
+- `packet` (if present) is a valid `WebContextPacket`
+
+It does **not** validate `metadata` (passed verbatim) or enforce authentication — add those yourself.
 
 ---
 
