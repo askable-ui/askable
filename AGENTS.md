@@ -645,6 +645,128 @@ Options accepted by `useAskablePageSource`:
 
 ---
 
+## Form context source — `useAskableFormSource`
+
+`useAskableFormSource` registers a named source that reads HTML form state — field names, values, types, labels, and HTML5 validation errors — so an AI assistant can provide contextual help, suggest corrections, and guide users through multi-step forms.
+
+Passwords are masked by default (`***`). Use `omitFields` to exclude sensitive fields. The hook listens to `input` and `change` events and calls `notifyChanged()` automatically (`autoTrack: true`).
+
+```tsx
+// React
+import { useRef } from 'react';
+import { useAskableAgent, useAskableFormSource } from '@askable-ui/react';
+
+function CheckoutForm() {
+  const formRef = useRef<HTMLFormElement>(null);
+  const { toPromptContext } = useAskableFormSource({
+    ref: formRef,
+    omitFields: ['csrf_token'],
+  });
+  const { send, status } = useAskableAgent();
+
+  async function handleHelp() {
+    const result = await send('Help me complete this form correctly', async (req) => {
+      // req.context includes field values + validation errors
+      const res = await fetch('/api/form-help', {
+        method: 'POST',
+        body: JSON.stringify(req),
+      });
+      return res.json();
+    });
+  }
+
+  return (
+    <form ref={formRef}>
+      <input name="email" type="email" required />
+      <input name="card" type="text" pattern="\d{16}" />
+      <input name="cvv" type="password" />
+      <button type="button" onClick={handleHelp} disabled={status === 'pending'}>
+        {status === 'pending' ? 'Thinking…' : 'Get AI help'}
+      </button>
+    </form>
+  );
+}
+```
+
+```vue
+<!-- Vue -->
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useAskableFormSource, useAskableAgent } from '@askable-ui/vue';
+
+const formRef = ref<HTMLFormElement>();
+useAskableFormSource({ formRef, omitFields: ['_token'] });
+const { send, status } = useAskableAgent();
+</script>
+
+<template>
+  <form ref="formRef">
+    <input name="email" type="email" required />
+    <button type="button" :disabled="status === 'pending'" @click="handleHelp">
+      {{ status === 'pending' ? 'Thinking…' : 'Get AI help' }}
+    </button>
+  </form>
+</template>
+```
+
+```tsx
+// SolidJS
+import { useAskableFormSource, useAskableAgent } from '@askable-ui/solid';
+
+function CheckoutForm() {
+  let formEl!: HTMLFormElement;
+  useAskableFormSource({ formRef: () => formEl, omitFields: ['csrf'] });
+  const { send, status } = useAskableAgent();
+
+  return <form ref={formEl}>{/* ... */}</form>;
+}
+```
+
+```svelte
+<!-- Svelte 5 -->
+<script lang="ts">
+  import { useAskableFormSource } from '@askable-ui/svelte/useAskableFormSource.svelte';
+  import { useAskableAgent } from '@askable-ui/svelte/useAskableAgent.svelte';
+
+  let formEl: HTMLFormElement | undefined = $state();
+  const { toPromptContext } = useAskableFormSource({ formRef: () => formEl });
+  const { send, status } = useAskableAgent();
+</script>
+
+<form bind:this={formEl}>{/* ... */}</form>
+```
+
+Options accepted by `useAskableFormSource`:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `id` | `string` | `"form"` | Source registration id |
+| `ref` / `formRef` | `Ref<HTMLFormElement>` | — | Ref or accessor returning the form element |
+| `selector` | `string` | first `<form>` | CSS selector to locate the form |
+| `autoTrack` | `boolean` | `true` | Re-notify on every `input`/`change` event |
+| `omitFields` | `string[]` | `[]` | Field names to exclude from snapshots |
+| `maskPasswords` | `boolean` | `true` | Replace password values with `"***"` |
+| `describe` | `string` | `"Active form"` | Human-readable description |
+| `kind` | `string` | `"form"` | Source category label |
+| `resolveLabel` | `function` | — | Override how field labels are resolved |
+| `resolveValue` | `function` | — | Override how field values are read |
+| `sanitizeSnapshot` | `function` | — | Transform the entire snapshot before serialization |
+
+The resolved snapshot (mode `"all"`) looks like:
+
+```json
+{
+  "fields": [
+    { "name": "email", "type": "email", "label": "Email address", "value": "user@example.com", "required": true },
+    { "name": "cvv",   "type": "password", "label": "CVV", "value": "***" }
+  ],
+  "hasErrors": false,
+  "errorCount": 0
+}
+```
+
+---
+
 ## Agent requests — `useAskableAgent`
 
 `useAskableAgent` bundles the current context into a typed request object, calls your async handler, and tracks loading/success/error state. It's the recommended way to wire the "Ask AI" button in any framework.

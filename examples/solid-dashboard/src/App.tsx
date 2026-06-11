@@ -1,10 +1,11 @@
-import { For, Show } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 import {
   Askable,
   useAskable,
   useAskableViewport,
   useAskableHistory,
   useAskableCompose,
+  useAskableChat,
   asMeta,
 } from '@askable-ui/solid';
 
@@ -44,11 +45,12 @@ const DEALS: DealMeta[] = [
 // ── styles ───────────────────────────────────────────────────────────────────
 
 const S = {
-  shell: 'display:grid;grid-template-columns:1fr 320px;height:100vh;overflow:hidden;font-family:system-ui,sans-serif;background:#0f0f12;color:#e2e8f0',
+  shell: 'display:grid;grid-template-columns:1fr 360px;height:100vh;overflow:hidden;font-family:system-ui,sans-serif;background:#0f0f12;color:#e2e8f0',
   main: 'overflow-y:auto;padding:24px 28px',
   h1: 'font-size:20px;font-weight:700;margin:0 0 20px',
   grid: 'display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px',
   card: 'background:#1e293b;border:1px solid #334155;border-radius:10px;padding:18px 20px;cursor:pointer;transition:border-color 0.15s',
+  cardActive: 'background:#1e293b;border:1px solid #6366f1;border-radius:10px;padding:18px 20px;cursor:pointer;transition:border-color 0.15s',
   cardLabel: 'font-size:12px;color:#94a3b8;font-weight:500;display:block;margin-bottom:6px',
   cardValue: 'font-size:26px;font-weight:700;letter-spacing:-0.5px;display:block',
   cardDelta: 'font-size:13px;margin-top:4px',
@@ -58,12 +60,18 @@ const S = {
   th: 'text-align:left;font-size:12px;color:#94a3b8;font-weight:500;padding:10px 16px',
   td: 'padding:12px 16px;font-size:14px',
   sidebar: 'border-left:1px solid #1e293b;background:#13131a;display:flex;flex-direction:column;overflow:hidden',
-  sidebarHeader: 'padding:14px 16px;border-bottom:1px solid #1e293b;font-size:13px;font-weight:600',
-  tab: 'display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid #1e293b',
-  tabBtn: 'font-size:11px;padding:3px 10px;border-radius:99px;border:none;cursor:pointer;font-weight:600',
+  sidebarHeader: 'padding:14px 16px;border-bottom:1px solid #1e293b;font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center',
+  tabs: 'display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid #1e293b;background:#0f0f12',
+  tabBtn: 'font-size:11px;padding:4px 12px;border-radius:99px;border:none;cursor:pointer;font-weight:600;transition:background 0.15s',
   panel: 'flex:1;overflow-y:auto;padding:14px 12px;font-size:12px;line-height:1.6',
   code: 'display:block;background:#0f172a;border-radius:6px;padding:10px;white-space:pre-wrap;word-break:break-all;font-family:monospace;font-size:11px;color:#94a3b8',
   histItem: 'padding:6px 0;border-bottom:1px solid #1e293b;display:flex;gap:6px;align-items:flex-start',
+  chatArea: 'flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px',
+  chatBubbleUser: 'background:#6366f1;color:#fff;align-self:flex-end;padding:8px 12px;border-radius:10px;max-width:85%;font-size:13px;line-height:1.5',
+  chatBubbleAI: 'background:#1e293b;color:#e2e8f0;align-self:flex-start;padding:8px 12px;border-radius:10px;max-width:90%;font-size:13px;line-height:1.5',
+  chatInput: 'display:flex;gap:6px;padding:10px;border-top:1px solid #1e293b',
+  input: 'flex:1;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:8px;padding:6px 10px;font-size:13px;outline:none',
+  sendBtn: 'background:#6366f1;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-weight:500',
 };
 
 function stageColor(stage: string) {
@@ -83,7 +91,6 @@ export default function App() {
   const { focus, promptContext: focusCtx } = useAskable();
   const { visibleItems, promptContext: viewportCtx } = useAskableViewport({ threshold: 0.3 });
   const { history, promptContext: historyCtx } = useAskableHistory({ maxEntries: 8 });
-  // Pass a reactive accessor so SolidJS tracks signal reads inside createMemo
   const { promptContext: composedCtx } = useAskableCompose(() => ({
     sections: [
       { label: 'Focused element', value: focusCtx() },
@@ -91,6 +98,41 @@ export default function App() {
       { label: 'Navigation trail', value: historyCtx() },
     ],
   }));
+
+  const { messages, append, isStreaming, clearMessages } = useAskableChat({
+    systemPrompt: (ctx) =>
+      `You are a helpful analytics assistant embedded in a sales dashboard.\n\n${ctx}`,
+  });
+
+  const [tab, setTab] = createSignal<'context' | 'chat'>('chat');
+  const [input, setInput] = createSignal('');
+
+  async function handleSend(e: Event) {
+    e.preventDefault();
+    const question = input().trim();
+    if (!question || isStreaming()) return;
+    setInput('');
+
+    await append(question, async (req, msgs, emit) => {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: req.question,
+          context: req.context,
+          messages: msgs.map((m) => ({ role: m.role, content: m.content })),
+        }),
+      });
+
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+      const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        emit(value);
+      }
+    });
+  }
 
   return (
     <div style={S.shell}>
@@ -101,19 +143,24 @@ export default function App() {
         {/* KPI cards */}
         <div style={S.grid}>
           <For each={KPIS}>
-            {(kpi) => (
-              <Askable meta={kpi}>
-                <article style={S.card}>
-                  <span style={S.cardLabel}>{kpi.label}</span>
-                  <span style={S.cardValue}>{kpi.value}</span>
-                  <span
-                    style={`${S.cardDelta};color:${kpi.trend === 'down' ? '#4ade80' : kpi.trend === 'up' ? '#4ade80' : '#94a3b8'}`}
-                  >
-                    {kpi.delta}
-                  </span>
-                </article>
-              </Askable>
-            )}
+            {(kpi) => {
+              const isActive = () =>
+                focus() && typeof focus()!.meta === 'object' &&
+                (focus()!.meta as Record<string, unknown>).id === kpi.id;
+              return (
+                <Askable meta={kpi}>
+                  <article style={isActive() ? S.cardActive : S.card}>
+                    <span style={S.cardLabel}>{kpi.label}</span>
+                    <span style={S.cardValue}>{kpi.value}</span>
+                    <span
+                      style={`${S.cardDelta};color:${kpi.trend === 'up' ? '#4ade80' : '#f87171'}`}
+                    >
+                      {kpi.delta}
+                    </span>
+                  </article>
+                </Askable>
+              );
+            }}
           </For>
         </div>
 
@@ -132,10 +179,7 @@ export default function App() {
             <tbody>
               <For each={DEALS}>
                 {(deal) => (
-                  <tr
-                    style={S.tr}
-                    data-askable={JSON.stringify(deal)}
-                  >
+                  <tr style={S.tr} data-askable={JSON.stringify(deal)}>
                     <td style={S.td}>{deal.company}</td>
                     <td style={S.td}>
                       <span
@@ -154,59 +198,113 @@ export default function App() {
         </section>
       </main>
 
-      {/* ── context sidebar ── */}
+      {/* ── sidebar ── */}
       <aside style={S.sidebar}>
         <div style={S.sidebarHeader}>
-          <span>AI Context Inspector</span>
-          <span style="font-weight:400;color:#64748b;margin-left:8px;font-size:11px">
-            {visibleItems().length} visible
+          <span>AI Assistant</span>
+          <span style="font-weight:400;color:#64748b;font-size:11px">
+            {visibleItems().length} visible items
           </span>
         </div>
 
-        <div style={S.panel}>
-          {/* current focus */}
-          <p style="color:#94a3b8;margin:0 0 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
-            FOCUSED
-          </p>
-          <Show
-            when={focus()}
-            fallback={<p style="color:#475569;font-style:italic">Click any card or row…</p>}
-          >
-            {(f) => {
-              const typed = asMeta<KpiMeta | DealMeta>(f());
-              return (
-                <code style={S.code}>{JSON.stringify(typed.meta, null, 2)}</code>
-              );
-            }}
-          </Show>
+        {/* tabs */}
+        <div style={S.tabs}>
+          {(['chat', 'context'] as const).map((t) => (
+            <button
+              style={`${S.tabBtn};background:${tab() === t ? '#6366f1' : '#1e293b'};color:${tab() === t ? '#fff' : '#94a3b8'}`}
+              onClick={() => setTab(t)}
+            >
+              {t === 'chat' ? 'Chat' : 'Context'}
+            </button>
+          ))}
+        </div>
 
-          {/* composed context */}
-          <p style="color:#94a3b8;margin:16px 0 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
-            COMPOSED PROMPT CONTEXT
-          </p>
-          <code style={S.code}>{composedCtx()}</code>
-
-          {/* history */}
-          <Show when={history().length > 0}>
-            <p style="color:#94a3b8;margin:16px 0 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
-              RECENT ({history().length})
-            </p>
-            <For each={history()}>
-              {(item, i) => (
-                <div style={S.histItem}>
-                  <span style={`color:${i() === 0 ? '#60a5fa' : '#475569'};font-weight:700`}>
-                    {i() === 0 ? '→' : '·'}
-                  </span>
-                  <span style="color:#94a3b8">
-                    {typeof item.meta === 'object'
-                      ? ((item.meta as Record<string, unknown>).label ?? (item.meta as Record<string, unknown>).company ?? JSON.stringify(item.meta))
-                      : item.meta}
-                  </span>
+        {/* chat panel */}
+        <Show when={tab() === 'chat'}>
+          <div style={S.chatArea}>
+            <Show when={messages().filter((m) => m.role !== 'system').length === 0}>
+              <p style="color:#475569;font-style:italic;text-align:center;margin-top:2rem;font-size:13px">
+                Click a card or row, then ask a question.
+              </p>
+            </Show>
+            <For each={messages().filter((m) => m.role !== 'system')}>
+              {(m) => (
+                <div style={m.role === 'user' ? S.chatBubbleUser : S.chatBubbleAI}>
+                  {m.content || (isStreaming() ? '…' : '')}
                 </div>
               )}
             </For>
+          </div>
+          <form style={S.chatInput} onSubmit={handleSend}>
+            <input
+              style={S.input}
+              value={input()}
+              onInput={(e) => setInput(e.currentTarget.value)}
+              placeholder="Ask about what you see…"
+              disabled={isStreaming()}
+            />
+            <button
+              type="submit"
+              style={`${S.sendBtn};opacity:${isStreaming() || !input().trim() ? '0.4' : '1'}`}
+              disabled={isStreaming() || !input().trim()}
+            >
+              {isStreaming() ? '…' : 'Send'}
+            </button>
+          </form>
+          <Show when={messages().filter((m) => m.role !== 'system').length > 0}>
+            <button
+              style="background:none;border:none;color:#475569;font-size:11px;cursor:pointer;padding:4px 10px 8px;text-align:right"
+              onClick={clearMessages}
+            >
+              Clear chat
+            </button>
           </Show>
-        </div>
+        </Show>
+
+        {/* context inspector panel */}
+        <Show when={tab() === 'context'}>
+          <div style={S.panel}>
+            <p style="color:#94a3b8;margin:0 0 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
+              FOCUSED
+            </p>
+            <Show
+              when={focus()}
+              fallback={<p style="color:#475569;font-style:italic">Click any card or row…</p>}
+            >
+              {(f) => {
+                const typed = asMeta<KpiMeta | DealMeta>(f());
+                return <code style={S.code}>{JSON.stringify(typed.meta, null, 2)}</code>;
+              }}
+            </Show>
+
+            <p style="color:#94a3b8;margin:16px 0 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
+              COMPOSED CONTEXT
+            </p>
+            <code style={S.code}>{composedCtx() || '(no context)'}</code>
+
+            <Show when={history().length > 0}>
+              <p style="color:#94a3b8;margin:16px 0 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
+                RECENT ({history().length})
+              </p>
+              <For each={history()}>
+                {(item, i) => (
+                  <div style={S.histItem}>
+                    <span style={`color:${i() === 0 ? '#60a5fa' : '#475569'};font-weight:700`}>
+                      {i() === 0 ? '→' : '·'}
+                    </span>
+                    <span style="color:#94a3b8">
+                      {typeof item.meta === 'object'
+                        ? ((item.meta as Record<string, unknown>).label ??
+                          (item.meta as Record<string, unknown>).company ??
+                          JSON.stringify(item.meta))
+                        : item.meta}
+                    </span>
+                  </div>
+                )}
+              </For>
+            </Show>
+          </div>
+        </Show>
       </aside>
     </div>
   );
