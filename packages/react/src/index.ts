@@ -4,6 +4,7 @@ export { useAskable } from './useAskable.js';
 export { useAskableSource } from './useAskableSource.js';
 export { useAskableRegionCapture } from './useAskableRegionCapture.js';
 export { useAskableTextSelectionCapture } from './useAskableTextSelectionCapture.js';
+export { useAskableViewport } from './useAskableViewport.js';
 export type { UseAskableOptions, UseAskableResult } from './useAskable.js';
 export type {
   UseAskableSourceOptions,
@@ -18,3 +19,7 @@ export type {
   UseAskableTextSelectionCaptureResult,
 } from './useAskableTextSelectionCapture.js';
 export type { AskableInspectorProps } from './AskableInspector.js';
+export type {
+  UseAskableViewportOptions,
+  UseAskableViewportResult,
+} from './useAskableViewport.js';
