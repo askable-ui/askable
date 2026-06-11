@@ -299,6 +299,40 @@ if (focus) {
 }
 ```
 
+### Ask AI button
+
+`useAskableAgent` packages the current context into a request payload and hands it to your send handler — no boilerplate needed:
+
+```tsx
+import { useAskableAgent } from '@askable-ui/react';
+
+function AskButton() {
+  const { send, isLoading } = useAskableAgent();
+
+  return (
+    <button
+      disabled={isLoading}
+      onClick={() =>
+        send('What is this?', async (req) => {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            body: JSON.stringify({
+              question: req.question,
+              context: req.context,
+            }),
+          });
+          return res.json();
+        })
+      }
+    >
+      {isLoading ? 'Thinking…' : 'Ask AI'}
+    </button>
+  );
+}
+```
+
+`req.context` is the full `toPromptContextAsync()` string — focus, history, sources — ready to use as a system prompt.
+
 ---
 
 ## Works with
@@ -574,6 +608,7 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 - **Explicit capture** — region, circle, lasso, and text-selection capture for user-directed AI
 - **Privacy & redaction** — strip sensitive fields before data leaves the page
 - **MCP bridge** — expose any context as `get_current_context` and `format_context_for_prompt` MCP tools
+- **Ask AI button** — `useAskableAgent()` packages context + question into a request payload in one call
 - **Dev inspector** — `<AskableInspector />` overlay showing live context packets and source data
 - **SSR safe** — defers to client lifecycle, no `window is not defined`
 - **Zero runtime dependencies** in core
