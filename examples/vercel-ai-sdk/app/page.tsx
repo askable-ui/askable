@@ -1,7 +1,13 @@
 'use client';
 
 import { useChat } from 'ai/react';
-import { Askable, useAskable } from '@askable-ui/react';
+import {
+  Askable,
+  useAskable,
+  useAskableHistory,
+  useAskableViewport,
+  useAskableCompose,
+} from '@askable-ui/react';
 import { useRef } from 'react';
 
 // --- sample data -----------------------------------------------------------
@@ -24,12 +30,23 @@ const DEALS = [
 // --- main component --------------------------------------------------------
 
 export default function Dashboard() {
-  const { focus, promptContext } = useAskable();
+  const { focus, promptContext: focusCtx } = useAskable();
+  const { promptContext: viewportCtx } = useAskableViewport({ threshold: 0.5 });
+  const { promptContext: historyCtx } = useAskableHistory({ maxEntries: 5 });
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Merge all context streams into one prompt string
+  const { promptContext } = useAskableCompose({
+    sections: [
+      { label: 'Currently focused element', value: focusCtx },
+      { label: 'Visible dashboard elements', value: viewportCtx },
+      { label: 'Recent navigation', value: historyCtx },
+    ],
+  });
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat',
-    // send the current UI context with every request
+    // send the composed context with every request
     body: { uiContext: promptContext },
   });
 
