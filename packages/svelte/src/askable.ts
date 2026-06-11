@@ -26,6 +26,21 @@ import type {
   WebContextPacket,
 } from '@askable-ui/core';
 
+// ── History store types ─────────────────────────────────────────────────────
+
+export interface AskableHistoryStoreOptions extends AskableStoreOptions {
+  maxEntries?: number;
+  dedupe?: boolean;
+}
+
+export interface AskableHistoryStore {
+  history: ReturnType<typeof readonly>;
+  current: ReturnType<typeof readonly>;
+  promptContext: ReturnType<typeof derived>;
+  ctx: AskableContext;
+  destroy: () => void;
+}
+
 // ── Viewport store types ────────────────────────────────────────────────────
 
 export interface AskableViewportStoreOptions {
@@ -508,4 +523,55 @@ export function createAskableViewportStore(options?: AskableViewportStoreOptions
   }
 
   return { visibleItems: readonly(_visibleItems), promptContext, observe, destroy };
+}
+
+// ── History store ───────────────────────────────────────────────────────────
+
+export function createAskableHistoryStore(options?: AskableHistoryStoreOptions): AskableHistoryStore {
+  const maxEntries = options?.maxEntries ?? 10;
+  const dedupe = options?.dedupe ?? true;
+  const askable = createAskableStore(options);
+
+  const _history = writable<AskableFocus[]>([]);
+  const _current = writable<AskableFocus | null>(null);
+
+  const promptContext = derived(_history, (items) => {
+    if (!items.length) return 'No navigation history yet.';
+    const lines = items.map((item, i) => {
+      const meta = typeof item.meta === 'string' ? item.meta : JSON.stringify(item.meta);
+      const text = item.text ? ` ("${item.text.slice(0, 80)}")` : '';
+      return `${i === 0 ? '→ ' : '  '}${meta}${text}`;
+    });
+    return `User navigation trail (most recent first):\n${lines.join('\n')}`;
+  });
+
+  function handleFocus(f: AskableFocus) {
+    _current.set(f);
+    _history.update((prev) => {
+      if (dedupe && prev.length > 0 && JSON.stringify(prev[0].meta) === JSON.stringify(f.meta)) return prev;
+      const next = [f, ...prev];
+      return next.length > maxEntries ? next.slice(0, maxEntries) : next;
+    });
+  }
+
+  function handleClear() {
+    _current.set(null);
+  }
+
+  askable.ctx.on('focus', handleFocus);
+  askable.ctx.on('clear', handleClear);
+
+  function destroy() {
+    askable.ctx.off('focus', handleFocus);
+    askable.ctx.off('clear', handleClear);
+    askable.destroy();
+  }
+
+  return {
+    history: readonly(_history),
+    current: readonly(_current),
+    promptContext,
+    ctx: askable.ctx,
+    destroy,
+  };
 }

@@ -13,7 +13,8 @@
     "./Askable.svelte": "./src/Askable.svelte",
     "./Askable5.svelte": "./src/Askable5.svelte",
     "./useAskable.svelte": "./src/useAskable.svelte.ts",
-    "./useAskableViewport.svelte": "./src/useAskableViewport.svelte.ts"
+    "./useAskableViewport.svelte": "./src/useAskableViewport.svelte.ts",
+    "./useAskableHistory.svelte": "./src/useAskableHistory.svelte.ts"
   },
   "files": [
     "dist",
@@ -21,6 +22,7 @@
     "src/Askable5.svelte",
     "src/useAskable.svelte.ts",
     "src/useAskableViewport.svelte.ts",
+    "src/useAskableHistory.svelte.ts",
     "README.md"
   ],
   "repository": {

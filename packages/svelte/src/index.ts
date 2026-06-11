@@ -1,5 +1,6 @@
 // Svelte 4 — store-based API
 export {
+  createAskableHistoryStore,
   createAskableRegionCaptureStore,
   createAskableSourceStore,
   createAskableStore,
@@ -7,6 +8,8 @@ export {
   createAskableViewportStore,
 } from './askable.js';
 export type {
+  AskableHistoryStore,
+  AskableHistoryStoreOptions,
   AskableRegionCaptureStore,
   AskableRegionCaptureStoreOptions,
   AskableSourceStore,
