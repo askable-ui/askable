@@ -300,7 +300,30 @@ const props = defineProps(['kpi']);
 </details>
 
 <details>
-<summary><strong>Svelte 4 & 5</strong></summary>
+<summary><strong>Svelte 5 (runes)</strong></summary>
+
+```bash
+npm install @askable-ui/svelte
+```
+
+```svelte
+<script lang="ts">
+  import { useAskable } from '@askable-ui/svelte/useAskable.svelte';
+  import Askable5 from '@askable-ui/svelte/Askable5.svelte';
+
+  const { promptContext } = useAskable();
+  let { kpi } = $props();
+</script>
+
+<Askable5 meta={{ metric: kpi.name, value: kpi.value, delta: kpi.delta }}>
+  <KPICard data={kpi} />
+</Askable5>
+```
+
+</details>
+
+<details>
+<summary><strong>Svelte 4 (stores)</strong></summary>
 
 ```bash
 npm install @askable-ui/svelte
@@ -308,8 +331,10 @@ npm install @askable-ui/svelte
 
 ```svelte
 <script>
-  import { Askable, useAskable } from '@askable-ui/svelte';
-  const { promptContext } = useAskable();
+  import { createAskableStore } from '@askable-ui/svelte';
+  import Askable from '@askable-ui/svelte/Askable.svelte';
+
+  const { promptContext } = createAskableStore();
   export let kpi;
 </script>
 
@@ -405,6 +430,19 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 - **Dev inspector** — `<AskableInspector />` overlay showing live context packets and source data
 - **SSR safe** — defers to client lifecycle, no `window is not defined`
 - **Zero runtime dependencies** in core
+
+---
+
+## Examples
+
+| Example | Stack | What it shows |
+|---|---|---|
+| [`analytics-dashboard-react`](./examples/analytics-dashboard-react/) | Next.js · CopilotKit | Full production demo with region, circle, lasso, and text capture |
+| [`vue-dashboard`](./examples/vue-dashboard/) | Vue 3 · Vite | Vue composables + live context panel |
+| [`svelte-dashboard`](./examples/svelte-dashboard/) | Svelte 5 · Vite | Runes API + live context panel |
+| [`mcp-server`](./examples/mcp-server/) | Node.js · Express | Standalone MCP server — connect Claude Desktop in 5 min |
+| [`vanilla-chat`](./examples/vanilla-chat/) | Vanilla JS | Zero-install HTML demo, opens in a browser |
+| [`react-native-expo`](./examples/react-native-expo/) | React Native · Expo | Mobile scroll context |
 
 ---
 
