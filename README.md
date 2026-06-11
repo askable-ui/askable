@@ -352,11 +352,11 @@ function AskButton() {
 
 | | Package | |
 |---|---|---|
-| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
-| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
+| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableAgent()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
+| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableAgent()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableAgent()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableAgent()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskablePageSourceService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
 | Qwik | `@askable-ui/qwik` | `useAskable()`, `<Askable>` for Qwik City apps |
 | Web Component | `@askable-ui/web-component` | `<askable-context>` custom element, works in HTMX, Ember, vanilla HTML |
 | React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |

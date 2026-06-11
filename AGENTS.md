@@ -168,6 +168,64 @@ const { promptContext } = useAskable();
 </Askable>
 ```
 
+### SolidJS
+
+```tsx
+import { Askable, useAskable } from '@askable-ui/solid';
+
+function Dashboard() {
+  const { promptContext } = useAskable();
+
+  return (
+    <>
+      <Askable meta={{ widget: 'revenue', value: kpi.revenue }}>
+        <RevenueCard />
+      </Askable>
+      <button onClick={() => sendToAI(promptContext())}>Ask AI</button>
+    </>
+  );
+}
+```
+
+Note: in SolidJS `promptContext` is a signal accessor — call it as `promptContext()` to read the current value.
+
+### Angular
+
+```ts
+import { Component, inject } from '@angular/core';
+import { AskableService } from '@askable-ui/angular';
+
+@Component({
+  template: `
+    <div data-askable='{"widget":"revenue","value":"$2.3M"}'>
+      <revenue-card />
+    </div>
+    <button (click)="askAI()">Ask AI</button>
+  `,
+})
+export class DashboardComponent {
+  private readonly askable = inject(AskableService);
+
+  askAI() {
+    const context = this.askable.promptContext();
+    sendToLLM(context);
+  }
+}
+```
+
+Use `AskableDirective` for reactive annotations:
+
+```ts
+@Component({
+  imports: [AskableDirective],
+  template: `
+    <div [askable]="{ widget: 'revenue', value: kpi.revenue }">
+      <revenue-card />
+    </div>
+  `,
+})
+```
+
 ### Vanilla JS
 
 ```ts
@@ -448,6 +506,44 @@ useAskableSource('accounts', {
 </script>
 ```
 
+### SolidJS: `useAskableSource`
+
+```tsx
+import { useAskableSource } from '@askable-ui/solid';
+
+function AccountsTable(props) {
+  const { notifyChanged } = useAskableSource('accounts', {
+    kind: 'collection',
+    getState: () => ({ total: props.rows.length }),
+    resolve: () => props.rows,
+  });
+
+  createEffect(() => {
+    props.rows; // track the signal
+    notifyChanged();
+  });
+}
+```
+
+### Svelte 5: `useAskableSource`
+
+```svelte
+<script lang="ts">
+  import { useAskableSource } from '@askable-ui/svelte/useAskableSource.svelte';
+
+  let { rows } = $props();
+  const { notifyChanged } = useAskableSource('accounts', {
+    kind: 'collection',
+    resolve: () => rows,
+  });
+
+  $effect(() => {
+    rows; // track reactivity
+    notifyChanged();
+  });
+</script>
+```
+
 ### Controlling source resolution
 
 ```ts
@@ -463,6 +559,217 @@ const prompt = await ctx.toPromptContextAsync({
 - `'include'` *(default)* — failed source appears with an error note; context is still emitted
 - `'omit'` — failed source is silently dropped; healthy sources still appear
 - `'throw'` — any failure rejects the whole promise
+
+---
+
+## Page context source
+
+`useAskablePageSource` is a zero-config hook that automatically captures the current page title, URL, headings, selected text, and optional links as a named source called `"page"`. It requires no DOM annotations and works on any page — useful as a fallback for pages without `data-askable` attributes.
+
+### React
+
+```tsx
+import { useAskablePageSource, useAskableAgent } from '@askable-ui/react';
+
+function ChatButton() {
+  useAskablePageSource({ includeLinks: false });
+  const { send, isLoading } = useAskableAgent();
+
+  return (
+    <button disabled={isLoading} onClick={() =>
+      send('What is on this page?', async (req) =>
+        fetch('/api/chat', { method: 'POST', body: JSON.stringify(req) }).then(r => r.json())
+      )
+    }>
+      {isLoading ? 'Thinking…' : 'Ask AI'}
+    </button>
+  );
+}
+```
+
+### Vue 3
+
+```vue
+<script setup>
+import { useAskablePageSource, useAskableAgent } from '@askable-ui/vue';
+
+useAskablePageSource({ includeLinks: true });
+const { send, status } = useAskableAgent();
+</script>
+```
+
+### SolidJS
+
+```tsx
+import { useAskablePageSource, useAskableAgent } from '@askable-ui/solid';
+
+function ChatButton() {
+  useAskablePageSource({ includeLinks: false });
+  const { send, isLoading } = useAskableAgent();
+
+  return (
+    <button disabled={isLoading()} onClick={() =>
+      send('Summarise this page', async (req) =>
+        fetch('/api/chat', { method: 'POST', body: JSON.stringify(req) }).then(r => r.json())
+      )
+    }>
+      {isLoading() ? 'Thinking…' : 'Ask AI'}
+    </button>
+  );
+}
+```
+
+### Svelte 5
+
+```svelte
+<script lang="ts">
+  import { useAskablePageSource } from '@askable-ui/svelte/useAskablePageSource.svelte';
+
+  const { toPromptContext } = useAskablePageSource({ includeLinks: true });
+</script>
+```
+
+Options accepted by `useAskablePageSource`:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `id` | `string` | `"page"` | Source registration id |
+| `includeLinks` | `boolean` | `false` | Include links in resolved snapshot |
+| `maxHeadings` | `number` | `20` | Maximum headings returned |
+| `maxLinks` | `number` | `20` | Maximum links returned |
+| `maxTextLength` | `number` | `8000` | Maximum body text chars (mode `"all"`) |
+| `describe` | `string` | `"Current page"` | Human-readable description |
+| `kind` | `string` | `"page"` | Source category label |
+| `sanitizeText` | `function` | — | Redact or transform extracted text |
+| `textExtractor` | `function` | — | Override how page text is read |
+
+---
+
+## Agent requests — `useAskableAgent`
+
+`useAskableAgent` bundles the current context into a typed request object, calls your async handler, and tracks loading/success/error state. It's the recommended way to wire the "Ask AI" button in any framework.
+
+### React
+
+```tsx
+import { useAskableAgent } from '@askable-ui/react';
+
+function AskButton() {
+  const { send, isLoading, data, error } = useAskableAgent({
+    onSuccess: (response) => console.log('AI said:', response),
+    onError: (err) => console.error(err),
+  });
+
+  return (
+    <button disabled={isLoading} onClick={() =>
+      send('What am I looking at?', async (req) => {
+        const res = await fetch('/api/ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(req),
+        });
+        return res.json();
+      })
+    }>
+      Ask AI
+    </button>
+  );
+}
+```
+
+`req` is an `AskableAgentRequest`:
+```ts
+{
+  requestId: string;
+  question: string;        // the string you passed to send()
+  context: string;         // full prompt-ready context string
+  focus: AskableFocus | null;
+  packet?: WebContextPacket;
+  metadata?: Record<string, unknown>;
+  timestamp: number;
+}
+```
+
+### Vue 3
+
+```vue
+<script setup lang="ts">
+import { useAskableAgent } from '@askable-ui/vue';
+
+const { send, status, data, error } = useAskableAgent();
+
+async function askAI() {
+  await send('Explain what I see', async (req) =>
+    fetch('/api/ai', { method: 'POST', body: JSON.stringify(req) }).then(r => r.json())
+  );
+}
+</script>
+```
+
+### SolidJS
+
+```tsx
+import { useAskableAgent } from '@askable-ui/solid';
+
+function AskButton() {
+  const { send, isLoading, status } = useAskableAgent();
+
+  return (
+    <button disabled={isLoading()} onClick={() =>
+      send('What is this?', async (req) =>
+        fetch('/api/ai', { method: 'POST', body: JSON.stringify(req) }).then(r => r.json())
+      )
+    }>
+      {status() === 'pending' ? 'Thinking…' : 'Ask AI'}
+    </button>
+  );
+}
+```
+
+### Svelte 5
+
+```svelte
+<script lang="ts">
+  import { useAskableAgent } from '@askable-ui/svelte/useAskableAgent.svelte';
+
+  const { send, isLoading, data, error } = useAskableAgent();
+</script>
+
+<button disabled={isLoading} onclick={() =>
+  send('What is on screen?', async (req) =>
+    fetch('/api/ai', { method: 'POST', body: JSON.stringify(req) }).then(r => r.json())
+  )
+}>
+  {isLoading ? 'Thinking…' : 'Ask AI'}
+</button>
+```
+
+### With `onRequest` middleware
+
+Use `onRequest` to modify the request before it reaches your handler — useful for injecting metadata, custom headers, or additional context sources:
+
+```ts
+const { send } = useAskableAgent({
+  onRequest: (req) => ({
+    ...req,
+    metadata: { ...req.metadata, userId: currentUser.id, route: router.pathname },
+  }),
+});
+```
+
+### Request options
+
+Pass `requestOptions` to include async sources or attach a full `WebContextPacket`:
+
+```ts
+const { send } = useAskableAgent({
+  requestOptions: {
+    sources: ['accounts'],
+    sourceMode: 'summary',
+    packet: true,
+  },
+});
+```
 
 ---
 
@@ -639,4 +946,8 @@ Before committing this file to your own repo, update the sections that are produ
 - [React guide](https://askable-ui.com/docs/guide/react)
 - [Vue guide](https://askable-ui.com/docs/guide/vue)
 - [Svelte guide](https://askable-ui.com/docs/guide/svelte)
+- [SolidJS guide](https://askable-ui.com/docs/guide/solid)
+- [Angular guide](https://askable-ui.com/docs/guide/angular)
+- [Qwik guide](https://askable-ui.com/docs/guide/qwik)
+- [MCP server guide](https://askable-ui.com/docs/guide/mcp)
 - [API reference](https://askable-ui.com/docs/api/core)
