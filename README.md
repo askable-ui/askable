@@ -519,6 +519,7 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 | [`vercel-ai-sdk`](./examples/vercel-ai-sdk/) | Next.js · Vercel AI SDK | Minimal integration — 4 steps, works with any AI provider |
 | [`vue-dashboard`](./examples/vue-dashboard/) | Vue 3 · Vite | Vue composables + live context panel |
 | [`svelte-dashboard`](./examples/svelte-dashboard/) | Svelte 5 · Vite | Runes API + live context panel |
+| [`solid-dashboard`](./examples/solid-dashboard/) | SolidJS · Vite | SolidJS signals + context inspector sidebar |
 | [`mcp-server`](./examples/mcp-server/) | Node.js · Express | Standalone MCP server — connect Claude Desktop in 5 min |
 | [`vanilla-chat`](./examples/vanilla-chat/) | Vanilla JS | Zero-install HTML demo, opens in a browser |
 | [`react-native-expo`](./examples/react-native-expo/) | React Native · Expo | Mobile scroll context |
