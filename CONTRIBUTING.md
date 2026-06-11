@@ -26,6 +26,7 @@ packages/
   create-askable-app/ — CLI scaffolder (npm create @askable-ui/app)
 examples/
   analytics-dashboard-react/  — full Next.js + CopilotKit demo
+  vercel-ai-sdk/              — minimal Next.js + Vercel AI SDK integration
   vue-dashboard/              — Vue 3 + Vite dashboard
   svelte-dashboard/           — Svelte 5 runes dashboard
   vanilla-chat/               — zero-dependency HTML demo

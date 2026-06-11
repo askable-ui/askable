@@ -438,6 +438,7 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 | Example | Stack | What it shows |
 |---|---|---|
 | [`analytics-dashboard-react`](./examples/analytics-dashboard-react/) | Next.js · CopilotKit | Full production demo with region, circle, lasso, and text capture |
+| [`vercel-ai-sdk`](./examples/vercel-ai-sdk/) | Next.js · Vercel AI SDK | Minimal integration — 4 steps, works with any AI provider |
 | [`vue-dashboard`](./examples/vue-dashboard/) | Vue 3 · Vite | Vue composables + live context panel |
 | [`svelte-dashboard`](./examples/svelte-dashboard/) | Svelte 5 · Vite | Runes API + live context panel |
 | [`mcp-server`](./examples/mcp-server/) | Node.js · Express | Standalone MCP server — connect Claude Desktop in 5 min |
