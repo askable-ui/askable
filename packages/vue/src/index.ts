@@ -6,6 +6,9 @@ export { useAskableRegionCapture } from './useAskableRegionCapture.js';
 export { useAskableTextSelectionCapture } from './useAskableTextSelectionCapture.js';
 export { useAskableViewport } from './useAskableViewport.js';
 export { useAskableHistory } from './useAskableHistory.js';
+// Re-export typed meta utility from core for convenience
+export { asMeta } from '@askable-ui/core';
+export type { TypedAskableFocus } from '@askable-ui/core';
 export type { UseAskableOptions, UseAskableResult } from './useAskable.js';
 export type {
   UseAskableSourceOptions,

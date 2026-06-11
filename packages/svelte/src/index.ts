@@ -22,6 +22,10 @@ export type {
   AskableViewportStoreOptions,
 } from './askable.js';
 
+// Re-export typed meta utility from core for convenience
+export { asMeta } from '@askable-ui/core';
+export type { TypedAskableFocus } from '@askable-ui/core';
+
 // Svelte 5 runes-based API:
 //   import { useAskable } from '@askable-ui/svelte/useAskable.svelte'
 // Askable components:

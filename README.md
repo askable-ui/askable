@@ -283,6 +283,22 @@ const { promptContext } = useAskableCompose({
 // Empty sections are automatically excluded from the output
 ```
 
+### Typed meta (TypeScript)
+
+Cast `focus.meta` to your own schema type without any runtime overhead:
+
+```ts
+import { asMeta } from '@askable-ui/react'; // or /vue, /svelte, @askable-ui/core
+
+interface KpiMeta { metric: string; value: string; delta: string; period: string }
+
+const { focus } = useAskable();
+if (focus) {
+  const kpi = asMeta<KpiMeta>(focus);
+  console.log(kpi.meta.value);  // string, not unknown
+}
+```
+
 ---
 
 ## Works with
@@ -457,8 +473,10 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 - **Zero config** — one attribute, works with any DOM structure or component library
 - **Real-time updates** — context refreshes on click, hover, focus, scroll — any interaction
 - **Structured packets** — `ctx.toContextPacket()` emits typed, validated JSON for agent pipelines
-- **Conversation history** — `ctx.toHistoryContext(n)` for multi-turn awareness
-- **Viewport awareness** — `ctx.toViewportContext()` serializes all currently visible annotated elements
+- **Conversation history** — `useAskableHistory()` / `ctx.toHistoryContext(n)` for multi-turn awareness
+- **Viewport awareness** — `useAskableViewport()` / `ctx.toViewportContext()` for all visible annotated elements
+- **Composed context** — `useAskableCompose()` merges focus, viewport, history, and app sources into one string
+- **Typed meta** — `asMeta<T>(focus)` casts `focus.meta` to your schema type without runtime overhead
 - **Named contexts** — isolate `table`, `chart`, and `form` contexts independently on the same page
 - **Explicit capture** — region, circle, lasso, and text-selection capture for user-directed AI
 - **Privacy & redaction** — strip sensitive fields before data leaves the page
