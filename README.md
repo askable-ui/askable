@@ -333,6 +333,69 @@ function AskButton() {
 
 `req.context` is the full `toPromptContextAsync()` string — focus, history, sources — ready to use as a system prompt.
 
+### Multi-turn chat
+
+`useAskableChat` manages the full conversation thread with context automatically injected on every turn:
+
+```tsx
+import { useAskableChat } from '@askable-ui/react';
+
+function ChatPanel() {
+  const { messages, append, isStreaming } = useAskableChat({
+    systemPrompt: (ctx) => `You are a helpful assistant.\n\n${ctx}`,
+  });
+
+  return (
+    <div>
+      {messages.map(m => <div key={m.id} className={m.role}>{m.content}</div>)}
+      <button disabled={isStreaming} onClick={() =>
+        append(userInput, async (req, msgs, emit) => {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            body: JSON.stringify({ messages: msgs, system: req.context }),
+          });
+          for await (const chunk of res.body!.pipeThrough(new TextDecoderStream())) {
+            emit(chunk);
+          }
+        })
+      }>
+        Send
+      </button>
+    </div>
+  );
+}
+```
+
+### Streaming responses
+
+`useAskableStream` accumulates text chunks reactively:
+
+```tsx
+import { useAskableStream } from '@askable-ui/react';
+
+function StreamingButton() {
+  const { stream, content, isStreaming } = useAskableStream();
+
+  return (
+    <>
+      <p>{content || 'Press Ask to start'}</p>
+      <button disabled={isStreaming} onClick={() =>
+        stream('Explain this', async (req, emit) => {
+          const res = await fetch('/api/stream', {
+            method: 'POST', body: JSON.stringify(req),
+          });
+          for await (const chunk of res.body!.pipeThrough(new TextDecoderStream())) {
+            emit(chunk);
+          }
+        })
+      }>
+        {isStreaming ? 'Streaming…' : 'Ask'}
+      </button>
+    </>
+  );
+}
+```
+
 ---
 
 ## Works with
@@ -352,10 +415,10 @@ function AskButton() {
 
 | | Package | |
 |---|---|---|
-| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableAgent()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
-| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableAgent()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableAgent()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableAgent()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
+| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskablePageSourceService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
 | Qwik | `@askable-ui/qwik` | `useAskable()`, `<Askable>` for Qwik City apps |
 | Web Component | `@askable-ui/web-component` | `<askable-context>` custom element, works in HTMX, Ember, vanilla HTML |

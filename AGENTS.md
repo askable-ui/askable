@@ -773,6 +773,117 @@ const { send } = useAskableAgent({
 
 ---
 
+## Multi-turn chat — `useAskableChat`
+
+`useAskableChat` manages a full conversation thread with automatic context injection on every turn. Each call to `append()` bundles the current UI focus, history, and sources into the request — the AI always knows what the user is looking at, across the entire conversation.
+
+### React
+
+```tsx
+import { useAskableChat } from '@askable-ui/react';
+
+function ChatPanel() {
+  const { messages, append, isStreaming, clearMessages } = useAskableChat({
+    systemPrompt: (ctx) => `You are a helpful analytics assistant.\n\n${ctx}`,
+  });
+
+  async function handleSubmit(text: string) {
+    await append(text, async (req, msgs, emit) => {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({
+          messages: msgs.map(m => ({ role: m.role, content: m.content })),
+          system: req.context,
+        }),
+      });
+      const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        emit(value);
+      }
+    });
+  }
+
+  return (
+    <div>
+      {messages.map(m => (
+        <div key={m.id} className={`message ${m.role}`}>{m.content}</div>
+      ))}
+      <ChatInput onSubmit={handleSubmit} disabled={isStreaming} />
+      <button onClick={clearMessages}>Clear</button>
+    </div>
+  );
+}
+```
+
+The handler receives three arguments:
+- `request: AskableAgentRequest` — the current context bundle
+- `messages: AskableChatMessage[]` — all previous messages in the thread (excluding the new assistant placeholder)
+- `emit: (chunk: string) => void` — call this for each text chunk
+
+### Vue 3
+
+```vue
+<script setup lang="ts">
+import { useAskableChat } from '@askable-ui/vue';
+
+const { messages, append, isStreaming } = useAskableChat({
+  systemPrompt: (ctx) => `You are helpful.\n\n${ctx}`,
+});
+</script>
+
+<template>
+  <div v-for="msg in messages" :key="msg.id" :class="msg.role">
+    {{ msg.content }}
+  </div>
+  <button @click="append(input, handler)" :disabled="isStreaming.value">Send</button>
+</template>
+```
+
+### SolidJS
+
+```tsx
+import { For } from 'solid-js';
+import { useAskableChat } from '@askable-ui/solid';
+
+function Chat() {
+  const { messages, append, isStreaming } = useAskableChat({
+    systemPrompt: (ctx) => `You are helpful.\n\n${ctx}`,
+  });
+
+  return (
+    <div>
+      <For each={messages()}>{(msg) =>
+        <div class={msg.role}>{msg.content}</div>
+      }</For>
+      <button disabled={isStreaming()} onClick={() => append(userInput, handler)}>
+        Send
+      </button>
+    </div>
+  );
+}
+```
+
+### Svelte 5
+
+```svelte
+<script lang="ts">
+  import { useAskableChat } from '@askable-ui/svelte/useAskableChat.svelte';
+
+  const chat = useAskableChat({
+    systemPrompt: (ctx) => `You are helpful.\n\n${ctx}`,
+  });
+</script>
+
+{#each chat.messages as msg (msg.id)}
+  <div class={msg.role}>{msg.content}</div>
+{/each}
+<button disabled={chat.isStreaming} onclick={() => chat.append(input, handler)}>Send</button>
+```
+
+---
+
 ## Streaming context with `subscribeAsync`
 
 Use `subscribeAsync` for live multi-turn agent transports — every time focus changes, the subscriber fires with fresh context including async source data.
