@@ -236,16 +236,31 @@ const textCapture = useAskableTextSelectionCapture({
 });
 ```
 
-### Scroll & viewport context
+### Viewport context
 
-For infinite lists and dashboards — track which item the user is currently reading.
+Track every annotated element currently visible in the viewport — useful for long lists and data-dense dashboards.
 
 ```tsx
-const { scrollCtx } = useAskableScrollView({
-  selectVisible: (items) => items[0], // top visible item
-  getMeta: (item) => ({ id: item.id, title: item.title }),
-});
+import { useAskableViewport } from '@askable-ui/react';
+
+const { visibleItems, promptContext } = useAskableViewport({ threshold: 0.5 });
+// promptContext → "Visible UI elements:\n- {"metric":"revenue","value":"$2.3M"} ..."
 ```
+
+Available in React, Vue, and Svelte (both Svelte 4 and 5).
+
+### Navigation history
+
+Let the AI understand the user's journey — not just where they are now, but where they've been.
+
+```tsx
+import { useAskableHistory } from '@askable-ui/react';
+
+const { history, promptContext } = useAskableHistory({ maxEntries: 5 });
+// promptContext → "User navigation trail (most recent first):\n→ {"metric":"churn"}..."
+```
+
+Deduplicates consecutive identical entries by default. Available in React, Vue, and Svelte.
 
 ---
 
@@ -266,9 +281,9 @@ const { scrollCtx } = useAskableScrollView({
 
 | | Package | |
 |---|---|---|
-| React 18+ | `@askable-ui/react` | `useAskable()`, `<Askable>`, `useAskableRegionCapture()` |
-| Vue 3 | `@askable-ui/vue` | `useAskable()`, `<Askable>`, composables |
-| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `<Askable>` |
+| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
+| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |
 | Vanilla JS | `@askable-ui/core` | `createAskableContext()`, zero dependencies |
 
