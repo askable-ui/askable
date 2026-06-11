@@ -1,7 +1,7 @@
 {
   "name": "@askable-ui/react",
   "version": "0.14.0",
-  "description": "React bindings for askable — LLM-aware UI context",
+  "description": "React hooks to give AI assistants real-time context about what users see and select",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -26,12 +26,18 @@
     "test": "vitest run"
   },
   "keywords": [
+    "ai",
     "llm",
+    "mcp",
+    "model-context-protocol",
     "context",
+    "claude",
+    "cursor",
+    "copilot",
     "react",
-    "ui",
-    "accessibility",
-    "focus"
+    "hooks",
+    "agentic",
+    "data-askable"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",

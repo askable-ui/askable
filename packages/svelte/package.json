@@ -1,7 +1,7 @@
 {
   "name": "@askable-ui/svelte",
   "version": "0.14.0",
-  "description": "Svelte 4 & 5 bindings for askable — LLM-aware UI context",
+  "description": "Svelte 4 & 5 stores and runes to give AI assistants real-time context about what users see and select",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,13 +32,20 @@
     "test": "vitest run"
   },
   "keywords": [
+    "ai",
     "llm",
+    "mcp",
+    "model-context-protocol",
     "context",
+    "claude",
+    "cursor",
+    "copilot",
     "svelte",
     "svelte4",
     "svelte5",
-    "ui",
-    "focus"
+    "runes",
+    "agentic",
+    "data-askable"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",

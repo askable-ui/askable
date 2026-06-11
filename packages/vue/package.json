@@ -1,7 +1,7 @@
 {
   "name": "@askable-ui/vue",
   "version": "0.14.0",
-  "description": "Vue 3 bindings for askable — LLM-aware UI context",
+  "description": "Vue 3 composables to give AI assistants real-time context about what users see and select",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -26,12 +26,19 @@
     "test": "vitest run"
   },
   "keywords": [
+    "ai",
     "llm",
+    "mcp",
+    "model-context-protocol",
     "context",
+    "claude",
+    "cursor",
+    "copilot",
     "vue",
     "vue3",
-    "ui",
-    "focus"
+    "composable",
+    "agentic",
+    "data-askable"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",

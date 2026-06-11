@@ -1,7 +1,7 @@
 {
   "name": "@askable-ui/create-app",
   "version": "0.14.0",
-  "description": "Scaffold a React + Vite + CopilotKit + askable-ui starter app",
+  "description": "Scaffold an AI-native app with askable-ui, CopilotKit, and React in one command",
   "type": "module",
   "bin": {
     "create-askable-app": "bin/create-askable-app.js"
@@ -18,11 +18,20 @@
     "directory": "packages/create-askable-app"
   },
   "keywords": [
-    "askable",
+    "ai",
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "cursor",
+    "copilot",
     "copilotkit",
-    "vite",
+    "askable",
+    "scaffold",
+    "create-app",
+    "starter",
     "react",
-    "scaffold"
+    "vite",
+    "agentic"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",

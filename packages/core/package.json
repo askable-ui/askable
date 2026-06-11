@@ -1,7 +1,7 @@
 {
   "name": "@askable-ui/core",
   "version": "0.14.0",
-  "description": "Framework-agnostic context tracker for LLM-aware UIs",
+  "description": "Give AI assistants real-time context about what users see and select in your UI",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,11 +29,18 @@
     "bench:ci": "node bench/perf.mjs --budget"
   },
   "keywords": [
+    "ai",
     "llm",
+    "mcp",
+    "model-context-protocol",
     "context",
+    "claude",
+    "cursor",
+    "copilot",
+    "agentic",
     "ui",
-    "accessibility",
-    "focus"
+    "focus",
+    "data-askable"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",

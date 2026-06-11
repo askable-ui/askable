@@ -9,6 +9,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TEMPLATE_DIR = path.resolve(__dirname, '..', 'template');
 
+const TEMPLATES = {
+  react: {
+    label: 'React + Vite + CopilotKit',
+    dir: TEMPLATE_DIR,
+    postInstall: [
+      'cp .env.example .env',
+      'npm run dev',
+    ],
+    tip: 'Add OPENAI_API_KEY to .env to enable the CopilotKit AI runtime.',
+  },
+};
+
 export function toPackageName(rawName) {
   return rawName
     .trim()
@@ -53,11 +65,29 @@ function copyTemplate(templateDir, targetDir, projectName) {
 }
 
 export async function runCli(args) {
-  const [projectArg] = args;
+  const flagIndex = args.findIndex((a) => a === '--template' || a === '-t');
+  const templateArg = flagIndex !== -1 ? args[flagIndex + 1] : 'react';
+  const projectArgs = args.filter(
+    (a, i) => a !== '--template' && a !== '-t' && (flagIndex === -1 || i !== flagIndex + 1),
+  );
+  const [projectArg] = projectArgs;
 
   if (!projectArg || projectArg === '--help' || projectArg === '-h') {
-    console.log(`create-askable-app\n\nUsage:\n  npm create @askable-ui/app my-app\n`);
+    console.log('create-askable-app\n');
+    console.log('Usage:');
+    console.log('  npm create @askable-ui/app <project-name> [--template react]\n');
+    console.log('Templates:');
+    for (const [key, t] of Object.entries(TEMPLATES)) {
+      console.log(`  ${key.padEnd(12)} ${t.label}`);
+    }
+    console.log('');
     return;
+  }
+
+  const template = TEMPLATES[templateArg];
+  if (!template) {
+    const valid = Object.keys(TEMPLATES).join(', ');
+    throw new Error(`Unknown template "${templateArg}". Valid options: ${valid}`);
   }
 
   const projectName = projectArg.trim();
@@ -72,13 +102,19 @@ export async function runCli(args) {
   }
 
   fs.mkdirSync(targetDir, { recursive: true });
-  copyTemplate(TEMPLATE_DIR, targetDir, projectName);
+  copyTemplate(template.dir, targetDir, projectName);
 
-  console.log(`\n✔ askable starter created at ${targetDir}\n`);
-  console.log('Next steps:');
-  console.log(`  cd ${projectName}`);
-  console.log('  npm install');
-  console.log('  cp .env.example .env');
-  console.log('  npm run dev');
-  console.log('\nTip: add OPENAI_API_KEY to .env when you want the CopilotKit runtime to answer.');
+  const rel = path.relative(process.cwd(), targetDir);
+  console.log(`\n  ✔ Created ${projectName} (${template.label})\n`);
+  console.log('  Next steps:\n');
+  console.log(`    cd ${rel}`);
+  console.log('    npm install');
+  for (const step of template.postInstall) {
+    console.log(`    ${step}`);
+  }
+  console.log('');
+  if (template.tip) {
+    console.log(`  Tip: ${template.tip}\n`);
+  }
+  console.log('  Docs: https://askable-ui.com/docs\n');
 }

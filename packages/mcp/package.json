@@ -1,7 +1,7 @@
 {
   "name": "@askable-ui/mcp",
   "version": "0.14.0",
-  "description": "MCP bridge for exposing Context packets to agents",
+  "description": "MCP server and page bridge to expose UI context to Claude Desktop, Cursor, and any MCP client",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -27,11 +27,18 @@
     "test": "vitest run --passWithNoTests"
   },
   "keywords": [
-    "askable",
     "mcp",
-    "context",
+    "model-context-protocol",
+    "claude",
+    "claude-desktop",
+    "cursor",
     "ai",
-    "agent"
+    "agent",
+    "agentic",
+    "context",
+    "llm",
+    "copilot",
+    "data-askable"
   ],
   "homepage": "https://askable-ui.com",
   "license": "MIT",
