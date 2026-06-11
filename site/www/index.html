@@ -719,6 +719,18 @@
     .mcp-card h4 { font-size: .92rem; letter-spacing: -.02em; margin-bottom: .42rem; }
     .mcp-card pre { margin-top: .82rem; padding: .8rem; border-radius: 12px; background: #f6f7f9; border: 1px solid rgba(0,0,0,0.06); font-family: var(--mono); font-size: .68rem; line-height: 1.58; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
 
+    /* COMPARE */
+    .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .compare-card { background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--line); padding: 1.5rem; }
+    .compare-bad { border-color: rgba(239,68,68,0.18); background: #fff9f9; }
+    .compare-good { border-color: rgba(79,70,229,0.28); background: var(--accent-faint); }
+    .compare-icon { font-size: 1.5rem; margin-bottom: .75rem; width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #fee2e2; }
+    .compare-card h3 { font-size: 1rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .75rem; }
+    .compare-card ul { list-style: none; display: flex; flex-direction: column; gap: .45rem; }
+    .compare-bad ul li::before { content: '✗  '; color: #ef4444; font-weight: 700; }
+    .compare-good ul li::before { content: '✓  '; color: var(--accent); font-weight: 700; }
+    .compare-card li { font-size: .85rem; color: var(--ink-2); line-height: 1.45; }
+
     /* DARK CTA */
     .cta-section { margin-top: 7rem; }
     .cta-card { border-radius: var(--radius-lg); background: var(--ink); padding: 5rem 4rem; text-align: center; position: relative; overflow: hidden; }
@@ -780,7 +792,7 @@
       .pattern-option { grid-template-columns: 1.35rem minmax(0, 1fr); padding: .52rem; }
       .pattern-status { align-items: flex-start; flex-direction: column; }
       .pattern-payload { max-width: 100%; }
-      .mcp-panel-head, .mcp-grid { grid-template-columns: 1fr; }
+      .mcp-panel-head, .mcp-grid, .compare-grid { grid-template-columns: 1fr; }
       .mcp-card { border-right: 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
       .mcp-card:last-child { border-bottom: 0; }
       .tool-hint { min-width: 0; }
@@ -1387,6 +1399,44 @@ server.connect(transport); // stdio, SSE, or WebSocket</pre>
   }
 }</pre>
         <p style="margin-top:.85rem;font-size:.84rem;color:var(--ink-2)">→ <a href="https://askable-ui.com/docs/guide/mcp" style="color:var(--accent);text-decoration:none;font-weight:600">Full MCP integration guide</a></p>
+      </div>
+    </section>
+
+    <section class="section" id="why">
+      <p class="section-label">Why askable-ui</p>
+      <h2 class="section-title">Screenshots don't scale. Descriptions go stale.</h2>
+      <p class="section-sub">Every other approach to giving AI context about your UI breaks down under real conditions.</p>
+      <div class="compare-grid">
+        <article class="compare-card compare-bad">
+          <div class="compare-icon">📸</div>
+          <h3>Vision / screenshots</h3>
+          <ul>
+            <li>Expensive per token, slow to generate</li>
+            <li>Fails on dense data tables and charts</li>
+            <li>Leaks PII to the model if not scrubbed</li>
+            <li>Can't read dynamic or lazy-loaded data</li>
+          </ul>
+        </article>
+        <article class="compare-card compare-bad">
+          <div class="compare-icon">📝</div>
+          <h3>Hardcoded system prompts</h3>
+          <ul>
+            <li>Describe the page, not the user's current state</li>
+            <li>Go stale the moment the data changes</li>
+            <li>Burn context window on irrelevant sections</li>
+            <li>No awareness of what the user selected or clicked</li>
+          </ul>
+        </article>
+        <article class="compare-card compare-good">
+          <div class="compare-icon" style="background:var(--accent-light);color:var(--accent)">✦</div>
+          <h3>askable-ui</h3>
+          <ul>
+            <li>Structured JSON — no vision model needed</li>
+            <li>Updates on every click, focus, or scroll event</li>
+            <li>Privacy-gated before leaving the page</li>
+            <li>Works with any LLM, framework, or MCP client</li>
+          </ul>
+        </article>
       </div>
     </section>
 
