@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>askable-ui — UI context your model can actually use</title>
-  <meta name="description" content="Mark UI, regions, circles, lasso selections, and highlighted text as usable AI context. React, Vue, Svelte, or plain HTML." />
+  <title>askable-ui — Your LLM doesn't know what the user is looking at. Fix that.</title>
+  <meta name="description" content="One HTML attribute. Your AI knows exactly what the user sees — no screenshots, no prompt engineering. Works with Claude Desktop, Cursor, CopilotKit, Vercel AI SDK, and any LLM. React, Vue, Svelte, Vanilla JS." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://askable-ui.com/" />
-  <meta property="og:title" content="askable-ui — UI context your model can actually use" />
-  <meta property="og:description" content="Mark UI, regions, circles, lasso selections, and highlighted text as usable AI context. React, Vue, Svelte, or plain HTML." />
+  <meta property="og:title" content="askable-ui — Your LLM doesn't know what the user is looking at. Fix that." />
+  <meta property="og:description" content="One HTML attribute. Your AI knows exactly what the user sees — no screenshots, no prompt engineering. Works with Claude Desktop, Cursor, CopilotKit, Vercel AI SDK, and any LLM." />
   <meta property="og:image" content="https://askable-ui.com/social.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="askable-ui — UI context your model can actually use" />
-  <meta name="twitter:description" content="Element focus, region capture, lasso, circle, and selected text as context your model can use." />
+  <meta name="twitter:title" content="askable-ui — Your LLM doesn't know what the user is looking at. Fix that." />
+  <meta name="twitter:description" content="One HTML attribute gives your AI real-time UI context. Works with Claude Desktop, Cursor, CopilotKit, and any LLM. No screenshots. No prompt engineering." />
   <meta name="twitter:image" content="https://askable-ui.com/social.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -840,7 +840,7 @@
     <div class="nav-links">
       <a href="#demo" class="nav-link">Demo</a>
       <a href="#patterns" class="nav-link">Patterns</a>
-      <a href="#integrations" class="nav-link">MCP</a>
+      <a href="#mcp" class="nav-link">MCP</a>
       <a href="#packages" class="nav-link">Packages</a>
       <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer" class="nav-link">Docs</a>
       <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer" class="nav-gh" aria-label="GitHub repository" title="GitHub repository">
@@ -854,12 +854,12 @@
   <main class="page-shell">
     <section class="hero">
       <div class="hero-copy">
-        <div class="eyebrow"><span class="spark">✦</span> Context for AI-native interfaces</div>
+        <div class="eyebrow"><span class="spark">✦</span> Claude Desktop · Cursor · CopilotKit · any LLM</div>
         <h1>Your model knows what <em>the user means.</em></h1>
         <p>
-          Mark a clicked element, drawn region, circled anomaly, lassoed area, or highlighted text,
-          then package the user's question with <code>askable.toAgentRequest()</code> at the AI boundary.
-          The assistant gets explicit user intent instead of guessing from the whole page.
+          Your AI copilot can't tell which metric the user is looking at, which row triggered the question,
+          or what they highlighted. askable-ui fixes that with one attribute — no screenshots, no stale system
+          prompts, no guessing. The AI gets the exact data the user sees, updated on every interaction.
         </p>
         <div class="hero-patterns" aria-label="Supported interaction patterns">
           <span class="hero-pattern-pill">Click</span>
@@ -1250,8 +1250,18 @@ ctx.push(meta, text);</pre>
     <section id="integrations" class="section">
       <p class="section-label">Integrations</p>
       <h2 class="section-title">Plugs into your AI layer.</h2>
-      <p class="section-sub"><code>toAgentRequest()</code> returns a JSON-ready request with prompt text, packet data, selected source context, and tracing metadata.</p>
-      <div class="pkg-grid" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+      <p class="section-sub"><code>toPromptContext()</code> returns a plain string. Pass it to any LLM framework or API — no adapter needed.</p>
+      <div class="pkg-grid" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">MCP client</div>
+          <div class="pkg-name">Claude Desktop</div>
+          <div class="pkg-desc">Claude sees exactly what the user sees. Ask about the focused element without screenshots.</div>
+        </div>
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">MCP client</div>
+          <div class="pkg-name">Cursor</div>
+          <div class="pkg-desc">Your IDE agent reads live UI context via the askable MCP server. Accurate, no manual description.</div>
+        </div>
         <div class="pkg-card" style="cursor:default;">
           <div class="pkg-badge">Framework</div>
           <div class="pkg-name">CopilotKit</div>
@@ -1263,14 +1273,9 @@ ctx.push(meta, text);</pre>
           <div class="pkg-desc">Inject into the system message or tool context for streaming chat UIs.</div>
         </div>
         <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">Framework</div>
-          <div class="pkg-name">LangChain</div>
-          <div class="pkg-desc">Drop into a prompt template variable or tool description for context-aware agents.</div>
-        </div>
-        <div class="pkg-card" style="cursor:default;">
           <div class="pkg-badge">Any LLM API</div>
-          <div class="pkg-name">Direct API</div>
-          <div class="pkg-desc">Append the string to your system or user message. Works with OpenAI, Anthropic, or any provider.</div>
+          <div class="pkg-name">OpenAI · Anthropic</div>
+          <div class="pkg-desc">Append the string to your system or user message. Works with any provider.</div>
         </div>
       </div>
 
@@ -1333,18 +1338,70 @@ ctx.push(meta, text);</pre>
       </div>
     </section>
 
+    <section id="mcp" class="section">
+      <p class="section-label">MCP — Model Context Protocol</p>
+      <h2 class="section-title">Give Claude Desktop eyes into your app.</h2>
+      <p class="section-sub">Expose your app's live UI context as an MCP server. Claude, Cursor, and any MCP client can call <code>get_current_context</code> to see exactly what the user is looking at — no screenshots, no description needed.</p>
+      <div class="pattern-shell">
+        <article class="pattern-copy">
+          <div>
+            <h3>Three lines to an MCP server.</h3>
+            <p>Any page annotated with <code>data-askable</code> instantly becomes queryable by AI agents. The MCP bridge translates live DOM state into structured Context packets that agents can read and reason about.</p>
+          </div>
+          <pre class="step-code" style="font-size:.78rem;line-height:1.65;background:#f4f6fa;border:1px solid rgba(0,0,0,0.07);border-radius:12px;padding:1rem;overflow-x:auto;white-space:pre">import { createAskableMcpServer } from '@askable-ui/mcp';
+
+const server = createAskableMcpServer({ provider });
+server.connect(transport); // stdio, SSE, or WebSocket</pre>
+        </article>
+        <div class="pattern-stack">
+          <article class="pattern-card">
+            <div class="pattern-icon">↗</div>
+            <h4>get_current_context</h4>
+            <p>Returns the focused element's structured metadata, surrounding context, and interaction history as a typed JSON packet.</p>
+          </article>
+          <article class="pattern-card">
+            <div class="pattern-icon">T</div>
+            <h4>format_context_for_prompt</h4>
+            <p>Returns a prompt-ready text rendering of the current context — drop it directly into any system message.</p>
+          </article>
+          <article class="pattern-card">
+            <div class="pattern-icon">🔒</div>
+            <h4>Privacy gate built in</h4>
+            <p>Set <code>requireRedacted: true</code> to block unredacted packets from leaving the page. PII stays in your app.</p>
+          </article>
+          <article class="pattern-card">
+            <div class="pattern-icon">◇</div>
+            <h4>Schema resource</h4>
+            <p>The MCP server exposes the full Context packet JSON Schema so agents can self-document and validate responses.</p>
+          </article>
+        </div>
+      </div>
+      <div style="margin-top:1.5rem;background:#f9fafb;border:1px solid rgba(0,0,0,0.07);border-radius:16px;padding:1.25rem 1.5rem;">
+        <p style="font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.75rem;">claude_desktop_config.json</p>
+        <pre style="font-size:.8rem;line-height:1.65;color:#374151;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;overflow-x:auto;white-space:pre">{
+  "mcpServers": {
+    "my-app": {
+      "command": "node",
+      "args": ["./mcp-server.js"]
+    }
+  }
+}</pre>
+        <p style="margin-top:.85rem;font-size:.84rem;color:var(--ink-2)">→ <a href="https://askable-ui.com/docs/guide/mcp" style="color:var(--accent);text-decoration:none;font-weight:600">Full MCP integration guide</a></p>
+      </div>
+    </section>
+
     <div class="cta-section">
       <div class="cta-card">
-        <h2>Start with one attribute.</h2>
-        <p>Drop <code style="color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.1)">data-askable</code> on your most important element. Working context in under five minutes.</p>
+        <h2>Your AI. Your UI. Finally connected.</h2>
+        <p>Drop <code style="color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.1)">data-askable</code> on your most important element. Working context in under five minutes — or scaffold a full copilot app in one command.</p>
         <div class="cta-actions">
           <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer" class="btn btn-inverse">Read the docs</a>
-          <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white btn-icon" aria-label="GitHub repository" title="GitHub repository">
+          <a href="https://askable-mu.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white">Live demo ↗</a>
+          <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white btn-icon" aria-label="GitHub repository" title="Star on GitHub">
             <svg class="github-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.49 0-.24-.01-1.05-.01-1.9-2.51.47-3.16-.63-3.36-1.21-.11-.3-.6-1.21-1.03-1.46-.35-.19-.85-.66-.01-.67.79-.01 1.35.74 1.54 1.05.9 1.55 2.34 1.11 2.91.85.09-.67.35-1.11.64-1.37-2.22-.26-4.55-1.14-4.55-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.71 0 0 .84-.28 2.75 1.05A9.28 9.28 0 0 1 12 6.98c.85 0 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.06.36.32.68.93.68 1.89 0 1.36-.01 2.46-.01 2.8 0 .27.18.59.69.49A10.12 10.12 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"/>
             </svg>
           </a>
-          <a href="https://www.npmjs.com/package/@askable-ui/core" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white">npm install</a>
         </div>
       </div>
     </div>
@@ -1353,6 +1410,8 @@ ctx.push(meta, text);</pre>
       <span>askable-ui — context that feels native to the UI</span>
       <div style="display:flex;gap:1rem;flex-wrap:wrap">
         <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer">Docs</a>
+        <a href="https://askable-ui.com/docs/guide/mcp" target="_blank" rel="noopener noreferrer">MCP guide</a>
+        <a href="https://askable-mu.vercel.app/" target="_blank" rel="noopener noreferrer">Live demo</a>
         <a href="https://github.com/askable-ui/askable" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://www.npmjs.com/org/askable-ui" target="_blank" rel="noopener noreferrer">npm</a>
         <a href="https://github.com/askable-ui/askable/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a>

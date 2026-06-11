@@ -625,7 +625,11 @@ export class AskableContextImpl implements AskableContext {
       if (!active) return;
       const focus = this.currentFocus;
       const scopedFocus = this.matchesScope(focus, contextOptions.scope) ? focus : null;
-      callback(this.toContext(contextOptions), scopedFocus);
+      try {
+        callback(this.toContext(contextOptions), scopedFocus);
+      } catch (err) {
+        console.error('[askable] subscribe callback threw:', err);
+      }
     };
 
     const schedule = () => {
