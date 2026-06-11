@@ -23,6 +23,7 @@ packages/
   svelte/           — Svelte 4 stores + Svelte 5 runes (createAskableStore, useAskable.svelte)
   solid/            — SolidJS primitives (useAskable, useAskableViewport, <Askable>)
   angular/          — Angular 16+ injectable service + directive (AskableService, AskableDirective)
+  web-component/    — <askable-context> custom element (zero build step, any framework)
   react-native/     — React Native scroll context hook
   mcp/              — MCP server, web handler, page bridge
   create-askable-app/ — CLI scaffolder (npm create @askable-ui/app)

@@ -323,6 +323,7 @@ if (focus) {
 | Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
+| Web Component | `@askable-ui/web-component` | `<askable-context>` custom element, works in HTMX, Ember, vanilla HTML |
 | React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |
 | Vanilla JS | `@askable-ui/core` | `createAskableContext()`, zero dependencies |
 
@@ -458,6 +459,35 @@ export class AppComponent {
 </details>
 
 <details>
+<summary><strong>Web Component (HTMX / Ember / Vanilla)</strong></summary>
+
+```bash
+npm install @askable-ui/web-component
+```
+
+Or via CDN — no build step required:
+
+```html
+<script type="module" src="https://unpkg.com/@askable-ui/web-component/dist/index.js"></script>
+
+<askable-context id="app">
+  <button data-askable='{"action":"buy","sku":"abc123"}'>Buy now</button>
+  <article data-askable='{"metric":"revenue","value":"$2.4M"}'>Revenue</article>
+</askable-context>
+
+<script type="module">
+  const el = document.getElementById('app');
+  el.addEventListener('askable:focus', (e) => {
+    console.log(e.detail.promptContext);
+    // → "Focused element:\n{\"action\":\"buy\",\"sku\":\"abc123\"}\nBuy now"
+    sendToAI(e.detail.promptContext);
+  });
+</script>
+```
+
+</details>
+
+<details>
 <summary><strong>React Native</strong></summary>
 
 ```bash
@@ -524,6 +554,7 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 | [`@askable-ui/svelte`](https://www.npmjs.com/package/@askable-ui/svelte) | [![npm](https://img.shields.io/npm/v/@askable-ui/svelte?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/svelte) | Svelte 4 & 5 stores and components |
 | [`@askable-ui/solid`](https://www.npmjs.com/package/@askable-ui/solid) | [![npm](https://img.shields.io/npm/v/@askable-ui/solid?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/solid) | SolidJS primitives and components |
 | [`@askable-ui/angular`](https://www.npmjs.com/package/@askable-ui/angular) | [![npm](https://img.shields.io/npm/v/@askable-ui/angular?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/angular) | Angular 16+ injectable service and directive |
+| [`@askable-ui/web-component`](https://www.npmjs.com/package/@askable-ui/web-component) | [![npm](https://img.shields.io/npm/v/@askable-ui/web-component?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/web-component) | `<askable-context>` custom element — HTMX, Ember, vanilla |
 | [`@askable-ui/react-native`](https://www.npmjs.com/package/@askable-ui/react-native) | [![npm](https://img.shields.io/npm/v/@askable-ui/react-native?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react-native) | React Native adapter |
 | [`@askable-ui/mcp`](https://www.npmjs.com/package/@askable-ui/mcp) | [![npm](https://img.shields.io/npm/v/@askable-ui/mcp?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/mcp) | MCP server — expose UI context to Claude, Cursor, etc. |
 | [`create-@askable-ui/app`](https://www.npmjs.com/package/@askable-ui/create-app) | [![npm](https://img.shields.io/npm/v/@askable-ui/create-app?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/create-app) | Starter scaffold: React + Vite + CopilotKit |

@@ -1,0 +1,54 @@
+{
+  "name": "@askable-ui/web-component",
+  "version": "0.14.0",
+  "description": "Zero-dependency custom element <askable-context> that works in any framework or vanilla HTML",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/askable-ui/askable.git",
+    "directory": "packages/web-component"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "mcp",
+    "model-context-protocol",
+    "context",
+    "claude",
+    "cursor",
+    "copilot",
+    "web-component",
+    "custom-element",
+    "htmx",
+    "vanilla",
+    "agentic",
+    "data-askable"
+  ],
+  "homepage": "https://askable-ui.com",
+  "license": "MIT",
+  "dependencies": {
+    "@askable-ui/core": "^0.14.0"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}
