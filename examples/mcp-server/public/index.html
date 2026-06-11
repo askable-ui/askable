@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>askable-ui MCP Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #7c3aed;
+      --accent-light: #ede9fe;
+      --border: rgba(0,0,0,0.08);
+      --ink-1: #111317;
+      --ink-2: #6b7280;
+      --bg: #f4f6fa;
+    }
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--ink-1); }
+    .shell { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    header { margin-bottom: 2rem; }
+    h1 { font-size: 1.6rem; font-weight: 700; }
+    .sub { font-size: .9rem; color: var(--ink-2); margin-top: .35rem; }
+    .setup-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      font-size: .85rem;
+    }
+    .setup-box h2 { font-size: .95rem; font-weight: 700; margin-bottom: .65rem; }
+    pre { background: var(--bg); border-radius: 8px; padding: .75rem 1rem; font-size: .78rem; overflow-x: auto; line-height: 1.6; }
+    .label {
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--ink-2); margin-bottom: .4rem;
+    }
+    /* Metrics */
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
+    .card {
+      background: #fff;
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .card:hover { border-color: var(--accent); }
+    .card.active { border-color: var(--accent); background: var(--accent-light); }
+    .card-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-2); margin-bottom: .5rem; }
+    .card-value { font-size: 2rem; font-weight: 700; line-height: 1; margin-bottom: .35rem; }
+    .card-delta { font-size: .82rem; }
+    .positive { color: #16a34a; }
+    .negative { color: #dc2626; }
+    /* Table */
+    .table-wrap { background: #fff; border-radius: 12px; overflow: hidden; margin-bottom: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-2); padding: .7rem 1rem; text-align: left; background: var(--bg); border-bottom: 1px solid var(--border); }
+    tbody tr { cursor: pointer; border-bottom: 1px solid var(--border); transition: background .12s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover td { background: #f5f3ff; }
+    tbody tr.active td { background: var(--accent-light); }
+    tbody td { padding: .8rem 1rem; font-size: .9rem; }
+    .co { font-weight: 600; }
+    /* Context panel */
+    .ctx-panel { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+    .ctx-pre {
+      font-family: ui-monospace, monospace; font-size: .75rem; line-height: 1.6;
+      white-space: pre-wrap; word-break: break-word; color: var(--ink-1);
+      background: var(--bg); border-radius: 8px; padding: .75rem; max-height: 200px; overflow-y: auto;
+    }
+    .ctx-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .65rem; }
+    .indicator { display: flex; align-items: center; gap: .4rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+    .tip { margin-top: 1.25rem; font-size: .82rem; color: var(--ink-2); background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: .65rem .9rem; }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <h1>askable-ui MCP Demo</h1>
+    <p class="sub">Click any card or row — Claude Desktop will see exactly what you're looking at via MCP.</p>
+  </header>
+
+  <div class="setup-box">
+    <h2>1. Connect Claude Desktop</h2>
+    <p style="margin-bottom:.7rem;color:var(--ink-2);font-size:.83rem;">Add this to your <code>claude_desktop_config.json</code> and restart Claude Desktop:</p>
+    <pre>{
+  "mcpServers": {
+    "my-app": { "url": "http://localhost:3001/mcp" }
+  }
+}</pre>
+    <p style="margin-top:.75rem;font-size:.82rem;color:var(--ink-2);">Then ask Claude: <em>"What is the user currently looking at?"</em></p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="label">Metrics — click to focus</div>
+  <div class="metrics" id="metrics">
+    <div class="card" tabindex="0"
+      data-askable='{"metric":"nrr","value":118,"unit":"percent","benchmark":110}'
+      data-label="Net Revenue Retention" data-display="118%"
+      data-delta="+4pp vs last quarter" data-positive="true">
+      <div class="card-label">Net Revenue Retention</div>
+      <div class="card-value">118%</div>
+      <div class="card-delta positive">+4pp vs last quarter</div>
+    </div>
+    <div class="card" tabindex="0"
+      data-askable='{"metric":"pipeline","value":4200000,"unit":"usd","multiplier":3.1}'
+      data-label="Pipeline Coverage" data-display="$4.2M"
+      data-delta="3.1× quota" data-positive="true">
+      <div class="card-label">Pipeline Coverage</div>
+      <div class="card-value">$4.2M</div>
+      <div class="card-delta positive">3.1× quota</div>
+    </div>
+    <div class="card" tabindex="0"
+      data-askable='{"metric":"backlog","value":47,"unit":"tickets","weekDelta":12}'
+      data-label="Support Backlog" data-display="47"
+      data-delta="+12 vs last week" data-positive="false">
+      <div class="card-label">Support Backlog</div>
+      <div class="card-value">47</div>
+      <div class="card-delta negative">+12 vs last week</div>
+    </div>
+  </div>
+
+  <!-- Deals Table -->
+  <div class="label">Priority Pipeline — click to focus</div>
+  <div class="table-wrap">
+    <table id="deals">
+      <thead><tr>
+        <th>Company</th><th>Stage</th><th>Value</th><th>Owner</th><th>Risk</th>
+      </tr></thead>
+      <tbody>
+        <tr tabindex="0" data-askable='{"company":"Acme Corp","stage":"Proposal","value":85000,"owner":"Sara K.","risk":"low"}'>
+          <td class="co">Acme Corp</td><td>Proposal</td><td>$85,000</td><td>Sara K.</td><td style="color:#16a34a;font-weight:700">low</td>
+        </tr>
+        <tr tabindex="0" data-askable='{"company":"Globex Inc","stage":"Negotiation","value":210000,"owner":"Tom R.","risk":"medium"}'>
+          <td class="co">Globex Inc</td><td>Negotiation</td><td>$210,000</td><td>Tom R.</td><td style="color:#d97706;font-weight:700">medium</td>
+        </tr>
+        <tr tabindex="0" data-askable='{"company":"Initech","stage":"Discovery","value":42000,"owner":"Amy J.","risk":"high"}'>
+          <td class="co">Initech</td><td>Discovery</td><td>$42,000</td><td>Amy J.</td><td style="color:#dc2626;font-weight:700">high</td>
+        </tr>
+        <tr tabindex="0" data-askable='{"company":"Umbrella Ltd","stage":"Closed Won","value":130000,"owner":"Dan W.","risk":"low"}'>
+          <td class="co">Umbrella Ltd</td><td>Closed Won</td><td>$130,000</td><td>Dan W.</td><td style="color:#16a34a;font-weight:700">low</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Live context panel -->
+  <div class="ctx-panel">
+    <div class="ctx-header">
+      <div class="label" style="margin:0">What Claude sees right now</div>
+      <div class="indicator">
+        <div class="dot" id="dot"></div>
+        <span style="font-size:.75rem;color:var(--ink-2)" id="status">ready</span>
+      </div>
+    </div>
+    <pre class="ctx-pre" id="ctx-display">— nothing focused yet —</pre>
+  </div>
+
+  <p class="tip"><strong>Try it:</strong> Focus an element above, then switch to Claude Desktop and ask "What metric is the user looking at?"</p>
+</div>
+
+<script type="module">
+  const ctxDisplay = document.getElementById('ctx-display');
+  const statusEl = document.getElementById('status');
+  const dot = document.getElementById('dot');
+  let activeEl = null;
+
+  function buildPacket(el) {
+    const raw = el.dataset.askable;
+    if (!raw) return null;
+    let metadata;
+    try { metadata = JSON.parse(raw); } catch { return null; }
+
+    return {
+      capture: { mode: 'element-focus' },
+      source: { url: window.location.href, title: document.title, app: 'mcp-demo' },
+      target: {
+        text: el.textContent?.trim().slice(0, 120) ?? '',
+        metadata,
+      },
+      privacy: { consent: 'explicit' },
+      provenance: { producer: 'askable-ui/mcp-demo', method: 'dom' },
+    };
+  }
+
+  async function pushContext(el) {
+    const packet = buildPacket(el);
+    if (!packet) return;
+
+    // Show locally
+    ctxDisplay.textContent = JSON.stringify(packet, null, 2);
+    statusEl.textContent = 'syncing…';
+    dot.style.background = '#f59e0b';
+
+    try {
+      await fetch('/update-context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(packet),
+      });
+      statusEl.textContent = 'synced ✓';
+      dot.style.background = '#10b981';
+    } catch {
+      statusEl.textContent = 'offline';
+      dot.style.background = '#ef4444';
+    }
+  }
+
+  function activate(el) {
+    if (activeEl) activeEl.classList.remove('active');
+    activeEl = el;
+    el.classList.add('active');
+    pushContext(el);
+  }
+
+  // Wire up all data-askable elements
+  document.querySelectorAll('[data-askable]').forEach((el) => {
+    el.addEventListener('click', () => activate(el));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(el); }
+    });
+  });
+</script>
+</body>
+</html>
