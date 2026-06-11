@@ -1,6 +1,7 @@
 export { Askable } from './Askable.js';
 export { AskableInspector } from './AskableInspector.js';
 export { useAskable } from './useAskable.js';
+export { useAskableAgent } from './useAskableAgent.js';
 export { useAskableSource } from './useAskableSource.js';
 export { useAskableRegionCapture } from './useAskableRegionCapture.js';
 export { useAskableTextSelectionCapture } from './useAskableTextSelectionCapture.js';
@@ -36,3 +37,8 @@ export type {
   UseAskableComposeOptions,
   UseAskableComposeResult,
 } from './useAskableCompose.js';
+export type {
+  AskableAgentStatus,
+  UseAskableAgentOptions,
+  UseAskableAgentResult,
+} from './useAskableAgent.js';
