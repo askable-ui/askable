@@ -262,6 +262,27 @@ const { history, promptContext } = useAskableHistory({ maxEntries: 5 });
 
 Deduplicates consecutive identical entries by default. Available in React, Vue, and Svelte.
 
+### Composing context streams
+
+Merge focus, viewport, history, and any other context into one prompt string using `useAskableCompose` (React):
+
+```tsx
+import { useAskable, useAskableViewport, useAskableHistory, useAskableCompose } from '@askable-ui/react';
+
+const { promptContext: focusCtx } = useAskable();
+const { promptContext: viewportCtx } = useAskableViewport();
+const { promptContext: historyCtx } = useAskableHistory({ maxEntries: 5 });
+
+const { promptContext } = useAskableCompose({
+  sections: [
+    { label: 'Currently focused element', value: focusCtx },
+    { label: 'Visible dashboard elements', value: viewportCtx },
+    { label: 'Recent navigation', value: historyCtx },
+  ],
+});
+// Empty sections are automatically excluded from the output
+```
+
 ---
 
 ## Works with
