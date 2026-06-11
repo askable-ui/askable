@@ -590,6 +590,7 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 | [`svelte-dashboard`](./examples/svelte-dashboard/) | Svelte 5 · Vite | Runes API + live context panel |
 | [`solid-dashboard`](./examples/solid-dashboard/) | SolidJS · Vite | SolidJS signals + context inspector sidebar |
 | [`angular-dashboard`](./examples/angular-dashboard/) | Angular 19 · standalone | Angular signals + injectable services |
+| [`nextjs-app-router`](./examples/nextjs-app-router/) | Next.js 15 · App Router | Vercel AI SDK streaming chat with real-time UI context |
 | [`mcp-server`](./examples/mcp-server/) | Node.js · Express | Standalone MCP server — connect Claude Desktop in 5 min |
 | [`vanilla-chat`](./examples/vanilla-chat/) | Vanilla JS | Zero-install HTML demo, opens in a browser |
 | [`react-native-expo`](./examples/react-native-expo/) | React Native · Expo | Mobile scroll context |

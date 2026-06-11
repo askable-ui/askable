@@ -33,6 +33,7 @@ examples/
   vue-dashboard/              — Vue 3 + Vite dashboard
   solid-dashboard/            — SolidJS + Vite dashboard
   angular-dashboard/          — Angular 19 + standalone components
+  nextjs-app-router/          — Next.js 15 App Router + Vercel AI SDK streaming chat
   svelte-dashboard/           — Svelte 5 runes dashboard
   vanilla-chat/               — zero-dependency HTML demo
   mcp-server/                 — standalone MCP server + Express quickstart
