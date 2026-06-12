@@ -17,7 +17,16 @@
     "./useAskableHistory.svelte": "./src/useAskableHistory.svelte.ts",
     "./useAskableCompose.svelte": "./src/useAskableCompose.svelte.ts",
     "./useAskableSource.svelte": "./src/useAskableSource.svelte.ts",
-    "./useAskableAgent.svelte": "./src/useAskableAgent.svelte.ts"
+    "./useAskableAgent.svelte": "./src/useAskableAgent.svelte.ts",
+    "./useAskableStream.svelte": "./src/useAskableStream.svelte.ts",
+    "./useAskableChat.svelte": "./src/useAskableChat.svelte.ts",
+    "./useAskablePageSource.svelte": "./src/useAskablePageSource.svelte.ts",
+    "./useAskableFormSource.svelte": "./src/useAskableFormSource.svelte.ts",
+    "./useAskableTableSource.svelte": "./src/useAskableTableSource.svelte.ts",
+    "./useAskableErrorSource.svelte": "./src/useAskableErrorSource.svelte.ts",
+    "./useAskableUserSource.svelte": "./src/useAskableUserSource.svelte.ts",
+    "./useAskableKeyboardShortcut.svelte": "./src/useAskableKeyboardShortcut.svelte.ts",
+    "./useAskableNavigationSource.svelte": "./src/useAskableNavigationSource.svelte.ts"
   },
   "files": [
     "dist",
@@ -29,6 +38,15 @@
     "src/useAskableCompose.svelte.ts",
     "src/useAskableSource.svelte.ts",
     "src/useAskableAgent.svelte.ts",
+    "src/useAskableStream.svelte.ts",
+    "src/useAskableChat.svelte.ts",
+    "src/useAskablePageSource.svelte.ts",
+    "src/useAskableFormSource.svelte.ts",
+    "src/useAskableTableSource.svelte.ts",
+    "src/useAskableErrorSource.svelte.ts",
+    "src/useAskableUserSource.svelte.ts",
+    "src/useAskableKeyboardShortcut.svelte.ts",
+    "src/useAskableNavigationSource.svelte.ts",
     "README.md"
   ],
   "repository": {

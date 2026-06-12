@@ -8,6 +8,7 @@ export { createAskablePageSource } from './page-source.js';
 export { createAskableFormSource } from './form-source.js';
 export { createAskableErrorSource } from './error-source.js';
 export { createAskableUserSource } from './user-source.js';
+export { createAskableNavigationSource } from './navigation-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -86,6 +87,11 @@ export type {
   AskableCreateUserSourceOptions,
   AskableUserProfile,
 } from './user-source.js';
+export type {
+  AskableCreateNavigationSourceOptions,
+  AskableNavigationEntry,
+  AskableNavigationSourceSnapshot,
+} from './navigation-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,
