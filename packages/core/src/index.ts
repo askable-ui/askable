@@ -24,6 +24,7 @@ export { createAskablePermissionSource } from './permission-source.js';
 export { createAskableFeatureFlagSource } from './feature-flag-source.js';
 export { createAskableAnalyticsSource } from './analytics-source.js';
 export { createAskableAbTestSource } from './ab-test-source.js';
+export { createAskableConnectionSource } from './connection-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -185,6 +186,12 @@ export type {
   AskableAbTestVariant,
   AskableAbTestSourceSnapshot,
 } from './ab-test-source.js';
+export type {
+  AskableCreateConnectionSourceOptions,
+  AskableConnectionStatus,
+  AskableConnectionProtocol,
+  AskableConnectionSourceSnapshot,
+} from './connection-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,
