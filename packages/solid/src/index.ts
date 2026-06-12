@@ -17,6 +17,7 @@ export { useAskableErrorSource } from './useAskableErrorSource.js';
 export { useAskableUserSource } from './useAskableUserSource.js';
 export { useAskableKeyboardShortcut } from './useAskableKeyboardShortcut.js';
 export { useAskableMediaSource } from './useAskableMediaSource.js';
+export { useAskableScrollSource } from './useAskableScrollSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -40,6 +41,7 @@ export type { UseAskableKeyboardShortcutOptions, UseAskableKeyboardShortcutResul
 export type { AskableStreamStatus, AskableStreamHandler, UseAskableStreamOptions, UseAskableStreamResult } from './useAskableStream.js';
 export type { AskableChatRole, AskableChatMessage, AskableChatStatus, AskableChatStreamHandler, UseAskableChatOptions, UseAskableChatResult } from './useAskableChat.js';
 export type { UseAskableMediaSourceOptions, UseAskableMediaSourceResult, AskableMediaState, AskableMediaSourceSnapshot } from './useAskableMediaSource.js';
+export type { UseAskableScrollSourceOptions, UseAskableScrollSourceResult, AskableScrollState, AskableScrollSourceSnapshot } from './useAskableScrollSource.js';
 export type { UseAskableViewportOptions, UseAskableViewportResult } from './useAskableViewport.js';
 export type { UseAskableHistoryOptions, UseAskableHistoryResult } from './useAskableHistory.js';
 export type {
