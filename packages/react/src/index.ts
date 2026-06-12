@@ -18,6 +18,7 @@ export { useAskableTableSource } from './useAskableTableSource.js';
 export { useAskableErrorSource } from './useAskableErrorSource.js';
 export { useAskableUserSource } from './useAskableUserSource.js';
 export { useAskableKeyboardShortcut } from './useAskableKeyboardShortcut.js';
+export { useAskableMediaSource } from './useAskableMediaSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -100,6 +101,12 @@ export type {
   UseAskableStreamOptions,
   UseAskableStreamResult,
 } from './useAskableStream.js';
+export type {
+  UseAskableMediaSourceOptions,
+  UseAskableMediaSourceResult,
+  AskableMediaState,
+  AskableMediaSourceSnapshot,
+} from './useAskableMediaSource.js';
 export type {
   AskableChatRole,
   AskableChatMessage,

@@ -18,6 +18,8 @@ export { AskableUserSourceService } from './askable-user-source.service.js';
 export type { AskableUserSourceServiceOptions, AskableUserProfile } from './askable-user-source.service.js';
 export { AskableNavigationSourceService } from './askable-navigation-source.service.js';
 export type { AskableNavigationSourceServiceOptions, AskableNavigationEntry } from './askable-navigation-source.service.js';
+export { AskableMediaSourceService } from './askable-media-source.service.js';
+export type { AskableMediaSourceServiceOptions, AskableMediaState, AskableMediaSourceSnapshot } from './askable-media-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,

@@ -29,7 +29,8 @@
     "./useAskableNavigationSource.svelte": "./src/useAskableNavigationSource.svelte.ts",
     "./useAskableDOMSource.svelte": "./src/useAskableDOMSource.svelte.ts",
     "./useAskableStorageSource.svelte": "./src/useAskableStorageSource.svelte.ts",
-    "./useAskableNotificationSource.svelte": "./src/useAskableNotificationSource.svelte.ts"
+    "./useAskableNotificationSource.svelte": "./src/useAskableNotificationSource.svelte.ts",
+    "./useAskableMediaSource.svelte": "./src/useAskableMediaSource.svelte.ts"
   },
   "files": [
     "dist",
@@ -53,6 +54,7 @@
     "src/useAskableDOMSource.svelte.ts",
     "src/useAskableStorageSource.svelte.ts",
     "src/useAskableNotificationSource.svelte.ts",
+    "src/useAskableMediaSource.svelte.ts",
     "README.md"
   ],
   "repository": {

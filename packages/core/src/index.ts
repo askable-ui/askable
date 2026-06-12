@@ -12,6 +12,7 @@ export { createAskableNavigationSource } from './navigation-source.js';
 export { createAskableDOMSource } from './dom-source.js';
 export { createAskableStorageSource } from './storage-source.js';
 export { createAskableNotificationSource } from './notification-source.js';
+export { createAskableMediaSource } from './media-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -109,6 +110,11 @@ export type {
   AskableNotificationSeverity,
   AskableNotificationSourceSnapshot,
 } from './notification-source.js';
+export type {
+  AskableCreateMediaSourceOptions,
+  AskableMediaState,
+  AskableMediaSourceSnapshot,
+} from './media-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,
