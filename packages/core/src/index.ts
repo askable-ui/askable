@@ -15,6 +15,7 @@ export { createAskableNotificationSource } from './notification-source.js';
 export { createAskableMediaSource } from './media-source.js';
 export { createAskableScrollSource } from './scroll-source.js';
 export { createAskableSelectionSource } from './selection-source.js';
+export { createAskableClipboardSource } from './clipboard-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -126,6 +127,11 @@ export type {
   AskableCreateSelectionSourceOptions,
   AskableSelectionSourceSnapshot,
 } from './selection-source.js';
+export type {
+  AskableCreateClipboardSourceOptions,
+  AskableClipboardEntry,
+  AskableClipboardSourceSnapshot,
+} from './clipboard-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

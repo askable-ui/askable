@@ -21,6 +21,7 @@ export { useAskableKeyboardShortcut } from './useAskableKeyboardShortcut.js';
 export { useAskableMediaSource } from './useAskableMediaSource.js';
 export { useAskableScrollSource } from './useAskableScrollSource.js';
 export { useAskableSelectionSource } from './useAskableSelectionSource.js';
+export { useAskableClipboardSource } from './useAskableClipboardSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -120,6 +121,12 @@ export type {
   UseAskableSelectionSourceResult,
   AskableSelectionSourceSnapshot,
 } from './useAskableSelectionSource.js';
+export type {
+  UseAskableClipboardSourceOptions,
+  UseAskableClipboardSourceResult,
+  AskableClipboardEntry,
+  AskableClipboardSourceSnapshot,
+} from './useAskableClipboardSource.js';
 export type {
   AskableChatRole,
   AskableChatMessage,
