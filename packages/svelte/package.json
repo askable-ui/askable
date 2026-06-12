@@ -36,7 +36,8 @@
     "./useAskableClipboardSource.svelte": "./src/useAskableClipboardSource.svelte.ts",
     "./useAskableNetworkSource.svelte": "./src/useAskableNetworkSource.svelte.ts",
     "./useAskableThemeSource.svelte": "./src/useAskableThemeSource.svelte.ts",
-    "./useAskableWindowSource.svelte": "./src/useAskableWindowSource.svelte.ts"
+    "./useAskableWindowSource.svelte": "./src/useAskableWindowSource.svelte.ts",
+    "./useAskableLocaleSource.svelte": "./src/useAskableLocaleSource.svelte.ts"
   },
   "files": [
     "dist",
@@ -67,6 +68,7 @@
     "src/useAskableNetworkSource.svelte.ts",
     "src/useAskableThemeSource.svelte.ts",
     "src/useAskableWindowSource.svelte.ts",
+    "src/useAskableLocaleSource.svelte.ts",
     "README.md"
   ],
   "repository": {

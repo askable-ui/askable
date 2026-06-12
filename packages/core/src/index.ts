@@ -19,6 +19,7 @@ export { createAskableClipboardSource } from './clipboard-source.js';
 export { createAskableNetworkSource } from './network-source.js';
 export { createAskableThemeSource } from './theme-source.js';
 export { createAskableWindowSource } from './window-source.js';
+export { createAskableLocaleSource } from './locale-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -154,6 +155,10 @@ export type {
   AskableOrientation,
   AskableWindowSourceSnapshot,
 } from './window-source.js';
+export type {
+  AskableCreateLocaleSourceOptions,
+  AskableLocaleSourceSnapshot,
+} from './locale-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

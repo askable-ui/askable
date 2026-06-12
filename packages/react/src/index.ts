@@ -25,6 +25,7 @@ export { useAskableClipboardSource } from './useAskableClipboardSource.js';
 export { useAskableNetworkSource } from './useAskableNetworkSource.js';
 export { useAskableThemeSource } from './useAskableThemeSource.js';
 export { useAskableWindowSource } from './useAskableWindowSource.js';
+export { useAskableLocaleSource } from './useAskableLocaleSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -152,6 +153,11 @@ export type {
   AskableOrientation,
   AskableWindowSourceSnapshot,
 } from './useAskableWindowSource.js';
+export type {
+  UseAskableLocaleSourceOptions,
+  UseAskableLocaleSourceResult,
+  AskableLocaleSourceSnapshot,
+} from './useAskableLocaleSource.js';
 export type {
   AskableChatRole,
   AskableChatMessage,
