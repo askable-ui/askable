@@ -1484,6 +1484,233 @@ if (!promptContext) return; // or use a default system prompt
 
 ---
 
+## Keyboard shortcut — useAskableKeyboardShortcut
+
+`useAskableKeyboardShortcut` adds Cmd+K / Ctrl+K (or any shortcut) to your app. When pressed, it composes the full AI context from all registered sources and calls `onTrigger` with the resulting string — ready to inject into any LLM chat.
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `shortcut` | `string` | `"mod+k"` | Shortcut string. `mod` = Cmd on Mac, Ctrl elsewhere |
+| `onTrigger` | `(context, event) => void` | — | Called with composed context when shortcut fires |
+| `toggle` | `boolean` | `false` | Auto-toggle `isOpen` on each trigger |
+| `enabled` | `boolean` | `true` | Whether the listener is active |
+| `preventDefault` | `boolean` | `true` | Prevent default browser action |
+| `sources` | `AskableContextSourceInclude[]` | all | Sources to include in composed context |
+
+### React
+
+```tsx
+import { useAskableKeyboardShortcut } from '@askable-ui/react';
+
+// Toggle an AI chat panel with Cmd+K
+const { isOpen, setOpen, lastContext } = useAskableKeyboardShortcut({
+  toggle: true,
+  onTrigger: (context) => console.log('AI context ready:', context.length, 'chars'),
+});
+
+return isOpen ? <AIChatPanel context={lastContext} onClose={() => setOpen(false)} /> : null;
+```
+
+### Vue
+
+```ts
+import { useAskableKeyboardShortcut } from '@askable-ui/vue';
+
+const { isOpen, setOpen, lastContext } = useAskableKeyboardShortcut({
+  shortcut: 'mod+k',
+  toggle: true,
+  onTrigger: (context) => chat.setSystemContext(context),
+});
+```
+
+### SolidJS
+
+```tsx
+import { useAskableKeyboardShortcut } from '@askable-ui/solid';
+
+const { isOpen, setOpen, lastContext } = useAskableKeyboardShortcut({
+  toggle: true,
+  onTrigger: (context) => setSystemPrompt(context),
+});
+```
+
+### Svelte 5
+
+```svelte
+<script lang="ts">
+  import { useAskableKeyboardShortcut } from '@askable-ui/svelte/useAskableKeyboardShortcut.svelte';
+
+  const kc = useAskableKeyboardShortcut({ toggle: true });
+</script>
+
+{#if kc.isOpen}
+  <AIChatPanel context={kc.lastContext} onClose={() => kc.setOpen(false)} />
+{/if}
+```
+
+---
+
+## Navigation context source — useAskableNavigationSource
+
+`useAskableNavigationSource` tracks the current route, page title, route parameters, query string, and navigation history. Works with any router — pass a `getPath` getter that reads from your router's reactive state.
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `getPath` | `() => string` | `window.location.*` | Current path getter |
+| `getTitle` | `() => string \| null` | `document.title` | Current title getter |
+| `getParams` | `() => Record<string, string>` | — | Route parameters getter |
+| `maxHistory` | `number` | `10` | Maximum history entries |
+| `pathname` | `string \| Ref<string>` (framework-specific) | — | Reactive path; triggers auto-notify |
+
+### React (React Router v6)
+
+```tsx
+import { useLocation, useParams } from 'react-router-dom';
+import { useAskableNavigationSource } from '@askable-ui/react';
+
+const location = useLocation();
+const params = useParams();
+useAskableNavigationSource({
+  pathname: location.pathname,
+  getPath: () => location.pathname + location.search,
+  getParams: () => params as Record<string, string>,
+});
+```
+
+### Next.js App Router
+
+```tsx
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useAskableNavigationSource } from '@askable-ui/react';
+
+const pathname = usePathname();
+const searchParams = useSearchParams();
+useAskableNavigationSource({
+  pathname,
+  getPath: () => pathname + (searchParams.toString() ? '?' + searchParams.toString() : ''),
+});
+```
+
+### Vue Router
+
+```ts
+import { useRoute } from 'vue-router';
+import { computed } from 'vue';
+import { useAskableNavigationSource } from '@askable-ui/vue';
+
+const route = useRoute();
+useAskableNavigationSource({
+  pathname: computed(() => route.fullPath),
+  getPath: () => route.fullPath,
+  getParams: () => route.params as Record<string, string>,
+});
+```
+
+### SvelteKit
+
+```svelte
+<script lang="ts">
+  import { page } from '$app/stores';
+  import { useAskableNavigationSource } from '@askable-ui/svelte/useAskableNavigationSource.svelte';
+
+  useAskableNavigationSource({
+    pathname: () => $page.url.pathname,
+    getPath: () => $page.url.pathname + $page.url.search,
+  });
+</script>
+```
+
+### Resolved snapshot
+
+```json
+{
+  "currentPath": "/users/42?tab=activity",
+  "currentTitle": "User Profile",
+  "params": { "userId": "42" },
+  "query": { "tab": "activity" },
+  "history": [
+    { "path": "/users/42?tab=activity", "title": "User Profile", "timestamp": "2024-01-15T10:30:00.000Z" },
+    { "path": "/dashboard", "title": "Dashboard", "timestamp": "2024-01-15T10:28:00.000Z" }
+  ]
+}
+```
+
+---
+
+## DOM element source — useAskableDOMSource
+
+`useAskableDOMSource` captures any DOM element's text content, ARIA labels, roles, data attributes, and selected attributes as AI context. Ideal for rich text editors, custom widgets, canvases, or any element without a dedicated source.
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ref` / `elementRef` | `RefObject<Element>` | — | Framework ref to the target element |
+| `selector` | `string` | — | CSS selector to find element |
+| `includeAttributes` | `string[]` | `[]` | Specific attribute names to capture |
+| `maxTextLength` | `number` | `2000` | Truncate text content at this length |
+| `observeChanges` | `boolean` | `false` | Auto-notify via MutationObserver |
+| `kind` | `string` | `"dom"` | Custom source category |
+
+### React
+
+```tsx
+import { useRef } from 'react';
+import { useAskableDOMSource } from '@askable-ui/react';
+
+const editorRef = useRef<HTMLDivElement>(null);
+useAskableDOMSource({
+  ref: editorRef,
+  id: 'editor',
+  includeAttributes: ['contenteditable', 'data-format'],
+  maxTextLength: 8000,
+  observeChanges: true,  // auto-notify on content changes
+});
+
+return <div ref={editorRef} contenteditable>Type here…</div>;
+```
+
+### Vue
+
+```vue
+<script setup>
+import { useTemplateRef } from 'vue';
+import { useAskableDOMSource } from '@askable-ui/vue';
+
+const editorEl = useTemplateRef('editor');
+useAskableDOMSource({
+  elementRef: editorEl,
+  id: 'editor',
+  observeChanges: true,
+});
+</script>
+<template>
+  <div ref="editor" contenteditable>Type here…</div>
+</template>
+```
+
+### Resolved snapshot
+
+```json
+{
+  "tag": "div",
+  "text": "The quick brown fox jumps over the lazy dog",
+  "label": "Rich text editor",
+  "role": "textbox",
+  "id": "editor",
+  "classes": ["editor", "prose"],
+  "data": { "format": "markdown" },
+  "attributes": { "contenteditable": "true" },
+  "childCount": 3
+}
+```
+
+---
+
 ## Customising this file for your project
 
 Before committing this file to your own repo, update the sections that are product-specific:
