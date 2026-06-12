@@ -34,6 +34,7 @@ export { useAskableIdleSource } from './useAskableIdleSource.js';
 export { useAskableSearchSource } from './useAskableSearchSource.js';
 export { useAskableTabSource } from './useAskableTabSource.js';
 export { useAskablePerformanceSource } from './useAskablePerformanceSource.js';
+export { useAskableBatterySource } from './useAskableBatterySource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -74,6 +75,7 @@ export type { UseAskableIdleSourceOptions, UseAskableIdleSourceResult, AskableId
 export type { UseAskableSearchSourceOptions, UseAskableSearchSourceResult, AskableSearchSourceSnapshot } from './useAskableSearchSource.js';
 export type { UseAskableTabSourceOptions, UseAskableTabSourceResult, AskableTabSourceSnapshot } from './useAskableTabSource.js';
 export type { UseAskablePerformanceSourceOptions, UseAskablePerformanceSourceResult, AskablePerformanceMetric, AskablePerformanceSourceSnapshot } from './useAskablePerformanceSource.js';
+export type { UseAskableBatterySourceOptions, UseAskableBatterySourceResult, AskableBatterySourceSnapshot } from './useAskableBatterySource.js';
 export type { UseAskableViewportOptions, UseAskableViewportResult } from './useAskableViewport.js';
 export type { UseAskableHistoryOptions, UseAskableHistoryResult } from './useAskableHistory.js';
 export type {

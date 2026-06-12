@@ -60,6 +60,8 @@ export { AskableDOMSourceService } from './askable-dom-source.service.js';
 export type { AskableDOMSourceServiceOptions, AskableDOMSnapshot } from './askable-dom-source.service.js';
 export { AskablePerformanceSourceService } from './askable-performance-source.service.js';
 export type { AskablePerformanceSourceServiceOptions, AskablePerformanceMetric, AskablePerformanceSourceSnapshot } from './askable-performance-source.service.js';
+export { AskableBatterySourceService } from './askable-battery-source.service.js';
+export type { AskableBatterySourceServiceOptions, AskableBatterySourceSnapshot } from './askable-battery-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,
