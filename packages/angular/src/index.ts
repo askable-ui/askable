@@ -50,6 +50,14 @@ export { AskableSearchSourceService } from './askable-search-source.service.js';
 export type { AskableSearchSourceServiceOptions, AskableSearchSourceSnapshot } from './askable-search-source.service.js';
 export { AskableTabSourceService } from './askable-tab-source.service.js';
 export type { AskableTabSourceServiceOptions, AskableTabSourceSnapshot } from './askable-tab-source.service.js';
+export { AskableClipboardSourceService } from './askable-clipboard-source.service.js';
+export type { AskableClipboardSourceServiceOptions, AskableClipboardEntry, AskableClipboardSourceSnapshot } from './askable-clipboard-source.service.js';
+export { AskableStorageSourceService } from './askable-storage-source.service.js';
+export type { AskableStorageSourceServiceOptions, AskableStorageSourceSnapshot } from './askable-storage-source.service.js';
+export { AskableNotificationSourceService } from './askable-notification-source.service.js';
+export type { AskableNotificationSourceServiceOptions, AskableNotification, AskableNotificationSeverity, AskableNotificationSourceSnapshot } from './askable-notification-source.service.js';
+export { AskableDOMSourceService } from './askable-dom-source.service.js';
+export type { AskableDOMSourceServiceOptions, AskableDOMSnapshot } from './askable-dom-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,
