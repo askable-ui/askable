@@ -34,7 +34,8 @@
     "./useAskableScrollSource.svelte": "./src/useAskableScrollSource.svelte.ts",
     "./useAskableSelectionSource.svelte": "./src/useAskableSelectionSource.svelte.ts",
     "./useAskableClipboardSource.svelte": "./src/useAskableClipboardSource.svelte.ts",
-    "./useAskableNetworkSource.svelte": "./src/useAskableNetworkSource.svelte.ts"
+    "./useAskableNetworkSource.svelte": "./src/useAskableNetworkSource.svelte.ts",
+    "./useAskableThemeSource.svelte": "./src/useAskableThemeSource.svelte.ts"
   },
   "files": [
     "dist",
@@ -63,6 +64,7 @@
     "src/useAskableSelectionSource.svelte.ts",
     "src/useAskableClipboardSource.svelte.ts",
     "src/useAskableNetworkSource.svelte.ts",
+    "src/useAskableThemeSource.svelte.ts",
     "README.md"
   ],
   "repository": {

@@ -23,6 +23,7 @@ export { useAskableScrollSource } from './useAskableScrollSource.js';
 export { useAskableSelectionSource } from './useAskableSelectionSource.js';
 export { useAskableClipboardSource } from './useAskableClipboardSource.js';
 export { useAskableNetworkSource } from './useAskableNetworkSource.js';
+export { useAskableThemeSource } from './useAskableThemeSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -135,6 +136,14 @@ export type {
   AskableNetworkEffectiveType,
   AskableNetworkSourceSnapshot,
 } from './useAskableNetworkSource.js';
+export type {
+  UseAskableThemeSourceOptions,
+  UseAskableThemeSourceResult,
+  AskableColorScheme,
+  AskableContrastPreference,
+  AskableMotionPreference,
+  AskableThemeSourceSnapshot,
+} from './useAskableThemeSource.js';
 export type {
   AskableChatRole,
   AskableChatMessage,

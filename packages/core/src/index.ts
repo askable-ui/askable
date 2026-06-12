@@ -17,6 +17,7 @@ export { createAskableScrollSource } from './scroll-source.js';
 export { createAskableSelectionSource } from './selection-source.js';
 export { createAskableClipboardSource } from './clipboard-source.js';
 export { createAskableNetworkSource } from './network-source.js';
+export { createAskableThemeSource } from './theme-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -139,6 +140,13 @@ export type {
   AskableNetworkEffectiveType,
   AskableNetworkSourceSnapshot,
 } from './network-source.js';
+export type {
+  AskableCreateThemeSourceOptions,
+  AskableColorScheme,
+  AskableContrastPreference,
+  AskableMotionPreference,
+  AskableThemeSourceSnapshot,
+} from './theme-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,
