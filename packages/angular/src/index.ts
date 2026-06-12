@@ -10,6 +10,8 @@ export { AskableAgentService } from './askable-agent.service.js';
 export type { AskableAgentStatus, AskableAgentServiceOptions } from './askable-agent.service.js';
 export { AskablePageSourceService } from './askable-page-source.service.js';
 export type { AskablePageSourceServiceOptions } from './askable-page-source.service.js';
+export { AskableFormSourceService } from './askable-form-source.service.js';
+export type { AskableFormSourceServiceOptions } from './askable-form-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,
