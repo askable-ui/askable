@@ -21,6 +21,7 @@ export { createAskableThemeSource } from './theme-source.js';
 export { createAskableWindowSource } from './window-source.js';
 export { createAskableLocaleSource } from './locale-source.js';
 export { createAskablePermissionSource } from './permission-source.js';
+export { createAskableFeatureFlagSource } from './feature-flag-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -167,6 +168,11 @@ export type {
   AskablePermissionState,
   AskablePermissionSourceSnapshot,
 } from './permission-source.js';
+export type {
+  AskableCreateFeatureFlagSourceOptions,
+  AskableFeatureFlagValue,
+  AskableFeatureFlagSourceSnapshot,
+} from './feature-flag-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

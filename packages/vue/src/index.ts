@@ -27,6 +27,7 @@ export { useAskableThemeSource } from './useAskableThemeSource.js';
 export { useAskableWindowSource } from './useAskableWindowSource.js';
 export { useAskableLocaleSource } from './useAskableLocaleSource.js';
 export { useAskablePermissionSource } from './useAskablePermissionSource.js';
+export { useAskableFeatureFlagSource } from './useAskableFeatureFlagSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -180,3 +181,9 @@ export type {
   AskablePermissionState,
   AskablePermissionSourceSnapshot,
 } from './useAskablePermissionSource.js';
+export type {
+  UseAskableFeatureFlagSourceOptions,
+  UseAskableFeatureFlagSourceResult,
+  AskableFeatureFlagValue,
+  AskableFeatureFlagSourceSnapshot,
+} from './useAskableFeatureFlagSource.js';
