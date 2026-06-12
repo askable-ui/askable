@@ -23,6 +23,7 @@ export { createAskableLocaleSource } from './locale-source.js';
 export { createAskablePermissionSource } from './permission-source.js';
 export { createAskableFeatureFlagSource } from './feature-flag-source.js';
 export { createAskableAnalyticsSource } from './analytics-source.js';
+export { createAskableAbTestSource } from './ab-test-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -179,6 +180,11 @@ export type {
   AskableAnalyticsEvent,
   AskableAnalyticsSourceSnapshot,
 } from './analytics-source.js';
+export type {
+  AskableCreateAbTestSourceOptions,
+  AskableAbTestVariant,
+  AskableAbTestSourceSnapshot,
+} from './ab-test-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

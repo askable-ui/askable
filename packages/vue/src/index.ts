@@ -29,6 +29,7 @@ export { useAskableLocaleSource } from './useAskableLocaleSource.js';
 export { useAskablePermissionSource } from './useAskablePermissionSource.js';
 export { useAskableFeatureFlagSource } from './useAskableFeatureFlagSource.js';
 export { useAskableAnalyticsSource } from './useAskableAnalyticsSource.js';
+export { useAskableAbTestSource } from './useAskableAbTestSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -194,3 +195,9 @@ export type {
   AskableAnalyticsEvent,
   AskableAnalyticsSourceSnapshot,
 } from './useAskableAnalyticsSource.js';
+export type {
+  UseAskableAbTestSourceOptions,
+  UseAskableAbTestSourceResult,
+  AskableAbTestVariant,
+  AskableAbTestSourceSnapshot,
+} from './useAskableAbTestSource.js';
