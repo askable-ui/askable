@@ -27,6 +27,7 @@ export { createAskableAbTestSource } from './ab-test-source.js';
 export { createAskableConnectionSource } from './connection-source.js';
 export { createAskableLoadingSource } from './loading-source.js';
 export { createAskableIdleSource } from './idle-source.js';
+export { createAskableSearchSource } from './search-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -204,6 +205,10 @@ export type {
   AskableCreateIdleSourceOptions,
   AskableIdleSourceSnapshot,
 } from './idle-source.js';
+export type {
+  AskableCreateSearchSourceOptions,
+  AskableSearchSourceSnapshot,
+} from './search-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

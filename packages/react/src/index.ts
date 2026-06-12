@@ -33,6 +33,7 @@ export { useAskableAbTestSource } from './useAskableAbTestSource.js';
 export { useAskableConnectionSource } from './useAskableConnectionSource.js';
 export { useAskableLoadingSource } from './useAskableLoadingSource.js';
 export { useAskableIdleSource } from './useAskableIdleSource.js';
+export { useAskableSearchSource } from './useAskableSearchSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -210,6 +211,11 @@ export type {
   UseAskableIdleSourceResult,
   AskableIdleSourceSnapshot,
 } from './useAskableIdleSource.js';
+export type {
+  UseAskableSearchSourceOptions,
+  UseAskableSearchSourceResult,
+  AskableSearchSourceSnapshot,
+} from './useAskableSearchSource.js';
 export type {
   AskableChatRole,
   AskableChatMessage,
