@@ -854,6 +854,152 @@ The resolved snapshot (mode `"all"`) looks like:
 
 ---
 
+## User profile source — `useAskableUserSource`
+
+`useAskableUserSource` registers a named source that exposes the logged-in user's profile — name, role, plan, organization, locale — so AI assistants can personalise responses. Works with any auth library (Clerk, NextAuth, Supabase, Auth0, custom JWT).
+
+```tsx
+// React — NextAuth
+import { useSession } from 'next-auth/react';
+import { useAskableUserSource } from '@askable-ui/react';
+
+function App() {
+  const { data: session } = useSession();
+  useAskableUserSource({
+    user: session?.user ? {
+      name: session.user.name,
+      email: session.user.email,
+      role: session.user.role,
+    } : null,
+    omitFields: ['email'],  // omit from resolved context for privacy
+  });
+}
+```
+
+```tsx
+// React — Clerk
+import { useUser } from '@clerk/nextjs';
+import { useAskableUserSource } from '@askable-ui/react';
+
+function App() {
+  const { user } = useUser();
+  useAskableUserSource({
+    user: user ? {
+      name: user.fullName ?? undefined,
+      role: user.publicMetadata.role as string,
+      plan: user.publicMetadata.plan as string,
+    } : null,
+  });
+}
+```
+
+```ts
+// Vue — Pinia auth store
+import { useAskableUserSource } from '@askable-ui/vue';
+
+const auth = useAuthStore();
+useAskableUserSource({
+  user: computed(() => auth.user),  // Ref<AskableUserProfile | null>
+  omitFields: ['email'],
+});
+```
+
+```tsx
+// SolidJS
+import { useAskableUserSource } from '@askable-ui/solid';
+
+const [user] = createSignal<AskableUserProfile | null>(null);
+useAskableUserSource({ user, omitFields: ['email'] });
+```
+
+```svelte
+<!-- Svelte 5 -->
+<script lang="ts">
+  import { useAskableUserSource } from '@askable-ui/svelte/useAskableUserSource.svelte';
+
+  let user = $state<AskableUserProfile | null>(null);
+  useAskableUserSource({ user: () => user });
+</script>
+```
+
+Options accepted by `useAskableUserSource`:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `id` | `string` | `"user"` | Source registration id |
+| `user` | `AskableUserProfile \| null` / accessor | — | Current user (null = not logged in) |
+| `omitFields` | `string[]` | `[]` | Fields to exclude for privacy (e.g. `["email"]`) |
+| `sanitize` | `function` | — | Transform the profile before serialization |
+| `describe` | `string` | `"Logged-in user"` | Human-readable description |
+| `kind` | `string` | `"user"` | Source category label |
+
+The `AskableUserProfile` type accepts `name`, `email`, `role`, `plan`, `organization`, `locale`, and any custom `[key: string]: unknown` fields.
+
+---
+
+## Error context source — `useAskableErrorSource`
+
+`useAskableErrorSource` registers a named source that exposes validation errors, API failures, and caught exceptions so an AI assistant can diagnose problems and guide the user to resolution.
+
+```tsx
+// React — React Hook Form compatible
+import { useForm } from 'react-hook-form';
+import { useAskableErrorSource } from '@askable-ui/react';
+
+function CheckoutForm() {
+  const { register, formState: { errors } } = useForm();
+  useAskableErrorSource({ errors });  // errors is Record<string, { message: string }>
+
+  return <form>...</form>;
+}
+```
+
+```tsx
+// React — manual errors
+const [apiError, setApiError] = useState<Error | null>(null);
+useAskableErrorSource({ errors: apiError });
+
+// Or mixed
+useAskableErrorSource({
+  errors: {
+    email: 'Invalid email address',
+    card: ['Card number is required', 'Must be 16 digits'],
+  }
+});
+```
+
+```ts
+// Vue — VeeValidate / reactive errors
+import { useAskableErrorSource } from '@askable-ui/vue';
+
+const errors = ref<Record<string, string>>({});
+useAskableErrorSource({ errors });
+```
+
+```svelte
+<!-- Svelte 5 -->
+<script lang="ts">
+  import { useAskableErrorSource } from '@askable-ui/svelte/useAskableErrorSource.svelte';
+
+  let errors = $state<Record<string, string>>({});
+  useAskableErrorSource({ errors: () => errors });
+</script>
+```
+
+The resolved snapshot separates errors from warnings:
+
+```json
+{
+  "errors":   [{ "key": "email", "message": "Invalid email address", "severity": "error" }],
+  "warnings": [{ "key": "card", "message": "Card expires soon", "severity": "warning" }],
+  "hasErrors": true,
+  "hasWarnings": true,
+  "total": 2
+}
+```
+
+---
+
 ## Agent requests — `useAskableAgent`
 
 `useAskableAgent` bundles the current context into a typed request object, calls your async handler, and tracks loading/success/error state. It's the recommended way to wire the "Ask AI" button in any framework.
