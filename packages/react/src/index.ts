@@ -32,6 +32,7 @@ export { useAskableAnalyticsSource } from './useAskableAnalyticsSource.js';
 export { useAskableAbTestSource } from './useAskableAbTestSource.js';
 export { useAskableConnectionSource } from './useAskableConnectionSource.js';
 export { useAskableLoadingSource } from './useAskableLoadingSource.js';
+export { useAskableIdleSource } from './useAskableIdleSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -204,6 +205,11 @@ export type {
   AskableLoadingEntry,
   AskableLoadingSourceSnapshot,
 } from './useAskableLoadingSource.js';
+export type {
+  UseAskableIdleSourceOptions,
+  UseAskableIdleSourceResult,
+  AskableIdleSourceSnapshot,
+} from './useAskableIdleSource.js';
 export type {
   AskableChatRole,
   AskableChatMessage,
