@@ -14,6 +14,7 @@ export { createAskableStorageSource } from './storage-source.js';
 export { createAskableNotificationSource } from './notification-source.js';
 export { createAskableMediaSource } from './media-source.js';
 export { createAskableScrollSource } from './scroll-source.js';
+export { createAskableSelectionSource } from './selection-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -121,6 +122,10 @@ export type {
   AskableScrollState,
   AskableScrollSourceSnapshot,
 } from './scroll-source.js';
+export type {
+  AskableCreateSelectionSourceOptions,
+  AskableSelectionSourceSnapshot,
+} from './selection-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

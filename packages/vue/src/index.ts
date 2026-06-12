@@ -20,6 +20,7 @@ export { useAskableUserSource } from './useAskableUserSource.js';
 export { useAskableKeyboardShortcut } from './useAskableKeyboardShortcut.js';
 export { useAskableMediaSource } from './useAskableMediaSource.js';
 export { useAskableScrollSource } from './useAskableScrollSource.js';
+export { useAskableSelectionSource } from './useAskableSelectionSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -127,3 +128,8 @@ export type {
   AskableScrollState,
   AskableScrollSourceSnapshot,
 } from './useAskableScrollSource.js';
+export type {
+  UseAskableSelectionSourceOptions,
+  UseAskableSelectionSourceResult,
+  AskableSelectionSourceSnapshot,
+} from './useAskableSelectionSource.js';
