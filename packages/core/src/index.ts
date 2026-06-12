@@ -34,6 +34,7 @@ export { createAskableBatterySource, getBatteryStatus, formatDuration } from './
 export { createAskableGeolocationSource } from './geolocation-source.js';
 export { createAskableTimeSource, buildTimeSnapshot } from './time-source.js';
 export { createAskableFocusSource, elementToFocusSnapshot } from './focus-source.js';
+export { createAskableMultistepSource, buildMultistepSnapshot } from './multistep-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -244,6 +245,11 @@ export type {
   AskableFocusedElementSnapshot,
   AskableFocusSourceSnapshot,
 } from './focus-source.js';
+export type {
+  AskableCreateMultistepSourceOptions,
+  AskableMultistepStep,
+  AskableMultistepSourceSnapshot,
+} from './multistep-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

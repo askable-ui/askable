@@ -68,6 +68,8 @@ export { AskableTimeSourceService } from './askable-time-source.service.js';
 export type { AskableTimeSourceServiceOptions, AskableBusinessHoursConfig, AskableTimeSourceSnapshot } from './askable-time-source.service.js';
 export { AskableFocusSourceService } from './askable-focus-source.service.js';
 export type { AskableFocusSourceServiceOptions, AskableFocusedElementSnapshot, AskableFocusSourceSnapshot } from './askable-focus-source.service.js';
+export { AskableMultistepSourceService } from './askable-multistep-source.service.js';
+export type { AskableMultistepSourceServiceOptions, AskableMultistepStep, AskableMultistepSourceSnapshot } from './askable-multistep-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,
