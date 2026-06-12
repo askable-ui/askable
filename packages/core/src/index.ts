@@ -25,6 +25,7 @@ export { createAskableFeatureFlagSource } from './feature-flag-source.js';
 export { createAskableAnalyticsSource } from './analytics-source.js';
 export { createAskableAbTestSource } from './ab-test-source.js';
 export { createAskableConnectionSource } from './connection-source.js';
+export { createAskableLoadingSource } from './loading-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -192,6 +193,12 @@ export type {
   AskableConnectionProtocol,
   AskableConnectionSourceSnapshot,
 } from './connection-source.js';
+export type {
+  AskableCreateLoadingSourceOptions,
+  AskableLoadingStatus,
+  AskableLoadingEntry,
+  AskableLoadingSourceSnapshot,
+} from './loading-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

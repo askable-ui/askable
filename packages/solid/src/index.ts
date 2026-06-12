@@ -29,6 +29,7 @@ export { useAskableFeatureFlagSource } from './useAskableFeatureFlagSource.js';
 export { useAskableAnalyticsSource } from './useAskableAnalyticsSource.js';
 export { useAskableAbTestSource } from './useAskableAbTestSource.js';
 export { useAskableConnectionSource } from './useAskableConnectionSource.js';
+export { useAskableLoadingSource } from './useAskableLoadingSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -64,6 +65,7 @@ export type { UseAskableFeatureFlagSourceOptions, UseAskableFeatureFlagSourceRes
 export type { UseAskableAnalyticsSourceOptions, UseAskableAnalyticsSourceResult, AskableAnalyticsEvent, AskableAnalyticsSourceSnapshot } from './useAskableAnalyticsSource.js';
 export type { UseAskableAbTestSourceOptions, UseAskableAbTestSourceResult, AskableAbTestVariant, AskableAbTestSourceSnapshot } from './useAskableAbTestSource.js';
 export type { UseAskableConnectionSourceOptions, UseAskableConnectionSourceResult, AskableConnectionStatus, AskableConnectionProtocol, AskableConnectionSourceSnapshot } from './useAskableConnectionSource.js';
+export type { UseAskableLoadingSourceOptions, UseAskableLoadingSourceResult, AskableLoadingStatus, AskableLoadingEntry, AskableLoadingSourceSnapshot } from './useAskableLoadingSource.js';
 export type { UseAskableViewportOptions, UseAskableViewportResult } from './useAskableViewport.js';
 export type { UseAskableHistoryOptions, UseAskableHistoryResult } from './useAskableHistory.js';
 export type {

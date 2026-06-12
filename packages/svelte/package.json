@@ -42,7 +42,8 @@
     "./useAskableFeatureFlagSource.svelte": "./src/useAskableFeatureFlagSource.svelte.ts",
     "./useAskableAnalyticsSource.svelte": "./src/useAskableAnalyticsSource.svelte.ts",
     "./useAskableAbTestSource.svelte": "./src/useAskableAbTestSource.svelte.ts",
-    "./useAskableConnectionSource.svelte": "./src/useAskableConnectionSource.svelte.ts"
+    "./useAskableConnectionSource.svelte": "./src/useAskableConnectionSource.svelte.ts",
+    "./useAskableLoadingSource.svelte": "./src/useAskableLoadingSource.svelte.ts"
   },
   "files": [
     "dist",
@@ -79,6 +80,7 @@
     "src/useAskableAnalyticsSource.svelte.ts",
     "src/useAskableAbTestSource.svelte.ts",
     "src/useAskableConnectionSource.svelte.ts",
+    "src/useAskableLoadingSource.svelte.ts",
     "README.md"
   ],
   "repository": {
