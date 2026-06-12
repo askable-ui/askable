@@ -31,6 +31,7 @@ export { createAskableSearchSource } from './search-source.js';
 export { createAskableTabSource } from './tab-source.js';
 export { createAskablePerformanceSource, rateMetric } from './performance-source.js';
 export { createAskableBatterySource, getBatteryStatus, formatDuration } from './battery-source.js';
+export { createAskableGeolocationSource } from './geolocation-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -226,6 +227,11 @@ export type {
   AskableCreateBatterySourceOptions,
   AskableBatterySourceSnapshot,
 } from './battery-source.js';
+export type {
+  AskableCreateGeolocationSourceOptions,
+  AskableGeolocationCoords,
+  AskableGeolocationSourceSnapshot,
+} from './geolocation-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

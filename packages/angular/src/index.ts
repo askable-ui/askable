@@ -62,6 +62,8 @@ export { AskablePerformanceSourceService } from './askable-performance-source.se
 export type { AskablePerformanceSourceServiceOptions, AskablePerformanceMetric, AskablePerformanceSourceSnapshot } from './askable-performance-source.service.js';
 export { AskableBatterySourceService } from './askable-battery-source.service.js';
 export type { AskableBatterySourceServiceOptions, AskableBatterySourceSnapshot } from './askable-battery-source.service.js';
+export { AskableGeolocationSourceService } from './askable-geolocation-source.service.js';
+export type { AskableGeolocationSourceServiceOptions, AskableGeolocationCoords, AskableGeolocationSourceSnapshot } from './askable-geolocation-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,

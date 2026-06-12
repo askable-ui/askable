@@ -37,6 +37,7 @@ export { useAskableSearchSource } from './useAskableSearchSource.js';
 export { useAskableTabSource } from './useAskableTabSource.js';
 export { useAskablePerformanceSource } from './useAskablePerformanceSource.js';
 export { useAskableBatterySource } from './useAskableBatterySource.js';
+export { useAskableGeolocationSource } from './useAskableGeolocationSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -235,6 +236,12 @@ export type {
   UseAskableBatterySourceResult,
   AskableBatterySourceSnapshot,
 } from './useAskableBatterySource.js';
+export type {
+  UseAskableGeolocationSourceOptions,
+  UseAskableGeolocationSourceResult,
+  AskableGeolocationCoords,
+  AskableGeolocationSourceSnapshot,
+} from './useAskableGeolocationSource.js';
 export type {
   AskableChatRole,
   AskableChatMessage,
