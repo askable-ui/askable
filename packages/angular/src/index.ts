@@ -20,6 +20,10 @@ export { AskableNavigationSourceService } from './askable-navigation-source.serv
 export type { AskableNavigationSourceServiceOptions, AskableNavigationEntry } from './askable-navigation-source.service.js';
 export { AskableMediaSourceService } from './askable-media-source.service.js';
 export type { AskableMediaSourceServiceOptions, AskableMediaState, AskableMediaSourceSnapshot } from './askable-media-source.service.js';
+export { AskableScrollSourceService } from './askable-scroll-source.service.js';
+export type { AskableScrollSourceServiceOptions, AskableScrollState, AskableScrollSourceSnapshot } from './askable-scroll-source.service.js';
+export { AskableSelectionSourceService } from './askable-selection-source.service.js';
+export type { AskableSelectionSourceServiceOptions, AskableSelectionSourceSnapshot } from './askable-selection-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,

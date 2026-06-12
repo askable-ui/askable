@@ -22,6 +22,7 @@ export { useAskableMediaSource } from './useAskableMediaSource.js';
 export { useAskableScrollSource } from './useAskableScrollSource.js';
 export { useAskableSelectionSource } from './useAskableSelectionSource.js';
 export { useAskableClipboardSource } from './useAskableClipboardSource.js';
+export { useAskableNetworkSource } from './useAskableNetworkSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -140,3 +141,10 @@ export type {
   AskableClipboardEntry,
   AskableClipboardSourceSnapshot,
 } from './useAskableClipboardSource.js';
+export type {
+  UseAskableNetworkSourceOptions,
+  UseAskableNetworkSourceResult,
+  AskableNetworkConnectionType,
+  AskableNetworkEffectiveType,
+  AskableNetworkSourceSnapshot,
+} from './useAskableNetworkSource.js';
