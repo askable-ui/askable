@@ -37,7 +37,8 @@
     "./useAskableNetworkSource.svelte": "./src/useAskableNetworkSource.svelte.ts",
     "./useAskableThemeSource.svelte": "./src/useAskableThemeSource.svelte.ts",
     "./useAskableWindowSource.svelte": "./src/useAskableWindowSource.svelte.ts",
-    "./useAskableLocaleSource.svelte": "./src/useAskableLocaleSource.svelte.ts"
+    "./useAskableLocaleSource.svelte": "./src/useAskableLocaleSource.svelte.ts",
+    "./useAskablePermissionSource.svelte": "./src/useAskablePermissionSource.svelte.ts"
   },
   "files": [
     "dist",
@@ -69,6 +70,7 @@
     "src/useAskableThemeSource.svelte.ts",
     "src/useAskableWindowSource.svelte.ts",
     "src/useAskableLocaleSource.svelte.ts",
+    "src/useAskablePermissionSource.svelte.ts",
     "README.md"
   ],
   "repository": {

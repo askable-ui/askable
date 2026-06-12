@@ -24,6 +24,7 @@ export { useAskableNetworkSource } from './useAskableNetworkSource.js';
 export { useAskableThemeSource } from './useAskableThemeSource.js';
 export { useAskableWindowSource } from './useAskableWindowSource.js';
 export { useAskableLocaleSource } from './useAskableLocaleSource.js';
+export { useAskablePermissionSource } from './useAskablePermissionSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -54,6 +55,7 @@ export type { UseAskableNetworkSourceOptions, UseAskableNetworkSourceResult, Ask
 export type { UseAskableThemeSourceOptions, UseAskableThemeSourceResult, AskableColorScheme, AskableContrastPreference, AskableMotionPreference, AskableThemeSourceSnapshot } from './useAskableThemeSource.js';
 export type { UseAskableWindowSourceOptions, UseAskableWindowSourceResult, AskableDeviceCategory, AskableOrientation, AskableWindowSourceSnapshot } from './useAskableWindowSource.js';
 export type { UseAskableLocaleSourceOptions, UseAskableLocaleSourceResult, AskableLocaleSourceSnapshot } from './useAskableLocaleSource.js';
+export type { UseAskablePermissionSourceOptions, UseAskablePermissionSourceResult, AskablePermissionEntry, AskablePermissionName, AskablePermissionState, AskablePermissionSourceSnapshot } from './useAskablePermissionSource.js';
 export type { UseAskableViewportOptions, UseAskableViewportResult } from './useAskableViewport.js';
 export type { UseAskableHistoryOptions, UseAskableHistoryResult } from './useAskableHistory.js';
 export type {

@@ -26,6 +26,7 @@ export { useAskableNetworkSource } from './useAskableNetworkSource.js';
 export { useAskableThemeSource } from './useAskableThemeSource.js';
 export { useAskableWindowSource } from './useAskableWindowSource.js';
 export { useAskableLocaleSource } from './useAskableLocaleSource.js';
+export { useAskablePermissionSource } from './useAskablePermissionSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -158,6 +159,14 @@ export type {
   UseAskableLocaleSourceResult,
   AskableLocaleSourceSnapshot,
 } from './useAskableLocaleSource.js';
+export type {
+  UseAskablePermissionSourceOptions,
+  UseAskablePermissionSourceResult,
+  AskablePermissionEntry,
+  AskablePermissionName,
+  AskablePermissionState,
+  AskablePermissionSourceSnapshot,
+} from './useAskablePermissionSource.js';
 export type {
   AskableChatRole,
   AskableChatMessage,

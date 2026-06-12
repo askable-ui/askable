@@ -20,6 +20,7 @@ export { createAskableNetworkSource } from './network-source.js';
 export { createAskableThemeSource } from './theme-source.js';
 export { createAskableWindowSource } from './window-source.js';
 export { createAskableLocaleSource } from './locale-source.js';
+export { createAskablePermissionSource } from './permission-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -159,6 +160,13 @@ export type {
   AskableCreateLocaleSourceOptions,
   AskableLocaleSourceSnapshot,
 } from './locale-source.js';
+export type {
+  AskableCreatePermissionSourceOptions,
+  AskablePermissionEntry,
+  AskablePermissionName,
+  AskablePermissionState,
+  AskablePermissionSourceSnapshot,
+} from './permission-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,
