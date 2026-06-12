@@ -7,6 +7,7 @@ export { createAskableCollectionSource, createAskableSource, isAskablePacketSour
 export { createAskablePageSource } from './page-source.js';
 export { createAskableFormSource } from './form-source.js';
 export { createAskableErrorSource } from './error-source.js';
+export { createAskableUserSource } from './user-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -81,6 +82,10 @@ export type {
   AskableErrorEntry,
   AskableErrorSourceSnapshot,
 } from './error-source.js';
+export type {
+  AskableCreateUserSourceOptions,
+  AskableUserProfile,
+} from './user-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,
