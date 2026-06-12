@@ -32,6 +32,7 @@ export { createAskableTabSource } from './tab-source.js';
 export { createAskablePerformanceSource, rateMetric } from './performance-source.js';
 export { createAskableBatterySource, getBatteryStatus, formatDuration } from './battery-source.js';
 export { createAskableGeolocationSource } from './geolocation-source.js';
+export { createAskableTimeSource, buildTimeSnapshot } from './time-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -232,6 +233,11 @@ export type {
   AskableGeolocationCoords,
   AskableGeolocationSourceSnapshot,
 } from './geolocation-source.js';
+export type {
+  AskableCreateTimeSourceOptions,
+  AskableBusinessHoursConfig,
+  AskableTimeSourceSnapshot,
+} from './time-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

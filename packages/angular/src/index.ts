@@ -64,6 +64,8 @@ export { AskableBatterySourceService } from './askable-battery-source.service.js
 export type { AskableBatterySourceServiceOptions, AskableBatterySourceSnapshot } from './askable-battery-source.service.js';
 export { AskableGeolocationSourceService } from './askable-geolocation-source.service.js';
 export type { AskableGeolocationSourceServiceOptions, AskableGeolocationCoords, AskableGeolocationSourceSnapshot } from './askable-geolocation-source.service.js';
+export { AskableTimeSourceService } from './askable-time-source.service.js';
+export type { AskableTimeSourceServiceOptions, AskableBusinessHoursConfig, AskableTimeSourceSnapshot } from './askable-time-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,

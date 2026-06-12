@@ -38,6 +38,7 @@ export { useAskableTabSource } from './useAskableTabSource.js';
 export { useAskablePerformanceSource } from './useAskablePerformanceSource.js';
 export { useAskableBatterySource } from './useAskableBatterySource.js';
 export { useAskableGeolocationSource } from './useAskableGeolocationSource.js';
+export { useAskableTimeSource } from './useAskableTimeSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -255,3 +256,9 @@ export type {
   AskableGeolocationCoords,
   AskableGeolocationSourceSnapshot,
 } from './useAskableGeolocationSource.js';
+export type {
+  UseAskableTimeSourceOptions,
+  UseAskableTimeSourceResult,
+  AskableBusinessHoursConfig,
+  AskableTimeSourceSnapshot,
+} from './useAskableTimeSource.js';
