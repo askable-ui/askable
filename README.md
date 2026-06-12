@@ -415,11 +415,11 @@ function StreamingButton() {
 
 | | Package | |
 |---|---|---|
-| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
-| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskablePageSourceService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
+| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
+| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskablePageSourceService`, `AskableFormSourceService`, `AskableAgentService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
 | Qwik | `@askable-ui/qwik` | `useAskable()`, `<Askable>` for Qwik City apps |
 | Web Component | `@askable-ui/web-component` | `<askable-context>` custom element, works in HTMX, Ember, vanilla HTML |
 | React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |
@@ -698,6 +698,12 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 - **Privacy & redaction** — strip sensitive fields before data leaves the page
 - **MCP bridge** — expose any context as `get_current_context` and `format_context_for_prompt` MCP tools
 - **Ask AI button** — `useAskableAgent()` packages context + question into a request payload in one call
+- **Streaming chat** — `useAskableChat()` multi-turn conversation with automatic context injection per turn
+- **Streaming primitives** — `useAskableStream()` for one-shot streaming with `abort()`, `content`, and status
+- **Form awareness** — `useAskableFormSource()` reads field values, labels, and HTML5 validation errors; masks passwords by default
+- **Table awareness** — `useAskableTableSource()` exposes rows, visible page, selection, and table state for any table library
+- **Error awareness** — `useAskableErrorSource()` captures validation errors and API failures; compatible with React Hook Form, Zod, VeeValidate
+- **Page source** — `useAskablePageSource()` snapshots title, URL, headings, selected text, and links as a fallback for unannotated pages
 - **Dev inspector** — `<AskableInspector />` overlay showing live context packets and source data
 - **SSR safe** — defers to client lifecycle, no `window is not defined`
 - **Zero runtime dependencies** in core
@@ -712,7 +718,7 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 | [`vercel-ai-sdk`](./examples/vercel-ai-sdk/) | Next.js · Vercel AI SDK | Minimal integration — 4 steps, works with any AI provider |
 | [`vue-dashboard`](./examples/vue-dashboard/) | Vue 3 · Vite | Vue composables + live context panel |
 | [`svelte-dashboard`](./examples/svelte-dashboard/) | Svelte 5 · Vite | Runes API + live context panel |
-| [`solid-dashboard`](./examples/solid-dashboard/) | SolidJS · Vite | SolidJS signals + context inspector sidebar |
+| [`solid-dashboard`](./examples/solid-dashboard/) | SolidJS · Vite | SolidJS signals + AI chat sidebar with tabbed context inspector |
 | [`angular-dashboard`](./examples/angular-dashboard/) | Angular 19 · standalone | Angular signals + injectable services |
 | [`nextjs-app-router`](./examples/nextjs-app-router/) | Next.js 15 · App Router | Vercel AI SDK streaming chat with real-time UI context |
 | [`mcp-server`](./examples/mcp-server/) | Node.js · Express | Standalone MCP server — connect Claude Desktop in 5 min |
