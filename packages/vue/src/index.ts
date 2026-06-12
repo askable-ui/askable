@@ -11,6 +11,7 @@ export { useAskableCompose } from './useAskableCompose.js';
 export { useAskablePageSource } from './useAskablePageSource.js';
 export { useAskableNavigationSource } from './useAskableNavigationSource.js';
 export { useAskableDOMSource } from './useAskableDOMSource.js';
+export { useAskableStorageSource } from './useAskableStorageSource.js';
 export { useAskableFormSource } from './useAskableFormSource.js';
 export { useAskableTableSource } from './useAskableTableSource.js';
 export { useAskableErrorSource } from './useAskableErrorSource.js';
@@ -66,6 +67,11 @@ export type {
   UseAskableDOMSourceResult,
   AskableDOMSnapshot,
 } from './useAskableDOMSource.js';
+export type {
+  UseAskableStorageSourceOptions,
+  UseAskableStorageSourceResult,
+  AskableStorageSourceSnapshot,
+} from './useAskableStorageSource.js';
 export type {
   UseAskableFormSourceOptions,
   UseAskableFormSourceResult,

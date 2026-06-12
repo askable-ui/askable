@@ -27,7 +27,8 @@
     "./useAskableUserSource.svelte": "./src/useAskableUserSource.svelte.ts",
     "./useAskableKeyboardShortcut.svelte": "./src/useAskableKeyboardShortcut.svelte.ts",
     "./useAskableNavigationSource.svelte": "./src/useAskableNavigationSource.svelte.ts",
-    "./useAskableDOMSource.svelte": "./src/useAskableDOMSource.svelte.ts"
+    "./useAskableDOMSource.svelte": "./src/useAskableDOMSource.svelte.ts",
+    "./useAskableStorageSource.svelte": "./src/useAskableStorageSource.svelte.ts"
   },
   "files": [
     "dist",
@@ -49,6 +50,7 @@
     "src/useAskableKeyboardShortcut.svelte.ts",
     "src/useAskableNavigationSource.svelte.ts",
     "src/useAskableDOMSource.svelte.ts",
+    "src/useAskableStorageSource.svelte.ts",
     "README.md"
   ],
   "repository": {

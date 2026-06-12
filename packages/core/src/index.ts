@@ -10,6 +10,7 @@ export { createAskableErrorSource } from './error-source.js';
 export { createAskableUserSource } from './user-source.js';
 export { createAskableNavigationSource } from './navigation-source.js';
 export { createAskableDOMSource } from './dom-source.js';
+export { createAskableStorageSource } from './storage-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -97,6 +98,10 @@ export type {
   AskableCreateDOMSourceOptions,
   AskableDOMSnapshot,
 } from './dom-source.js';
+export type {
+  AskableCreateStorageSourceOptions,
+  AskableStorageSourceSnapshot,
+} from './storage-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,
