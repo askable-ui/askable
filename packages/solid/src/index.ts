@@ -22,6 +22,7 @@ export { useAskableSelectionSource } from './useAskableSelectionSource.js';
 export { useAskableClipboardSource } from './useAskableClipboardSource.js';
 export { useAskableNetworkSource } from './useAskableNetworkSource.js';
 export { useAskableThemeSource } from './useAskableThemeSource.js';
+export { useAskableWindowSource } from './useAskableWindowSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -50,6 +51,7 @@ export type { UseAskableSelectionSourceOptions, UseAskableSelectionSourceResult,
 export type { UseAskableClipboardSourceOptions, UseAskableClipboardSourceResult, AskableClipboardEntry, AskableClipboardSourceSnapshot } from './useAskableClipboardSource.js';
 export type { UseAskableNetworkSourceOptions, UseAskableNetworkSourceResult, AskableNetworkConnectionType, AskableNetworkEffectiveType, AskableNetworkSourceSnapshot } from './useAskableNetworkSource.js';
 export type { UseAskableThemeSourceOptions, UseAskableThemeSourceResult, AskableColorScheme, AskableContrastPreference, AskableMotionPreference, AskableThemeSourceSnapshot } from './useAskableThemeSource.js';
+export type { UseAskableWindowSourceOptions, UseAskableWindowSourceResult, AskableDeviceCategory, AskableOrientation, AskableWindowSourceSnapshot } from './useAskableWindowSource.js';
 export type { UseAskableViewportOptions, UseAskableViewportResult } from './useAskableViewport.js';
 export type { UseAskableHistoryOptions, UseAskableHistoryResult } from './useAskableHistory.js';
 export type {

@@ -18,6 +18,7 @@ export { createAskableSelectionSource } from './selection-source.js';
 export { createAskableClipboardSource } from './clipboard-source.js';
 export { createAskableNetworkSource } from './network-source.js';
 export { createAskableThemeSource } from './theme-source.js';
+export { createAskableWindowSource } from './window-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -147,6 +148,12 @@ export type {
   AskableMotionPreference,
   AskableThemeSourceSnapshot,
 } from './theme-source.js';
+export type {
+  AskableCreateWindowSourceOptions,
+  AskableDeviceCategory,
+  AskableOrientation,
+  AskableWindowSourceSnapshot,
+} from './window-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

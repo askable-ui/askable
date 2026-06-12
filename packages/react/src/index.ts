@@ -24,6 +24,7 @@ export { useAskableSelectionSource } from './useAskableSelectionSource.js';
 export { useAskableClipboardSource } from './useAskableClipboardSource.js';
 export { useAskableNetworkSource } from './useAskableNetworkSource.js';
 export { useAskableThemeSource } from './useAskableThemeSource.js';
+export { useAskableWindowSource } from './useAskableWindowSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -144,6 +145,13 @@ export type {
   AskableMotionPreference,
   AskableThemeSourceSnapshot,
 } from './useAskableThemeSource.js';
+export type {
+  UseAskableWindowSourceOptions,
+  UseAskableWindowSourceResult,
+  AskableDeviceCategory,
+  AskableOrientation,
+  AskableWindowSourceSnapshot,
+} from './useAskableWindowSource.js';
 export type {
   AskableChatRole,
   AskableChatMessage,
