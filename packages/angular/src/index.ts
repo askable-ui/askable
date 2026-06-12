@@ -16,6 +16,8 @@ export { AskableErrorSourceService } from './askable-error-source.service.js';
 export type { AskableErrorSourceServiceOptions, AskableErrorEntry } from './askable-error-source.service.js';
 export { AskableUserSourceService } from './askable-user-source.service.js';
 export type { AskableUserSourceServiceOptions, AskableUserProfile } from './askable-user-source.service.js';
+export { AskableNavigationSourceService } from './askable-navigation-source.service.js';
+export type { AskableNavigationSourceServiceOptions, AskableNavigationEntry } from './askable-navigation-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,
