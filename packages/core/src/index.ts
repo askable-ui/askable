@@ -6,6 +6,7 @@ export { a11yTextExtractor } from './a11y.js';
 export { createAskableCollectionSource, createAskableSource, isAskablePacketSourceSelection } from './sources.js';
 export { createAskablePageSource } from './page-source.js';
 export { createAskableFormSource } from './form-source.js';
+export { createAskableErrorSource } from './error-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -75,6 +76,11 @@ export type {
   AskableFormFieldSnapshot,
   AskableFormSourceSnapshot,
 } from './form-source.js';
+export type {
+  AskableCreateErrorSourceOptions,
+  AskableErrorEntry,
+  AskableErrorSourceSnapshot,
+} from './error-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

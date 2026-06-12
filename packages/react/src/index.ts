@@ -11,6 +11,7 @@ export { useAskableAgent } from './useAskableAgent.js';
 export { useAskablePageSource } from './useAskablePageSource.js';
 export { useAskableFormSource } from './useAskableFormSource.js';
 export { useAskableTableSource } from './useAskableTableSource.js';
+export { useAskableErrorSource } from './useAskableErrorSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -60,6 +61,10 @@ export type {
   UseAskableTableSourceOptions,
   UseAskableTableSourceResult,
 } from './useAskableTableSource.js';
+export type {
+  UseAskableErrorSourceOptions,
+  UseAskableErrorSourceResult,
+} from './useAskableErrorSource.js';
 export type {
   AskableStreamStatus,
   AskableStreamHandler,
