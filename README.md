@@ -396,6 +396,37 @@ function StreamingButton() {
 }
 ```
 
+### Cmd+K AI trigger
+
+`useAskableKeyboardShortcut` adds a keyboard shortcut that fires with the full composed AI context:
+
+```tsx
+import { useAskableKeyboardShortcut } from '@askable-ui/react';
+
+// One line to add Cmd+K AI to your app
+const { isOpen, setOpen, lastContext } = useAskableKeyboardShortcut({
+  toggle: true,
+  onTrigger: (context) => console.log('AI context:', context),
+});
+```
+
+### Context sources
+
+Register any combination of built-in sources — they're automatically composed into a single prompt string:
+
+| Source hook | What it captures |
+|---|---|
+| `useAskablePageSource` | Page title, URL, headings, selected text |
+| `useAskableFormSource` | Form field names, values, labels, validation errors |
+| `useAskableTableSource` | Table rows, visible rows, selected rows, state |
+| `useAskableErrorSource` | Form validation errors, API failures, caught exceptions |
+| `useAskableUserSource` | Authenticated user name, role, plan, locale |
+| `useAskableNavigationSource` | Current route, title, params, query, nav history |
+| `useAskableDOMSource` | Any element: text, ARIA labels, data attributes |
+| `useAskableStorageSource` | localStorage/sessionStorage items |
+| `useAskableViewport` | Elements currently visible in the viewport |
+| `useAskableHistory` | Navigation trail (last N focused elements) |
+
 ---
 
 ## Works with
@@ -415,11 +446,11 @@ function StreamingButton() {
 
 | | Package | |
 |---|---|---|
-| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
-| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskablePageSourceService`, `AskableFormSourceService`, `AskableAgentService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
+| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
+| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskablePageSourceService`, `AskableFormSourceService`, `AskableErrorSourceService`, `AskableUserSourceService`, `AskableNavigationSourceService`, `AskableAgentService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
 | Qwik | `@askable-ui/qwik` | `useAskable()`, `<Askable>` for Qwik City apps |
 | Web Component | `@askable-ui/web-component` | `<askable-context>` custom element, works in HTMX, Ember, vanilla HTML |
 | React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |
