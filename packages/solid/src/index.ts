@@ -10,6 +10,7 @@ export { useAskablePageSource } from './useAskablePageSource.js';
 export { useAskableNavigationSource } from './useAskableNavigationSource.js';
 export { useAskableDOMSource } from './useAskableDOMSource.js';
 export { useAskableStorageSource } from './useAskableStorageSource.js';
+export { useAskableNotificationSource } from './useAskableNotificationSource.js';
 export { useAskableFormSource } from './useAskableFormSource.js';
 export { useAskableTableSource } from './useAskableTableSource.js';
 export { useAskableErrorSource } from './useAskableErrorSource.js';
@@ -29,6 +30,7 @@ export type { UseAskablePageSourceOptions, UseAskablePageSourceResult } from './
 export type { UseAskableNavigationSourceOptions, UseAskableNavigationSourceResult, AskableNavigationEntry } from './useAskableNavigationSource.js';
 export type { UseAskableDOMSourceOptions, UseAskableDOMSourceResult, AskableDOMSnapshot } from './useAskableDOMSource.js';
 export type { UseAskableStorageSourceOptions, UseAskableStorageSourceResult, AskableStorageSourceSnapshot } from './useAskableStorageSource.js';
+export type { UseAskableNotificationSourceOptions, UseAskableNotificationSourceResult, AskableNotification, AskableNotificationSeverity } from './useAskableNotificationSource.js';
 export type { UseAskableFormSourceOptions, UseAskableFormSourceResult } from './useAskableFormSource.js';
 export type { UseAskableTableSourceOptions, UseAskableTableSourceResult } from './useAskableTableSource.js';
 export type { UseAskableErrorSourceOptions, UseAskableErrorSourceResult } from './useAskableErrorSource.js';

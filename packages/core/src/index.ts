@@ -11,6 +11,7 @@ export { createAskableUserSource } from './user-source.js';
 export { createAskableNavigationSource } from './navigation-source.js';
 export { createAskableDOMSource } from './dom-source.js';
 export { createAskableStorageSource } from './storage-source.js';
+export { createAskableNotificationSource } from './notification-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -102,6 +103,12 @@ export type {
   AskableCreateStorageSourceOptions,
   AskableStorageSourceSnapshot,
 } from './storage-source.js';
+export type {
+  AskableCreateNotificationSourceOptions,
+  AskableNotification,
+  AskableNotificationSeverity,
+  AskableNotificationSourceSnapshot,
+} from './notification-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

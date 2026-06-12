@@ -12,6 +12,7 @@ export { useAskablePageSource } from './useAskablePageSource.js';
 export { useAskableNavigationSource } from './useAskableNavigationSource.js';
 export { useAskableDOMSource } from './useAskableDOMSource.js';
 export { useAskableStorageSource } from './useAskableStorageSource.js';
+export { useAskableNotificationSource } from './useAskableNotificationSource.js';
 export { useAskableFormSource } from './useAskableFormSource.js';
 export { useAskableTableSource } from './useAskableTableSource.js';
 export { useAskableErrorSource } from './useAskableErrorSource.js';
