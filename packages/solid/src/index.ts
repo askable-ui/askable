@@ -8,6 +8,7 @@ export { useAskableHistory } from './useAskableHistory.js';
 export { useAskableCompose } from './useAskableCompose.js';
 export { useAskablePageSource } from './useAskablePageSource.js';
 export { useAskableNavigationSource } from './useAskableNavigationSource.js';
+export { useAskableDOMSource } from './useAskableDOMSource.js';
 export { useAskableFormSource } from './useAskableFormSource.js';
 export { useAskableTableSource } from './useAskableTableSource.js';
 export { useAskableErrorSource } from './useAskableErrorSource.js';
@@ -25,6 +26,7 @@ export type { UseAskableSourceOptions, UseAskableSourceResult } from './useAskab
 export type { AskableAgentStatus, UseAskableAgentOptions, UseAskableAgentResult } from './useAskableAgent.js';
 export type { UseAskablePageSourceOptions, UseAskablePageSourceResult } from './useAskablePageSource.js';
 export type { UseAskableNavigationSourceOptions, UseAskableNavigationSourceResult, AskableNavigationEntry } from './useAskableNavigationSource.js';
+export type { UseAskableDOMSourceOptions, UseAskableDOMSourceResult, AskableDOMSnapshot } from './useAskableDOMSource.js';
 export type { UseAskableFormSourceOptions, UseAskableFormSourceResult } from './useAskableFormSource.js';
 export type { UseAskableTableSourceOptions, UseAskableTableSourceResult } from './useAskableTableSource.js';
 export type { UseAskableErrorSourceOptions, UseAskableErrorSourceResult } from './useAskableErrorSource.js';

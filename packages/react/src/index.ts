@@ -10,6 +10,7 @@ export { useAskableCompose } from './useAskableCompose.js';
 export { useAskableAgent } from './useAskableAgent.js';
 export { useAskablePageSource } from './useAskablePageSource.js';
 export { useAskableNavigationSource } from './useAskableNavigationSource.js';
+export { useAskableDOMSource } from './useAskableDOMSource.js';
 export { useAskableFormSource } from './useAskableFormSource.js';
 export { useAskableTableSource } from './useAskableTableSource.js';
 export { useAskableErrorSource } from './useAskableErrorSource.js';
@@ -61,6 +62,11 @@ export type {
   UseAskableNavigationSourceResult,
   AskableNavigationEntry,
 } from './useAskableNavigationSource.js';
+export type {
+  UseAskableDOMSourceOptions,
+  UseAskableDOMSourceResult,
+  AskableDOMSnapshot,
+} from './useAskableDOMSource.js';
 export type {
   UseAskableFormSourceOptions,
   UseAskableFormSourceResult,
