@@ -48,6 +48,8 @@ export { AskableIdleSourceService } from './askable-idle-source.service.js';
 export type { AskableIdleSourceServiceOptions, AskableIdleSourceSnapshot } from './askable-idle-source.service.js';
 export { AskableSearchSourceService } from './askable-search-source.service.js';
 export type { AskableSearchSourceServiceOptions, AskableSearchSourceSnapshot } from './askable-search-source.service.js';
+export { AskableTabSourceService } from './askable-tab-source.service.js';
+export type { AskableTabSourceServiceOptions, AskableTabSourceSnapshot } from './askable-tab-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,
