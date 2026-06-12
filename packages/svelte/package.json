@@ -50,7 +50,8 @@
     "./useAskablePerformanceSource.svelte": "./src/useAskablePerformanceSource.svelte.ts",
     "./useAskableBatterySource.svelte": "./src/useAskableBatterySource.svelte.ts",
     "./useAskableGeolocationSource.svelte": "./src/useAskableGeolocationSource.svelte.ts",
-    "./useAskableTimeSource.svelte": "./src/useAskableTimeSource.svelte.ts"
+    "./useAskableTimeSource.svelte": "./src/useAskableTimeSource.svelte.ts",
+    "./useAskableFocusSource.svelte": "./src/useAskableFocusSource.svelte.ts"
   },
   "files": [
     "dist",
@@ -95,6 +96,7 @@
     "src/useAskableBatterySource.svelte.ts",
     "src/useAskableGeolocationSource.svelte.ts",
     "src/useAskableTimeSource.svelte.ts",
+    "src/useAskableFocusSource.svelte.ts",
     "README.md"
   ],
   "repository": {

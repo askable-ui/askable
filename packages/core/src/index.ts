@@ -33,6 +33,7 @@ export { createAskablePerformanceSource, rateMetric } from './performance-source
 export { createAskableBatterySource, getBatteryStatus, formatDuration } from './battery-source.js';
 export { createAskableGeolocationSource } from './geolocation-source.js';
 export { createAskableTimeSource, buildTimeSnapshot } from './time-source.js';
+export { createAskableFocusSource, elementToFocusSnapshot } from './focus-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -238,6 +239,11 @@ export type {
   AskableBusinessHoursConfig,
   AskableTimeSourceSnapshot,
 } from './time-source.js';
+export type {
+  AskableCreateFocusSourceOptions,
+  AskableFocusedElementSnapshot,
+  AskableFocusSourceSnapshot,
+} from './focus-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

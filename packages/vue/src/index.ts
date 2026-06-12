@@ -39,6 +39,7 @@ export { useAskablePerformanceSource } from './useAskablePerformanceSource.js';
 export { useAskableBatterySource } from './useAskableBatterySource.js';
 export { useAskableGeolocationSource } from './useAskableGeolocationSource.js';
 export { useAskableTimeSource } from './useAskableTimeSource.js';
+export { useAskableFocusSource } from './useAskableFocusSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -262,3 +263,9 @@ export type {
   AskableBusinessHoursConfig,
   AskableTimeSourceSnapshot,
 } from './useAskableTimeSource.js';
+export type {
+  UseAskableFocusSourceOptions,
+  UseAskableFocusSourceResult,
+  AskableFocusedElementSnapshot,
+  AskableFocusSourceSnapshot,
+} from './useAskableFocusSource.js';

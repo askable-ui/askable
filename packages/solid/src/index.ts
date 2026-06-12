@@ -37,6 +37,7 @@ export { useAskablePerformanceSource } from './useAskablePerformanceSource.js';
 export { useAskableBatterySource } from './useAskableBatterySource.js';
 export { useAskableGeolocationSource } from './useAskableGeolocationSource.js';
 export { useAskableTimeSource } from './useAskableTimeSource.js';
+export { useAskableFocusSource } from './useAskableFocusSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -80,6 +81,7 @@ export type { UseAskablePerformanceSourceOptions, UseAskablePerformanceSourceRes
 export type { UseAskableBatterySourceOptions, UseAskableBatterySourceResult, AskableBatterySourceSnapshot } from './useAskableBatterySource.js';
 export type { UseAskableGeolocationSourceOptions, UseAskableGeolocationSourceResult, AskableGeolocationCoords, AskableGeolocationSourceSnapshot } from './useAskableGeolocationSource.js';
 export type { UseAskableTimeSourceOptions, UseAskableTimeSourceResult, AskableBusinessHoursConfig, AskableTimeSourceSnapshot } from './useAskableTimeSource.js';
+export type { UseAskableFocusSourceOptions, UseAskableFocusSourceResult, AskableFocusedElementSnapshot, AskableFocusSourceSnapshot } from './useAskableFocusSource.js';
 export type { UseAskableViewportOptions, UseAskableViewportResult } from './useAskableViewport.js';
 export type { UseAskableHistoryOptions, UseAskableHistoryResult } from './useAskableHistory.js';
 export type {
