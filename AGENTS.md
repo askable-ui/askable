@@ -645,6 +645,93 @@ Options accepted by `useAskablePageSource`:
 
 ---
 
+## Table context source — `useAskableTableSource`
+
+`useAskableTableSource` wraps `createAskableCollectionSource` with a table-friendly API and auto-notifies on row data changes, so AI assistants can see all rows, the current page (visible), selections, and table state (sort / filter / search query).
+
+Works with **any** table library: React Table / TanStack Table, AG Grid, plain arrays.
+
+```tsx
+// React — plain array or state
+import { useAskableTableSource, useAskableAgent } from '@askable-ui/react';
+
+function OrdersTable({ orders, selected, tableState }) {
+  useAskableTableSource({
+    id: 'orders',
+    rows: orders,
+    selectedRows: selected,
+    state: tableState,           // { sort, filter, page }
+    sanitizeRow: ({ id, date, amount, status }) => ({ id, date, amount, status }),
+  });
+
+  const { send } = useAskableAgent();
+  // ...
+}
+```
+
+```ts
+// Vue — Ref<T[]> or plain arrays
+import { useAskableTableSource } from '@askable-ui/vue';
+
+const { notifyChanged } = useAskableTableSource({
+  id: 'invoices',
+  rows: allRowsRef,
+  visibleRows: pageRowsRef,
+  selectedRows: selectedRef,
+  state: tableStateRef,
+});
+```
+
+```tsx
+// SolidJS — signal accessors
+import { useAskableTableSource } from '@askable-ui/solid';
+
+const [rows] = createSignal(allOrders);
+const [selected, setSelected] = createSignal([]);
+
+useAskableTableSource({
+  id: 'orders',
+  rows,
+  selectedRows: selected,
+  sanitizeRow: ({ id, amount }) => ({ id, amount }),
+});
+```
+
+```svelte
+<!-- Svelte 5 — $state getters -->
+<script lang="ts">
+  import { useAskableTableSource } from '@askable-ui/svelte/useAskableTableSource.svelte';
+
+  let rows = $state(allOrders);
+  let selected = $state([]);
+
+  useAskableTableSource({
+    rows: () => rows,
+    selectedRows: () => selected,
+  });
+</script>
+```
+
+The default summary (mode `"summary"`) automatically computes `totalRows`, `visibleRows`, and `selectedRows`. Override with `getSummary` for custom aggregations.
+
+Options accepted by `useAskableTableSource`:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `id` | `string` | `"table"` | Source registration id |
+| `rows` | `T[]` / accessor | — | All rows in the dataset |
+| `visibleRows` | `T[]` / accessor | — | Rows currently on screen |
+| `selectedRows` | `T[]` / accessor | — | User-selected rows |
+| `state` | `S` / accessor | — | Table state (sort, filter, page) |
+| `maxRows` | `number` | `100` | Max rows returned per resolution |
+| `sanitizeRow` | `function` | — | Redact or transform each row |
+| `getSummary` | `function` | auto | Override the summary object |
+| `getRowId` | `function` | — | Stable row id for packet selection |
+| `describe` | `string` | `"Data table"` | Human-readable description |
+| `kind` | `string` | `"table"` | Source category label |
+
+---
+
 ## Form context source — `useAskableFormSource`
 
 `useAskableFormSource` registers a named source that reads HTML form state — field names, values, types, labels, and HTML5 validation errors — so an AI assistant can provide contextual help, suggest corrections, and guide users through multi-step forms.
