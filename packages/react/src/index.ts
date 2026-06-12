@@ -13,6 +13,7 @@ export { useAskableFormSource } from './useAskableFormSource.js';
 export { useAskableTableSource } from './useAskableTableSource.js';
 export { useAskableErrorSource } from './useAskableErrorSource.js';
 export { useAskableUserSource } from './useAskableUserSource.js';
+export { useAskableKeyboardShortcut } from './useAskableKeyboardShortcut.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -70,6 +71,10 @@ export type {
   UseAskableUserSourceOptions,
   UseAskableUserSourceResult,
 } from './useAskableUserSource.js';
+export type {
+  UseAskableKeyboardShortcutOptions,
+  UseAskableKeyboardShortcutResult,
+} from './useAskableKeyboardShortcut.js';
 export type {
   AskableStreamStatus,
   AskableStreamHandler,
