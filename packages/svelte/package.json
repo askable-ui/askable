@@ -46,7 +46,8 @@
     "./useAskableLoadingSource.svelte": "./src/useAskableLoadingSource.svelte.ts",
     "./useAskableIdleSource.svelte": "./src/useAskableIdleSource.svelte.ts",
     "./useAskableSearchSource.svelte": "./src/useAskableSearchSource.svelte.ts",
-    "./useAskableTabSource.svelte": "./src/useAskableTabSource.svelte.ts"
+    "./useAskableTabSource.svelte": "./src/useAskableTabSource.svelte.ts",
+    "./useAskablePerformanceSource.svelte": "./src/useAskablePerformanceSource.svelte.ts"
   },
   "files": [
     "dist",
@@ -87,6 +88,7 @@
     "src/useAskableIdleSource.svelte.ts",
     "src/useAskableSearchSource.svelte.ts",
     "src/useAskableTabSource.svelte.ts",
+    "src/useAskablePerformanceSource.svelte.ts",
     "README.md"
   ],
   "repository": {

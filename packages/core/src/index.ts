@@ -29,6 +29,7 @@ export { createAskableLoadingSource } from './loading-source.js';
 export { createAskableIdleSource } from './idle-source.js';
 export { createAskableSearchSource } from './search-source.js';
 export { createAskableTabSource } from './tab-source.js';
+export { createAskablePerformanceSource, rateMetric } from './performance-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
@@ -215,6 +216,11 @@ export type {
   AskableTabVisibility,
   AskableTabSourceSnapshot,
 } from './tab-source.js';
+export type {
+  AskableCreatePerformanceSourceOptions,
+  AskablePerformanceMetric,
+  AskablePerformanceSourceSnapshot,
+} from './performance-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,

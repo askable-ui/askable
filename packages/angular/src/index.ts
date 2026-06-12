@@ -58,6 +58,8 @@ export { AskableNotificationSourceService } from './askable-notification-source.
 export type { AskableNotificationSourceServiceOptions, AskableNotification, AskableNotificationSeverity, AskableNotificationSourceSnapshot } from './askable-notification-source.service.js';
 export { AskableDOMSourceService } from './askable-dom-source.service.js';
 export type { AskableDOMSourceServiceOptions, AskableDOMSnapshot } from './askable-dom-source.service.js';
+export { AskablePerformanceSourceService } from './askable-performance-source.service.js';
+export type { AskablePerformanceSourceServiceOptions, AskablePerformanceMetric, AskablePerformanceSourceSnapshot } from './askable-performance-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,
