@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.14.0**.
+> Current npm release: **v0.15.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,7 +59,13 @@ features:
   </video>
 </div>
 
-## Latest in v0.14.0
+## Latest in v0.15.0
+
+- **Cart source** — `useAskableCartSource()` with `addItem`, `removeItem`, `updateQuantity`, `setTotals`, `clearCart`; computes subtotal, tax, shipping, and total automatically
+- **Multistep source** — `useAskableMultistepSource()` tracks wizard progress: step name, index, progress %, `isComplete`; navigate with `next`, `prev`, `goTo`
+- All six framework packages (React, Vue, Svelte, SolidJS, Angular, web-component) updated
+
+## Also in v0.14.0
 
 - browser-local MCP page resources with `read_current_resource` and `askable://current`
 - page bridge responses that return resource-shaped JSON or prompt-ready text for local companions
@@ -105,7 +111,7 @@ Every pattern can produce a prompt string with `toPromptContext()` or a structur
 
 Start here:
 
-- [What’s New in v0.14.0](/guide/whats-new)
+- [What’s New in v0.15.0](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [React interaction patterns](/guide/react#region-circle-and-lasso-capture)
 - [AI SDK integration patterns](/examples/ai-sdk)
