@@ -1,3 +1,78 @@
+# What’s New in v0.15.0
+
+askable-ui v0.15.0 ships two new context source families — ecommerce cart
+tracking and wizard/stepper progress — and updates all six framework packages
+(React, Vue, Svelte, SolidJS, Angular, web-component) in one release.
+
+## Highlights
+
+### Cart source
+
+`useAskableCartSource()` exposes real-time shopping cart state so AI assistants
+can answer questions about cart contents, totals, and discounts without any
+additional description from the developer.
+
+```ts
+import { useAskableCartSource } from ‘@askable-ui/react’;
+
+const { snapshot, addItem, removeItem, updateQuantity, setTotals, clearCart } =
+  useAskableCartSource({
+    items: [{ id: ‘sku-1’, name: ‘T-Shirt’, price: 29.99, quantity: 2 }],
+    totals: { tax: 5.40, shipping: 4.99, currency: ‘USD’ },
+  });
+
+// The assistant can now answer:
+// "How many items are in my cart?"
+// "What is my order total with tax?"
+// "Do I qualify for free shipping?"
+```
+
+The snapshot includes `items`, `itemCount`, `totalQuantity`, `subtotal`,
+`discount`, `tax`, `shipping`, `total` (clamped to ≥ 0), `currency`,
+`couponCode`, `isEmpty`, and `lastModifiedAt`.
+
+Mutators work the same across frameworks:
+
+| Method | Behaviour |
+|---|---|
+| `addItem(item)` | Add or replace by `id` |
+| `removeItem(id)` | Remove by `id` |
+| `updateQuantity(id, qty)` | Update quantity; removes when `qty ≤ 0` |
+| `setItems(items)` | Replace entire item list |
+| `setTotals(totals)` | Update discount, tax, shipping, currency, couponCode |
+| `clearCart()` | Empty cart, preserving currency |
+
+Angular apps use the `AskableCartSourceService` injectable with the same methods.
+
+### Multistep / wizard source
+
+`useAskableMultistepSource()` tracks wizard and stepper progress so the
+assistant always knows which step the user is on, how far they’ve come, and
+whether the flow is complete.
+
+```ts
+import { useAskableMultistepSource } from ‘@askable-ui/react’;
+
+const { snapshot, goTo, next, prev, complete, reset } = useAskableMultistepSource({
+  steps: [
+    { id: ‘account’, label: ‘Account details’ },
+    { id: ‘billing’, label: ‘Billing info’ },
+    { id: ‘confirm’, label: ‘Confirm order’ },
+  ],
+  currentId: ‘billing’,
+});
+// snapshot.progress === 50   (0–100)
+// snapshot.currentLabel === ‘Billing info’
+// snapshot.isComplete === false
+```
+
+The snapshot includes `steps`, `currentId`, `currentIndex`, `currentLabel`,
+`totalSteps`, `progress`, `isFirstStep`, `isLastStep`, and `isComplete`.
+
+Angular apps use the `AskableMultistepSourceService` injectable.
+
+## Also in v0.14.0
+
 # What’s New in v0.14.0
 
 askable-ui v0.14.0 adds browser-local MCP page resources, so trusted
@@ -301,7 +376,7 @@ If you are integrating Askable into an AI or agent runtime, start here:
 
 ## Version note
 
-The current published docs track **v0.14.0** at both:
+The current published docs track **v0.15.0** at both:
 
 - `/docs/`
-- `/docs/v0.14.0/`
+- `/docs/v0.15.0/`

@@ -1049,3 +1049,117 @@ const ctx = createAskableContext({ textExtractor: a11yTextExtractor });
 | 6 | `textContent.trim()` | Default fallback |
 
 See [Accessibility-aware text extraction](/guide/annotating#accessibility-aware-text-extraction) in the guide.
+
+---
+
+## `createAskableMultistepSource(options)`
+
+Factory for wizard and stepper context. Computes progress, current step, and completion state from a list of step definitions.
+
+```ts
+import { createAskableMultistepSource, buildMultistepSnapshot } from '@askable-ui/core';
+
+const snap = buildMultistepSnapshot(
+  [
+    { id: 'account', label: 'Account details' },
+    { id: 'billing', label: 'Billing info' },
+    { id: 'confirm', label: 'Confirm order' },
+  ],
+  { currentId: 'billing' },
+);
+// snap.currentIndex === 1
+// snap.progress === 50
+// snap.isComplete === false
+
+const source = createAskableMultistepSource({ getSnapshot: () => snap });
+ctx.registerSource('checkout', source);
+```
+
+**`AskableMultistepStep` fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Unique step identifier |
+| `label` | `string` | Human-readable step name |
+| `description` | `string?` | Optional longer description |
+| `meta` | `unknown` | Any extra step data |
+
+**`AskableMultistepSourceSnapshot` fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `steps` | `AskableMultistepStep[]` | Full ordered step list |
+| `currentId` | `string` | Active step id |
+| `currentIndex` | `number` | 0-based index |
+| `currentLabel` | `string` | Active step label |
+| `totalSteps` | `number` | Total step count |
+| `progress` | `number` | 0–100 completion percentage |
+| `isFirstStep` | `boolean` | Whether on first step |
+| `isLastStep` | `boolean` | Whether on last step |
+| `isComplete` | `boolean` | `true` when explicitly marked complete |
+
+Framework wrappers add navigation helpers (`next`, `prev`, `goTo`, `complete`, `reset`) and register the source on mount.
+
+---
+
+## `createAskableCartSource(options)`
+
+Factory for ecommerce cart context. Computes item counts, subtotal, and clamped total from a list of cart items and optional totals.
+
+```ts
+import { createAskableCartSource, buildCartSnapshot } from '@askable-ui/core';
+
+const snap = buildCartSnapshot(
+  [{ id: 'sku-1', name: 'T-Shirt', price: 29.99, quantity: 2 }],
+  { tax: 5.40, shipping: 4.99, currency: 'USD' },
+  new Date().toISOString(),
+);
+// snap.subtotal === 59.98
+// snap.total === 70.37
+// snap.totalQuantity === 2
+
+const source = createAskableCartSource({ getSnapshot: () => snap });
+ctx.registerSource('cart', source);
+```
+
+**`AskableCartItem` fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | SKU or product id |
+| `name` | `string` | Product name |
+| `price` | `number` | Unit price |
+| `quantity` | `number` | Item quantity |
+| `category` | `string?` | Product category |
+| `variant` | `string?` | Size, color, etc. |
+| `imageUrl` | `string?` | Product image |
+| `meta` | `unknown` | Any extra item data |
+
+**`AskableCartSourceSnapshot` fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `items` | `AskableCartItem[]` | All cart items |
+| `itemCount` | `number` | Unique item count |
+| `totalQuantity` | `number` | Sum of all quantities |
+| `subtotal` | `number` | Sum of `price × quantity` |
+| `discount` | `number` | Discount amount |
+| `tax` | `number` | Tax amount |
+| `shipping` | `number` | Shipping cost |
+| `total` | `number` | `subtotal - discount + tax + shipping`, clamped ≥ 0 |
+| `currency` | `string` | ISO 4217 currency code (default `'USD'`) |
+| `couponCode` | `string \| null` | Applied coupon code |
+| `isEmpty` | `boolean` | `true` when no items |
+| `lastModifiedAt` | `string` | ISO timestamp of last mutation |
+
+**`AskableCartTotals` fields (for `buildCartSnapshot`):**
+
+| Field | Type | Description |
+|---|---|---|
+| `discount` | `number?` | Discount amount |
+| `tax` | `number?` | Tax amount |
+| `shipping` | `number?` | Shipping cost |
+| `currency` | `string?` | ISO currency code |
+| `couponCode` | `string \| null?` | Coupon code |
+
+Framework wrappers expose `addItem`, `removeItem`, `updateQuantity`, `setItems`, `setTotals`, and `clearCart` helpers on top of the registered source.

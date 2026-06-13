@@ -1235,31 +1235,31 @@ ctx.push(meta, text);</pre>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/react" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · React</div>
           <div class="pkg-name">@askable-ui/react</div>
-          <div class="pkg-desc"><code>useAskable()</code>, <code>useAskableViewport()</code>, <code>useAskableHistory()</code>, <code>useAskableCompose()</code> + <code>&lt;Askable&gt;</code> for React 17+.</div>
+          <div class="pkg-desc">45+ hooks — <code>useAskableCartSource()</code>, <code>useAskableMultistepSource()</code>, <code>useAskableFormSource()</code>, <code>useAskableTableSource()</code>, <code>useAskableTimeSource()</code>, <code>useAskableThemeSource()</code> and more. <code>&lt;Askable&gt;</code> for React 17+.</div>
           <span class="pkg-tag">npm</span>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/vue" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · Vue</div>
           <div class="pkg-name">@askable-ui/vue</div>
-          <div class="pkg-desc"><code>useAskable()</code>, <code>useAskableViewport()</code>, <code>useAskableHistory()</code> composables + <code>&lt;Askable&gt;</code> for Vue 3.</div>
+          <div class="pkg-desc">45+ composables — <code>useAskableCartSource()</code>, <code>useAskableMultistepSource()</code>, <code>useAskableFormSource()</code>, <code>useAskableThemeSource()</code>, <code>useAskableLocaleSource()</code> and more. <code>&lt;Askable&gt;</code> for Vue 3.</div>
           <span class="pkg-tag">npm</span>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/svelte" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · Svelte</div>
           <div class="pkg-name">@askable-ui/svelte</div>
-          <div class="pkg-desc">Svelte 4 stores and Svelte 5 runes — <code>useAskable()</code>, <code>useAskableViewport()</code>, <code>useAskableHistory()</code>.</div>
+          <div class="pkg-desc">Svelte 4 stores and Svelte 5 runes — 45+ sources including <code>useAskableCartSource()</code>, <code>useAskableMultistepSource()</code>, <code>useAskableScrollSource()</code>, <code>useAskableWindowSource()</code> and more.</div>
           <span class="pkg-tag">npm</span>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/solid" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · SolidJS</div>
           <div class="pkg-name">@askable-ui/solid</div>
-          <div class="pkg-desc"><code>useAskable()</code>, <code>useAskableViewport()</code>, <code>useAskableHistory()</code>, <code>&lt;Askable&gt;</code> for SolidJS.</div>
+          <div class="pkg-desc">45+ reactive primitives for SolidJS — <code>useAskableCartSource()</code>, <code>useAskableMultistepSource()</code>, <code>useAskableNetworkSource()</code>, <code>useAskableFocusSource()</code> and more. <code>&lt;Askable&gt;</code> for SolidJS.</div>
           <span class="pkg-tag">npm</span>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/angular" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">TS · Angular</div>
           <div class="pkg-name">@askable-ui/angular</div>
-          <div class="pkg-desc"><code>AskableService</code>, <code>AskableDirective</code>, <code>AskableViewportService</code>, <code>AskableHistoryService</code> for Angular 16+.</div>
+          <div class="pkg-desc">Injectable services for Angular 16+ — <code>AskableCartSourceService</code>, <code>AskableMultistepSourceService</code>, <code>AskableFormSourceService</code>, <code>AskableTableSourceService</code>, <code>AskableTimeSourceService</code> and more.</div>
           <span class="pkg-tag">npm</span>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/qwik" target="_blank" rel="noopener noreferrer">
@@ -1462,6 +1462,45 @@ server.connect(transport); // stdio, SSE, or WebSocket</pre>
           </ul>
         </article>
       </div>
+    </section>
+
+    <section class="section" id="sources">
+      <p class="section-label">Context Sources — v0.15.0</p>
+      <h2 class="section-title">Every layer of your app. Zero prompt engineering.</h2>
+      <p class="section-sub">45+ built-in sources cover UI state, user session, environment, and device — automatically composed into a single context string the AI can reason about.</p>
+      <div class="pkg-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;">
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">New in v0.15.0</div>
+          <div class="pkg-name">Cart source</div>
+          <div class="pkg-desc"><code>useAskableCartSource()</code> — items, quantities, subtotal, tax, shipping, coupon. Mutate with <code>addItem</code>, <code>setTotals</code>, <code>clearCart</code>. Works in React, Vue, Svelte, SolidJS, and Angular.</div>
+        </div>
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">New in v0.15.0</div>
+          <div class="pkg-name">Multistep source</div>
+          <div class="pkg-desc"><code>useAskableMultistepSource()</code> — step name, index, progress %, <code>isComplete</code>. Navigate with <code>next</code>, <code>prev</code>, <code>goTo</code>. Works in all frameworks.</div>
+        </div>
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">UI & content</div>
+          <div class="pkg-name">Forms, tables, search</div>
+          <div class="pkg-desc"><code>useAskableFormSource()</code>, <code>useAskableTableSource()</code>, <code>useAskableSearchSource()</code>, <code>useAskableTabSource()</code>, <code>useAskableMediaSource()</code>.</div>
+        </div>
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">Environment</div>
+          <div class="pkg-name">Device & browser state</div>
+          <div class="pkg-desc"><code>useAskableThemeSource()</code>, <code>useAskableWindowSource()</code>, <code>useAskableLocaleSource()</code>, <code>useAskableNetworkSource()</code>, <code>useAskablePermissionSource()</code>, <code>useAskableConnectionSource()</code>.</div>
+        </div>
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">Sensors & time</div>
+          <div class="pkg-name">Time, location, battery</div>
+          <div class="pkg-desc"><code>useAskableTimeSource()</code> with business hours config, <code>useAskableGeolocationSource()</code>, <code>useAskableBatterySource()</code>, <code>useAskablePerformanceSource()</code> with Core Web Vitals.</div>
+        </div>
+        <div class="pkg-card" style="cursor:default;">
+          <div class="pkg-badge">User behaviour</div>
+          <div class="pkg-name">Session intelligence</div>
+          <div class="pkg-desc"><code>useAskableAnalyticsSource()</code>, <code>useAskableAbTestSource()</code>, <code>useAskableFeatureFlagSource()</code>, <code>useAskableIdleSource()</code>, <code>useAskableFocusSource()</code>, <code>useAskableScrollSource()</code>.</div>
+        </div>
+      </div>
+      <p style="margin-top:1.5rem;text-align:center;font-size:.9rem;color:var(--ink-2)">All sources are composable — <a href="https://askable-ui.com/docs/api/core" style="color:var(--accent);text-decoration:none;font-weight:600">read the full API reference →</a></p>
     </section>
 
     <div class="cta-section">
