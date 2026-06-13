@@ -45,6 +45,18 @@ jobs:
       - name: Check example Askable package versions
         run: node scripts/check-example-askable-versions.mjs
 
+      - name: Check publish workflow package coverage
+        run: node scripts/check-publish-package-coverage.mjs
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit docs dependencies
+        run: npm --prefix site/docs audit --package-lock-only --audit-level=high
+
+      - name: Audit React Native example dependencies
+        run: npm --prefix examples/react-native-expo audit --package-lock-only --audit-level=critical
+
       - name: Build core
         run: npm run build -w packages/core
 

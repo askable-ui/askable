@@ -114,5 +114,9 @@ jobs:
           publish_package packages/vue
           publish_package packages/svelte
           publish_package packages/react-native
+          publish_package packages/solid
+          publish_package packages/angular
+          publish_package packages/qwik
+          publish_package packages/web-component
           publish_package packages/mcp
           publish_package packages/create-askable-app

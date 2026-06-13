@@ -21,6 +21,7 @@
     "directory": "packages/angular"
   },
   "scripts": {
+    "prebuild": "npm run build -w @askable-ui/core",
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run"
