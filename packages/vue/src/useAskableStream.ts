@@ -1,4 +1,4 @@
-import { ref, computed, type MaybeRef } from 'vue';
+import { ref, computed, type ComputedRef, type MaybeRef } from 'vue';
 import type { AskableAgentRequest, AskableAgentRequestOptions, AskableContext } from '@askable-ui/core';
 import { useAskable, type UseAskableOptions } from './useAskable.js';
 
@@ -26,7 +26,7 @@ export interface UseAskableStreamResult {
   content: ReturnType<typeof ref<string>>;
   error: ReturnType<typeof ref<unknown>>;
   lastRequest: ReturnType<typeof ref<AskableAgentRequest | null>>;
-  isStreaming: ReturnType<typeof computed<boolean>>;
+  isStreaming: ComputedRef<boolean>;
   reset: () => void;
   abort: () => void;
   ctx: AskableContext;

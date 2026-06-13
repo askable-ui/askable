@@ -4,7 +4,7 @@ import { useAskableSource, type UseAskableSource, type UseAskableSourceOptions }
 
 export interface UseAskablePageSourceOptions
   extends AskableCreatePageSourceOptions,
-    UseAskableSourceOptions {
+    Omit<UseAskableSourceOptions, 'textExtractor'> {
   /** Source registration id. Defaults to "page". */
   id?: string;
   /** Provide an existing context instead of creating a new one. */

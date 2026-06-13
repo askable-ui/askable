@@ -4,7 +4,7 @@ import type { AskableCreatePageSourceOptions } from '@askable-ui/core';
 import { useAskableSource, type UseAskableSourceOptions, type UseAskableSourceResult } from './useAskableSource.js';
 
 export interface UseAskablePageSourceOptions
-  extends UseAskableSourceOptions,
+  extends Omit<UseAskableSourceOptions, 'textExtractor'>,
     AskableCreatePageSourceOptions {
   /** Source registration id. Defaults to "page". */
   id?: string;

@@ -70,7 +70,10 @@ function getUtcOffset(timezone: string): string {
 function getHourCycle(locale: string, timezone: string): 'h12' | 'h23' | 'h11' | 'h24' | null {
   try {
     const fmt = new Intl.DateTimeFormat(locale, { hour: 'numeric', timeZone: timezone });
-    return (fmt.resolvedOptions().hourCycle ?? null) as ReturnType<typeof getHourCycle>;
+    const resolved = fmt.resolvedOptions() as Intl.ResolvedDateTimeFormatOptions & {
+      hourCycle?: 'h12' | 'h23' | 'h11' | 'h24';
+    };
+    return resolved.hourCycle ?? null;
   } catch {
     return null;
   }
