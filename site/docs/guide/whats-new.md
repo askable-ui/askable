@@ -1,6 +1,6 @@
-# What’s New in v0.14.0
+# What’s New in v0.15.0
 
-askable-ui v0.14.0 adds browser-local MCP page resources, so trusted
+askable-ui v0.15.0 adds browser-local MCP page resources, so trusted
 extensions and local companions can read approved page context as
 `askable://current` without scraping the DOM.
 
@@ -39,7 +39,7 @@ context options.
 
 The main website navigation now uses a compact split-pill header, and the WebMCP
 section calls out `read_current_resource` alongside hosted MCP. New starter apps
-now pin Askable packages to `^0.14.0`.
+now pin Askable packages to `^0.15.0`.
 
 ## Also in v0.13.1
 
@@ -288,8 +288,8 @@ browser tools, and agent runtimes.
 
 ### Starter and docs version alignment
 
-`npm create @askable-ui/app` now scaffolds projects pinned to `^0.14.0`, and the
-versioned docs have been advanced to `/docs/v0.14.0/`.
+`npm create @askable-ui/app` now scaffolds projects pinned to `^0.15.0`, and the
+versioned docs have been advanced to `/docs/v0.15.0/`.
 
 ## Recommended next step
 
@@ -301,7 +301,7 @@ If you are integrating Askable into an AI or agent runtime, start here:
 
 ## Version note
 
-The current published docs track **v0.14.0** at both:
+The current published docs track **v0.15.0** at both:
 
 - `/docs/`
-- `/docs/v0.14.0/`
+- `/docs/v0.15.0/`

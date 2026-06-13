@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@askable-ui/svelte": "^0.14.0",
+    "@askable-ui/svelte": "^0.15.0",
     "svelte": "^5.0.0"
   },
   "devDependencies": {

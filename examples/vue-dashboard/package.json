@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@askable-ui/vue": "^0.14.0",
+    "@askable-ui/vue": "^0.15.0",
     "vue": "^3.5.0"
   },
   "devDependencies": {

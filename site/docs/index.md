@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.14.0**.
+> Current npm release: **v0.15.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,11 +59,11 @@ features:
   </video>
 </div>
 
-## Latest in v0.14.0
+## Latest in v0.15.0
 
 - browser-local MCP page resources with `read_current_resource` and `askable://current`
 - page bridge responses that return resource-shaped JSON or prompt-ready text for local companions
-- starter app dependency pins advanced to `^0.14.0`
+- starter app dependency pins advanced to `^0.15.0`
 - main website navigation and WebMCP copy aligned with the browser-local MCP flow
 
 ## Also in v0.13.1
@@ -84,7 +84,7 @@ features:
 - agent request packaging with `toAgentRequest()`
 - source-backed live subscriptions with `subscribeAsync()`
 - point-path metadata on lasso Context packets
-- starter app dependency pins advanced to `^0.14.0`
+- starter app dependency pins advanced to `^0.15.0`
 - continued support for region/circle/text capture, MCP Context packets, and framework wrappers
 
 ## Interaction patterns
@@ -105,7 +105,7 @@ Every pattern can produce a prompt string with `toPromptContext()` or a structur
 
 Start here:
 
-- [What’s New in v0.14.0](/guide/whats-new)
+- [What’s New in v0.15.0](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [React interaction patterns](/guide/react#region-circle-and-lasso-capture)
 - [AI SDK integration patterns](/examples/ai-sdk)

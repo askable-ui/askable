@@ -8,7 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@askable-ui/solid": "^0.14.0",
+    "@askable-ui/solid": "^0.15.0",
     "solid-js": "^1.9.7"
   },
   "devDependencies": {

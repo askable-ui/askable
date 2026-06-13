@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/create-app",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Scaffold an AI-native app with askable-ui — React, Vue, Svelte, or Next.js in one command",
   "type": "module",
   "bin": {
