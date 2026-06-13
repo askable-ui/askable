@@ -1,6 +1,10 @@
 import { createAskableContext } from '@askable-ui/core';
 import type { AskableContext, AskableFocus } from '@askable-ui/core';
 
+const HTMLElementBase: typeof HTMLElement = typeof HTMLElement === 'undefined'
+  ? class {} as typeof HTMLElement
+  : HTMLElement;
+
 /**
  * `<askable-context>` — a zero-dependency custom element that wraps any DOM
  * subtree and captures AI context from `data-askable` annotations inside it.
@@ -35,7 +39,7 @@ import type { AskableContext, AskableFocus } from '@askable-ui/core';
  * - `promptContext` — current prompt string
  * - `currentFocus` — current `AskableFocus | null`
  */
-export class AskableContextElement extends HTMLElement {
+export class AskableContextElement extends HTMLElementBase {
   static observedAttributes = ['scope', 'observe'];
 
   private _ctx: AskableContext | null = null;
