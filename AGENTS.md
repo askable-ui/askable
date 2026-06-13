@@ -1733,5 +1733,5 @@ Before committing this file to your own repo, update the sections that are produ
 - [SolidJS guide](https://askable-ui.com/docs/guide/solid)
 - [Angular guide](https://askable-ui.com/docs/guide/angular)
 - [Qwik guide](https://askable-ui.com/docs/guide/qwik)
-- [MCP server guide](https://askable-ui.com/docs/guide/mcp)
+- [MCP server guide](https://askable-ui.com/docs/api/mcp)
 - [API reference](https://askable-ui.com/docs/api/core)

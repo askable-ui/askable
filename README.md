@@ -160,7 +160,7 @@ Add to `claude_desktop_config.json`:
 
 Claude Desktop can now call `get_current_context` and `format_context_for_prompt` — it sees exactly what your user sees, without screenshots or manual description.
 
-→ **[MCP integration guide](https://askable-ui.com/docs/guide/mcp)**
+→ **[MCP integration guide](https://askable-ui.com/docs/api/mcp)**
 
 ---
 
