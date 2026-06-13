@@ -52,7 +52,8 @@
     "./useAskableGeolocationSource.svelte": "./src/useAskableGeolocationSource.svelte.ts",
     "./useAskableTimeSource.svelte": "./src/useAskableTimeSource.svelte.ts",
     "./useAskableFocusSource.svelte": "./src/useAskableFocusSource.svelte.ts",
-    "./useAskableMultistepSource.svelte": "./src/useAskableMultistepSource.svelte.ts"
+    "./useAskableMultistepSource.svelte": "./src/useAskableMultistepSource.svelte.ts",
+    "./useAskableCartSource.svelte": "./src/useAskableCartSource.svelte.ts"
   },
   "files": [
     "dist",
@@ -99,6 +100,7 @@
     "src/useAskableTimeSource.svelte.ts",
     "src/useAskableFocusSource.svelte.ts",
     "src/useAskableMultistepSource.svelte.ts",
+    "src/useAskableCartSource.svelte.ts",
     "README.md"
   ],
   "repository": {

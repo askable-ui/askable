@@ -39,6 +39,7 @@ export { useAskableGeolocationSource } from './useAskableGeolocationSource.js';
 export { useAskableTimeSource } from './useAskableTimeSource.js';
 export { useAskableFocusSource } from './useAskableFocusSource.js';
 export { useAskableMultistepSource } from './useAskableMultistepSource.js';
+export { useAskableCartSource } from './useAskableCartSource.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -84,6 +85,7 @@ export type { UseAskableGeolocationSourceOptions, UseAskableGeolocationSourceRes
 export type { UseAskableTimeSourceOptions, UseAskableTimeSourceResult, AskableBusinessHoursConfig, AskableTimeSourceSnapshot } from './useAskableTimeSource.js';
 export type { UseAskableFocusSourceOptions, UseAskableFocusSourceResult, AskableFocusedElementSnapshot, AskableFocusSourceSnapshot } from './useAskableFocusSource.js';
 export type { UseAskableMultistepSourceOptions, UseAskableMultistepSourceResult, AskableMultistepStep, AskableMultistepSourceSnapshot } from './useAskableMultistepSource.js';
+export type { UseAskableCartSourceOptions, UseAskableCartSourceResult, AskableCartItem, AskableCartSourceSnapshot, AskableCartTotals } from './useAskableCartSource.js';
 export type { UseAskableViewportOptions, UseAskableViewportResult } from './useAskableViewport.js';
 export type { UseAskableHistoryOptions, UseAskableHistoryResult } from './useAskableHistory.js';
 export type {

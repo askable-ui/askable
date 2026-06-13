@@ -70,6 +70,8 @@ export { AskableFocusSourceService } from './askable-focus-source.service.js';
 export type { AskableFocusSourceServiceOptions, AskableFocusedElementSnapshot, AskableFocusSourceSnapshot } from './askable-focus-source.service.js';
 export { AskableMultistepSourceService } from './askable-multistep-source.service.js';
 export type { AskableMultistepSourceServiceOptions, AskableMultistepStep, AskableMultistepSourceSnapshot } from './askable-multistep-source.service.js';
+export { AskableCartSourceService } from './askable-cart-source.service.js';
+export type { AskableCartSourceServiceOptions, AskableCartItem, AskableCartSourceSnapshot, AskableCartTotals } from './askable-cart-source.service.js';
 export { useAskableCompose } from './use-askable-compose.js';
 export type {
   AskableContextSection,

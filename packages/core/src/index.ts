@@ -35,6 +35,7 @@ export { createAskableGeolocationSource } from './geolocation-source.js';
 export { createAskableTimeSource, buildTimeSnapshot } from './time-source.js';
 export { createAskableFocusSource, elementToFocusSnapshot } from './focus-source.js';
 export { createAskableMultistepSource, buildMultistepSnapshot } from './multistep-source.js';
+export { createAskableCartSource, buildCartSnapshot } from './cart-source.js';
 export {
   WEB_CONTEXT_PROTOCOL,
   WEB_CONTEXT_VERSION,
