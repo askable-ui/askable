@@ -251,6 +251,12 @@ export type {
   AskableMultistepStep,
   AskableMultistepSourceSnapshot,
 } from './multistep-source.js';
+export type {
+  AskableCreateCartSourceOptions,
+  AskableCartItem,
+  AskableCartSourceSnapshot,
+  AskableCartTotals,
+} from './cart-source.js';
 export { asMeta } from './types.js';
 export type {
   AskableContext,
