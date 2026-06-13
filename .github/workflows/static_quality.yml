@@ -45,6 +45,9 @@ jobs:
       - name: Check example Askable package versions
         run: node scripts/check-example-askable-versions.mjs
 
+      - name: Check publish workflow package coverage
+        run: node scripts/check-publish-package-coverage.mjs
+
       - name: Build core
         run: npm run build -w packages/core
 
