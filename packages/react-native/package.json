@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/react-native",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "React Native hooks to give AI assistants real-time scroll context for mobile apps",
   "type": "module",
   "main": "./dist/index.js",
@@ -43,7 +43,7 @@
     "react": ">=17.0.0"
   },
   "dependencies": {
-    "@askable-ui/core": "^0.14.0"
+    "@askable-ui/core": "^0.15.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",

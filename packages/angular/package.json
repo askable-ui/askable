@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/angular",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Angular service and directive to give AI assistants real-time context about what users see and select",
   "type": "module",
   "main": "./dist/index.js",
@@ -47,7 +47,7 @@
     "@angular/core": ">=16.0.0"
   },
   "dependencies": {
-    "@askable-ui/core": "^0.14.0"
+    "@askable-ui/core": "^0.15.0"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "^1.18.3",

@@ -414,18 +414,55 @@ const { isOpen, setOpen, lastContext } = useAskableKeyboardShortcut({
 
 Register any combination of built-in sources — they're automatically composed into a single prompt string:
 
+**UI & content**
+
 | Source hook | What it captures |
 |---|---|
 | `useAskablePageSource` | Page title, URL, headings, selected text |
 | `useAskableFormSource` | Form field names, values, labels, validation errors |
 | `useAskableTableSource` | Table rows, visible rows, selected rows, state |
-| `useAskableErrorSource` | Form validation errors, API failures, caught exceptions |
+| `useAskableDOMSource` | Any element: text, ARIA labels, data attributes |
+| `useAskableMultistepSource` | Wizard/stepper — step name, index, progress, completion |
+| `useAskableSearchSource` | Query string, result count, filters, active status |
+| `useAskableTabSource` | Active tab label, index, total tab count |
+| `useAskableMediaSource` | Media title, playback state, position, duration |
+| `useAskableSelectionSource` | Currently selected text or element |
+| `useAskableClipboardSource` | Recent clipboard entries (type, preview, size) |
+| `useAskableFocusSource` | Currently focused DOM element, role, ARIA label |
+
+**User & session**
+
+| Source hook | What it captures |
+|---|---|
 | `useAskableUserSource` | Authenticated user name, role, plan, locale |
 | `useAskableNavigationSource` | Current route, title, params, query, nav history |
-| `useAskableDOMSource` | Any element: text, ARIA labels, data attributes |
 | `useAskableStorageSource` | localStorage/sessionStorage items |
+| `useAskableErrorSource` | Form validation errors, API failures, caught exceptions |
+| `useAskableNotificationSource` | Active notifications, severity, messages |
+| `useAskableCartSource` | Cart items, quantities, subtotal, tax, shipping, total |
+| `useAskableAnalyticsSource` | Recent analytics events (name, properties, timestamp) |
+| `useAskableAbTestSource` | Active A/B test variants the user is enrolled in |
+| `useAskableFeatureFlagSource` | Feature flag names and enabled/disabled values |
+| `useAskableIdleSource` | User idle state and time since last interaction |
+
+**Environment**
+
+| Source hook | What it captures |
+|---|---|
 | `useAskableViewport` | Elements currently visible in the viewport |
 | `useAskableHistory` | Navigation trail (last N focused elements) |
+| `useAskableScrollSource` | Scroll position, direction, progress percentage |
+| `useAskableWindowSource` | Window dimensions, device category, orientation |
+| `useAskableThemeSource` | Color scheme, contrast preference, motion preference |
+| `useAskableLocaleSource` | Language, region, timezone, date format |
+| `useAskableNetworkSource` | Connection type, effective speed, online status |
+| `useAskableConnectionSource` | WebSocket/SSE connection status and protocol |
+| `useAskableLoadingSource` | Named loading states (pending, success, error) |
+| `useAskablePerformanceSource` | LCP, FID, CLS, TTFB, and custom timing metrics |
+| `useAskableBatterySource` | Battery level, charging state, estimated time |
+| `useAskableGeolocationSource` | GPS coordinates and accuracy (with user permission) |
+| `useAskableTimeSource` | Current time, timezone, business hours status |
+| `useAskablePermissionSource` | Browser permission states (camera, mic, notifications) |
 
 ---
 
@@ -446,11 +483,11 @@ Register any combination of built-in sources — they're automatically composed 
 
 | | Package | |
 |---|---|---|
-| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
-| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
-| Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskablePageSourceService`, `AskableFormSourceService`, `AskableErrorSourceService`, `AskableUserSourceService`, `AskableNavigationSourceService`, `AskableAgentService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
+| React 18+ | `@askable-ui/react` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableCartSource()`, `useAskableMultistepSource()`, `useAskableScrollSource()`, `useAskableThemeSource()`, `useAskableWindowSource()`, `useAskableLocaleSource()`, `useAskableNetworkSource()`, `useAskableTimeSource()`, `useAskableFocusSource()`, `useAskableTabSource()`, `useAskablePerformanceSource()`, `useAskableBatterySource()`, `useAskableGeolocationSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>`, region/text capture |
+| Vue 3 | `@askable-ui/vue` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableCartSource()`, `useAskableMultistepSource()`, `useAskableScrollSource()`, `useAskableThemeSource()`, `useAskableWindowSource()`, `useAskableLocaleSource()`, `useAskableNetworkSource()`, `useAskableTimeSource()`, `useAskableFocusSource()`, `useAskableTabSource()`, `useAskablePerformanceSource()`, `useAskableBatterySource()`, `useAskableGeolocationSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableCartSource()`, `useAskableMultistepSource()`, `useAskableScrollSource()`, `useAskableThemeSource()`, `useAskableWindowSource()`, `useAskableLocaleSource()`, `useAskableNetworkSource()`, `useAskableTimeSource()`, `useAskableFocusSource()`, `useAskableTabSource()`, `useAskablePerformanceSource()`, `useAskableBatterySource()`, `useAskableGeolocationSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableCartSource()`, `useAskableMultistepSource()`, `useAskableScrollSource()`, `useAskableThemeSource()`, `useAskableWindowSource()`, `useAskableLocaleSource()`, `useAskableNetworkSource()`, `useAskableTimeSource()`, `useAskableFocusSource()`, `useAskableTabSource()`, `useAskablePerformanceSource()`, `useAskableBatterySource()`, `useAskableGeolocationSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
+| Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskablePageSourceService`, `AskableFormSourceService`, `AskableErrorSourceService`, `AskableUserSourceService`, `AskableNavigationSourceService`, `AskableCartSourceService`, `AskableMultistepSourceService`, `AskableScrollSourceService`, `AskableThemeSourceService`, `AskableWindowSourceService`, `AskableLocaleSourceService`, `AskableNetworkSourceService`, `AskableTimeSourceService`, `AskableFocusSourceService`, `AskableTabSourceService`, `AskablePerformanceSourceService`, `AskableBatterySourceService`, `AskableGeolocationSourceService`, `AskableAgentService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
 | Qwik | `@askable-ui/qwik` | `useAskable()`, `<Askable>` for Qwik City apps |
 | Web Component | `@askable-ui/web-component` | `<askable-context>` custom element, works in HTMX, Ember, vanilla HTML |
 | React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |
@@ -735,6 +772,15 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 - **Table awareness** — `useAskableTableSource()` exposes rows, visible page, selection, and table state for any table library
 - **Error awareness** — `useAskableErrorSource()` captures validation errors and API failures; compatible with React Hook Form, Zod, VeeValidate
 - **Page source** — `useAskablePageSource()` snapshots title, URL, headings, selected text, and links as a fallback for unannotated pages
+- **Cart awareness** — `useAskableCartSource()` tracks ecommerce cart items, quantities, subtotal, discount, tax, shipping, and total; mutate with `addItem`, `removeItem`, `updateQuantity`, `setTotals`, `clearCart`
+- **Wizard / stepper** — `useAskableMultistepSource()` tracks wizard progress: step name, index, total steps, completion percentage, and whether the flow is finished
+- **Environment sources** — `useAskableScrollSource()`, `useAskableWindowSource()`, `useAskableThemeSource()`, `useAskableLocaleSource()`, `useAskableNetworkSource()`, `useAskableConnectionSource()`, `useAskablePermissionSource()` — the assistant knows the user's context without you describing it
+- **Performance metrics** — `useAskablePerformanceSource()` exposes Core Web Vitals (LCP, FID, CLS, TTFB) and custom timing marks
+- **Device sensors** — `useAskableBatterySource()` and `useAskableGeolocationSource()` for mobile-aware assistants
+- **Time awareness** — `useAskableTimeSource()` provides current time, timezone, and configurable business hours status
+- **Focus tracking** — `useAskableFocusSource()` reports the currently focused DOM element, ARIA role, and label
+- **Navigation & tab state** — `useAskableTabSource()` for multi-tab UIs; `useAskableSearchSource()` for live search context
+- **User behaviour** — `useAskableIdleSource()`, `useAskableAnalyticsSource()`, `useAskableAbTestSource()`, `useAskableFeatureFlagSource()` for session intelligence
 - **Dev inspector** — `<AskableInspector />` overlay showing live context packets and source data
 - **SSR safe** — defers to client lifecycle, no `window is not defined`
 - **Zero runtime dependencies** in core

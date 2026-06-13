@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/core",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Give AI assistants real-time context about what users see and select in your UI",
   "type": "module",
   "main": "./dist/index.js",
@@ -45,7 +45,7 @@
   "homepage": "https://askable-ui.com",
   "license": "MIT",
   "dependencies": {
-    "@askable-ui/context": "^0.14.0"
+    "@askable-ui/context": "^0.15.0"
   },
   "devDependencies": {
     "jsdom": "^29.1.1",

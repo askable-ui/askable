@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/vue",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Vue 3 composables to give AI assistants real-time context about what users see and select",
   "type": "module",
   "main": "./dist/index.js",
@@ -46,7 +46,7 @@
     "vue": "^3.0.0"
   },
   "dependencies": {
-    "@askable-ui/core": "^0.14.0"
+    "@askable-ui/core": "^0.15.0"
   },
   "devDependencies": {
     "@vue/test-utils": "^2.4.11",

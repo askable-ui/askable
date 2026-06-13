@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/web-component",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Zero-dependency custom element <askable-context> that works in any framework or vanilla HTML",
   "type": "module",
   "main": "./dist/index.js",
@@ -44,7 +44,7 @@
   "homepage": "https://askable-ui.com",
   "license": "MIT",
   "dependencies": {
-    "@askable-ui/core": "^0.14.0"
+    "@askable-ui/core": "^0.15.0"
   },
   "devDependencies": {
     "jsdom": "^29.1.1",
