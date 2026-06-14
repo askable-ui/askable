@@ -54,6 +54,8 @@
     "./useAskableFocusSource.svelte": "./src/useAskableFocusSource.svelte.ts",
     "./useAskableMultistepSource.svelte": "./src/useAskableMultistepSource.svelte.ts",
     "./useAskableCartSource.svelte": "./src/useAskableCartSource.svelte.ts",
+    "./useAskableRegionCapture.svelte": "./src/useAskableRegionCapture.svelte.ts",
+    "./useAskableTextSelectionCapture.svelte": "./src/useAskableTextSelectionCapture.svelte.ts",
     "./core": "./src/core.svelte.ts",
     "./extended": "./src/extended.svelte.ts"
   },
@@ -103,6 +105,8 @@
     "src/useAskableFocusSource.svelte.ts",
     "src/useAskableMultistepSource.svelte.ts",
     "src/useAskableCartSource.svelte.ts",
+    "src/useAskableRegionCapture.svelte.ts",
+    "src/useAskableTextSelectionCapture.svelte.ts",
     "README.md",
     "src/core.svelte.ts",
     "src/extended.svelte.ts"

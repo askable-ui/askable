@@ -40,6 +40,8 @@ export { useAskableTimeSource } from './useAskableTimeSource.js';
 export { useAskableFocusSource } from './useAskableFocusSource.js';
 export { useAskableMultistepSource } from './useAskableMultistepSource.js';
 export { useAskableCartSource } from './useAskableCartSource.js';
+export { useAskableRegionCapture } from './useAskableRegionCapture.js';
+export { useAskableTextSelectionCapture } from './useAskableTextSelectionCapture.js';
 export { useAskableStream } from './useAskableStream.js';
 export { useAskableChat } from './useAskableChat.js';
 // Re-export typed meta utility from core for convenience
@@ -86,6 +88,8 @@ export type { UseAskableTimeSourceOptions, UseAskableTimeSourceResult, AskableBu
 export type { UseAskableFocusSourceOptions, UseAskableFocusSourceResult, AskableFocusedElementSnapshot, AskableFocusSourceSnapshot } from './useAskableFocusSource.js';
 export type { UseAskableMultistepSourceOptions, UseAskableMultistepSourceResult, AskableMultistepStep, AskableMultistepSourceSnapshot } from './useAskableMultistepSource.js';
 export type { UseAskableCartSourceOptions, UseAskableCartSourceResult, AskableCartItem, AskableCartSourceSnapshot, AskableCartTotals } from './useAskableCartSource.js';
+export type { UseAskableRegionCaptureOptions, UseAskableRegionCaptureResult, AskableRegionCaptureSelection, AskableRegionCaptureState } from './useAskableRegionCapture.js';
+export type { UseAskableTextSelectionCaptureOptions, UseAskableTextSelectionCaptureResult, AskableTextSelectionCaptureSelection, AskableTextSelectionCaptureState } from './useAskableTextSelectionCapture.js';
 export type { UseAskableViewportOptions, UseAskableViewportResult } from './useAskableViewport.js';
 export type { UseAskableHistoryOptions, UseAskableHistoryResult } from './useAskableHistory.js';
 export type {
