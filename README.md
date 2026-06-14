@@ -412,57 +412,52 @@ const { isOpen, setOpen, lastContext } = useAskableKeyboardShortcut({
 
 ### Context sources
 
-Register any combination of built-in sources — they're automatically composed into a single prompt string:
+Sources expose app state the AI can't see in the DOM. Import from `@askable-ui/react/core` (or `vue/core`, `svelte/core`, etc.) for the essentials. Niche sources live in `@askable-ui/react/extended` and are fully tree-shakeable — they cost nothing if you don't import them.
 
-**UI & content**
+**Core** (`@askable-ui/react/core`)
 
 | Source hook | What it captures |
 |---|---|
 | `useAskablePageSource` | Page title, URL, headings, selected text |
 | `useAskableFormSource` | Form field names, values, labels, validation errors |
 | `useAskableTableSource` | Table rows, visible rows, selected rows, state |
+| `useAskableErrorSource` | Form validation errors, API failures, caught exceptions |
+| `useAskableUserSource` | Authenticated user name, role, plan, locale |
+| `useAskableNavigationSource` | Current route, title, params, query, nav history |
 | `useAskableDOMSource` | Any element: text, ARIA labels, data attributes |
+| `useAskableStorageSource` | localStorage/sessionStorage items |
+| `useAskableNotificationSource` | Active notifications, severity, messages |
+| `useAskableCartSource` | Cart items, quantities, subtotal, tax, shipping, total |
 | `useAskableMultistepSource` | Wizard/stepper — step name, index, progress, completion |
+
+**Extended** (`@askable-ui/react/extended`)
+
+| Source hook | What it captures |
+|---|---|
+| `useAskableScrollSource` | Scroll position, direction, progress percentage |
+| `useAskableThemeSource` | Color scheme, contrast preference, motion preference |
+| `useAskableWindowSource` | Window dimensions, device category, orientation |
+| `useAskableLocaleSource` | Language, region, timezone, date format |
+| `useAskableNetworkSource` | Connection type, effective speed, online status |
+| `useAskableConnectionSource` | WebSocket/SSE connection status and protocol |
+| `useAskableLoadingSource` | Named loading states (pending, success, error) |
 | `useAskableSearchSource` | Query string, result count, filters, active status |
 | `useAskableTabSource` | Active tab label, index, total tab count |
 | `useAskableMediaSource` | Media title, playback state, position, duration |
 | `useAskableSelectionSource` | Currently selected text or element |
 | `useAskableClipboardSource` | Recent clipboard entries (type, preview, size) |
 | `useAskableFocusSource` | Currently focused DOM element, role, ARIA label |
-
-**User & session**
-
-| Source hook | What it captures |
-|---|---|
-| `useAskableUserSource` | Authenticated user name, role, plan, locale |
-| `useAskableNavigationSource` | Current route, title, params, query, nav history |
-| `useAskableStorageSource` | localStorage/sessionStorage items |
-| `useAskableErrorSource` | Form validation errors, API failures, caught exceptions |
-| `useAskableNotificationSource` | Active notifications, severity, messages |
-| `useAskableCartSource` | Cart items, quantities, subtotal, tax, shipping, total |
+| `useAskableIdleSource` | User idle state and time since last interaction |
 | `useAskableAnalyticsSource` | Recent analytics events (name, properties, timestamp) |
 | `useAskableAbTestSource` | Active A/B test variants the user is enrolled in |
 | `useAskableFeatureFlagSource` | Feature flag names and enabled/disabled values |
-| `useAskableIdleSource` | User idle state and time since last interaction |
-
-**Environment**
-
-| Source hook | What it captures |
-|---|---|
-| `useAskableViewport` | Elements currently visible in the viewport |
-| `useAskableHistory` | Navigation trail (last N focused elements) |
-| `useAskableScrollSource` | Scroll position, direction, progress percentage |
-| `useAskableWindowSource` | Window dimensions, device category, orientation |
-| `useAskableThemeSource` | Color scheme, contrast preference, motion preference |
-| `useAskableLocaleSource` | Language, region, timezone, date format |
-| `useAskableNetworkSource` | Connection type, effective speed, online status |
-| `useAskableConnectionSource` | WebSocket/SSE connection status and protocol |
-| `useAskableLoadingSource` | Named loading states (pending, success, error) |
+| `useAskablePermissionSource` | Browser permission states (camera, mic, notifications) |
 | `useAskablePerformanceSource` | LCP, FID, CLS, TTFB, and custom timing metrics |
+| `useAskableTimeSource` | Current time, timezone, business hours status |
 | `useAskableBatterySource` | Battery level, charging state, estimated time |
 | `useAskableGeolocationSource` | GPS coordinates and accuracy (with user permission) |
-| `useAskableTimeSource` | Current time, timezone, business hours status |
-| `useAskablePermissionSource` | Browser permission states (camera, mic, notifications) |
+
+All sources are also available from the main entry point — the split is about clarity, not restriction.
 
 ---
 

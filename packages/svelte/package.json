@@ -53,7 +53,9 @@
     "./useAskableTimeSource.svelte": "./src/useAskableTimeSource.svelte.ts",
     "./useAskableFocusSource.svelte": "./src/useAskableFocusSource.svelte.ts",
     "./useAskableMultistepSource.svelte": "./src/useAskableMultistepSource.svelte.ts",
-    "./useAskableCartSource.svelte": "./src/useAskableCartSource.svelte.ts"
+    "./useAskableCartSource.svelte": "./src/useAskableCartSource.svelte.ts",
+    "./core": "./src/core.svelte.ts",
+    "./extended": "./src/extended.svelte.ts"
   },
   "files": [
     "dist",
@@ -101,7 +103,9 @@
     "src/useAskableFocusSource.svelte.ts",
     "src/useAskableMultistepSource.svelte.ts",
     "src/useAskableCartSource.svelte.ts",
-    "README.md"
+    "README.md",
+    "src/core.svelte.ts",
+    "src/extended.svelte.ts"
   ],
   "repository": {
     "type": "git",

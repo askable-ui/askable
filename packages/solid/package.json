@@ -9,6 +9,14 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./core": {
+      "import": "./dist/core.js",
+      "types": "./dist/core.d.ts"
+    },
+    "./extended": {
+      "import": "./dist/extended.js",
+      "types": "./dist/extended.d.ts"
     }
   },
   "files": [
