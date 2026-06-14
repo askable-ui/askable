@@ -1,4 +1,4 @@
-import { useSignal, useVisibleTask$, useTask$ } from '@builder.io/qwik';
+import { useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { createAskableContext } from '@askable-ui/core';
 import type { AskableContext, AskableContextOptions, AskableEvent, AskableFocus } from '@askable-ui/core';
 
@@ -15,9 +15,43 @@ export interface UseAskableResult {
 
 const DEFAULT_EVENTS: AskableEvent[] = ['click', 'hover', 'focus'];
 
+// Module-level cache so all hooks in the same page share one default context
+const globalCtxByKey = new Map<string, AskableContext>();
+const globalRefCount = new Map<string, number>();
+
+function sharedKey(options?: UseAskableOptions): string {
+  const name = options?.name?.trim() ? `name:${options.name.trim()}` : 'global';
+  const evts = (options?.events ?? DEFAULT_EVENTS).slice().sort().join('|');
+  return `${name}::${evts}`;
+}
+
+function retainCtx(key: string, options?: UseAskableOptions): AskableContext {
+  const existing = globalCtxByKey.get(key);
+  if (existing) {
+    globalRefCount.set(key, (globalRefCount.get(key) ?? 0) + 1);
+    return existing;
+  }
+  const ctx = createAskableContext(options);
+  globalCtxByKey.set(key, ctx);
+  globalRefCount.set(key, 1);
+  ctx.observe(document, { events: options?.events ?? DEFAULT_EVENTS });
+  return ctx;
+}
+
+function releaseCtx(key: string): void {
+  const count = (globalRefCount.get(key) ?? 1) - 1;
+  if (count > 0) { globalRefCount.set(key, count); return; }
+  globalRefCount.delete(key);
+  globalCtxByKey.get(key)?.destroy();
+  globalCtxByKey.delete(key);
+}
+
 /**
- * Qwik hook that creates an AskableContext, observes the document, and
- * returns reactive signals for the current focus and prompt context.
+ * Qwik hook that creates (or shares) an AskableContext and returns reactive
+ * signals for the current focus and prompt context.
+ *
+ * Multiple calls with the same options share a single context instance so all
+ * source hooks on the page read from the same focus stream.
  *
  * @example
  * ```tsx
@@ -33,17 +67,14 @@ const DEFAULT_EVENTS: AskableEvent[] = ['click', 'hover', 'focus'];
 export function useAskable(options?: UseAskableOptions): UseAskableResult {
   const focus = useSignal<AskableFocus | null>(null);
   const promptContext = useSignal<string>('');
+  const usesProvidedCtx = Boolean(options?.ctx);
 
-  // ctx lives outside signals — it's imperatively managed
   let ctx: AskableContext | null = null;
+  const key = sharedKey(options);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
-    ctx = options?.ctx ?? createAskableContext(options);
-
-    if (!options?.ctx) {
-      ctx.observe(document, { events: options?.events ?? DEFAULT_EVENTS });
-    }
+    ctx = usesProvidedCtx ? options!.ctx! : retainCtx(key, options);
 
     const handleFocus = (f: AskableFocus) => {
       focus.value = f;
@@ -60,7 +91,7 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
     cleanup(() => {
       ctx!.off('focus', handleFocus);
       ctx!.off('clear', handleClear);
-      if (!options?.ctx) ctx!.destroy();
+      if (!usesProvidedCtx) releaseCtx(key);
       ctx = null;
     });
   });
