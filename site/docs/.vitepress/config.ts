@@ -62,6 +62,7 @@ export default defineConfig({
             { text: 'React', link: '/guide/react' },
             { text: 'Vue', link: '/guide/vue' },
             { text: 'Svelte', link: '/guide/svelte' },
+            { text: 'Angular', link: '/guide/angular' },
             { text: 'Plain JS / HTML', link: '/guide/vanilla' },
           ],
         },
@@ -81,8 +82,9 @@ export default defineConfig({
         {
           text: 'Integrations',
           items: [
-            { text: 'Third-Party Libraries', link: '/guide/third-party-libraries' },
+            { text: 'MCP Integration', link: '/guide/mcp' },
             { text: 'CopilotKit', link: '/guide/copilotkit' },
+            { text: 'Third-Party Libraries', link: '/guide/third-party-libraries' },
           ],
         },
         {

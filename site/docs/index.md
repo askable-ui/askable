@@ -114,6 +114,8 @@ Start here:
 - [What’s New in v0.15.0](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [React interaction patterns](/guide/react#region-circle-and-lasso-capture)
+- [Angular guide](/guide/angular)
+- [MCP integration guide](/guide/mcp)
 - [AI SDK integration patterns](/examples/ai-sdk)
 - [CopilotKit guide](/guide/copilotkit)
 
