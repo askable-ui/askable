@@ -63,6 +63,8 @@ export default defineConfig({
             { text: 'Vue', link: '/guide/vue' },
             { text: 'Svelte', link: '/guide/svelte' },
             { text: 'Angular', link: '/guide/angular' },
+            { text: 'SolidJS', link: '/guide/solid' },
+            { text: 'Qwik', link: '/guide/qwik' },
             { text: 'Plain JS / HTML', link: '/guide/vanilla' },
           ],
         },
