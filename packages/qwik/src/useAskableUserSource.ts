@@ -1,6 +1,8 @@
 import { createAskableUserSource } from '@askable-ui/core';
-import type { AskableCreateUserSourceOptions } from '@askable-ui/core';
+import type { AskableCreateUserSourceOptions, AskableUserProfile } from '@askable-ui/core';
 import { useAskableSource, type UseAskableSourceOptions, type UseAskableSourceResult } from './useAskableSource.js';
+
+export type { AskableUserProfile };
 
 export interface UseAskableUserSourceOptions
   extends UseAskableSourceOptions,
@@ -15,10 +17,11 @@ export type UseAskableUserSourceResult = UseAskableSourceResult;
  * (name, email, roles, preferences) to the AI.
  *
  * ```tsx
- * useAskableUserSource({ getUser: () => session.user });
+ * // In your root component (after auth resolves):
+ * useAskableUserSource({ getUser: () => session.value?.user ?? null });
  * ```
  */
-export function useAskableUserSource(options: UseAskableUserSourceOptions = {}): UseAskableUserSourceResult {
+export function useAskableUserSource(options: UseAskableUserSourceOptions): UseAskableUserSourceResult {
   const { id = 'user', enabled, ctx, name, events, ...sourceOptions } = options;
   const source = createAskableUserSource(sourceOptions);
   return useAskableSource(id, source, { enabled, ctx, name, events });

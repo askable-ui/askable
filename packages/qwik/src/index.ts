@@ -32,10 +32,10 @@ export { useAskableTableSource } from './useAskableTableSource.js';
 export type { UseAskableTableSourceOptions, UseAskableTableSourceResult } from './useAskableTableSource.js';
 
 export { useAskableUserSource } from './useAskableUserSource.js';
-export type { UseAskableUserSourceOptions, UseAskableUserSourceResult } from './useAskableUserSource.js';
+export type { UseAskableUserSourceOptions, UseAskableUserSourceResult, AskableUserProfile } from './useAskableUserSource.js';
 
 export { useAskableErrorSource } from './useAskableErrorSource.js';
-export type { UseAskableErrorSourceOptions, UseAskableErrorSourceResult } from './useAskableErrorSource.js';
+export type { UseAskableErrorSourceOptions, UseAskableErrorSourceResult, AskableErrorEntry } from './useAskableErrorSource.js';
 
 export { useAskableNotificationSource } from './useAskableNotificationSource.js';
 export type { UseAskableNotificationSourceOptions, UseAskableNotificationSourceResult, AskableNotification, AskableNotificationSeverity } from './useAskableNotificationSource.js';

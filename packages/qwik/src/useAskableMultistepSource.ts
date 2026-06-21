@@ -26,8 +26,7 @@ export interface UseAskableMultistepSourceResult extends UseAskableSourceResult 
 }
 
 /**
- * Qwik hook that tracks wizard / stepper / checkout flow progress and exposes
- * it to AI assistants.
+ * Qwik hook that tracks wizard / stepper / checkout flow progress.
  *
  * ```tsx
  * export const Checkout = component$(() => {
@@ -50,54 +49,50 @@ export interface UseAskableMultistepSourceResult extends UseAskableSourceResult 
 export function useAskableMultistepSource(options: UseAskableMultistepSourceOptions = {}): UseAskableMultistepSourceResult {
   const { id = 'multistep', steps: initialSteps = [], initialStep = 0, describe, kind, enabled, ctx, name, events } = options;
 
-  const fullSteps: AskableMultistepStep[] = initialSteps.map((s, i) => ({
-    ...s,
-    index: i,
-    isComplete: false,
-    isActive: i === initialStep,
-    isCurrent: i === initialStep,
-  }));
+  function makeSteps(defs: Pick<AskableMultistepStep, 'id' | 'label' | 'description' | 'optional'>[], activeIdx: number): AskableMultistepStep[] {
+    return defs.map((s, i) => ({
+      id: s.id,
+      label: s.label,
+      description: s.description,
+      optional: s.optional,
+      completed: i < activeIdx,
+      active: i === activeIdx,
+    }));
+  }
 
   const snapshot = useSignal<AskableMultistepSourceSnapshot | null>(
-    fullSteps.length > 0 ? buildMultistepSnapshot(fullSteps, initialStep, new Date().toISOString()) : null,
+    initialSteps.length > 0 ? buildMultistepSnapshot(makeSteps(initialSteps, initialStep)) : null,
   );
 
   const source = createAskableMultistepSource({ describe, kind, getSnapshot: () => snapshot.value });
   const result = useAskableSource(id, source, { enabled, ctx, name, events });
 
-  function currentSteps(): AskableMultistepStep[] {
-    return snapshot.value?.steps ?? fullSteps;
+  function currentDefs(): Pick<AskableMultistepStep, 'id' | 'label' | 'description' | 'optional'>[] {
+    return snapshot.value?.steps.map((s) => ({ id: s.id, label: s.label, description: s.description, optional: s.optional })) ?? initialSteps;
   }
 
   function currentIndex(): number {
     return snapshot.value?.currentIndex ?? initialStep;
   }
 
-  function applyIndex(idx: number): void {
-    const steps = currentSteps();
-    if (idx < 0 || idx >= steps.length) return;
-    snapshot.value = buildMultistepSnapshot(steps, idx, new Date().toISOString());
+  function applyIndex(defs: Pick<AskableMultistepStep, 'id' | 'label' | 'description' | 'optional'>[], idx: number): void {
+    if (idx < 0 || idx >= defs.length) return;
+    snapshot.value = buildMultistepSnapshot(makeSteps(defs, idx));
     result.notifyChanged();
   }
 
-  function next(): void { applyIndex(currentIndex() + 1); }
-  function prev(): void { applyIndex(currentIndex() - 1); }
+  function next(): void { applyIndex(currentDefs(), currentIndex() + 1); }
+  function prev(): void { applyIndex(currentDefs(), currentIndex() - 1); }
 
   function goTo(indexOrId: number | string): void {
-    if (typeof indexOrId === 'number') { applyIndex(indexOrId); return; }
-    const idx = currentSteps().findIndex((s) => s.id === indexOrId);
-    if (idx >= 0) applyIndex(idx);
+    const defs = currentDefs();
+    if (typeof indexOrId === 'number') { applyIndex(defs, indexOrId); return; }
+    const idx = defs.findIndex((s) => s.id === indexOrId);
+    if (idx >= 0) applyIndex(defs, idx);
   }
 
   function setSteps(steps: Pick<AskableMultistepStep, 'id' | 'label' | 'description' | 'optional'>[]): void {
-    const full: AskableMultistepStep[] = steps.map((s, i) => ({
-      ...s,
-      index: i,
-      isComplete: false,
-      isActive: i === 0,
-      isCurrent: i === 0,
-    }));
-    snapshot.value = buildMultistepSnapshot(full, 0, new Date().toISOString());
+    snapshot.value = buildMultistepSnapshot(makeSteps(steps, 0));
     result.notifyChanged();
   }
 

@@ -110,7 +110,7 @@ export function useAskableChat(options: UseAskableChatOptions = {}): UseAskableC
 
     if (systemPrompt) {
       const sys = typeof systemPrompt === 'function' ? systemPrompt(ctx.toPromptContext()) : systemPrompt;
-      req = { ...req, systemPrompt: sys };
+      req = { ...req, metadata: { ...req.metadata, systemPrompt: sys } };
     }
 
     const assistantId = nextId();
