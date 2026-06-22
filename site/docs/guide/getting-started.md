@@ -37,6 +37,10 @@ npm install @askable-ui/vue @askable-ui/core
 npm install @askable-ui/svelte @askable-ui/core
 ```
 
+```bash [Angular]
+npm install @askable-ui/angular @askable-ui/core
+```
+
 ```bash [Plain JS]
 npm install @askable-ui/core
 ```
@@ -98,6 +102,13 @@ function RevenueCard() {
 </Askable>
 ```
 
+```html [Angular]
+<!-- app.component.html -->
+<div [askable]="{ metric: 'revenue', delta: '-12%', period: 'Q3' }">
+  <revenue-chart />
+</div>
+```
+
 :::
 
 ## Step 2 — Observe the page
@@ -133,6 +144,15 @@ import { createAskableStore } from '@askable-ui/svelte';
 
 const { promptContext, destroy } = createAskableStore();
 onDestroy(destroy);
+```
+
+```ts [Angular]
+import { inject } from '@angular/core';
+import { AskableService } from '@askable-ui/angular';
+
+// In your component:
+private readonly askable = inject(AskableService); // starts observing automatically
+// this.askable.promptContext() — Signal<string>
 ```
 
 ```ts [Plain JS]

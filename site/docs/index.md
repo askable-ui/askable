@@ -29,7 +29,7 @@ features:
 
   - icon: ⚡
     title: Framework-native bindings
-    details: First-class hooks and components for React, React Native, Vue, and Svelte. Web bindings are reactive and SSR-safe; React Native ships a focused press-driven adapter on top of @askable-ui/core.
+    details: First-class hooks and components for React, Vue, Svelte, Angular, SolidJS, Qwik, and React Native. All web bindings are reactive and SSR-safe; React Native ships a press-driven adapter on top of @askable-ui/core.
 
   - icon: 🎯
     title: Multiple interaction patterns
