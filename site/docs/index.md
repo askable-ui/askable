@@ -115,6 +115,7 @@ Start here:
 - [Context Packets](/guide/context)
 - [React interaction patterns](/guide/react#region-circle-and-lasso-capture)
 - [Angular guide](/guide/angular)
+- [React Native guide](/guide/react-native)
 - [MCP integration guide](/guide/mcp)
 - [AI SDK integration patterns](/examples/ai-sdk)
 - [CopilotKit guide](/guide/copilotkit)
