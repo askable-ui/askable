@@ -65,6 +65,7 @@ export default defineConfig({
             { text: 'Angular', link: '/guide/angular' },
             { text: 'SolidJS', link: '/guide/solid' },
             { text: 'Qwik', link: '/guide/qwik' },
+            { text: 'React Native', link: '/guide/react-native' },
             { text: 'Plain JS / HTML', link: '/guide/vanilla' },
           ],
         },
