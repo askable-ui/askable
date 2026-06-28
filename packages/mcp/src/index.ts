@@ -207,6 +207,14 @@ export interface AskableMcpPageBridgeOptions {
   allowedOrigins?: AskableMcpPageBridgeAllowedOrigins;
   window?: AskableMcpPageBridgeWindow;
   onError?: (error: unknown, event: MessageEvent) => void;
+  /**
+   * When `true`, page-bridge requests that resolve to a packet with
+   * `privacy.redacted === false` respond with an error instead of forwarding
+   * potentially-unredacted data — matching {@link AskableMcpServerOptions.requireRedacted}.
+   * Defaults to `false` for backwards compatibility. Set to `true` when the page
+   * captures user-entered or sensitive content in `data-askable` attributes.
+   */
+  requireRedacted?: boolean;
 }
 
 export interface AskableMcpPageBridge {
@@ -535,6 +543,16 @@ async function handleAskableMcpPageBridgeMessage(
   try {
     const contextOptions = getAskableMcpPageBridgeContextOptions(request.options);
     const packet = await options.provider.getContext(contextOptions);
+
+    if (options.requireRedacted && packet.privacy?.redacted === false) {
+      bridgeWindow.postMessage({
+        ...createAskableMcpPageBridgeResponseBase(request),
+        type: `${request.type}:error`,
+        error: { message: 'Context packet has not been redacted. Set requireRedacted: false to allow, or redact the packet before sending.' },
+      }, resolveAskableMcpPageBridgeTargetOrigin(event, options));
+      return;
+    }
+
     const responseBase = createAskableMcpPageBridgeResponseBase(request);
     let response: AskableMcpPageBridgeSuccessResponse;
 
