@@ -1116,6 +1116,63 @@ describe('createAskableMcpPageBridge', () => {
     });
   });
 
+  it('blocks unredacted packets when requireRedacted is set', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'region' },
+      privacy: { redacted: false, consent: 'implicit' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const fakeWindow = new FakePageBridgeWindow();
+    createAskableMcpPageBridge({ provider, window: fakeWindow, requireRedacted: true });
+
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      type: 'get_current_context',
+      requestId: 'req-redact-1',
+    });
+    await flushPageBridge();
+
+    expect(fakeWindow.posted).toHaveLength(1);
+    expect(fakeWindow.posted[0]?.message).toEqual(
+      expect.objectContaining({
+        type: 'get_current_context:error',
+        requestId: 'req-redact-1',
+      }),
+    );
+    expect(fakeWindow.posted[0]?.message).not.toHaveProperty('packet');
+  });
+
+  it('forwards redacted packets when requireRedacted is set', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'region' },
+      privacy: { redacted: true, consent: 'explicit' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const fakeWindow = new FakePageBridgeWindow();
+    createAskableMcpPageBridge({ provider, window: fakeWindow, requireRedacted: true });
+
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      type: 'get_current_context',
+      requestId: 'req-redact-2',
+    });
+    await flushPageBridge();
+
+    expect(fakeWindow.posted[0]?.message).toEqual(
+      expect.objectContaining({
+        type: 'get_current_context:result',
+        requestId: 'req-redact-2',
+        packet,
+      }),
+    );
+  });
+
   it('removes the page bridge listener on dispose', async () => {
     const provider: AskableMcpContextProvider = {
       getContext: vi.fn(),
