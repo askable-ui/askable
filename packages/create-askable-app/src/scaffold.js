@@ -2,14 +2,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ASKABLE_VERSION = '0.14.0';
+const pkg = JSON.parse(
+  fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+);
+
+// Sourced from this package's own version so every scaffolded app pins the
+// current release. Never hardcode this — the integrity test asserts it matches
+// the package version, which is how the 0.14.0/0.15.0 skew is prevented.
+export const ASKABLE_VERSION = pkg.version;
 const COPILOTKIT_VERSION = '1.59.2';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TEMPLATE_DIR = path.resolve(__dirname, '..', 'template');
 
-const TEMPLATES = {
+export const TEMPLATES = {
   react: {
     label: 'React + Vite + CopilotKit',
     dir: TEMPLATE_DIR,
@@ -102,7 +109,7 @@ export async function runCli(args) {
   if (!projectArg || projectArg === '--help' || projectArg === '-h') {
     console.log('create-askable-app\n');
     console.log('Usage:');
-    console.log('  npm create @askable-ui/app <project-name> [--template react|vue|svelte|nextjs]\n');
+    console.log(`  npm create @askable-ui/app <project-name> [--template ${Object.keys(TEMPLATES).join('|')}]\n`);
     console.log('Templates:');
     for (const [key, t] of Object.entries(TEMPLATES)) {
       console.log(`  ${key.padEnd(12)} ${t.label}`);
