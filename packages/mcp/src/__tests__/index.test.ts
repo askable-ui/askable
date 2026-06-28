@@ -7,6 +7,7 @@ import {
   ASKABLE_MCP_PAGE_BRIDGE_VERSION,
   createAskableMcpContextProvider,
   createAskableMcpPageBridge,
+  createAskableMcpRemoteProvider,
   createAskableMcpServer,
   createAskableMcpWebHandler,
   defaultPromptFormatter,
@@ -1227,5 +1228,35 @@ describe('defaultPromptFormatter', () => {
       'Recent context: [{"metadata":{"metric":"pipeline"},"text":"Pipeline is $8.1M"}]',
       'Source context: [{"label":"accounts","role":"collection","metadata":{"data":{"total":12}}}]',
     ].join('\n'));
+  });
+});
+
+describe('createAskableMcpRemoteProvider', () => {
+  it('fetches the current packet from the configured url with headers', async () => {
+    const packet = createWebContextPacket({ capture: { mode: 'region' } });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(packet),
+    });
+
+    const provider = createAskableMcpRemoteProvider({
+      url: 'https://app.example/context',
+      headers: { Authorization: 'Bearer abc' },
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    await expect(provider.getContext()).resolves.toEqual(packet);
+    expect(fetchMock).toHaveBeenCalledWith('https://app.example/context', {
+      headers: { Authorization: 'Bearer abc' },
+    });
+  });
+
+  it('throws when the endpoint responds with a non-ok status', async () => {
+    const provider = createAskableMcpRemoteProvider({
+      url: 'https://app.example/context',
+      fetch: vi.fn().mockResolvedValue({ ok: false, status: 503 }) as unknown as typeof fetch,
+    });
+
+    await expect(provider.getContext()).rejects.toThrow(/503/);
   });
 });

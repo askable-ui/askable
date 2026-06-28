@@ -11,6 +11,9 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "bin": {
+    "askable-mcp": "./dist/cli.js"
+  },
   "files": [
     "dist",
     "README.md"
@@ -49,6 +52,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"
   }

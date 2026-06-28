@@ -284,6 +284,35 @@ export function createAskableMcpContextProvider(
   };
 }
 
+export interface AskableMcpRemoteProviderOptions {
+  /** URL of an endpoint that returns the current Context packet as JSON on GET. */
+  url: string;
+  /** Extra request headers, e.g. an Authorization header. */
+  headers?: Record<string, string>;
+  /** Inject a custom fetch implementation (defaults to the global `fetch`). */
+  fetch?: typeof fetch;
+}
+
+/**
+ * Builds an {@link AskableMcpContextProvider} that fetches the current Context
+ * packet from a remote HTTP endpoint. Useful for connecting a stdio MCP server
+ * (e.g. the `askable-mcp` CLI) to a running app that exposes its packet at a URL.
+ */
+export function createAskableMcpRemoteProvider(
+  options: AskableMcpRemoteProviderOptions,
+): AskableMcpContextProvider {
+  const doFetch = options.fetch ?? fetch;
+  return {
+    async getContext() {
+      const response = await doFetch(options.url, { headers: options.headers });
+      if (!response.ok) {
+        throw new Error(`askable-mcp: context endpoint ${options.url} returned ${response.status}`);
+      }
+      return (await response.json()) as WebContextPacket;
+    },
+  };
+}
+
 export function createAskableMcpServer(options: AskableMcpServerOptions): McpServer {
   const server = new McpServer({
     name: options.name ?? 'askable-context',
