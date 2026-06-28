@@ -74,6 +74,7 @@ export default defineConfig({
             { text: 'Annotating Elements', link: '/guide/annotating' },
             { text: 'Focus & History', link: '/guide/focus-history' },
             { text: 'Ask AI Buttons (select())', link: '/guide/select' },
+            { text: 'Region & Text Capture', link: '/guide/capture' },
             { text: 'Prompt Serialization', link: '/guide/serialization' },
             { text: 'Context Packets', link: '/guide/context' },
             { text: 'Migration Guides', link: '/guide/migrations' },
