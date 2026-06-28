@@ -271,15 +271,27 @@ export function createWebContextPacket(options: CreateWebContextPacketOptions): 
   };
 }
 
+// Enum sets are read straight from the schema so the runtime guard and the
+// published JSON Schema can never drift apart.
+const captureModeValues = webContextPacketSchema.properties.capture.properties.mode.enum;
+const captureGestureValues = webContextPacketSchema.properties.capture.properties.gesture.enum;
+const privacyConsentValues = webContextPacketSchema.properties.privacy.properties.consent.enum;
+const provenanceMethodValues = webContextPacketSchema.properties.provenance.properties.method.enum;
+
+function isEnumMember(allowed: readonly string[], value: unknown): boolean {
+  return typeof value === 'string' && allowed.includes(value);
+}
+
 export function isWebContextPacket(value: unknown): value is WebContextPacket {
   if (!isRecord(value)) return false;
   if (value.protocol !== WEB_CONTEXT_PROTOCOL || value.version !== WEB_CONTEXT_VERSION) return false;
   if (!isRecord(value.source) || typeof value.source.timestamp !== 'string') return false;
-  if (!isRecord(value.capture) || typeof value.capture.mode !== 'string') return false;
+  if (!isRecord(value.capture) || !isEnumMember(captureModeValues, value.capture.mode)) return false;
+  if (value.capture.gesture !== undefined && !isEnumMember(captureGestureValues, value.capture.gesture)) return false;
   if (!isRecord(value.privacy) || typeof value.privacy.redacted !== 'boolean') return false;
-  if (!['explicit', 'implicit', 'none'].includes(String(value.privacy.consent))) return false;
+  if (!isEnumMember(privacyConsentValues, value.privacy.consent)) return false;
   if (!isRecord(value.provenance) || typeof value.provenance.producer !== 'string') return false;
-  return typeof value.provenance.method === 'string';
+  return isEnumMember(provenanceMethodValues, value.provenance.method);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
