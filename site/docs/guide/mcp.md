@@ -156,6 +156,37 @@ In Claude.ai settings → Integrations, add the MCP server URL. Claude will call
 
 Point the ChatGPT connector at your `/api/mcp` endpoint. The MCP server exposes a `read_current_resource` tool that ChatGPT's function-calling layer will invoke.
 
+## Connect over stdio (CLI)
+
+Some MCP clients launch a **command over stdio** instead of connecting to a URL. The `@askable-ui/mcp` package ships an `askable-mcp` binary for exactly this — no server framework or extra dependencies required. Point it at any endpoint that returns the current Context packet as JSON:
+
+```json
+{
+  "mcpServers": {
+    "my-app": {
+      "command": "npx",
+      "args": [
+        "-y", "@askable-ui/mcp",
+        "--url", "http://localhost:3001/context",
+        "--header", "Authorization: Bearer YOUR_SECRET"
+      ]
+    }
+  }
+}
+```
+
+Your app just needs to expose a `GET` endpoint that returns the latest packet (e.g. via `ctx.toContextPacket()`). Flags:
+
+| Flag | Description |
+|---|---|
+| `--url <endpoint>` | HTTP(S) endpoint returning the current Context packet as JSON |
+| `--file <path>` | Serve a static packet file instead of fetching a URL |
+| `--header "K: V"` | Extra request header for `--url` (repeatable) |
+| `--name <name>` | Server name advertised to the client |
+| `--require-redacted` | Refuse to serve packets with `privacy.redacted === false` |
+
+The same remote provider is available programmatically via `createAskableMcpRemoteProvider({ url, headers })`, which you can pass to `createAskableMcpServer`.
+
 ## MCP tools exposed
 
 The MCP server exposes a single tool:
