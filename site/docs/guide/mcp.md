@@ -22,32 +22,31 @@ The page bridge exposes a `read_current_resource` MCP tool and an `askable://cur
 ```ts
 // In your app entry point (e.g. main.ts / index.ts)
 import { createAskableContext } from '@askable-ui/core';
-import { createAskableMcpPageBridge } from '@askable-ui/mcp';
+import { createAskableMcpContextProvider, createAskableMcpPageBridge } from '@askable-ui/mcp';
 
 const ctx = createAskableContext();
 ctx.observe(document);
 
-const bridge = createAskableMcpPageBridge(ctx, {
-  resourceUri: 'askable://current',
-  name: 'My App UI Context',
+const bridge = createAskableMcpPageBridge({
+  provider: createAskableMcpContextProvider(ctx),
+  // requireRedacted: true, // refuse to serve packets with privacy.redacted === false
 });
 
 // The bridge installs a window message listener that local companions use.
-// Call bridge.destroy() when tearing down.
+// Call bridge.dispose() when tearing down.
 ```
-
-The companion receives a resource-shaped JSON object or a prompt-ready string depending on the request format.
 
 ### Prompt-ready vs structured output
 
-```ts
-// Returns a plain string like:
-// "User is focused on: metric: revenue, value: $128k, period: Q3"
-bridge.promptContext();
+A local companion posts a message and receives a response shaped by the request `type`:
 
-// Returns a structured WebContextPacket for programmatic use
-bridge.contextPacket();
-```
+| Request `type` | Response |
+|---|---|
+| `get_current_context` | The structured `WebContextPacket` |
+| `format_context_for_prompt` | A prompt-ready string |
+| `read_current_resource` | An MCP resource at `askable://current` (packet JSON or prompt text) |
+
+The packet/string is produced by the `provider` you pass — `createAskableMcpContextProvider(ctx)` wires it to your context's `toContextPacket()` / `toContext()`.
 
 ## Remote WebMCP (server-side)
 
@@ -249,16 +248,16 @@ app.post('/api/chat', async (req, res) => {
 ```tsx
 import { useEffect } from 'react';
 import { useAskable } from '@askable-ui/react';
-import { createAskableMcpPageBridge } from '@askable-ui/mcp';
+import { createAskableMcpContextProvider, createAskableMcpPageBridge } from '@askable-ui/mcp';
 
 function App() {
   const { ctx } = useAskable();
 
   useEffect(() => {
-    const bridge = createAskableMcpPageBridge(ctx, {
-      resourceUri: 'askable://current',
+    const bridge = createAskableMcpPageBridge({
+      provider: createAskableMcpContextProvider(ctx),
     });
-    return () => bridge.destroy();
+    return () => bridge.dispose();
   }, [ctx]);
 
   return <Dashboard />;
