@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/svelte';
 import Askable from '../Askable.svelte';
+import Askable5 from '../Askable5.svelte';
 import AskableWithContent from './AskableWithContent.svelte';
 import AskableNested from './AskableNested.svelte';
 
@@ -52,5 +53,26 @@ describe('Askable (Svelte)', () => {
     expect(nodes[0].getAttribute('data-askable')).toBe(JSON.stringify({ view: 'dashboard' }));
     expect(nodes[1].getAttribute('data-askable')).toBe(JSON.stringify({ tab: 'finance' }));
     expect(nodes[2].getAttribute('data-askable')).toBe(JSON.stringify({ metric: 'revenue' }));
+  });
+});
+
+describe('Askable5 (Svelte 5 runes)', () => {
+  it('sets data-askable attribute with stringified object meta', () => {
+    const meta = { metric: 'revenue', value: '$2.3M' };
+    const { container } = render(Askable5, { props: { meta } });
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-askable')).toBe(JSON.stringify(meta));
+  });
+
+  it('sets data-askable-scope when scope is provided (regression: prop was dropped)', () => {
+    const { container } = render(Askable5, { props: { meta: { widget: 'revenue' }, scope: 'analytics' } });
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-askable-scope')).toBe('analytics');
+  });
+
+  it('omits data-askable-scope when scope is not provided', () => {
+    const { container } = render(Askable5, { props: { meta: { widget: 'revenue' } } });
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.hasAttribute('data-askable-scope')).toBe(false);
   });
 });
