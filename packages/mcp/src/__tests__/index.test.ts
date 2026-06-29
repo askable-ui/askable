@@ -1260,3 +1260,89 @@ describe('createAskableMcpRemoteProvider', () => {
     await expect(provider.getContext()).rejects.toThrow(/503/);
   });
 });
+
+type ResourceReader = (uri: URL) => Promise<{ contents: Array<{ uri: string; mimeType?: string; text: string }> }>;
+
+function getResourceReader(provider: AskableMcpContextProvider, uri: string, requireRedacted = false): ResourceReader {
+  const server = createAskableMcpServer({ provider, requireRedacted });
+  const resources = (server as unknown as {
+    _registeredResources: Record<string, { readCallback: ResourceReader }>;
+  })._registeredResources;
+  const resource = resources[uri];
+  if (!resource) throw new Error(`Resource ${uri} not registered`);
+  return resource.readCallback;
+}
+
+describe('createAskableMcpServer — current_context resource', () => {
+  it('serves the current packet as a resource at askable://current', async () => {
+    const packet = createWebContextPacket({ capture: { mode: 'region' } });
+    const provider: AskableMcpContextProvider = { getContext: vi.fn().mockResolvedValue(packet) };
+
+    const read = getResourceReader(provider, ASKABLE_MCP_CURRENT_CONTEXT_RESOURCE_URI);
+    const result = await read(new URL(ASKABLE_MCP_CURRENT_CONTEXT_RESOURCE_URI));
+
+    expect(result.contents[0].mimeType).toBe('application/json');
+    expect(JSON.parse(result.contents[0].text)).toEqual(packet);
+  });
+
+  it('throws when requireRedacted is set and the packet is unredacted', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'region' },
+      privacy: { redacted: false, consent: 'implicit' },
+    });
+    const provider: AskableMcpContextProvider = { getContext: vi.fn().mockResolvedValue(packet) };
+
+    const read = getResourceReader(provider, ASKABLE_MCP_CURRENT_CONTEXT_RESOURCE_URI, true);
+
+    await expect(read(new URL(ASKABLE_MCP_CURRENT_CONTEXT_RESOURCE_URI))).rejects.toThrow(/redacted/);
+  });
+});
+
+describe('createAskableMcpServer — list_context_sources tool', () => {
+  it('returns the sources from the current packet', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'semantic' },
+      surrounding: {
+        sources: [
+          { label: 'accounts', role: 'collection', metadata: { total: 12 } },
+          { label: 'cart', role: 'cart', metadata: { itemCount: 3 } },
+        ],
+      },
+    });
+    const provider: AskableMcpContextProvider = { getContext: vi.fn().mockResolvedValue(packet) };
+
+    const handler = getToolHandler(provider, 'list_context_sources');
+    const result = await handler({});
+
+    expect(result.isError).toBeFalsy();
+    const sources = JSON.parse(result.content[0].text);
+    expect(sources).toHaveLength(2);
+    expect(sources[0].label).toBe('accounts');
+  });
+
+  it('returns an empty list when the packet has no sources', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(createWebContextPacket({ capture: { mode: 'element-focus' } })),
+    };
+
+    const handler = getToolHandler(provider, 'list_context_sources');
+    const result = await handler({});
+
+    expect(JSON.parse(result.content[0].text)).toEqual([]);
+  });
+
+  it('blocks unredacted packets when requireRedacted is set', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'region' },
+      privacy: { redacted: false, consent: 'implicit' },
+    });
+    const server = createAskableMcpServer({
+      provider: { getContext: vi.fn().mockResolvedValue(packet) },
+      requireRedacted: true,
+    });
+    const tools = (server as unknown as { _registeredTools: Record<string, { handler: McpToolHandler }> })._registeredTools;
+    const result = await tools['list_context_sources'].handler({});
+
+    expect(result.isError).toBe(true);
+  });
+});

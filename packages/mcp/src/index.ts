@@ -338,6 +338,31 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
     }),
   );
 
+  server.registerResource(
+    'current_context',
+    ASKABLE_MCP_CURRENT_CONTEXT_RESOURCE_URI,
+    {
+      title: 'Current Askable context',
+      description: 'The current selected, focused, or visible Context packet from the active app.',
+      mimeType: 'application/json',
+    },
+    async (uri) => {
+      const packet = await options.provider.getContext();
+      if (options.requireRedacted && packet.privacy?.redacted === false) {
+        throw new Error('Context packet has not been redacted. Set requireRedacted: false to allow, or redact the packet before serving.');
+      }
+      return {
+        contents: [
+          {
+            uri: uri.href,
+            mimeType: 'application/json',
+            text: JSON.stringify(packet, null, 2),
+          },
+        ],
+      };
+    },
+  );
+
   server.registerTool(
     'get_current_context',
     {
@@ -369,6 +394,43 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
         return {
           isError: true,
           content: [{ type: 'text', text: 'Failed to get context. Check server logs for details.' }],
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    'list_context_sources',
+    {
+      title: 'List app context sources',
+      description: 'List the app-owned context sources currently available (label, role, and metadata) so the agent can decide which to request.',
+      inputSchema: contextOptionsShape,
+    },
+    async (args) => {
+      try {
+        const packet = await options.provider.getContext(args);
+        if (options.requireRedacted && packet.privacy?.redacted === false) {
+          console.warn('[askable-mcp] list_context_sources blocked: packet has privacy.redacted=false');
+          return {
+            isError: true,
+            content: [{ type: 'text', text: 'Context packet has not been redacted. Configure a sanitizer or set requireRedacted: false.' }],
+          };
+        }
+        const sources = packet.surrounding?.sources ?? [];
+        return {
+          content: [
+            {
+              type: 'text',
+              mimeType: 'application/json',
+              text: JSON.stringify(sources, null, 2),
+            },
+          ],
+        };
+      } catch (err) {
+        console.error('[askable-mcp] list_context_sources failed:', err);
+        return {
+          isError: true,
+          content: [{ type: 'text', text: 'Failed to list context sources. Check server logs for details.' }],
         };
       }
     },
