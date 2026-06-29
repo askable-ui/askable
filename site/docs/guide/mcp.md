@@ -186,19 +186,23 @@ Your app just needs to expose a `GET` endpoint that returns the latest packet (e
 
 The same remote provider is available programmatically via `createAskableMcpRemoteProvider({ url, headers })`, which you can pass to `createAskableMcpServer`.
 
-## MCP tools exposed
+## MCP tools and resources exposed
 
-The MCP server exposes a single tool:
+`createAskableMcpServer` (and therefore the web handler and stdio CLI built on it) registers these tools:
 
 | Tool | Description |
 |---|---|
-| `read_current_resource` | Returns the current UI context as a `WebContextPacket` or prompt string |
+| `get_current_context` | Returns the current UI context as a `WebContextPacket` |
+| `format_context_for_prompt` | Returns a prompt-ready text rendering of the current context |
+| `list_context_sources` | Lists the app-owned context sources currently available (label, role, metadata) so the agent can decide which to request |
+| `get_context_schema` | Returns the JSON Schema for Context packets |
 
-And a resource:
+And these resources:
 
 | Resource | URI | Description |
 |---|---|---|
-| Current context | `askable://current` | Structured JSON packet of the focused UI element and active sources |
+| Current context | `askable://current` | The current Context packet as JSON — read it via `resources/read` instead of calling a tool |
+| Context schema | `context://schema` | The JSON Schema for Context packets |
 
 ## createAskableMcpServer (embedding MCP in-process)
 
