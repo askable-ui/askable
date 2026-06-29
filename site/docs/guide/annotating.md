@@ -219,6 +219,15 @@ const ctx = createAskableContext({ textExtractor: a11yTextExtractor });
 
 This is useful for icon buttons, data cells with screen-reader-only labels, or any element whose visible text is less informative than its accessible name.
 
+`a11yTextExtractor` is re-exported from every web framework package, so you can pass it straight to the hook without importing from `@askable-ui/core`:
+
+```tsx
+// React (also Vue, Svelte, Solid, Qwik)
+import { useAskable, a11yTextExtractor } from '@askable-ui/react';
+
+const { promptContext } = useAskable({ textExtractor: a11yTextExtractor });
+```
+
 ### Custom extractor
 
 For full control, write your own extractor. The function receives the DOM element and returns a string. It applies to all focus events and explicit `select()` calls:
