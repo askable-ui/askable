@@ -5,8 +5,14 @@ updates:
     schedule:
       interval: "weekly"
     groups:
+      # Only bundle non-breaking dev-dependency updates. Major bumps come as
+      # individual PRs so a breaking upgrade (e.g. an Angular major) can't be
+      # silently merged inside a routine group.
       dev-dependencies:
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
     open-pull-requests-limit: 10
