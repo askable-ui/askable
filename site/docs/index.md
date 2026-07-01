@@ -113,6 +113,7 @@ Start here:
 
 - [What’s New in v0.15.0](/guide/whats-new)
 - [Context Packets](/guide/context)
+- [The Context Packet Protocol (spec)](/guide/protocol)
 - [React interaction patterns](/guide/react#region-circle-and-lasso-capture)
 - [Angular guide](/guide/angular)
 - [React Native guide](/guide/react-native)
