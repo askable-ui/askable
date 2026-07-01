@@ -1,0 +1,44 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.json",
+  "name": "io.github.askable-ui/askable",
+  "description": "Expose your web app's live UI context — what the user is looking at, as structured Context Packets — to Claude Desktop, Cursor, and any MCP client.",
+  "status": "active",
+  "repository": {
+    "url": "https://github.com/askable-ui/askable",
+    "source": "github"
+  },
+  "version_detail": {
+    "version": "0.15.0"
+  },
+  "packages": [
+    {
+      "registry_name": "npm",
+      "name": "@askable-ui/mcp",
+      "version": "0.15.0",
+      "runtime_hint": "npx",
+      "package_arguments": [
+        {
+          "type": "named",
+          "name": "--url",
+          "description": "HTTP(S) endpoint that returns the current Context packet as JSON on GET",
+          "is_required": false,
+          "format": "string"
+        },
+        {
+          "type": "named",
+          "name": "--file",
+          "description": "Path to a static Context packet JSON file (alternative to --url)",
+          "is_required": false,
+          "format": "string"
+        },
+        {
+          "type": "named",
+          "name": "--require-redacted",
+          "description": "Refuse to serve packets with privacy.redacted === false",
+          "is_required": false,
+          "format": "boolean"
+        }
+      ]
+    }
+  ]
+}
