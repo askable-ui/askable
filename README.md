@@ -5,8 +5,8 @@
 <h1 align="center">askable-ui</h1>
 
 <p align="center">
-  <strong>Your LLM doesn't know what the user is looking at. Fix that in two lines.</strong><br />
-  One attribute. Real-time UI context. Works with every LLM SDK and MCP client.
+  <strong>Give your LLM eyes. One attribute for humans, one protocol for agents.</strong><br />
+  <code>data-askable</code> turns what the user is looking at into structured, real-time context — for every LLM SDK and every MCP client.
 </p>
 
 <p align="center">
@@ -35,6 +35,7 @@
   <a href="#mcp-claude-desktop--cursor">MCP</a> &nbsp;·&nbsp;
   <a href="#how-it-works">How it works</a> &nbsp;·&nbsp;
   <a href="#capture-modes">Capture modes</a> &nbsp;·&nbsp;
+  <a href="#an-open-protocol-not-just-a-library">Protocol</a> &nbsp;·&nbsp;
   <a href="#packages">Packages</a> &nbsp;·&nbsp;
   <a href="https://askable-ui.com/docs/">Docs</a> &nbsp;·&nbsp;
   <a href="https://askable-mu.vercel.app/">Live Demo</a>
@@ -129,38 +130,37 @@ React + Vite + CopilotKit, wired up and ready to go.
 
 ## MCP — Claude Desktop, Cursor, and any MCP client
 
-Expose your app's live UI context as an MCP server. Any agent that connects can ask what the user currently sees.
-
-```bash
-npm install @askable-ui/mcp
-```
-
-```ts
-import { createAskableMcpServer, createAskableMcpContextProvider } from '@askable-ui/mcp';
-
-const server = createAskableMcpServer({
-  provider: createAskableMcpContextProvider(ctx),
-});
-
-server.connect(transport);
-```
-
-Add to `claude_desktop_config.json`:
+**Give Claude eyes into your running app in one command.** If your app exposes its current context at an endpoint (one `GET` route returning `ctx.toContextPacket()`), the bundled `askable-mcp` binary serves it to any MCP client over stdio — no server framework, no extra dependencies:
 
 ```json
+// claude_desktop_config.json
 {
   "mcpServers": {
     "my-app": {
-      "command": "node",
-      "args": ["path/to/your/mcp-server.js"]
+      "command": "npx",
+      "args": ["-y", "@askable-ui/mcp", "--url", "http://localhost:3001/context"]
     }
   }
 }
 ```
 
-Claude Desktop can now call `get_current_context` and `format_context_for_prompt` — it sees exactly what your user sees, without screenshots or manual description.
+Claude Desktop and Cursor can now call `get_current_context`, `format_context_for_prompt`, and `list_context_sources`, or read the live `askable://current` resource — they see exactly what your user sees, without screenshots or manual description. Add `--require-redacted` to refuse serving unredacted packets.
 
-→ **[MCP integration guide](https://askable-ui.com/docs/api/mcp)**
+Prefer embedding? The same server runs in-process:
+
+```ts
+import { createAskableMcpServer, createAskableMcpContextProvider } from '@askable-ui/mcp';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+
+const server = createAskableMcpServer({
+  provider: createAskableMcpContextProvider(ctx),
+});
+await server.connect(new StdioServerTransport());
+```
+
+There's also a fetch-compatible HTTP handler (`createAskableMcpWebHandler`) for remote WebMCP endpoints, and a browser-local page bridge for extensions.
+
+→ **[MCP integration guide](https://askable-ui.com/docs/guide/mcp)**
 
 ---
 
@@ -247,7 +247,7 @@ const { visibleItems, promptContext } = useAskableViewport({ threshold: 0.5 });
 // promptContext → "Visible UI elements:\n- {"metric":"revenue","value":"$2.3M"} ..."
 ```
 
-Available in React, Vue, and Svelte (both Svelte 4 and 5).
+Available in React, Vue, Svelte (both 4 and 5), SolidJS, and Angular.
 
 ### Navigation history
 
@@ -260,7 +260,7 @@ const { history, promptContext } = useAskableHistory({ maxEntries: 5 });
 // promptContext → "User navigation trail (most recent first):\n→ {"metric":"churn"}..."
 ```
 
-Deduplicates consecutive identical entries by default. Available in React, Vue, and Svelte.
+Deduplicates consecutive identical entries by default. Available in React, Vue, Svelte, SolidJS, Angular, and Qwik.
 
 ### Composing context streams
 
@@ -461,6 +461,27 @@ All sources are also available from the main entry point — the split is about 
 
 ---
 
+## An open protocol, not just a library
+
+Everything above serializes to one versioned wire format: the **Context Packet** (`askable.context/0.1`). It's a small JSON envelope that carries what was captured, how, and — first-class — whether it was redacted and under what consent:
+
+```json
+{
+  "protocol": "askable.context",
+  "version": "0.1",
+  "capture": { "mode": "lasso", "intent": "explain the highlighted region" },
+  "target": { "text": "NRR 118%", "metadata": { "metric": "net revenue retention" } },
+  "privacy": { "redacted": true, "consent": "explicit" },
+  "provenance": { "producer": "askable-ui", "method": "app" }
+}
+```
+
+The format lives in [`@askable-ui/context`](https://www.npmjs.com/package/@askable-ui/context) — a dependency-free package with the types, the JSON Schema, and a runtime guard. askable-ui is the reference implementation; any producer (app, extension, native client) and any consumer (prompt builder, MCP client, agent runtime) can speak it.
+
+→ **[Read the spec](https://askable-ui.com/docs/guide/protocol)**
+
+---
+
 ## Works with
 
 **LLM SDKs**
@@ -483,7 +504,7 @@ All sources are also available from the main entry point — the split is about 
 | Svelte 4 & 5 | `@askable-ui/svelte` | `createAskableStore()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableCartSource()`, `useAskableMultistepSource()`, `useAskableScrollSource()`, `useAskableThemeSource()`, `useAskableWindowSource()`, `useAskableLocaleSource()`, `useAskableNetworkSource()`, `useAskableTimeSource()`, `useAskableFocusSource()`, `useAskableTabSource()`, `useAskablePerformanceSource()`, `useAskableBatterySource()`, `useAskableGeolocationSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | SolidJS | `@askable-ui/solid` | `useAskable()`, `useAskableAgent()`, `useAskableStream()`, `useAskableChat()`, `useAskableKeyboardShortcut()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableDOMSource()`, `useAskableStorageSource()`, `useAskableCartSource()`, `useAskableMultistepSource()`, `useAskableScrollSource()`, `useAskableThemeSource()`, `useAskableWindowSource()`, `useAskableLocaleSource()`, `useAskableNetworkSource()`, `useAskableTimeSource()`, `useAskableFocusSource()`, `useAskableTabSource()`, `useAskablePerformanceSource()`, `useAskableBatterySource()`, `useAskableGeolocationSource()`, `useAskableViewport()`, `useAskableHistory()`, `<Askable>` |
 | Angular 16+ | `@askable-ui/angular` | `AskableService`, `AskablePageSourceService`, `AskableFormSourceService`, `AskableErrorSourceService`, `AskableUserSourceService`, `AskableNavigationSourceService`, `AskableCartSourceService`, `AskableMultistepSourceService`, `AskableScrollSourceService`, `AskableThemeSourceService`, `AskableWindowSourceService`, `AskableLocaleSourceService`, `AskableNetworkSourceService`, `AskableTimeSourceService`, `AskableFocusSourceService`, `AskableTabSourceService`, `AskablePerformanceSourceService`, `AskableBatterySourceService`, `AskableGeolocationSourceService`, `AskableAgentService`, `AskableDirective`, `AskableViewportService`, `AskableHistoryService` |
-| Qwik | `@askable-ui/qwik` | `useAskable()`, `<Askable>` for Qwik City apps |
+| Qwik | `@askable-ui/qwik` | `useAskable()`, `useAskableStream()`, `useAskableChat()`, `useAskableHistory()`, `useAskablePageSource()`, `useAskableFormSource()`, `useAskableTableSource()`, `useAskableErrorSource()`, `useAskableUserSource()`, `useAskableNavigationSource()`, `useAskableNotificationSource()`, `useAskableCartSource()`, `useAskableMultistepSource()`, `<Askable>` for Qwik City apps |
 | Web Component | `@askable-ui/web-component` | `<askable-context>` custom element, works in HTMX, Ember, vanilla HTML |
 | React Native | `@askable-ui/react-native` | `useAskable()`, `<Askable>`, scroll view adapter |
 | Vanilla JS | `@askable-ui/core` | `createAskableContext()`, zero dependencies |
@@ -613,7 +634,7 @@ export class AppComponent {
     { label: 'Focused element', value: this.askable.promptContext() },
   ]);
 
-  { promptContext } = useAskableCompose(this.sections);
+  promptContext = useAskableCompose(this.sections).promptContext;
 }
 ```
 

@@ -29,7 +29,7 @@ export interface UseAskableComposeResult {
  *     { label: 'Focused element', value: this.askable.promptContext() },
  *   ]);
  *
- *   { promptContext } = useAskableCompose(this.sections);
+ *   promptContext = useAskableCompose(this.sections).promptContext;
  * }
  * ```
  */
