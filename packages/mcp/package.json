@@ -2,6 +2,7 @@
   "name": "@askable-ui/mcp",
   "version": "0.15.0",
   "description": "MCP server and page bridge to expose UI context to Claude Desktop, Cursor, and any MCP client",
+  "mcpName": "io.github.askable-ui/askable",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
