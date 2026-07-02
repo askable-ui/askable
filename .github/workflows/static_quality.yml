@@ -20,6 +20,9 @@ on:
       - ".github/workflows/publish_release.yml"
       - "packages/**/CHANGELOG.md"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

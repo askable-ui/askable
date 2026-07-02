@@ -631,6 +631,9 @@ async function handleAskableMcpPageBridgeMessage(
     return;
   }
 
+  const targetOrigin = resolveAskableMcpPageBridgeTargetOrigin(event, options, bridgeWindow);
+  if (!targetOrigin) return;
+
   try {
     const contextOptions = getAskableMcpPageBridgeContextOptions(request.options);
     const packet = await options.provider.getContext(contextOptions);
@@ -640,7 +643,7 @@ async function handleAskableMcpPageBridgeMessage(
         ...createAskableMcpPageBridgeResponseBase(request),
         type: `${request.type}:error`,
         error: { message: 'Context packet has not been redacted. Set requireRedacted: false to allow, or redact the packet before sending.' },
-      }, resolveAskableMcpPageBridgeTargetOrigin(event, options));
+      }, targetOrigin);
       return;
     }
 
@@ -672,14 +675,14 @@ async function handleAskableMcpPageBridgeMessage(
       };
     }
 
-    bridgeWindow.postMessage(response, resolveAskableMcpPageBridgeTargetOrigin(event, options));
+    bridgeWindow.postMessage(response, targetOrigin);
   } catch (error) {
     options.onError?.(error, event);
     bridgeWindow.postMessage({
       ...createAskableMcpPageBridgeResponseBase(request),
       type: `${request.type}:error`,
       error: { message: 'Askable MCP page bridge failed.' },
-    }, resolveAskableMcpPageBridgeTargetOrigin(event, options));
+    }, targetOrigin);
   }
 }
 
@@ -801,8 +804,12 @@ function createAskableMcpPageBridgeResponseBase(
 function resolveAskableMcpPageBridgeTargetOrigin(
   event: MessageEvent,
   options: AskableMcpPageBridgeOptions,
-): string {
-  return options.targetOrigin ?? (event.origin || '*');
+  bridgeWindow: AskableMcpPageBridgeWindow,
+): string | null {
+  if (options.targetOrigin) return options.targetOrigin;
+  // Never fall back to '*': context packets must not be broadcast to
+  // arbitrary origins. Without a known origin, drop the response instead.
+  return event.origin || bridgeWindow.location?.origin || null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
