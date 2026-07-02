@@ -100,14 +100,58 @@ describe('createAskableStorageSource', () => {
   });
 
   it('reads sessionStorage when specified', async () => {
-    setItems(sessionStorage, { sessionId: 'xyz' });
+    setItems(sessionStorage, { viewMode: 'grid' });
     const ctx = createAskableContext();
     ctx.registerSource('sess', createAskableStorageSource({ storage: 'sessionStorage' }));
 
     const resolved = await ctx.resolveSource('sess');
     const data = resolved.data as { storageType: string; items: Record<string, unknown> };
     expect(data.storageType).toBe('sessionStorage');
-    expect(data.items.sessionId).toBe('xyz');
+    expect(data.items.viewMode).toBe('grid');
+    ctx.destroy();
+  });
+
+  it('masks secret-looking keys by default', async () => {
+    setItems(localStorage, {
+      authToken: 'jwt-abc',
+      api_key: 'sk-123',
+      userPassword: 'hunter2',
+      sessionId: 'xyz',
+      theme: 'dark',
+    });
+    const ctx = createAskableContext();
+    ctx.registerSource('ls', createAskableStorageSource());
+
+    const resolved = await ctx.resolveSource('ls');
+    const data = resolved.data as { items: Record<string, unknown> };
+    expect(data.items.authToken).toBe('***');
+    expect(data.items.api_key).toBe('***');
+    expect(data.items.userPassword).toBe('***');
+    expect(data.items.sessionId).toBe('***');
+    expect(data.items.theme).toBe('dark');
+    ctx.destroy();
+  });
+
+  it('masks secret-looking keys even when explicitly listed in keys', async () => {
+    setItems(localStorage, { accessToken: 'abc', theme: 'dark' });
+    const ctx = createAskableContext();
+    ctx.registerSource('ls', createAskableStorageSource({ keys: ['accessToken', 'theme'] }));
+
+    const resolved = await ctx.resolveSource('ls');
+    const data = resolved.data as { items: Record<string, unknown> };
+    expect(data.items.accessToken).toBe('***');
+    expect(data.items.theme).toBe('dark');
+    ctx.destroy();
+  });
+
+  it('captures secret-looking keys when maskSensitiveKeys is false', async () => {
+    setItems(localStorage, { authToken: 'jwt-abc' });
+    const ctx = createAskableContext();
+    ctx.registerSource('ls', createAskableStorageSource({ maskSensitiveKeys: false }));
+
+    const resolved = await ctx.resolveSource('ls');
+    const data = resolved.data as { items: Record<string, unknown> };
+    expect(data.items.authToken).toBe('jwt-abc');
     ctx.destroy();
   });
 

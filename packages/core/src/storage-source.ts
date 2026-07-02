@@ -39,6 +39,15 @@ export interface AskableCreateStorageSourceOptions {
    */
   maskKeys?: string[];
   /**
+   * Mask values whose keys look secret-bearing — matching token, secret,
+   * password, auth, jwt, api key, credential, session id, cookie, or private —
+   * in addition to `maskKeys`. This is a safety net so credentials in
+   * localStorage are not serialized into AI context by default. Set to `false`
+   * only when you are certain the captured storage holds no secrets.
+   * @default true
+   */
+  maskSensitiveKeys?: boolean;
+  /**
    * Custom transformer applied to the captured items before returning.
    * Can be used for field-level sanitization or restructuring.
    */
@@ -77,6 +86,13 @@ function keyMatchesList(key: string, patterns: string[]): boolean {
   return patterns.some((p) => matchesGlob(key, p));
 }
 
+const SENSITIVE_KEY_PATTERN = /token|secret|passw(or)?d|auth|jwt|api[-_]?key|credential|session[-_]?id|cookie|private/i;
+
+function shouldMask(key: string, maskKeys: string[], maskSensitiveKeys: boolean): boolean {
+  if (maskKeys.length > 0 && keyMatchesList(key, maskKeys)) return true;
+  return maskSensitiveKeys && SENSITIVE_KEY_PATTERN.test(key);
+}
+
 function parseValue(raw: string | null, parseJSON: boolean): unknown {
   if (raw === null) return null;
   if (!parseJSON) return raw;
@@ -96,6 +112,7 @@ function buildSnapshot(
     omitKeys = [],
     parseJSON = true,
     maskKeys = [],
+    maskSensitiveKeys = true,
     sanitize,
   } = options;
 
@@ -114,7 +131,7 @@ function buildSnapshot(
         for (let i = 0; i < store.length; i++) {
           const k = store.key(i);
           if (k && matchesGlob(k, pattern) && !keyMatchesList(k, omitKeys)) {
-            items[k] = maskKeys && keyMatchesList(k, maskKeys)
+            items[k] = shouldMask(k, maskKeys, maskSensitiveKeys)
               ? '***'
               : parseValue(store.getItem(k), parseJSON);
           }
@@ -123,7 +140,7 @@ function buildSnapshot(
         if (!keyMatchesList(pattern, omitKeys)) {
           const raw = store.getItem(pattern);
           if (raw !== null) {
-            items[pattern] = maskKeys && keyMatchesList(pattern, maskKeys)
+            items[pattern] = shouldMask(pattern, maskKeys, maskSensitiveKeys)
               ? '***'
               : parseValue(raw, parseJSON);
           }
@@ -134,7 +151,7 @@ function buildSnapshot(
     for (let i = 0; i < store.length; i++) {
       const k = store.key(i);
       if (!k || keyMatchesList(k, omitKeys)) continue;
-      items[k] = maskKeys && keyMatchesList(k, maskKeys)
+      items[k] = shouldMask(k, maskKeys, maskSensitiveKeys)
         ? '***'
         : parseValue(store.getItem(k), parseJSON);
     }

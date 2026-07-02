@@ -1174,6 +1174,30 @@ describe('createAskableMcpPageBridge', () => {
     );
   });
 
+  it('drops the response instead of posting with a wildcard target origin', async () => {
+    const packet = createWebContextPacket({ capture: { mode: 'region' } });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const fakeWindow = new FakePageBridgeWindow();
+    (fakeWindow as unknown as { location: undefined }).location = undefined;
+    createAskableMcpPageBridge({
+      provider,
+      window: fakeWindow,
+      allowedOrigins: () => true,
+    });
+
+    fakeWindow.emit({
+      protocol: ASKABLE_MCP_PAGE_BRIDGE_PROTOCOL,
+      version: ASKABLE_MCP_PAGE_BRIDGE_VERSION,
+      type: 'get_current_context',
+      requestId: 'req-no-origin',
+    }, '');
+    await flushPageBridge();
+
+    expect(fakeWindow.posted).toHaveLength(0);
+  });
+
   it('removes the page bridge listener on dispose', async () => {
     const provider: AskableMcpContextProvider = {
       getContext: vi.fn(),
