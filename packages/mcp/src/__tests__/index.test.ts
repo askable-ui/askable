@@ -578,6 +578,139 @@ describe('createAskableMcpWebHandler', () => {
     }));
   });
 
+  it('rejects oversized MCP request bodies using actual bytes when content length is absent or false', async () => {
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn(),
+    };
+    const handler = createAskableMcpWebHandler({
+      provider,
+      maxRequestBodyBytes: 3,
+    });
+
+    const withoutContentLength = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      body: '😀',
+    }));
+    const falseContentLength = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'Content-Length': '1',
+      },
+      body: '😀',
+    }));
+
+    expect(withoutContentLength.status).toBe(413);
+    expect(falseContentLength.status).toBe(413);
+    expect(provider.getContext).not.toHaveBeenCalled();
+  });
+
+  it('cancels both branches of an oversized streamed MCP request', async () => {
+    let pulls = 0;
+    let cancelled = false;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulls += 1;
+        controller.enqueue(new Uint8Array([pulls]));
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const handler = createAskableMcpWebHandler({
+      provider: { getContext: vi.fn() },
+      maxRequestBodyBytes: 3,
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      body,
+      duplex: 'half',
+    } as RequestInit & { duplex: 'half' }));
+    const pullsAtResponse = pulls;
+    await Promise.resolve();
+
+    expect(response.status).toBe(413);
+    expect(cancelled).toBe(true);
+    expect(pulls).toBe(pullsAtResponse);
+  });
+
+  it('supports authorization that consumes the body and returns parsedBody', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'semantic' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const body = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: { name: 'get_current_context', arguments: {} },
+    });
+    const handler = createAskableMcpWebHandler({
+      provider,
+      maxRequestBodyBytes: new TextEncoder().encode(body).byteLength,
+      authorize: async (request) => ({
+        parsedBody: await request.json() as Record<string, unknown>,
+      }),
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'MCP-Protocol-Version': '2025-06-18',
+      },
+      body,
+    }));
+
+    expect(response.status).toBe(200);
+    expect(provider.getContext).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts an MCP request whose actual byte length equals the configured limit', async () => {
+    const packet = createWebContextPacket({
+      capture: { mode: 'semantic' },
+    });
+    const provider: AskableMcpContextProvider = {
+      getContext: vi.fn().mockResolvedValue(packet),
+    };
+    const body = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: { name: 'get_current_context', arguments: {} },
+    });
+    const handler = createAskableMcpWebHandler({
+      provider,
+      maxRequestBodyBytes: new TextEncoder().encode(body).byteLength,
+    });
+
+    const response = await handler(new Request('https://example.com/mcp', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json',
+        'MCP-Protocol-Version': '2025-06-18',
+      },
+      body,
+    }));
+
+    expect(response.status).toBe(200);
+    expect(provider.getContext).toHaveBeenCalledTimes(1);
+  });
+
   it('supports custom and disabled MCP request body limits', async () => {
     const packet = createWebContextPacket({
       capture: { mode: 'semantic' },
