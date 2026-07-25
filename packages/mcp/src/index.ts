@@ -500,6 +500,7 @@ export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions)
   return async (request) => {
     const startedAt = Date.now();
     let corsHeaders: Headers | undefined;
+    let requestBodySizeCheck: AskableMcpRequestBodySizeCheck | undefined;
     const finalize = (
       response: Response,
       outcome: AskableMcpWebOutcome,
@@ -529,21 +530,33 @@ export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions)
         );
       }
 
-      if (isRequestBodyTooLarge(request, resolveMaxRequestBodyBytes(options.maxRequestBodyBytes))) {
+      const maxRequestBodyBytes = resolveMaxRequestBodyBytes(options.maxRequestBodyBytes);
+      if (isDeclaredRequestBodyTooLarge(request, maxRequestBodyBytes)) {
         return finalize(
           createAskableMcpErrorResponse(413, -32004, 'MCP request body is too large.'),
           'payload_too_large',
         );
       }
 
+      requestBodySizeCheck = createRequestBodySizeCheck(request, maxRequestBodyBytes);
+
       const authorization = options.authorize ? await options.authorize(request) : undefined;
       if (authorization instanceof Response) {
+        await requestBodySizeCheck?.cancel();
         return finalize(authorization, authorization.status >= 400 ? 'unauthorized' : 'success');
       }
       if (authorization === false) {
+        await requestBodySizeCheck?.cancel();
         return finalize(
           createAskableMcpErrorResponse(401, -32001, 'Unauthorized MCP request.'),
           'unauthorized',
+        );
+      }
+
+      if (await requestBodySizeCheck?.exceedsLimit()) {
+        return finalize(
+          createAskableMcpErrorResponse(413, -32004, 'MCP request body is too large.'),
+          'payload_too_large',
         );
       }
 
@@ -567,6 +580,7 @@ export function createAskableMcpWebHandler(options: AskableMcpWebHandlerOptions)
         'success',
       );
     } catch (error) {
+      await requestBodySizeCheck?.cancel();
       options.onError?.(error, request);
       return finalize(
         createAskableMcpErrorResponse(500, -32000, 'Askable MCP handler failed.'),
@@ -920,7 +934,7 @@ function resolveMaxRequestBodyBytes(value: AskableMcpWebHandlerOptions['maxReque
   return defaultMaxRequestBodyBytes;
 }
 
-function isRequestBodyTooLarge(request: Request, maxRequestBodyBytes: number | false): boolean {
+function isDeclaredRequestBodyTooLarge(request: Request, maxRequestBodyBytes: number | false): boolean {
   if (maxRequestBodyBytes === false || !requestMayHaveBody(request)) return false;
 
   const contentLength = request.headers.get('Content-Length');
@@ -928,6 +942,73 @@ function isRequestBodyTooLarge(request: Request, maxRequestBodyBytes: number | f
 
   const bytes = Number(contentLength);
   return Number.isFinite(bytes) && bytes > maxRequestBodyBytes;
+}
+
+interface AskableMcpRequestBodySizeCheck {
+  exceedsLimit(): Promise<boolean>;
+  cancel(): Promise<void>;
+}
+
+function createRequestBodySizeCheck(
+  request: Request,
+  maxRequestBodyBytes: number | false,
+): AskableMcpRequestBodySizeCheck | undefined {
+  if (maxRequestBodyBytes === false || !requestMayHaveBody(request) || !request.body) return undefined;
+
+  const reader = request.clone().body?.getReader();
+  const requestBody = request.body;
+  if (!reader || !requestBody) return undefined;
+
+  let finished = false;
+  let cancellation: Promise<void> | undefined;
+  let bytes = 0;
+
+  const releaseReader = () => {
+    try {
+      reader.releaseLock();
+    } catch {
+      // The reader may already be released by a runtime after cancellation.
+    }
+  };
+
+  const cancel = (): Promise<void> => {
+    if (cancellation) return cancellation;
+    if (finished) return Promise.resolve();
+    finished = true;
+
+    // A cloned Request tees the underlying stream. Start cancellation on both
+    // branches before awaiting either one so the source can actually stop.
+    const cloneCancellation = reader.cancel().catch(() => undefined);
+    const requestCancellation = requestBody.cancel().catch(() => undefined);
+    cancellation = Promise.all([cloneCancellation, requestCancellation]).then(() => {
+      releaseReader();
+    });
+    return cancellation;
+  };
+
+  const exceedsLimit = async (): Promise<boolean> => {
+    if (finished) return false;
+    try {
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) {
+          finished = true;
+          releaseReader();
+          return false;
+        }
+        bytes += chunk.value.byteLength;
+        if (bytes > maxRequestBodyBytes) {
+          await cancel();
+          return true;
+        }
+      }
+    } catch (error) {
+      await cancel();
+      throw error;
+    }
+  };
+
+  return { exceedsLimit, cancel };
 }
 
 function requestMayHaveBody(request: Request): boolean {

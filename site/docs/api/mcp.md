@@ -133,10 +133,12 @@ When `cors` is configured, preflight requests are answered before auth or contex
 reads. Web responses also receive `Cache-Control: no-store` and
 `X-Content-Type-Options: nosniff` unless the response already set those headers.
 
-`maxRequestBodyBytes` rejects oversized MCP requests with a JSON-RPC `413`
-before authorization, server setup, or MCP body parsing runs. The default is
-1 MiB. Pass `false` to disable the built-in guard when another layer already
-enforces request limits.
+`maxRequestBodyBytes` rejects oversized MCP requests with a JSON-RPC `413`.
+An oversized declared `Content-Length` is rejected before authorization. The
+actual streamed bytes are also checked after authorization and before server
+setup or MCP body parsing, so missing or inaccurate length headers cannot bypass
+the limit. The default is 1 MiB. Pass `false` to disable the built-in guard when
+another layer already enforces request limits.
 
 `telemetry` receives sanitized request metadata such as method, path, status,
 outcome, duration, origin, user agent, and request ID. It does not include MCP
