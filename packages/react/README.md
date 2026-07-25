@@ -175,6 +175,8 @@ const { focus: focusOnly } = useAskable({ events: ['focus'] });
 
 The hook manages a shared singleton context per `name + events + viewport` configuration. Multiple `useAskable()` consumers with the same shared configuration reuse one observer lifecycle, while differing configurations get isolated shared contexts of their own. Each shared context is automatically destroyed when its last consumer unmounts.
 
+Unnamed hooks that pass `maxHistory`, `sanitizeMeta`, `sanitizeText`, `sanitizeSource`, or `textExtractor` receive a private auto-created context so privacy and capture configuration cannot leak through the default shared context. Supplying `name` explicitly opts into sharing for the same `events` + `viewport` configuration, and that configuration's first mounted consumer supplies its creation options.
+
 If you need isolation, create your own context and pass it through `ctx`:
 
 ```tsx

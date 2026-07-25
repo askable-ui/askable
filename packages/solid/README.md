@@ -82,6 +82,10 @@ fetch('/api/chat', {
 | `<Askable meta={...}>` | Wrapper component that sets `data-askable` |
 | `asMeta<T>(focus)` | Cast `focus.meta` to your typed schema |
 
+### Context sharing and isolation
+
+Default hooks share a context by `name + events + viewport`. An unnamed hook that supplies `maxHistory`, `sanitizeMeta`, `sanitizeText`, `sanitizeSource`, or `textExtractor` receives a private context so capture and privacy configuration cannot affect unrelated consumers. Supplying `name` explicitly opts into sharing for the same `events` + `viewport` configuration, and that configuration's first mounted consumer supplies its creation options.
+
 ## Links
 
 - [askable-ui.com](https://askable-ui.com) — docs and demos

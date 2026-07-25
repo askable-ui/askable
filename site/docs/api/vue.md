@@ -113,10 +113,12 @@ Vue mirrors the React adapter's context model:
 
 - **Default shared context** — `useAskable()` reuses one shared document observer for the same `events` + `viewport` configuration.
 - **Named shared context** — `useAskable({ name: 'chart' })` reuses a separate shared context for one region or AI surface.
-- **Private auto-created context** — passing context-creation options like `maxHistory`, `sanitizeMeta`, `sanitizeText`, or `textExtractor` without `name` or `ctx` creates a private context for that composable instance.
+- **Private auto-created context** — passing context-creation options like `maxHistory`, `sanitizeMeta`, `sanitizeText`, `sanitizeSource`, or `textExtractor` without `name` or `ctx` creates a private context for that composable instance.
 - **Custom provided context** — `useAskable({ ctx })` attaches to an explicitly created `AskableContext` that you observe/configure yourself.
 
 Use the shared mode when multiple Vue components should agree on the same focus/history. Use a private or provided context when one panel needs isolation or a custom root.
+
+Supplying `name` explicitly opts into sharing for the same `events` + `viewport` configuration. Context-creation options are taken from that configuration's first mounted consumer, so matching consumers should use the same sanitizers and history configuration.
 
 ```ts
 // Shared chart/chat pair

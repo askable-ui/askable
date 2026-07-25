@@ -165,6 +165,69 @@ describe('useAskable (Vue)', () => {
     wrapperA.unmount();
   });
 
+  it.each([false, true])(
+    'isolates an unnamed sanitizeSource context when sanitized consumer is mounted first=%s',
+    async (sanitizedFirst) => {
+      const contexts: Record<string, unknown> = {};
+
+      const DefaultConsumer = defineComponent({
+        setup() {
+          contexts.default = useAskable().ctx;
+          return {};
+        },
+        template: `<span />`,
+      });
+      const SanitizedConsumer = defineComponent({
+        setup() {
+          contexts.sanitized = useAskable({ sanitizeSource: (source) => source }).ctx;
+          return {};
+        },
+        template: `<span />`,
+      });
+
+      const components = sanitizedFirst
+        ? { First: SanitizedConsumer, Second: DefaultConsumer }
+        : { First: DefaultConsumer, Second: SanitizedConsumer };
+      const wrapper = track(mount(defineComponent({
+        components,
+        template: `<div><First /><Second /></div>`,
+      }), { attachTo: document.body }));
+      await flushAll();
+
+      expect(contexts.sanitized).toBeDefined();
+      expect(contexts.default).toBeDefined();
+      expect(contexts.sanitized).not.toBe(contexts.default);
+      wrapper.unmount();
+    }
+  );
+
+  it.each([
+    ['maxHistory', { maxHistory: 0 }],
+    ['sanitizeMeta', { sanitizeMeta: (meta: Record<string, unknown>) => meta }],
+    ['sanitizeText', { sanitizeText: (text: string) => text }],
+    ['sanitizeSource', { sanitizeSource: (source: any) => source }],
+    ['textExtractor', { textExtractor: (element: Element) => element.textContent ?? '' }],
+  ] as const)('isolates unnamed %s configuration', async (_label, privateOptions) => {
+    const contexts: Record<string, unknown> = {};
+    const DefaultConsumer = defineComponent({
+      setup() { contexts.default = useAskable().ctx; return {}; },
+      template: `<span />`,
+    });
+    const ConfiguredConsumer = defineComponent({
+      setup() { contexts.configured = useAskable(privateOptions).ctx; return {}; },
+      template: `<span />`,
+    });
+
+    const wrapper = track(mount(defineComponent({
+      components: { DefaultConsumer, ConfiguredConsumer },
+      template: `<div><DefaultConsumer /><ConfiguredConsumer /></div>`,
+    }), { attachTo: document.body }));
+    await flushAll();
+
+    expect(contexts.configured).not.toBe(contexts.default);
+    wrapper.unmount();
+  });
+
   it('observes the shared global context only once for multiple consumers with the same events', async () => {
     let capturedCtx: ReturnType<typeof import('@askable-ui/core').createAskableContext> | null = null;
 
@@ -192,7 +255,7 @@ describe('useAskable (Vue)', () => {
     wrapperA.unmount();
   });
 
-  it('isolates differing shared event configurations and preserves the remaining config on unmount', async () => {
+  it('isolates named contexts with different events and preserves the remaining context on unmount', async () => {
     const EventConsumer = defineComponent({
       name: 'EventConsumer',
       props: {
@@ -200,7 +263,7 @@ describe('useAskable (Vue)', () => {
         events: { type: Array as () => ('click' | 'focus')[], required: true },
       },
       setup(props) {
-        const { focus } = useAskable({ events: props.events });
+        const { focus } = useAskable({ name: 'region', events: props.events });
         return { focus };
       },
       template: `<span :data-testid="'event-' + label">{{ focus ? JSON.stringify(focus.meta) : 'null' }}</span>`,
