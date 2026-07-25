@@ -21,16 +21,33 @@ function getSharedKey(name?: string, events?: AskableEvent[], viewport?: boolean
   return `${scope}::${getEventsKey(events)}::${viewportKey}`;
 }
 
+function requiresPrivateContext(options?: UseAskableOptions): boolean {
+  if (options?.name?.trim()) return false;
+  return Boolean(
+    options?.maxHistory !== undefined ||
+    options?.sanitizeMeta ||
+    options?.sanitizeText ||
+    options?.sanitizeSource ||
+    options?.textExtractor
+  );
+}
+
+function createAdapterContext(options?: UseAskableOptions): AskableContext {
+  if (!options?.name) return createAskableContext(options);
+  const { name: _name, ...contextOptions } = options;
+  return createAskableContext(contextOptions);
+}
+
 function getGlobalCtx(options?: UseAskableOptions): AskableContext {
   // During SSR (no window), never persist to the module-level singleton —
   // each render gets a fresh throwaway context so requests don't share state.
   if (typeof window === 'undefined') {
-    return createAskableContext(options);
+    return createAdapterContext(options);
   }
   const key = getSharedKey(options?.name, options?.events, options?.viewport);
   const existing = globalCtxByEvents.get(key);
   if (existing) return existing;
-  const ctx = createAskableContext(options);
+  const ctx = createAdapterContext(options);
   globalCtxByEvents.set(key, ctx);
   return ctx;
 }
@@ -76,22 +93,12 @@ export interface UseAskableResult {
   ctx: AskableContext;
 }
 
-function hasContextCreationOptions(options?: UseAskableOptions): boolean {
-  return Boolean(
-    options?.maxHistory !== undefined ||
-    options?.sanitizeMeta ||
-    options?.sanitizeText ||
-    options?.textExtractor
-  );
-}
-
 export function useAskable(options?: UseAskableOptions) {
   const usesProvidedCtx = Boolean(options?.ctx);
-  const usesNamedSharedCtx = !usesProvidedCtx && Boolean(options?.name?.trim());
   // Use a private context when context-creation options are specified without a shared name
-  const usePrivateCtx = !usesProvidedCtx && !usesNamedSharedCtx && hasContextCreationOptions(options);
+  const usePrivateCtx = !usesProvidedCtx && requiresPrivateContext(options);
 
-  const ctx = options?.ctx ?? (usePrivateCtx ? createAskableContext(options) : getGlobalCtx(options));
+  const ctx = options?.ctx ?? (usePrivateCtx ? createAdapterContext(options) : getGlobalCtx(options));
   const focus = ref<AskableFocus | null>(ctx.getFocus());
   // Reference focus.value so Vue tracks it as a reactive dependency;
   // ctx.toPromptContext() is a plain method and not itself reactive.

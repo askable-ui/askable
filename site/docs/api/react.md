@@ -343,13 +343,16 @@ On touch-like devices, Askable maps `hover` to tap/click by default. That means 
 
 ### Shared vs custom contexts
 
-`useAskable()` has three common modes in React:
+`useAskable()` has four common modes in React:
 
 - **Default shared context** — `useAskable()` with no `ctx` or `name` reuses one shared document observer for the same `events` + `viewport` configuration.
 - **Named shared context** — `useAskable({ name: 'chart' })` reuses a separate shared context for one UI region or surface.
+- **Private auto-created context** — passing `maxHistory`, `sanitizeMeta`, `sanitizeText`, `sanitizeSource`, or `textExtractor` without `name` or `ctx` creates an isolated context for that hook instance.
 - **Custom context** — `useAskable({ ctx })` attaches to an explicitly created `AskableContext` that you observe/configure yourself.
 
 Use a shared context when multiple components on the same page should agree on the same focus/history. Provide a custom `ctx` when you need isolation, a custom root element, or different lifecycle control.
+
+Supplying `name` explicitly opts into sharing for the same `events` + `viewport` configuration. Context-creation options are taken from that configuration's first mounted consumer, so matching consumers should use the same sanitizers and history configuration.
 
 ```tsx
 function SharedChatInput() {

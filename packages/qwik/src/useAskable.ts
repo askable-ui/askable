@@ -22,7 +22,25 @@ const globalRefCount = new Map<string, number>();
 function sharedKey(options?: UseAskableOptions): string {
   const name = options?.name?.trim() ? `name:${options.name.trim()}` : 'global';
   const evts = (options?.events ?? DEFAULT_EVENTS).slice().sort().join('|');
-  return `${name}::${evts}`;
+  const viewport = options?.viewport ? 'viewport:on' : 'viewport:off';
+  return `${name}::${evts}::${viewport}`;
+}
+
+function requiresPrivateContext(options?: UseAskableOptions): boolean {
+  if (options?.name?.trim()) return false;
+  return Boolean(
+    options?.maxHistory !== undefined ||
+    options?.sanitizeMeta ||
+    options?.sanitizeText ||
+    options?.sanitizeSource ||
+    options?.textExtractor
+  );
+}
+
+function createAdapterContext(options?: UseAskableOptions): AskableContext {
+  if (!options?.name) return createAskableContext(options);
+  const { name: _name, ...contextOptions } = options;
+  return createAskableContext(contextOptions);
 }
 
 function retainCtx(key: string, options?: UseAskableOptions): AskableContext {
@@ -31,7 +49,7 @@ function retainCtx(key: string, options?: UseAskableOptions): AskableContext {
     globalRefCount.set(key, (globalRefCount.get(key) ?? 0) + 1);
     return existing;
   }
-  const ctx = createAskableContext(options);
+  const ctx = createAdapterContext(options);
   globalCtxByKey.set(key, ctx);
   globalRefCount.set(key, 1);
   ctx.observe(document, { events: options?.events ?? DEFAULT_EVENTS });
@@ -68,13 +86,21 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
   const focus = useSignal<AskableFocus | null>(null);
   const promptContext = useSignal<string>('');
   const usesProvidedCtx = Boolean(options?.ctx);
+  const usePrivateCtx = !usesProvidedCtx && requiresPrivateContext(options);
 
   let ctx: AskableContext | null = null;
   const key = sharedKey(options);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
-    ctx = usesProvidedCtx ? options!.ctx! : retainCtx(key, options);
+    ctx = usesProvidedCtx
+      ? options!.ctx!
+      : usePrivateCtx
+        ? createAdapterContext(options)
+        : retainCtx(key, options);
+    if (usePrivateCtx) {
+      ctx.observe(document, { events: options?.events ?? DEFAULT_EVENTS });
+    }
 
     const handleFocus = (f: AskableFocus) => {
       focus.value = f;
@@ -91,7 +117,10 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
     cleanup(() => {
       ctx!.off('focus', handleFocus);
       ctx!.off('clear', handleClear);
-      if (!usesProvidedCtx) releaseCtx(key);
+      if (!usesProvidedCtx) {
+        if (usePrivateCtx) ctx!.destroy();
+        else releaseCtx(key);
+      }
       ctx = null;
     });
   });

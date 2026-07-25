@@ -17,14 +17,31 @@ function getSharedKey(name?: string, events?: AskableEvent[], viewport?: boolean
   return `${scope}::${normalizeEvents(events).join('|')}::${viewportKey}`;
 }
 
+function requiresPrivateContext(options?: UseAskableOptions): boolean {
+  if (options?.name?.trim()) return false;
+  return Boolean(
+    options?.maxHistory !== undefined ||
+    options?.sanitizeMeta ||
+    options?.sanitizeText ||
+    options?.sanitizeSource ||
+    options?.textExtractor
+  );
+}
+
+function createAdapterContext(options?: UseAskableOptions): AskableContext {
+  if (!options?.name) return createAskableContext(options);
+  const { name: _name, ...contextOptions } = options;
+  return createAskableContext(contextOptions);
+}
+
 function retainGlobalCtx(key: string, options?: UseAskableOptions): AskableContext {
-  if (typeof window === 'undefined') return createAskableContext(options);
+  if (typeof window === 'undefined') return createAdapterContext(options);
   const existing = globalCtxByKey.get(key);
   if (existing) {
     globalRefCountByKey.set(key, (globalRefCountByKey.get(key) ?? 0) + 1);
     return existing;
   }
-  const ctx = createAskableContext(options);
+  const ctx = createAdapterContext(options);
   globalCtxByKey.set(key, ctx);
   globalRefCountByKey.set(key, 1);
   if (typeof document !== 'undefined') {
@@ -56,9 +73,15 @@ export interface UseAskableResult {
 
 export function useAskable(options?: UseAskableOptions): UseAskableResult {
   const usesProvidedCtx = Boolean(options?.ctx);
+  const usePrivateCtx = !usesProvidedCtx && requiresPrivateContext(options);
   const sharedKey = getSharedKey(options?.name, options?.events, options?.viewport);
 
-  const ctx = options?.ctx ?? retainGlobalCtx(sharedKey, options);
+  const ctx = options?.ctx ?? (usePrivateCtx
+    ? createAdapterContext(options)
+    : retainGlobalCtx(sharedKey, options));
+  if (usePrivateCtx && typeof document !== 'undefined') {
+    ctx.observe(document, { events: normalizeEvents(options?.events) });
+  }
   const [focus, setFocus] = createSignal<AskableFocus | null>(ctx.getFocus());
 
   createEffect(() => {
@@ -72,7 +95,8 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
       ctx.off('focus', handleFocus);
       ctx.off('clear', handleClear);
       if (!usesProvidedCtx) {
-        releaseGlobalCtx(sharedKey);
+        if (usePrivateCtx) ctx.destroy();
+        else releaseGlobalCtx(sharedKey);
       }
     });
   });

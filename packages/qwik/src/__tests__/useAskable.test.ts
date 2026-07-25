@@ -1,9 +1,22 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { createAskableContext } from '@askable-ui/core';
+import { useAskable } from '../useAskable.js';
 
-// Qwik hooks require a component context and jsdom environment.
-// These tests exercise the underlying AskableContext API directly
-// (the same API useAskable() wraps) to verify the integration contract.
+const { cleanups } = vi.hoisted(() => ({ cleanups: [] as Array<() => void> }));
+
+vi.mock('@builder.io/qwik', () => ({
+  useSignal: <T>(value: T) => ({ value }),
+  useVisibleTask$: (task: (args: { cleanup(callback: () => void): void }) => void) => {
+    task({ cleanup: (callback) => cleanups.push(callback) });
+  },
+}));
+
+afterEach(() => {
+  while (cleanups.length > 0) cleanups.pop()!();
+});
+
+// The Qwik primitives are mocked so adapter lifecycle and context-sharing
+// behavior can be exercised without a rendered Qwik component.
 
 describe('useAskable (Qwik) — contract tests', () => {
   it('createAskableContext() returns a valid context', () => {
@@ -47,5 +60,59 @@ describe('useAskable (Qwik) — contract tests', () => {
     const ctx = createAskableContext();
     expect(ctx.getFocus()).toBeNull();
     ctx.destroy();
+  });
+
+  it.each([false, true])(
+    'isolates an unnamed sanitizeSource context when sanitized hook starts first=%s',
+    (sanitizedFirst) => {
+      const first = sanitizedFirst
+        ? useAskable({ sanitizeSource: (source) => source })
+        : useAskable();
+      const second = sanitizedFirst
+        ? useAskable()
+        : useAskable({ sanitizeSource: (source) => source });
+
+      expect(first.ctx).not.toBe(second.ctx);
+    }
+  );
+
+  it.each([
+    ['maxHistory', { maxHistory: 0 }],
+    ['sanitizeMeta', { sanitizeMeta: (meta: Record<string, unknown>) => meta }],
+    ['sanitizeText', { sanitizeText: (text: string) => text }],
+    ['sanitizeSource', { sanitizeSource: (source: any) => source }],
+    ['textExtractor', { textExtractor: (element: Element) => element.textContent ?? '' }],
+  ] as const)('isolates unnamed %s configuration', (_label, privateOptions) => {
+    expect(useAskable().ctx).not.toBe(useAskable(privateOptions).ctx);
+  });
+
+  it.each([false, true])(
+    'retains explicit named sharing when sanitized hook starts first=%s',
+    (sanitizedFirst) => {
+      const first = sanitizedFirst
+        ? useAskable({ name: 'shared', sanitizeSource: (source) => source })
+        : useAskable({ name: 'shared' });
+      const second = sanitizedFirst
+        ? useAskable({ name: 'shared' })
+        : useAskable({ name: 'shared', sanitizeSource: (source) => source });
+
+      expect(first.ctx).toBe(second.ctx);
+    }
+  );
+
+  it('owns named contexts independently for different event configurations', () => {
+    const click = useAskable({ name: 'region', events: ['click'] });
+    const focus = useAskable({ name: 'region', events: ['focus'] });
+    expect(click.ctx).not.toBe(focus.ctx);
+
+    const focusDestroy = vi.spyOn(focus.ctx, 'destroy');
+    cleanups.shift()!();
+    expect(focusDestroy).not.toHaveBeenCalled();
+    cleanups.shift()!();
+    expect(focusDestroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('isolates viewport-aware shared contexts', () => {
+    expect(useAskable().ctx).not.toBe(useAskable({ viewport: true }).ctx);
   });
 });

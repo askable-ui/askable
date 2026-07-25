@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { useEffect } from 'react';
+import { StrictMode, useEffect } from 'react';
 import { createAskableContext } from '@askable-ui/core';
-import type { AskableContext } from '@askable-ui/core';
+import type { AskableContext, AskableEvent } from '@askable-ui/core';
 import { Askable } from '../Askable';
 import { useAskable } from '../useAskable';
 
@@ -207,6 +207,176 @@ describe('useAskable', () => {
     first.unmount();
   });
 
+  it.each([false, true])(
+    'isolates an unnamed sanitizeSource context when sanitized consumer is mounted first=%s',
+    async (sanitizedFirst) => {
+      let defaultCtx: AskableContext | null = null;
+      let sanitizedCtx: AskableContext | null = null;
+
+      function DefaultConsumer() {
+        defaultCtx = useAskable().ctx;
+        return null;
+      }
+
+      function SanitizedConsumer() {
+        sanitizedCtx = useAskable({
+          sanitizeSource: (source) => ({ ...source, state: { redacted: true } }),
+        }).ctx;
+        return null;
+      }
+
+      const view = render(
+        sanitizedFirst ? (
+          <><SanitizedConsumer /><DefaultConsumer /></>
+        ) : (
+          <><DefaultConsumer /><SanitizedConsumer /></>
+        )
+      );
+
+      expect(defaultCtx).not.toBeNull();
+      expect(sanitizedCtx).not.toBeNull();
+      expect(sanitizedCtx).not.toBe(defaultCtx);
+
+      sanitizedCtx!.registerSource('account', {
+        getState: () => ({ token: 'secret' }),
+      });
+      defaultCtx!.registerSource('account', {
+        getState: () => ({ token: 'secret' }),
+      });
+
+      expect((await sanitizedCtx!.resolveSource('account')).state).toEqual({ redacted: true });
+      expect((await defaultCtx!.resolveSource('account')).state).toEqual({ token: 'secret' });
+
+      view.unmount();
+    }
+  );
+
+  it.each([
+    ['maxHistory', { maxHistory: 0 }],
+    ['sanitizeMeta', { sanitizeMeta: (meta: Record<string, unknown>) => meta }],
+    ['sanitizeText', { sanitizeText: (text: string) => text }],
+    ['sanitizeSource', { sanitizeSource: (source: any) => source }],
+    ['textExtractor', { textExtractor: (element: Element) => element.textContent ?? '' }],
+  ] as const)('isolates unnamed %s configuration', (_label, privateOptions) => {
+    let defaultCtx: AskableContext | null = null;
+    let configuredCtx: AskableContext | null = null;
+
+    function DefaultConsumer() {
+      defaultCtx = useAskable().ctx;
+      return null;
+    }
+    function ConfiguredConsumer() {
+      configuredCtx = useAskable(privateOptions).ctx;
+      return null;
+    }
+
+    const view = render(<><DefaultConsumer /><ConfiguredConsumer /></>);
+    expect(configuredCtx).not.toBe(defaultCtx);
+    view.unmount();
+  });
+
+  it('keeps a private context alive through Strict Mode replay and event changes', async () => {
+    let capturedCtx: AskableContext | null = null;
+
+    function PrivateConsumer({ events }: { events: AskableEvent[] }) {
+      const { ctx } = useAskable({ events, sanitizeSource: (source) => source });
+      if (!ctx.hasSource('strict-source')) {
+        ctx.registerSource('strict-source', { getState: () => ({ alive: true }) });
+      }
+      capturedCtx = ctx;
+      return null;
+    }
+
+    const view = render(<StrictMode><PrivateConsumer events={['click']} /></StrictMode>);
+    await flushMicrotasks();
+    expect((await capturedCtx!.resolveSource('strict-source')).state).toEqual({ alive: true });
+
+    const destroySpy = vi.spyOn(capturedCtx!, 'destroy');
+    view.rerender(<StrictMode><PrivateConsumer events={['focus']} /></StrictMode>);
+    await flushMicrotasks();
+
+    expect(destroySpy).not.toHaveBeenCalled();
+    expect((await capturedCtx!.resolveSource('strict-source')).state).toEqual({ alive: true });
+
+    view.unmount();
+    await flushMicrotasks();
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a shared context alive and cached through Strict Mode replay', async () => {
+    const contexts: Record<string, AskableContext> = {};
+
+    function SharedConsumer({ slot }: { slot: string }) {
+      const { ctx } = useAskable({ name: 'strict-shared' });
+      if (!ctx.hasSource('strict-shared-source')) {
+        ctx.registerSource('strict-shared-source', { getState: () => ({ alive: true }) });
+      }
+      contexts[slot] = ctx;
+      return null;
+    }
+
+    const strictView = render(
+      <StrictMode><SharedConsumer slot="strict" /></StrictMode>
+    );
+    await flushMicrotasks();
+    expect((await contexts.strict.resolveSource('strict-shared-source')).state).toEqual({ alive: true });
+
+    const secondView = render(<SharedConsumer slot="second" />);
+    await flushMicrotasks();
+    expect(contexts.second).toBe(contexts.strict);
+
+    const destroySpy = vi.spyOn(contexts.strict, 'destroy');
+    strictView.unmount();
+    await flushMicrotasks();
+    expect(destroySpy).not.toHaveBeenCalled();
+
+    secondView.unmount();
+    await flushMicrotasks();
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('destroys every retired private context during same-turn mode changes', async () => {
+    let capturedCtx: AskableContext | null = null;
+
+    function DynamicConsumer({ privateMode }: { privateMode: boolean }) {
+      capturedCtx = useAskable(privateMode
+        ? { sanitizeSource: (source) => source }
+        : undefined).ctx;
+      return null;
+    }
+
+    const view = render(<DynamicConsumer privateMode />);
+    const retiredCtx = capturedCtx!;
+    const retiredDestroy = vi.spyOn(retiredCtx, 'destroy');
+
+    view.rerender(<DynamicConsumer privateMode={false} />);
+    view.rerender(<DynamicConsumer privateMode />);
+    expect(capturedCtx).not.toBe(retiredCtx);
+
+    await flushMicrotasks();
+    expect(retiredDestroy).toHaveBeenCalledTimes(1);
+
+    view.unmount();
+    await flushMicrotasks();
+  });
+
+  it('retains explicit named sharing when sanitizeSource is configured', () => {
+    const seen: AskableContext[] = [];
+
+    function NamedConsumer({ sanitized }: { sanitized?: boolean }) {
+      seen.push(useAskable({
+        name: 'shared-sanitizer',
+        ...(sanitized ? { sanitizeSource: (source) => source } : {}),
+      }).ctx);
+      return null;
+    }
+
+    const view = render(<><NamedConsumer sanitized /><NamedConsumer /></>);
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).toBe(seen[1]);
+    view.unmount();
+  });
+
   it('keeps different named shared contexts isolated', async () => {
     const seen: AskableContext[] = [];
 
@@ -230,6 +400,29 @@ describe('useAskable', () => {
     expect(seen[0]).not.toBe(seen[1]);
 
     view.unmount();
+  });
+
+  it('owns named contexts independently for different event configurations', async () => {
+    let clickCtx: AskableContext | null = null;
+    let focusCtx: AskableContext | null = null;
+
+    function NamedConsumer({ events }: { events: AskableEvent[] }) {
+      const { ctx } = useAskable({ name: 'region', events });
+      if (events[0] === 'click') clickCtx = ctx;
+      else focusCtx = ctx;
+      return null;
+    }
+
+    const clickView = render(<NamedConsumer events={['click']} />);
+    const focusView = render(<NamedConsumer events={['focus']} />);
+    expect(clickCtx).not.toBe(focusCtx);
+
+    const focusDestroy = vi.spyOn(focusCtx!, 'destroy');
+    clickView.unmount();
+    expect(focusDestroy).not.toHaveBeenCalled();
+    focusView.unmount();
+    await flushMicrotasks();
+    expect(focusDestroy).toHaveBeenCalledTimes(1);
   });
 
   it('observes the shared global context only once for multiple consumers with the same events', async () => {

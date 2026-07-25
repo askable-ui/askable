@@ -50,6 +50,10 @@ await agent.send('Explain this metric', (request) =>
 | `<Askable meta={...}>` | Annotate rendered UI with `data-askable` |
 | `asMeta<T>(focus)` | Read typed focus metadata |
 
+### Context sharing and isolation
+
+Default hooks share a context by `name + events + viewport`. An unnamed hook that supplies `maxHistory`, `sanitizeMeta`, `sanitizeText`, `sanitizeSource`, or `textExtractor` receives a private context so capture and privacy configuration cannot affect unrelated consumers. Supplying `name` explicitly opts into sharing for the same `events` + `viewport` configuration, and that configuration's first mounted consumer supplies its creation options.
+
 ## Links
 
 - [Documentation](https://askable-ui.com/docs/)
