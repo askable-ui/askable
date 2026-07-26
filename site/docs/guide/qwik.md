@@ -49,14 +49,50 @@ Renders a `div` (or any element via `as`) annotated with `data-askable`.
 Creates (or shares) a context and returns reactive Qwik signals.
 
 ```tsx
-const { focus, promptContext, ctx } = useAskable();
+const askable = useAskable();
+const { focus, promptContext, ctxRef } = askable;
 
 // focus.value — current AskableFocus | null (signal)
 // promptContext.value — serialized string (signal)
-// ctx — raw AskableContext for advanced usage
+// ctxRef.value — AskableContext after the visible task mounts
 ```
 
 All hooks in the same Qwik app share a single context instance by default (matched by name + events key), so source hooks automatically connect to the same focus stream.
+
+The DOM-backed context is intentionally initialized in a visible task so SSR
+never accesses `document`. Do not destructure `ctx` during component render,
+because that reads before the visible task runs. Read `askable.ctx` from browser
+actions, or use the stable `ctxRef` signal in lifecycle-aware code:
+
+```tsx
+const askable = useAskable();
+
+// Browser action after mount
+const readPrompt = () => askable.ctx.toPromptContext();
+
+// Visible task or other reactive lifecycle code
+const ctx = askable.ctxRef.value;
+```
+
+The stream, chat, history, source, and agent hooks resolve `ctxRef` when their
+action/task runs rather than capturing a render-time value.
+
+For SSR-to-browser resume, use QRL factories to create hook-owned runtime
+contexts and reconstruct custom sources in the browser:
+
+```tsx
+import { $ } from '@builder.io/qwik';
+import { createAskableContext } from '@askable-ui/core';
+
+const askable = useAskable({ ctx$: $(() => createAskableContext()) });
+const source = useAskableSource('stats', $(() => ({
+  resolve: () => ({ count: 2 }),
+})));
+```
+
+The hook observes and destroys contexts created by `ctx$`. Direct `ctx` and
+source-object arguments remain supported for client-only mounts. Values wrapped
+with `noSerialize` are intentionally not restored after an SSR resume.
 
 ## Sources
 

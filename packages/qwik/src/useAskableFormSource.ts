@@ -22,7 +22,7 @@ export type UseAskableFormSourceResult = UseAskableSourceResult;
  * ```
  */
 export function useAskableFormSource(options: UseAskableFormSourceOptions = {}): UseAskableFormSourceResult {
-  const { id = 'form', enabled, ctx, name, events, ...sourceOptions } = options;
+  const { id = 'form', enabled, ctx, ctx$, name, events, ...sourceOptions } = options;
   const source = createAskableFormSource(sourceOptions);
-  return useAskableSource(id, source, { enabled, ctx, name, events });
+  return useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
 }

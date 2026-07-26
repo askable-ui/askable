@@ -2,23 +2,65 @@ import { afterEach, describe, it, expect, vi } from 'vitest';
 import { createAskableContext } from '@askable-ui/core';
 import { useAskable } from '../useAskable.js';
 
-const { cleanups } = vi.hoisted(() => ({ cleanups: [] as Array<() => void> }));
+const { cleanups, visibleTasks } = vi.hoisted(() => ({
+  cleanups: [] as Array<() => void>,
+  visibleTasks: {
+    runImmediately: true,
+    pending: [] as Array<(args: { cleanup(callback: () => void): void }) => void>,
+  },
+}));
 
 vi.mock('@builder.io/qwik', () => ({
-  useSignal: <T>(value: T) => ({ value }),
+  noSerialize: <T>(value: T) => value,
+  useSignal: <T>(value?: T) => ({ value }),
   useVisibleTask$: (task: (args: { cleanup(callback: () => void): void }) => void) => {
+    if (!visibleTasks.runImmediately) {
+      visibleTasks.pending.push(task);
+      return;
+    }
     task({ cleanup: (callback) => cleanups.push(callback) });
   },
 }));
 
 afterEach(() => {
   while (cleanups.length > 0) cleanups.pop()!();
+  visibleTasks.runImmediately = true;
+  visibleTasks.pending = [];
+  vi.unstubAllGlobals();
 });
 
 // The Qwik primitives are mocked so adapter lifecycle and context-sharing
 // behavior can be exercised without a rendered Qwik component.
 
 describe('useAskable (Qwik) — contract tests', () => {
+  it('does not access document before the visible task runs', () => {
+    visibleTasks.runImmediately = false;
+    vi.stubGlobal('document', undefined);
+
+    const result = useAskable();
+
+    expect(result.ctxRef.value).toBeUndefined();
+    expect(result.ctx).toBeUndefined();
+    expect(visibleTasks.pending).toHaveLength(1);
+  });
+
+  it('destroys a factory context that resolves after cleanup', async () => {
+    let resolveContext!: (ctx: ReturnType<typeof createAskableContext>) => void;
+    const pendingContext = new Promise<ReturnType<typeof createAskableContext>>((resolve) => {
+      resolveContext = resolve;
+    });
+    const ctx = createAskableContext();
+    const destroy = vi.spyOn(ctx, 'destroy');
+
+    const result = useAskable({ ctx$: (() => pendingContext) as any });
+    expect(cleanups).toHaveLength(1);
+    cleanups.pop()!();
+
+    resolveContext(ctx);
+    await vi.waitFor(() => expect(destroy).toHaveBeenCalledOnce());
+    expect(result.ctxRef.value).toBeUndefined();
+  });
+
   it('createAskableContext() returns a valid context', () => {
     const ctx = createAskableContext();
     expect(ctx).toBeDefined();

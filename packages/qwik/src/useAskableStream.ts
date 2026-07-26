@@ -1,5 +1,6 @@
 import { useSignal } from '@builder.io/qwik';
 import type { AskableAgentRequest, AskableAgentRequestOptions, AskableContext } from '@askable-ui/core';
+import { getAskableContext } from './contextRef.js';
 import { useAskable, type UseAskableOptions } from './useAskable.js';
 
 export type AskableStreamStatus = 'idle' | 'streaming' | 'success' | 'error';
@@ -60,7 +61,7 @@ export interface UseAskableStreamResult {
  */
 export function useAskableStream(options: UseAskableStreamOptions = {}): UseAskableStreamResult {
   const { onRequest, onChunk, onSuccess, onError, requestOptions, ...askableOptions } = options;
-  const { ctx } = useAskable(askableOptions);
+  const { ctxRef } = useAskable(askableOptions);
 
   const status = useSignal<AskableStreamStatus>('idle');
   const content = useSignal('');
@@ -88,6 +89,7 @@ export function useAskableStream(options: UseAskableStreamOptions = {}): UseAska
   async function stream(question: string, handler: AskableStreamHandler): Promise<string | undefined> {
     abort();
     abortController = new AbortController();
+    const ctx = getAskableContext(ctxRef);
     let req = await ctx.toAgentRequest(question, requestOptions);
     if (onRequest) { const override = onRequest(req); if (override) req = override; }
 
@@ -137,5 +139,5 @@ export function useAskableStream(options: UseAskableStreamOptions = {}): UseAska
     });
   }
 
-  return { stream, streamFrom, status, content, error, lastRequest, isStreaming, reset, abort, get ctx() { return ctx; } };
+  return { stream, streamFrom, status, content, error, lastRequest, isStreaming, reset, abort, get ctx() { return ctxRef.value!; } };
 }

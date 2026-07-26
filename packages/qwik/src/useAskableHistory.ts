@@ -1,4 +1,4 @@
-import { useSignal, useVisibleTask$, useComputed$ } from '@builder.io/qwik';
+import { useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { AskableContext, AskableFocus } from '@askable-ui/core';
 import { useAskable, type UseAskableOptions } from './useAskable.js';
 
@@ -34,12 +34,14 @@ export function useAskableHistory(options?: UseAskableHistoryOptions): UseAskabl
   const maxEntries = options?.maxEntries ?? 10;
   const dedupe = options?.dedupe ?? true;
 
-  const { ctx } = useAskable(options);
+  const { ctxRef } = useAskable(options);
   const history = useSignal<AskableFocus[]>([]);
   const current = useSignal<AskableFocus | null>(null);
 
   // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ cleanup }) => {
+  useVisibleTask$(({ cleanup, track }) => {
+    const ctx = track(() => ctxRef.value);
+    if (!ctx) return;
     const handleFocus = (f: AskableFocus) => {
       current.value = f;
       const prev = history.value;
@@ -58,5 +60,9 @@ export function useAskableHistory(options?: UseAskableHistoryOptions): UseAskabl
     });
   });
 
-  return { history, current, ctx };
+  return {
+    history,
+    current,
+    get ctx() { return ctxRef.value!; },
+  };
 }

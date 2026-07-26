@@ -1,15 +1,21 @@
-import { useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { noSerialize, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import type { NoSerialize, QRL } from '@builder.io/qwik';
 import { createAskableContext } from '@askable-ui/core';
 import type { AskableContext, AskableContextOptions, AskableEvent, AskableFocus } from '@askable-ui/core';
+import type { AskableContextRef } from './contextRef.js';
 
 export interface UseAskableOptions extends AskableContextOptions {
   events?: AskableEvent[];
   ctx?: AskableContext;
+  /** Resume-safe factory for a hook-owned browser context. */
+  ctx$?: QRL<() => AskableContext | Promise<AskableContext>>;
 }
 
 export interface UseAskableResult {
   focus: ReturnType<typeof useSignal<AskableFocus | null>>;
   promptContext: ReturnType<typeof useSignal<string>>;
+  /** Stable signal populated when the component becomes visible in the browser. */
+  ctxRef: AskableContextRef;
   ctx: AskableContext;
 }
 
@@ -85,25 +91,24 @@ function releaseCtx(key: string): void {
 export function useAskable(options?: UseAskableOptions): UseAskableResult {
   const focus = useSignal<AskableFocus | null>(null);
   const promptContext = useSignal<string>('');
+  const ctxRef = useSignal<NoSerialize<AskableContext>>();
   const usesProvidedCtx = Boolean(options?.ctx);
-  const usePrivateCtx = !usesProvidedCtx && requiresPrivateContext(options);
+  const usesContextFactory = Boolean(options?.ctx$);
+  const usePrivateCtx = !usesProvidedCtx && !usesContextFactory && requiresPrivateContext(options);
+  const providedCtx = options?.ctx ? noSerialize(options.ctx) : undefined;
+  const providedCtxFactory = options?.ctx$;
+  const { ctx: _providedCtx, ctx$: _providedCtxFactory, ...contextOptions } = options ?? {};
 
-  let ctx: AskableContext | null = null;
   const key = sharedKey(options);
 
   // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ cleanup }) => {
-    ctx = usesProvidedCtx
-      ? options!.ctx!
-      : usePrivateCtx
-        ? createAdapterContext(options)
-        : retainCtx(key, options);
-    if (usePrivateCtx) {
-      ctx.observe(document, { events: options?.events ?? DEFAULT_EVENTS });
-    }
+  useVisibleTask$(async ({ cleanup }) => {
+    let disposed = false;
+    let ctx: AskableContext | undefined;
+    let subscribed = false;
 
-    const handleFocus = (f: AskableFocus) => {
-      focus.value = f;
+    const handleFocus = (focusValue: AskableFocus) => {
+      focus.value = focusValue;
       promptContext.value = ctx!.toPromptContext();
     };
     const handleClear = (_: null) => {
@@ -111,23 +116,55 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
       promptContext.value = '';
     };
 
-    ctx.on('focus', handleFocus);
-    ctx.on('clear', handleClear);
-
     cleanup(() => {
-      ctx!.off('focus', handleFocus);
-      ctx!.off('clear', handleClear);
+      disposed = true;
+      if (!ctx) return;
+      if (subscribed) {
+        ctx.off('focus', handleFocus);
+        ctx.off('clear', handleClear);
+      }
       if (!usesProvidedCtx) {
-        if (usePrivateCtx) ctx!.destroy();
+        if (usePrivateCtx || usesContextFactory) ctx.destroy();
         else releaseCtx(key);
       }
-      ctx = null;
+      if (ctxRef.value === ctx) ctxRef.value = undefined;
     });
+
+    try {
+      ctx = usesProvidedCtx
+        ? providedCtx
+        : usesContextFactory
+          ? await providedCtxFactory!()
+          : usePrivateCtx
+            ? createAdapterContext(contextOptions)
+            : retainCtx(key, contextOptions);
+    } catch (error) {
+      if (disposed) return;
+      throw error;
+    }
+    if (!ctx) {
+      throw new Error(
+        'Provided Askable context was not available after Qwik resume; pass ctx$ for SSR-resumable ownership',
+      );
+    }
+    if (disposed) {
+      if (usesContextFactory) ctx.destroy();
+      return;
+    }
+    ctxRef.value = noSerialize(ctx);
+    if (usePrivateCtx || usesContextFactory) {
+      ctx.observe(document, { events: contextOptions.events ?? DEFAULT_EVENTS });
+    }
+
+    ctx.on('focus', handleFocus);
+    ctx.on('clear', handleClear);
+    subscribed = true;
   });
 
   return {
     focus,
     promptContext,
-    get ctx() { return ctx!; },
+    ctxRef,
+    get ctx() { return ctxRef.value!; },
   };
 }

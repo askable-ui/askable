@@ -1,5 +1,6 @@
 import { useSignal } from '@builder.io/qwik';
 import type { AskableAgentRequest, AskableAgentRequestOptions, AskableContext } from '@askable-ui/core';
+import { getAskableContext } from './contextRef.js';
 import { useAskable, type UseAskableOptions } from './useAskable.js';
 
 export type AskableChatRole = 'user' | 'assistant' | 'system';
@@ -75,7 +76,7 @@ function nextId() { return `msg-${Date.now()}-${++idCounter}`; }
  */
 export function useAskableChat(options: UseAskableChatOptions = {}): UseAskableChatResult {
   const { initialMessages = [], systemPrompt, onChunk, onFinish, onError, requestOptions, ...askableOptions } = options;
-  const { ctx } = useAskable(askableOptions);
+  const { ctxRef } = useAskable(askableOptions);
 
   const messages = useSignal<AskableChatMessage[]>([...initialMessages]);
   const status = useSignal<AskableChatStatus>('idle');
@@ -103,6 +104,7 @@ export function useAskableChat(options: UseAskableChatOptions = {}): UseAskableC
     abort();
     currentAc = new AbortController();
 
+    const ctx = getAskableContext(ctxRef);
     const userMsg: AskableChatMessage = { id: nextId(), role: 'user', content, createdAt: Date.now() };
     messages.value = [...messages.value, userMsg];
 
@@ -146,5 +148,5 @@ export function useAskableChat(options: UseAskableChatOptions = {}): UseAskableC
     }
   }
 
-  return { messages, status, error, isStreaming, append, clearMessages, abort, get ctx() { return ctx; } };
+  return { messages, status, error, isStreaming, append, clearMessages, abort, get ctx() { return ctxRef.value!; } };
 }

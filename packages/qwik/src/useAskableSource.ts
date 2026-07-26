@@ -1,4 +1,5 @@
-import { useVisibleTask$ } from '@builder.io/qwik';
+import { noSerialize, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import type { NoSerialize, QRL } from '@builder.io/qwik';
 import type {
   AskableAsyncPromptContextOptions,
   AskableContext,
@@ -7,6 +8,7 @@ import type {
   AskableContextSourceRequest,
   AskableResolvedContextSource,
 } from '@askable-ui/core';
+import { getAskableContext } from './contextRef.js';
 import { useAskable, type UseAskableOptions } from './useAskable.js';
 
 export interface UseAskableSourceOptions extends Omit<UseAskableOptions, never> {
@@ -25,6 +27,10 @@ export interface UseAskableSourceResult {
   unregister(): void;
 }
 
+export type AskableContextSourceFactory = QRL<
+  () => AskableContextSource | Promise<AskableContextSource>
+>;
+
 /**
  * Qwik hook that registers an arbitrary context source on the shared
  * AskableContext. The source is registered once the component mounts in the
@@ -32,39 +38,59 @@ export interface UseAskableSourceResult {
  */
 export function useAskableSource(
   id: string,
-  source: AskableContextSource,
+  source: AskableContextSource | AskableContextSourceFactory,
   options: UseAskableSourceOptions = {},
 ): UseAskableSourceResult {
   const { enabled = true, ...askableOptions } = options;
-  const { ctx: _ctxRef } = useAskable(askableOptions);
+  const { ctxRef } = useAskable(askableOptions);
+  const sourceFactory = typeof source === 'function' ? source : undefined;
+  const clientSource = typeof source === 'function' ? undefined : noSerialize(source);
 
-  let handle: AskableContextSourceHandle | null = null;
+  const handleRef = useSignal<NoSerialize<AskableContextSourceHandle>>();
 
   // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ cleanup }) => {
-    const ctx = _ctxRef;
+  useVisibleTask$(async ({ cleanup, track }) => {
+    let disposed = false;
+    cleanup(() => {
+      disposed = true;
+      handleRef.value?.unregister();
+      handleRef.value = undefined;
+    });
+
+    const ctx = track(() => ctxRef.value);
     if (!ctx || !enabled || !id.trim()) return;
 
-    handle = ctx.registerSource(id.trim(), source);
-
-    cleanup(() => {
-      handle?.unregister();
-      handle = null;
-    });
+    let resolvedSource: AskableContextSource | undefined;
+    try {
+      resolvedSource = sourceFactory ? await sourceFactory() : clientSource;
+    } catch (error) {
+      if (disposed) return;
+      throw error;
+    }
+    if (!resolvedSource) {
+      throw new Error(
+        'Askable source was not available after Qwik resume; pass a QRL source factory instead',
+      );
+    }
+    if (disposed) return;
+    handleRef.value = noSerialize(ctx.registerSource(id.trim(), resolvedSource));
   });
 
   return {
-    get ctx() { return _ctxRef; },
+    get ctx() { return ctxRef.value!; },
     sourceId: id,
-    resolve: (request?) => _ctxRef.resolveSource(id, request),
+    resolve: (request?) => getAskableContext(ctxRef).resolveSource(id, request),
     toPromptContext: (opts?) => {
       const { source: sourceRequest, ...rest } = opts ?? {};
-      return _ctxRef.toPromptContextAsync({
+      return getAskableContext(ctxRef).toPromptContextAsync({
         ...rest,
         sources: [{ id, ...sourceRequest }],
       });
     },
-    notifyChanged: () => handle?.notifyChanged(),
-    unregister: () => { handle?.unregister(); handle = null; },
+    notifyChanged: () => handleRef.value?.notifyChanged(),
+    unregister: () => {
+      handleRef.value?.unregister();
+      handleRef.value = undefined;
+    },
   };
 }
