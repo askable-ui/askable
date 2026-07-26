@@ -66,6 +66,7 @@ export function useAskableTableSource<TRow = unknown, TState = unknown>(
     advertisedModes,
     enabled,
     ctx,
+    ctx$,
     name,
     events,
   } = options;
@@ -90,5 +91,5 @@ export function useAskableTableSource<TRow = unknown, TState = unknown>(
     sanitizeItem: sanitizeRow ? (row) => sanitizeRow(row) : undefined,
   });
 
-  return useAskableSource(id, source, { enabled, ctx, name, events });
+  return useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
 }

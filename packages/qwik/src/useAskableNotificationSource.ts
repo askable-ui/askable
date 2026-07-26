@@ -35,7 +35,7 @@ export interface UseAskableNotificationSourceResult extends UseAskableSourceResu
 export function useAskableNotificationSource(
   options: UseAskableNotificationSourceOptions = {},
 ): UseAskableNotificationSourceResult {
-  const { id = 'notifications', enabled, ctx, name, events, maxEntries = 20, describe, kind } = options;
+  const { id = 'notifications', enabled, ctx, ctx$, name, events, maxEntries = 20, describe, kind } = options;
 
   const notifications = useSignal<AskableNotification[]>([]);
   let nextId = 1;
@@ -45,7 +45,7 @@ export function useAskableNotificationSource(
     kind,
     getNotifications: () => notifications.value,
   });
-  const result = useAskableSource(id, source, { enabled, ctx, name, events });
+  const result = useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
 
   function push(notification: Omit<AskableNotification, 'id' | 'timestamp'>): void {
     const entry: AskableNotification = {

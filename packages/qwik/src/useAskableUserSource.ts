@@ -22,7 +22,7 @@ export type UseAskableUserSourceResult = UseAskableSourceResult;
  * ```
  */
 export function useAskableUserSource(options: UseAskableUserSourceOptions): UseAskableUserSourceResult {
-  const { id = 'user', enabled, ctx, name, events, ...sourceOptions } = options;
+  const { id = 'user', enabled, ctx, ctx$, name, events, ...sourceOptions } = options;
   const source = createAskableUserSource(sourceOptions);
-  return useAskableSource(id, source, { enabled, ctx, name, events });
+  return useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
 }

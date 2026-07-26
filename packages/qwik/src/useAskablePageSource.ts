@@ -22,7 +22,7 @@ export type UseAskablePageSourceResult = UseAskableSourceResult;
  * ```
  */
 export function useAskablePageSource(options: UseAskablePageSourceOptions = {}): UseAskablePageSourceResult {
-  const { id = 'page', enabled, ctx, name, events, describe, kind, root, includeLinks, maxLinks, maxHeadings, maxTextLength, textExtractor, sanitizeText } = options;
+  const { id = 'page', enabled, ctx, ctx$, name, events, describe, kind, root, includeLinks, maxLinks, maxHeadings, maxTextLength, textExtractor, sanitizeText } = options;
   const source = createAskablePageSource({ describe, kind, root, includeLinks, maxLinks, maxHeadings, maxTextLength, textExtractor, sanitizeText });
-  return useAskableSource(id, source, { enabled, ctx, name, events });
+  return useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
 }

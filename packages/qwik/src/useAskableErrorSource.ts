@@ -32,7 +32,7 @@ export interface UseAskableErrorSourceResult extends UseAskableSourceResult {
  * ```
  */
 export function useAskableErrorSource(options: UseAskableErrorSourceOptions = {}): UseAskableErrorSourceResult {
-  const { id = 'errors', enabled, ctx, name, events, describe, kind, initialErrors = [], getErrors: customGetErrors } = options;
+  const { id = 'errors', enabled, ctx, ctx$, name, events, describe, kind, initialErrors = [], getErrors: customGetErrors } = options;
 
   const errors = useSignal<AskableErrorEntry[]>(initialErrors);
 
@@ -42,7 +42,7 @@ export function useAskableErrorSource(options: UseAskableErrorSourceOptions = {}
     getErrors: customGetErrors ?? (() => errors.value),
   });
 
-  const result = useAskableSource(id, source, { enabled, ctx, name, events });
+  const result = useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
 
   function addError(entry: AskableErrorEntry): void {
     errors.value = [entry, ...errors.value.filter((e) => e.key !== entry.key)];

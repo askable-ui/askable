@@ -41,14 +41,14 @@ export interface UseAskableCartSourceResult extends UseAskableSourceResult {
  * ```
  */
 export function useAskableCartSource(options: UseAskableCartSourceOptions = {}): UseAskableCartSourceResult {
-  const { id = 'cart', items: initialItems = [], totals: initialTotals = {}, describe, kind, enabled, ctx, name, events } = options;
+  const { id = 'cart', items: initialItems = [], totals: initialTotals = {}, describe, kind, enabled, ctx, ctx$, name, events } = options;
 
   const snapshot = useSignal<AskableCartSourceSnapshot | null>(
     buildCartSnapshot(initialItems, initialTotals, new Date().toISOString()),
   );
 
   const source = createAskableCartSource({ describe, kind, getSnapshot: () => snapshot.value });
-  const result = useAskableSource(id, source, { enabled, ctx, name, events });
+  const result = useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
 
   function getTotals(): AskableCartTotals {
     const s = snapshot.value;

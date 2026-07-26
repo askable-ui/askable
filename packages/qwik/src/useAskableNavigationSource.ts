@@ -20,7 +20,7 @@ export type UseAskableNavigationSourceResult = UseAskableSourceResult;
  * ```
  */
 export function useAskableNavigationSource(options: UseAskableNavigationSourceOptions = {}): UseAskableNavigationSourceResult {
-  const { id = 'navigation', enabled, ctx, name, events, ...sourceOptions } = options;
+  const { id = 'navigation', enabled, ctx, ctx$, name, events, ...sourceOptions } = options;
   const source = createAskableNavigationSource(sourceOptions);
-  return useAskableSource(id, source, { enabled, ctx, name, events });
+  return useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
 }

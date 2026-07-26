@@ -3,9 +3,10 @@ export type { AskableProps } from './Askable.js';
 
 export { useAskable } from './useAskable.js';
 export type { UseAskableOptions, UseAskableResult } from './useAskable.js';
+export type { AskableContextRef } from './contextRef.js';
 
 export { useAskableSource } from './useAskableSource.js';
-export type { UseAskableSourceOptions, UseAskableSourceResult } from './useAskableSource.js';
+export type { AskableContextSourceFactory, UseAskableSourceOptions, UseAskableSourceResult } from './useAskableSource.js';
 
 export { useAskableAgent } from './useAskableAgent.js';
 export type { AskableAgentStatus, UseAskableAgentOptions, UseAskableAgentResult } from './useAskableAgent.js';

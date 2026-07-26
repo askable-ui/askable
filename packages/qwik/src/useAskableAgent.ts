@@ -1,18 +1,14 @@
-import { useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
-import { createAskableContext } from '@askable-ui/core';
+import { useSignal, $ } from '@builder.io/qwik';
 import type {
   AskableAgentRequest,
   AskableAgentRequestOptions,
   AskableContext,
-  AskableContextOptions,
-  AskableEvent,
 } from '@askable-ui/core';
+import { useAskable, type UseAskableOptions } from './useAskable.js';
 
 export type AskableAgentStatus = 'idle' | 'pending' | 'success' | 'error';
 
-export interface UseAskableAgentOptions extends AskableContextOptions {
-  events?: AskableEvent[];
-  ctx?: AskableContext;
+export interface UseAskableAgentOptions extends UseAskableOptions {
   requestOptions?: AskableAgentRequestOptions;
 }
 
@@ -60,25 +56,14 @@ export function useAskableAgent<T = unknown>(
   const isLoading = useSignal<boolean>(false);
   const lastRequest = useSignal<AskableAgentRequest | null>(null);
 
-  let ctx: AskableContext | null = null;
-  const requestOptions = options?.requestOptions;
-
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ cleanup }) => {
-    ctx = options?.ctx ?? createAskableContext(options);
-    if (!options?.ctx) {
-      ctx.observe(document, { events: options?.events });
-    }
-    cleanup(() => {
-      if (!options?.ctx) ctx?.destroy();
-      ctx = null;
-    });
-  });
+  const { requestOptions, ...askableOptions } = options ?? {};
+  const { ctxRef } = useAskable(askableOptions);
 
   const send = $(async (
     question: string,
     handler: (request: AskableAgentRequest) => T | Promise<T>,
   ): Promise<T | undefined> => {
+    const ctx = ctxRef.value;
     if (!ctx) return undefined;
 
     status.value = 'pending';
@@ -118,6 +103,6 @@ export function useAskableAgent<T = unknown>(
     lastRequest,
     send,
     reset,
-    get ctx() { return ctx!; },
+    get ctx() { return ctxRef.value!; },
   };
 }

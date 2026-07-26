@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run"
+    "test": "vitest run && vitest run --config vitest.lifecycle.config.ts"
   },
   "keywords": [
     "ai",

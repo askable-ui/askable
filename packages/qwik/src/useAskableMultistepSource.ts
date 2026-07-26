@@ -47,7 +47,7 @@ export interface UseAskableMultistepSourceResult extends UseAskableSourceResult 
  * ```
  */
 export function useAskableMultistepSource(options: UseAskableMultistepSourceOptions = {}): UseAskableMultistepSourceResult {
-  const { id = 'multistep', steps: initialSteps = [], initialStep = 0, describe, kind, enabled, ctx, name, events } = options;
+  const { id = 'multistep', steps: initialSteps = [], initialStep = 0, describe, kind, enabled, ctx, ctx$, name, events } = options;
 
   function makeSteps(defs: Pick<AskableMultistepStep, 'id' | 'label' | 'description' | 'optional'>[], activeIdx: number): AskableMultistepStep[] {
     return defs.map((s, i) => ({
@@ -65,7 +65,7 @@ export function useAskableMultistepSource(options: UseAskableMultistepSourceOpti
   );
 
   const source = createAskableMultistepSource({ describe, kind, getSnapshot: () => snapshot.value });
-  const result = useAskableSource(id, source, { enabled, ctx, name, events });
+  const result = useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
 
   function currentDefs(): Pick<AskableMultistepStep, 'id' | 'label' | 'description' | 'optional'>[] {
     return snapshot.value?.steps.map((s) => ({ id: s.id, label: s.label, description: s.description, optional: s.optional })) ?? initialSteps;
