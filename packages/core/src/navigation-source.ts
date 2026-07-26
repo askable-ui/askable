@@ -1,4 +1,3 @@
-import { createAskableSource } from './sources.js';
 import type { AskableContextSource } from './types.js';
 
 export interface AskableNavigationEntry {
@@ -126,22 +125,16 @@ function buildDefaultDescribe(snapshot: AskableNavigationSourceSnapshot): string
 export function createAskableNavigationSource(
   options: AskableCreateNavigationSourceOptions = {},
 ): AskableContextSource {
-  const {
-    getPath = defaultGetPath,
-    getTitle = defaultGetTitle,
-    getParams,
-    maxHistory = 10,
-    describe,
-    kind = 'navigation',
-  } = options;
-
   const history: AskableNavigationEntry[] = [];
 
   function buildSnapshot(): AskableNavigationSourceSnapshot {
+    const getPath = options.getPath ?? defaultGetPath;
+    const getTitle = options.getTitle ?? defaultGetTitle;
     const currentPath = getPath();
-    const currentTitle = getTitle?.() ?? null;
-    const params = getParams?.() ?? null;
+    const currentTitle = getTitle() ?? null;
+    const params = options.getParams?.() ?? null;
     const query = parseQuery(currentPath);
+    const maxHistory = options.maxHistory ?? 10;
 
     const latest = history[0];
     if (!latest || latest.path !== currentPath) {
@@ -150,18 +143,24 @@ export function createAskableNavigationSource(
         title: currentTitle ?? undefined,
         timestamp: new Date().toISOString(),
       });
-      if (history.length > maxHistory) history.length = maxHistory;
     }
+    if (history.length > maxHistory) history.length = maxHistory;
 
     return { currentPath, currentTitle, params, query, history: [...history] };
   }
 
-  return createAskableSource({
-    kind,
-    describe: describe
-      ? () => describe(buildSnapshot())
-      : () => buildDefaultDescribe(buildSnapshot()),
-    state: () => {
+  return {
+    get kind() {
+      return options.kind ?? 'navigation';
+    },
+    modes: ['state'],
+    describe: () => {
+      const snapshot = buildSnapshot();
+      return options.describe
+        ? options.describe(snapshot)
+        : buildDefaultDescribe(snapshot);
+    },
+    getState: () => {
       const snapshot = buildSnapshot();
       return {
         currentPath: snapshot.currentPath,
@@ -169,6 +168,6 @@ export function createAskableNavigationSource(
         historyLength: snapshot.history.length,
       };
     },
-    data: () => buildSnapshot(),
-  });
+    resolve: () => buildSnapshot(),
+  };
 }
