@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createAskableNavigationSource } from '../navigation-source.js';
+import type { AskableCreateNavigationSourceOptions } from '../navigation-source.js';
 import { createAskableContext } from '../index.js';
 
 describe('createAskableNavigationSource', () => {
@@ -124,6 +125,36 @@ describe('createAskableNavigationSource', () => {
     const resolved = await ctx.resolveSource('nav');
     const data = resolved.data as { history: unknown[] };
     expect(data.history).toHaveLength(1);
+    ctx.destroy();
+  });
+
+  it('reads updated options without resetting navigation history', async () => {
+    const ctx = createAskableContext();
+    const options: AskableCreateNavigationSourceOptions = {
+      getPath,
+      getTitle,
+      maxHistory: 3,
+      kind: 'route',
+      describe: (snapshot) => `First: ${snapshot.currentPath}`,
+    };
+    const source = createAskableNavigationSource(options);
+    ctx.registerSource('nav', source);
+
+    await ctx.resolveSource('nav');
+    path = '/settings';
+    await ctx.resolveSource('nav');
+
+    options.getPath = () => '/profile';
+    options.getTitle = () => 'Profile';
+    options.maxHistory = 2;
+    options.kind = 'router';
+    options.describe = (snapshot) => `Latest: ${snapshot.currentTitle}`;
+
+    const resolved = await ctx.resolveSource('nav');
+    const data = resolved.data as { history: { path: string }[] };
+    expect(resolved.kind).toBe('router');
+    expect(resolved.description).toBe('Latest: Profile');
+    expect(data.history.map((entry) => entry.path)).toEqual(['/profile', '/settings']);
     ctx.destroy();
   });
 

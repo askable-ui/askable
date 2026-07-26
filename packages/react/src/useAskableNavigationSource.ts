@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { createAskableNavigationSource } from '@askable-ui/core';
 import type {
   AskableCreateNavigationSourceOptions,
@@ -7,6 +7,8 @@ import type {
 import { useAskableSource, type UseAskableSourceOptions, type UseAskableSourceResult } from './useAskableSource.js';
 
 export type { AskableNavigationEntry };
+
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 export interface UseAskableNavigationSourceOptions
   extends UseAskableSourceOptions,
@@ -74,17 +76,37 @@ export function useAskableNavigationSource(
     events,
   } = options;
 
+  const sourceOptionsRef = useRef<AskableCreateNavigationSourceOptions>({
+    getPath,
+    getTitle,
+    getParams,
+    maxHistory,
+    describe,
+    kind,
+  });
+
+  useIsomorphicLayoutEffect(() => {
+    Object.assign(sourceOptionsRef.current, {
+      getPath,
+      getTitle,
+      getParams,
+      maxHistory,
+      describe,
+      kind,
+    });
+  }, [getPath, getTitle, getParams, maxHistory, describe, kind]);
+
   const source = useMemo(
-    () => createAskableNavigationSource({ getPath, getTitle, getParams, maxHistory, describe, kind }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => createAskableNavigationSource(sourceOptionsRef.current),
     [],
   );
 
   const result = useAskableSource(id, source, { enabled, ctx, name, events });
+  const { notifyChanged } = result;
 
   useEffect(() => {
-    result.notifyChanged();
-  }, [pathname, result]);
+    notifyChanged();
+  }, [pathname, notifyChanged]);
 
   return result;
 }
