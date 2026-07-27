@@ -51,6 +51,9 @@ jobs:
       - name: Check publish workflow package coverage
         run: node scripts/check-publish-package-coverage.mjs
 
+      - name: Check MCP Registry manifest
+        run: node scripts/check-mcp-server-manifest.mjs
+
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 

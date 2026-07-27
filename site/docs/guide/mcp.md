@@ -17,7 +17,10 @@ npm install @askable-ui/mcp @askable-ui/core
 
 ## Browser-local page bridge
 
-The page bridge exposes a `read_current_resource` MCP tool and an `askable://current` resource. A local MCP companion (e.g. a browser extension with MCP proxy support) can call this to read the current UI context without a network round trip.
+The page bridge handles a `read_current_resource` window-message request and
+returns the `askable://current` resource payload. A local MCP companion (for
+example, a browser extension with MCP proxy support) can map that response to
+MCP `resources/read` without a network round trip.
 
 ```ts
 // In your app entry point (e.g. main.ts / index.ts)
@@ -149,11 +152,15 @@ Add your endpoint to `claude_desktop_config.json`:
 
 ### Claude.ai (claude.ai/code)
 
-In Claude.ai settings → Integrations, add the MCP server URL. Claude will call `read_current_resource` to read the current UI state whenever it needs page context.
+In Claude.ai settings → Integrations, add the MCP server URL. Claude can read
+`askable://current` through MCP `resources/read`, or call
+`get_current_context` when it needs the current UI state.
 
 ### ChatGPT plugins / connectors
 
-Point the ChatGPT connector at your `/api/mcp` endpoint. The MCP server exposes a `read_current_resource` tool that ChatGPT's function-calling layer will invoke.
+Point the ChatGPT connector at your `/api/mcp` endpoint. The server exposes
+`get_current_context` and `format_context_for_prompt` tools, plus the
+`askable://current` resource.
 
 ## Connect over stdio (CLI)
 

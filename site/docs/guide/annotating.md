@@ -219,7 +219,9 @@ const ctx = createAskableContext({ textExtractor: a11yTextExtractor });
 
 This is useful for icon buttons, data cells with screen-reader-only labels, or any element whose visible text is less informative than its accessible name.
 
-`a11yTextExtractor` is re-exported from every web framework package, so you can pass it straight to the hook without importing from `@askable-ui/core`:
+`a11yTextExtractor` is re-exported from the React, Vue, Svelte, SolidJS, and
+Qwik packages, so those adapters can pass it straight to a hook without
+importing from `@askable-ui/core`:
 
 ```tsx
 // React (also Vue, Svelte, Solid, Qwik)

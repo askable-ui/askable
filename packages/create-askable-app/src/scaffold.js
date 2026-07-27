@@ -8,7 +8,7 @@ const pkg = JSON.parse(
 
 // Sourced from this package's own version so every scaffolded app pins the
 // current release. Never hardcode this — the integrity test asserts it matches
-// the package version, which is how the 0.14.0/0.15.0 skew is prevented.
+// the package version, preventing scaffold/package release skew.
 export const ASKABLE_VERSION = pkg.version;
 const COPILOTKIT_VERSION = '1.59.2';
 

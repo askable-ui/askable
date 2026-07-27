@@ -3,18 +3,21 @@
 askable-ui supports two kinds of docs URLs:
 
 - `/docs/` — latest stable docs
-- `/docs/<version>/` — frozen version-specific docs snapshots
+- `/docs/<version>/` — a version-specific alias for the current release, or a
+  frozen snapshot after that version is archived
 
 ## Current version
 
-- Latest stable: `v0.15.0`
-- Versioned current docs URL: `/docs/v0.15.0/`
+- Latest stable: `v0.16.0`
+- Versioned current docs URL: `/docs/v0.16.0/`
 
 ## Archived versions
 
 No archived major versions yet.
 
-The current release is also published at `/docs/v0.15.0/` so version-specific links work before the first breaking release.
+The current release is rebuilt at both `/docs/` and `/docs/v0.16.0/` on every
+deployment. Only versions listed under `archived` are copied from frozen
+snapshots.
 
 ## Breaking release workflow
 
