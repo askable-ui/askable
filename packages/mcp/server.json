@@ -1,21 +1,25 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
   "name": "io.github.askable-ui/askable",
-  "description": "Expose your web app's live UI context — what the user is looking at, as structured Context Packets — to Claude Desktop, Cursor, and any MCP client.",
+  "description": "Expose live UI context as structured Context Packets to Claude, Cursor, and other MCP clients.",
+  "version": "0.16.0",
   "status": "active",
   "repository": {
     "url": "https://github.com/askable-ui/askable",
-    "source": "github"
+    "source": "github",
+    "subfolder": "packages/mcp"
   },
-  "version_detail": {
-    "version": "0.15.0"
-  },
+  "website_url": "https://askable-ui.com/docs/guide/mcp",
   "packages": [
     {
-      "registry_name": "npm",
-      "name": "@askable-ui/mcp",
-      "version": "0.15.0",
+      "registry_type": "npm",
+      "registry_base_url": "https://registry.npmjs.org",
+      "identifier": "@askable-ui/mcp",
+      "version": "0.16.0",
       "runtime_hint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
       "package_arguments": [
         {
           "type": "named",
@@ -29,7 +33,7 @@
           "name": "--file",
           "description": "Path to a static Context packet JSON file (alternative to --url)",
           "is_required": false,
-          "format": "string"
+          "format": "filepath"
         },
         {
           "type": "named",

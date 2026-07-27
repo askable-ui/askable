@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
 ---
 
-> Current npm release: **v0.15.0**.
+> Current npm release: **v0.16.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,11 +59,18 @@ features:
   </video>
 </div>
 
-## Latest in v0.15.0
+## Latest in v0.16.0
 
-- **Cart source** — `useAskableCartSource()` with `addItem`, `removeItem`, `updateQuantity`, `setTotals`, `clearCart`; computes subtotal, tax, shipping, and total automatically
-- **Multistep source** — `useAskableMultistepSource()` tracks wizard progress: step name, index, progress %, `isComplete`; navigate with `next`, `prev`, `goTo`
-- All six framework packages (React, Vue, Svelte, SolidJS, Angular, web-component) updated
+- **Resumable Qwik actions** — optimizer-safe `QRL` actions, `$()` / `sync$()` callback contracts, race-safe stream/chat ownership, and hardened source cleanup
+- **MCP CLI and live resources** — a stdio command for MCP clients, `askable://current`, `list_context_sources`, and registry-ready metadata
+- **Context Packet Protocol** — a first-class protocol specification plus new custom-source, cart/multistep, React Native, and MCP guides
+- **Reliability and security** — fixes across adapter option isolation, React navigation freshness, MCP request limits, storage masking, and page-bridge origins
+
+## Also in v0.15.0
+
+- cart context sources with item, quantity, totals, discount, and currency tracking
+- multistep context sources for wizard progress and completion state
+- aligned cart and multistep APIs across the framework packages
 
 ## Also in v0.14.0
 
@@ -111,7 +118,7 @@ Every pattern can produce a prompt string with `toPromptContext()` or a structur
 
 Start here:
 
-- [What’s New in v0.15.0](/guide/whats-new)
+- [What’s New in v0.16.0](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [The Context Packet Protocol (spec)](/guide/protocol)
 - [React interaction patterns](/guide/react#region-circle-and-lasso-capture)
