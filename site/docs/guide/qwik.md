@@ -65,10 +65,12 @@ because that reads before the visible task runs. Read `askable.ctx` from browser
 actions, or use the stable `ctxRef` signal in lifecycle-aware code:
 
 ```tsx
+import { $ } from '@builder.io/qwik';
+
 const askable = useAskable();
 
 // Browser action after mount
-const readPrompt = () => askable.ctx.toPromptContext();
+const readPrompt = $(() => askable.ctx.toPromptContext());
 
 // Visible task or other reactive lifecycle code
 const ctx = askable.ctxRef.value;
@@ -191,7 +193,7 @@ const { addError, clearErrors } = useAskableErrorSource();
 try {
   await submitOrder();
 } catch (e) {
-  addError({ key: 'submit', message: (e as Error).message, severity: 'error' });
+  await addError({ key: 'submit', message: (e as Error).message, severity: 'error' });
 }
 ```
 
@@ -214,11 +216,25 @@ try {
 ### `useAskableStream`
 
 ```tsx
-import { component$ } from '@builder.io/qwik';
+import { $, component$ } from '@builder.io/qwik';
 import { useAskableStream } from '@askable-ui/qwik';
 
 export const AskButton = component$(() => {
   const { stream, content, isStreaming, status } = useAskableStream();
+  const handler = $(async (req, emit, signal) => {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+      signal,
+    });
+    const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      emit(value);
+    }
+  });
 
   return (
     <>
@@ -226,21 +242,7 @@ export const AskButton = component$(() => {
       {content.value && <p>{content.value}</p>}
       <button
         disabled={isStreaming.value}
-        onClick$={() =>
-          stream('Explain what I am looking at', async (req, emit) => {
-            const res = await fetch('/api/chat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(req),
-            });
-            const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              emit(value);
-            }
-          })
-        }
+        onClick$={() => stream('Explain what I am looking at', handler)}
       >
         Ask AI
       </button>
@@ -252,12 +254,26 @@ export const AskButton = component$(() => {
 ### `useAskableChat`
 
 ```tsx
-import { component$ } from '@builder.io/qwik';
+import { $, component$ } from '@builder.io/qwik';
 import { useAskableChat } from '@askable-ui/qwik';
 
 export const ChatPanel = component$(() => {
   const { messages, append, isStreaming, clearMessages } = useAskableChat({
-    systemPrompt: (ctx) => `You are a helpful UI assistant.\n\nCurrent UI context:\n${ctx}`,
+    systemPrompt: $((ctx) => `You are a helpful UI assistant.\n\nCurrent UI context:\n${ctx}`),
+  });
+  const handler = $(async (req, _messages, emit, signal) => {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+      signal,
+    });
+    const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      emit(value);
+    }
   });
 
   return (
@@ -272,21 +288,7 @@ export const ChatPanel = component$(() => {
 
       <button
         disabled={isStreaming.value}
-        onClick$={() =>
-          append('What is this page about?', async (req, _msgs, emit) => {
-            const res = await fetch('/api/chat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(req),
-            });
-            const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              emit(value);
-            }
-          })
-        }
+        onClick$={() => append('What is this page about?', handler)}
       >
         Ask
       </button>
@@ -295,6 +297,45 @@ export const ChatPanel = component$(() => {
   );
 });
 ```
+
+### Resumable actions and callbacks
+
+Qwik hook actions such as `stream`, `append`, `send`, `resolve`, `reset`, and
+the mutable source-helper actions are QRLs. They can be captured directly by
+`onClick$` and other lazy event handlers. Any handler or callback passed to
+those actions must also be created with `$()`.
+
+Asynchronous source providers such as table `getItems`, user `getUser`, and
+context `sanitizeSource` use `$()`. Synchronous DOM transforms, context
+sanitizers, text extractors, and router getters use `sync$()` because the
+underlying source reads them synchronously. `sync$()` requires Qwik 1.6 or
+newer and cannot capture lexical state. For router integrations that need
+to capture component-local state, pass a `source$` factory instead:
+
+```tsx
+import { $, component$ } from '@builder.io/qwik';
+import { createAskableNavigationSource } from '@askable-ui/core';
+import { useAskableNavigationSource } from '@askable-ui/qwik';
+
+export const RouteContext = component$(() => {
+  useAskableNavigationSource({
+    source$: $(() => createAskableNavigationSource({
+      getPath: () => window.location.pathname,
+    })),
+  });
+  return null;
+});
+```
+
+`stream` and `append` handlers receive an `AbortSignal` as their final
+argument. Pass it to `fetch` or another cancellable transport so `abort()` and
+overlapping requests stop the underlying work as well as suppressing stale
+chunks.
+
+QRL invocation is asynchronous, so await mutation actions before immediately
+reading their updated signals. `streamFrom()` is runtime-only: create its
+`ReadableStream` or `AsyncIterable` in the browser event that invokes it rather
+than attempting to serialize the stream into an SSR snapshot.
 
 ## Focus history
 
@@ -317,7 +358,12 @@ export const HistoryPanel = component$(() => {
 
 ## Server-side rendering
 
-`useAskable` returns empty signals on the server — `focus.value` is `null` and `promptContext.value` is `''`. All DOM observation and source registration happens inside `useVisibleTask$`, which is browser-only. Qwik City apps with SSR are safe to use with any askable-ui hook.
+`useAskable` returns empty signals on the server — `focus.value` is `null` and
+`promptContext.value` is `''`. DOM observation and source registration happen
+inside browser-only visible tasks. Use QRL callback and source factories when
+the integration must be reconstructed after resume. Direct DOM roots, form
+elements, context objects, and source objects remain client-only compatibility
+options and are intentionally unavailable after an SSR snapshot is resumed.
 
 ## Agent requests
 

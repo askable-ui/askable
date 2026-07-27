@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock('@builder.io/qwik', () => ({
+  $: <T>(value: T) => value,
   noSerialize: <T>(value: T) => value,
   useSignal: <T>(value?: T) => ({ value }),
   useVisibleTask$: (

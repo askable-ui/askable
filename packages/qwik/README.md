@@ -31,15 +31,30 @@ Use `useAskableAgent()` when a question should be sent with the current UI
 context:
 
 ```tsx
-const agent = useAskableAgent();
+import { $ } from '@builder.io/qwik';
 
-await agent.send('Explain this metric', (request) =>
+const agent = useAskableAgent();
+const handler = $((request) =>
   fetch('/api/ai', {
     method: 'POST',
     body: JSON.stringify(request),
   }).then((response) => response.json()),
 );
+
+await agent.send('Explain this metric', handler);
 ```
+
+Imperative hook actions are QRLs and can be captured directly by `onClick$`.
+Handlers and callback options passed to those actions must also be created with
+`$()`. Synchronous source and context callbacks such as `textExtractor`,
+`sanitizeText`, and router getters use Qwik's `sync$()`; asynchronous callbacks
+such as `sanitizeSource` use `$()`. `sync$()` requires Qwik 1.6 or newer and
+cannot capture lexical state. QRL invocation is asynchronous;
+`await` mutation actions before immediately reading their updated signals.
+
+`streamFrom()` is a runtime-only QRL action: create its `ReadableStream` or
+`AsyncIterable` in the browser event that invokes it. Streams themselves are
+not serialized into the SSR snapshot.
 
 ## API
 
@@ -65,7 +80,7 @@ visible tasks—do not destructure it during component render:
 const askable = useAskable();
 
 // Safe in an event handler after the component is visible.
-const readPrompt = () => askable.ctx.toPromptContext();
+const readPrompt = $(() => askable.ctx.toPromptContext());
 
 // For reactive lifecycle code:
 const ctx = askable.ctxRef.value;

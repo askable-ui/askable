@@ -1,14 +1,21 @@
 import { noSerialize, useSignal, useVisibleTask$ } from '@builder.io/qwik';
-import type { NoSerialize, QRL } from '@builder.io/qwik';
+import type { NoSerialize, QRL, SyncQRL } from '@builder.io/qwik';
 import { createAskableContext } from '@askable-ui/core';
 import type { AskableContext, AskableContextOptions, AskableEvent, AskableFocus } from '@askable-ui/core';
 import type { AskableContextRef } from './contextRef.js';
 
-export interface UseAskableOptions extends AskableContextOptions {
+export interface UseAskableOptions extends Omit<
+  AskableContextOptions,
+  'textExtractor' | 'sanitizeMeta' | 'sanitizeText' | 'sanitizeSource'
+> {
   events?: AskableEvent[];
   ctx?: AskableContext;
   /** Resume-safe factory for a hook-owned browser context. */
   ctx$?: QRL<() => AskableContext | Promise<AskableContext>>;
+  textExtractor?: SyncQRL<NonNullable<AskableContextOptions['textExtractor']>>;
+  sanitizeMeta?: SyncQRL<NonNullable<AskableContextOptions['sanitizeMeta']>>;
+  sanitizeText?: SyncQRL<NonNullable<AskableContextOptions['sanitizeText']>>;
+  sanitizeSource?: QRL<NonNullable<AskableContextOptions['sanitizeSource']>>;
 }
 
 export interface UseAskableResult {
@@ -20,6 +27,15 @@ export interface UseAskableResult {
 }
 
 const DEFAULT_EVENTS: AskableEvent[] = ['click', 'hover', 'focus'];
+type ResolvedUseAskableOptions = AskableContextOptions & Pick<UseAskableOptions, 'events'>;
+
+function resolveQrlOrFunction<T extends (...args: any[]) => any>(
+  value: QRL<T> | T | undefined,
+): T | Promise<T> | undefined {
+  return value && 'resolve' in value && typeof value.resolve === 'function'
+    ? value.resolve()
+    : value as T | undefined;
+}
 
 // Module-level cache so all hooks in the same page share one default context
 const globalCtxByKey = new Map<string, AskableContext>();
@@ -43,13 +59,13 @@ function requiresPrivateContext(options?: UseAskableOptions): boolean {
   );
 }
 
-function createAdapterContext(options?: UseAskableOptions): AskableContext {
+function createAdapterContext(options?: ResolvedUseAskableOptions): AskableContext {
   if (!options?.name) return createAskableContext(options);
   const { name: _name, ...contextOptions } = options;
   return createAskableContext(contextOptions);
 }
 
-function retainCtx(key: string, options?: UseAskableOptions): AskableContext {
+function retainCtx(key: string, options?: ResolvedUseAskableOptions): AskableContext {
   const existing = globalCtxByKey.get(key);
   if (existing) {
     globalRefCount.set(key, (globalRefCount.get(key) ?? 0) + 1);
@@ -97,7 +113,15 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
   const usePrivateCtx = !usesProvidedCtx && !usesContextFactory && requiresPrivateContext(options);
   const providedCtx = options?.ctx ? noSerialize(options.ctx) : undefined;
   const providedCtxFactory = options?.ctx$;
-  const { ctx: _providedCtx, ctx$: _providedCtxFactory, ...contextOptions } = options ?? {};
+  const {
+    ctx: _providedCtx,
+    ctx$: _providedCtxFactory,
+    textExtractor,
+    sanitizeMeta,
+    sanitizeText,
+    sanitizeSource,
+    ...contextOptions
+  } = options ?? {};
 
   const key = sharedKey(options);
 
@@ -131,13 +155,42 @@ export function useAskable(options?: UseAskableOptions): UseAskableResult {
     });
 
     try {
+      const callbackValues = [
+        resolveQrlOrFunction(textExtractor),
+        resolveQrlOrFunction(sanitizeMeta),
+        resolveQrlOrFunction(sanitizeText),
+        resolveQrlOrFunction(sanitizeSource),
+      ] as const;
+      const resolvedCallbacks = (callbackValues.some(
+        (value) => value && typeof (value as Promise<unknown>).then === 'function',
+      )
+        ? await Promise.all(callbackValues)
+        : callbackValues) as [
+          AskableContextOptions['textExtractor'],
+          AskableContextOptions['sanitizeMeta'],
+          AskableContextOptions['sanitizeText'],
+          AskableContextOptions['sanitizeSource'],
+        ];
+      const [
+        resolvedTextExtractor,
+        resolvedSanitizeMeta,
+        resolvedSanitizeText,
+        resolvedSanitizeSource,
+      ] = resolvedCallbacks;
+      const resolvedContextOptions = {
+        ...contextOptions,
+        textExtractor: resolvedTextExtractor,
+        sanitizeMeta: resolvedSanitizeMeta,
+        sanitizeText: resolvedSanitizeText,
+        sanitizeSource: resolvedSanitizeSource,
+      };
       ctx = usesProvidedCtx
         ? providedCtx
         : usesContextFactory
           ? await providedCtxFactory!()
           : usePrivateCtx
-            ? createAdapterContext(contextOptions)
-            : retainCtx(key, contextOptions);
+            ? createAdapterContext(resolvedContextOptions)
+            : retainCtx(key, resolvedContextOptions);
     } catch (error) {
       if (disposed) return;
       throw error;
