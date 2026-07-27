@@ -1,10 +1,12 @@
 import { useSignal, $ } from '@builder.io/qwik';
+import type { QRL } from '@builder.io/qwik';
 import type {
   AskableAgentRequest,
   AskableAgentRequestOptions,
   AskableContext,
 } from '@askable-ui/core';
 import { useAskable, type UseAskableOptions } from './useAskable.js';
+import type { AskableContextRef } from './contextRef.js';
 
 export type AskableAgentStatus = 'idle' | 'pending' | 'success' | 'error';
 
@@ -12,14 +14,20 @@ export interface UseAskableAgentOptions extends UseAskableOptions {
   requestOptions?: AskableAgentRequestOptions;
 }
 
+export type AskableAgentHandler<T> = QRL<
+  (request: AskableAgentRequest) => T | Promise<T>
+>;
+
 export interface UseAskableAgentResult<T = unknown> {
   status: ReturnType<typeof useSignal<AskableAgentStatus>>;
   data: ReturnType<typeof useSignal<T | null>>;
   error: ReturnType<typeof useSignal<unknown>>;
   isLoading: ReturnType<typeof useSignal<boolean>>;
   lastRequest: ReturnType<typeof useSignal<AskableAgentRequest | null>>;
-  send: (question: string, handler: (request: AskableAgentRequest) => T | Promise<T>) => Promise<T | undefined>;
-  reset: () => void;
+  send: QRL<(question: string, handler: AskableAgentHandler<T>) => Promise<T | undefined>>;
+  reset: QRL<() => void>;
+  /** Stable resumable reference populated when the browser lifecycle mounts. */
+  ctxRef: AskableContextRef;
   ctx: AskableContext;
 }
 
@@ -29,18 +37,19 @@ export interface UseAskableAgentResult<T = unknown> {
  *
  * @example
  * ```tsx
- * import { component$ } from '@builder.io/qwik';
+ * import { $, component$ } from '@builder.io/qwik';
  * import { useAskableAgent } from '@askable-ui/qwik';
  *
  * export const AskButton = component$(() => {
  *   const { send, isLoading } = useAskableAgent();
+ *   const sendRequest = $(async (req) =>
+ *     fetch('/api/ai', { method: 'POST', body: JSON.stringify(req) }).then(r => r.json())
+ *   );
  *
  *   return (
- *     <button disabled={isLoading.value} onClick$={$(() =>
- *       send('What is this?', async (req) =>
- *         fetch('/api/ai', { method: 'POST', body: JSON.stringify(req) }).then(r => r.json())
- *       )
- *     )}>
+ *     <button disabled={isLoading.value} onClick$={() =>
+ *       send('What is this?', sendRequest)
+ *     }>
  *       {isLoading.value ? 'Thinking…' : 'Ask AI'}
  *     </button>
  *   );
@@ -61,7 +70,7 @@ export function useAskableAgent<T = unknown>(
 
   const send = $(async (
     question: string,
-    handler: (request: AskableAgentRequest) => T | Promise<T>,
+    handler: AskableAgentHandler<T>,
   ): Promise<T | undefined> => {
     const ctx = ctxRef.value;
     if (!ctx) return undefined;
@@ -103,6 +112,7 @@ export function useAskableAgent<T = unknown>(
     lastRequest,
     send,
     reset,
+    ctxRef,
     get ctx() { return ctxRef.value!; },
   };
 }

@@ -1,63 +1,86 @@
-import { useSignal } from '@builder.io/qwik';
+import { $, useSignal } from '@builder.io/qwik';
+import type { QRL } from '@builder.io/qwik';
 import { createAskableErrorSource } from '@askable-ui/core';
 import type { AskableCreateErrorSourceOptions, AskableErrorEntry } from '@askable-ui/core';
-import { useAskableSource, type UseAskableSourceOptions, type UseAskableSourceResult } from './useAskableSource.js';
+import {
+  useAskableSource,
+  type UseAskableSourceOptions,
+  type UseAskableSourceResult,
+} from './useAskableSource.js';
 
 export type { AskableErrorEntry };
 
 export interface UseAskableErrorSourceOptions
   extends UseAskableSourceOptions,
-    Omit<AskableCreateErrorSourceOptions, 'getErrors'> {
+    Omit<AskableCreateErrorSourceOptions, 'describe' | 'getErrors'> {
   id?: string;
-  /** Initial list of errors. Pass `getErrors` for dynamic sources. */
+  /** Initial list of errors. Pass a QRL `getErrors` for dynamic sources. */
   initialErrors?: AskableErrorEntry[];
-  /** Override the error getter with a custom async function. */
-  getErrors?: AskableCreateErrorSourceOptions['getErrors'];
+  /** Resume-safe description callback. */
+  describe?: string | QRL<() => string | Promise<string>>;
+  /** Resume-safe override for dynamic errors. */
+  getErrors?: QRL<() => AskableErrorEntry[] | Promise<AskableErrorEntry[]>>;
 }
 
 export interface UseAskableErrorSourceResult extends UseAskableSourceResult {
   errors: ReturnType<typeof useSignal<AskableErrorEntry[]>>;
-  addError(entry: AskableErrorEntry): void;
-  removeError(key: string): void;
-  clearErrors(): void;
+  addError: QRL<(entry: AskableErrorEntry) => Promise<void>>;
+  removeError: QRL<(key: string) => Promise<void>>;
+  clearErrors: QRL<() => Promise<void>>;
 }
 
 /**
  * Registers an error source that captures recent application errors so the AI
- * can reference them. Errors are managed reactively via `addError`/`removeError`.
- *
- * ```tsx
- * const { addError } = useAskableErrorSource();
- * // On catch: addError({ key: 'submit', message: 'Network timeout', severity: 'error' });
- * ```
+ * can reference them. Mutation actions are resumable QRLs.
  */
-export function useAskableErrorSource(options: UseAskableErrorSourceOptions = {}): UseAskableErrorSourceResult {
-  const { id = 'errors', enabled, ctx, ctx$, name, events, describe, kind, initialErrors = [], getErrors: customGetErrors } = options;
-
-  const errors = useSignal<AskableErrorEntry[]>(initialErrors);
-
-  const source = createAskableErrorSource({
+export function useAskableErrorSource(
+  options: UseAskableErrorSourceOptions = {},
+): UseAskableErrorSourceResult {
+  const {
+    id = 'errors',
+    enabled,
+    ctx,
+    ctx$,
+    name,
+    events,
+    viewport,
+    textExtractor,
+    sanitizeMeta,
+    sanitizeText,
+    sanitizeSource,
+    maxHistory,
     describe,
     kind,
-    getErrors: customGetErrors ?? (() => errors.value),
+    initialErrors = [],
+    getErrors: customGetErrors,
+  } = options;
+
+  const errors = useSignal<AskableErrorEntry[]>(initialErrors);
+  const sourceFactory = $(async () => createAskableErrorSource({
+    describe: typeof describe === 'string' ? describe : await describe?.resolve(),
+    kind,
+    getErrors: await customGetErrors?.resolve() ?? (() => errors.value),
+  }));
+  const result = useAskableSource(id, sourceFactory, {
+    enabled, ctx, ctx$, name, events, viewport, textExtractor,
+    sanitizeMeta, sanitizeText, sanitizeSource, maxHistory,
+  });
+  const notifyChanged = result.notifyChanged;
+
+  const addError = $(async (entry: AskableErrorEntry): Promise<void> => {
+    errors.value = [entry, ...errors.value.filter((errorEntry) => errorEntry.key !== entry.key)];
+    await notifyChanged();
   });
 
-  const result = useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
+  const removeError = $(async (key: string): Promise<void> => {
+    errors.value = errors.value.filter((entry) => entry.key !== key);
+    await notifyChanged();
+  });
 
-  function addError(entry: AskableErrorEntry): void {
-    errors.value = [entry, ...errors.value.filter((e) => e.key !== entry.key)];
-    result.notifyChanged();
-  }
-
-  function removeError(key: string): void {
-    errors.value = errors.value.filter((e) => e.key !== key);
-    result.notifyChanged();
-  }
-
-  function clearErrors(): void {
+  const clearErrors = $(async (): Promise<void> => {
     errors.value = [];
-    result.notifyChanged();
-  }
+    await notifyChanged();
+  });
 
-  return { ...result, errors, addError, removeError, clearErrors };
+  return Object.assign(result, { errors, addError, removeError, clearErrors });
 }

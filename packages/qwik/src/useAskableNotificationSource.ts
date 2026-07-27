@@ -1,26 +1,32 @@
-import { useSignal } from '@builder.io/qwik';
+import { $, useSignal } from '@builder.io/qwik';
+import type { QRL, SyncQRL } from '@builder.io/qwik';
 import { createAskableNotificationSource } from '@askable-ui/core';
 import type {
   AskableCreateNotificationSourceOptions,
   AskableNotification,
   AskableNotificationSeverity,
 } from '@askable-ui/core';
-import { useAskableSource, type UseAskableSourceOptions, type UseAskableSourceResult } from './useAskableSource.js';
+import {
+  useAskableSource,
+  type UseAskableSourceOptions,
+  type UseAskableSourceResult,
+} from './useAskableSource.js';
 
 export type { AskableNotification, AskableNotificationSeverity };
 
 export interface UseAskableNotificationSourceOptions
   extends UseAskableSourceOptions,
-    Pick<AskableCreateNotificationSourceOptions, 'describe' | 'kind'> {
+    Pick<AskableCreateNotificationSourceOptions, 'kind'> {
   id?: string;
   maxEntries?: number;
+  describe?: SyncQRL<NonNullable<AskableCreateNotificationSourceOptions['describe']>>;
 }
 
 export interface UseAskableNotificationSourceResult extends UseAskableSourceResult {
   notifications: ReturnType<typeof useSignal<AskableNotification[]>>;
-  push(notification: Omit<AskableNotification, 'id' | 'timestamp'>): void;
-  dismiss(id: string): void;
-  clear(): void;
+  push: QRL<(notification: Omit<AskableNotification, 'id' | 'timestamp'>) => Promise<void>>;
+  dismiss: QRL<(id: string) => Promise<void>>;
+  clear: QRL<() => Promise<void>>;
 }
 
 /**
@@ -28,45 +34,69 @@ export interface UseAskableNotificationSourceResult extends UseAskableSourceResu
  * banners so the AI can reference them.
  *
  * ```tsx
- * const { push, dismiss } = useAskableNotificationSource();
- * push({ message: 'Order placed!', severity: 'success' });
+ * const notifications = useAskableNotificationSource();
+ * <button onClick$={() => notifications.push({
+ *   message: 'Order placed!',
+ *   severity: 'success',
+ * })}>Notify</button>
  * ```
  */
 export function useAskableNotificationSource(
   options: UseAskableNotificationSourceOptions = {},
 ): UseAskableNotificationSourceResult {
-  const { id = 'notifications', enabled, ctx, ctx$, name, events, maxEntries = 20, describe, kind } = options;
-
-  const notifications = useSignal<AskableNotification[]>([]);
-  let nextId = 1;
-
-  const source = createAskableNotificationSource({
+  const {
+    id = 'notifications',
+    enabled,
+    ctx,
+    ctx$,
+    name,
+    events,
+    viewport,
+    textExtractor,
+    sanitizeMeta,
+    sanitizeText,
+    sanitizeSource,
+    maxHistory,
+    maxEntries = 20,
     describe,
     kind,
-    getNotifications: () => notifications.value,
-  });
-  const result = useAskableSource(id, source, { enabled, ctx, ctx$, name, events });
+  } = options;
 
-  function push(notification: Omit<AskableNotification, 'id' | 'timestamp'>): void {
+  const notifications = useSignal<AskableNotification[]>([]);
+  const nextId = useSignal(1);
+  const sourceFactory = $(async () => createAskableNotificationSource({
+    describe: await describe?.resolve(),
+    kind,
+    getNotifications: () => notifications.value,
+  }));
+  const result = useAskableSource(id, sourceFactory, {
+    enabled, ctx, ctx$, name, events, viewport, textExtractor,
+    sanitizeMeta, sanitizeText, sanitizeSource, maxHistory,
+  });
+  const notifyChanged = result.notifyChanged;
+
+  const push = $(async (
+    notification: Omit<AskableNotification, 'id' | 'timestamp'>,
+  ): Promise<void> => {
     const entry: AskableNotification = {
       ...notification,
-      id: String(nextId++),
+      id: String(nextId.value++),
       timestamp: new Date().toISOString(),
     };
     const next = [entry, ...notifications.value];
     notifications.value = next.length > maxEntries ? next.slice(0, maxEntries) : next;
-    result.notifyChanged();
-  }
+    await notifyChanged();
+  });
 
-  function dismiss(id: string): void {
-    notifications.value = notifications.value.filter((n) => n.id !== id);
-    result.notifyChanged();
-  }
+  const dismiss = $(async (entryId: string): Promise<void> => {
+    notifications.value = notifications.value.filter((notification) => notification.id !== entryId);
+    await notifyChanged();
+  });
 
-  function clear(): void {
+  const clear = $(async (): Promise<void> => {
     notifications.value = [];
-    result.notifyChanged();
-  }
+    await notifyChanged();
+  });
 
-  return { ...result, notifications, push, dismiss, clear };
+  return Object.assign(result, { notifications, push, dismiss, clear });
 }

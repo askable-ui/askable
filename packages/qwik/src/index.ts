@@ -9,7 +9,7 @@ export { useAskableSource } from './useAskableSource.js';
 export type { AskableContextSourceFactory, UseAskableSourceOptions, UseAskableSourceResult } from './useAskableSource.js';
 
 export { useAskableAgent } from './useAskableAgent.js';
-export type { AskableAgentStatus, UseAskableAgentOptions, UseAskableAgentResult } from './useAskableAgent.js';
+export type { AskableAgentStatus, AskableAgentHandler, UseAskableAgentOptions, UseAskableAgentResult } from './useAskableAgent.js';
 
 export { useAskableStream } from './useAskableStream.js';
 export type { AskableStreamStatus, AskableStreamHandler, UseAskableStreamOptions, UseAskableStreamResult } from './useAskableStream.js';

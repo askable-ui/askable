@@ -1,6 +1,8 @@
-import { useSignal } from '@builder.io/qwik';
+import { $, noSerialize, useSignal, useTask$ } from '@builder.io/qwik';
+import type { NoSerialize, QRL } from '@builder.io/qwik';
 import type { AskableAgentRequest, AskableAgentRequestOptions, AskableContext } from '@askable-ui/core';
 import { getAskableContext } from './contextRef.js';
+import type { AskableContextRef } from './contextRef.js';
 import { useAskable, type UseAskableOptions } from './useAskable.js';
 
 export type AskableChatRole = 'user' | 'assistant' | 'system';
@@ -15,20 +17,20 @@ export interface AskableChatMessage {
 
 export type AskableChatStatus = 'idle' | 'streaming' | 'error';
 
-export type AskableChatStreamHandler = (
+export type AskableChatStreamHandler = QRL<(
   request: AskableAgentRequest,
   messages: AskableChatMessage[],
   emit: (chunk: string) => void,
-) => Promise<void>;
+  signal: AbortSignal,
+) => void | Promise<void>>;
 
-export interface UseAskableChatOptions extends Omit<UseAskableOptions, 'inspector'> {
+export interface UseAskableChatOptions extends UseAskableOptions {
   initialMessages?: AskableChatMessage[];
-  systemPrompt?: string | ((context: string) => string);
-  onChunk?: (chunk: string) => void;
-  onFinish?: (message: AskableChatMessage) => void;
-  onError?: (error: unknown) => void;
+  systemPrompt?: string | QRL<(context: string) => string | Promise<string>>;
+  onChunk?: QRL<(chunk: string) => void | Promise<void>>;
+  onFinish?: QRL<(message: AskableChatMessage) => void | Promise<void>>;
+  onError?: QRL<(error: unknown) => void | Promise<void>>;
   requestOptions?: AskableAgentRequestOptions;
-  ctx?: AskableContext;
 }
 
 export interface UseAskableChatResult {
@@ -36,117 +38,171 @@ export interface UseAskableChatResult {
   status: ReturnType<typeof useSignal<AskableChatStatus>>;
   error: ReturnType<typeof useSignal<unknown>>;
   isStreaming: ReturnType<typeof useSignal<boolean>>;
-  append(content: string, handler: AskableChatStreamHandler): Promise<void>;
-  clearMessages(): void;
-  abort(): void;
+  append: QRL<(content: string, handler: AskableChatStreamHandler) => Promise<void>>;
+  clearMessages: QRL<() => void>;
+  abort: QRL<() => void>;
+  /** Stable resumable reference populated when the browser lifecycle mounts. */
+  ctxRef: AskableContextRef;
   ctx: AskableContext;
 }
 
-let idCounter = 0;
-function nextId() { return `msg-${Date.now()}-${++idCounter}`; }
-
 /**
  * Qwik hook for multi-turn AI chat. Injects the current UI context into every
- * turn automatically.
+ * turn automatically. Handlers and callbacks are QRLs so actions can be used
+ * from resumable Qwik event handlers.
  *
  * ```tsx
  * export const ChatPanel = component$(() => {
- *   const { messages, append, isStreaming } = useAskableChat({
- *     systemPrompt: (ctx) => `You are helpful.\n\n${ctx}`,
+ *   const chat = useAskableChat({
+ *     systemPrompt: 'You are helpful.',
+ *   });
+ *   const handler = $(async (req, messages, emit, signal) => {
+ *     const res = await fetch('/api/chat', {
+ *       method: 'POST',
+ *       body: JSON.stringify({ req, messages }),
+ *       signal,
+ *     });
+ *     const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
+ *     while (true) {
+ *       const { done, value } = await reader.read();
+ *       if (done) break;
+ *       emit(value);
+ *     }
  *   });
  *
- *   return (
- *     <>
- *       {messages.value.map((m) => (
- *         <p key={m.id} class={m.role}>{m.content}</p>
- *       ))}
- *       <button onClick$={() => append('Explain this', async (req, msgs, emit) => {
- *         const res = await fetch('/api/chat', { method: 'POST', body: JSON.stringify(req) });
- *         const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
- *         while (true) {
- *           const { done, value } = await reader.read();
- *           if (done) break;
- *           emit(value);
- *         }
- *       })}>Send</button>
- *     </>
- *   );
+ *   return <button onClick$={() => chat.append('Explain this', handler)}>Send</button>;
  * });
  * ```
  */
 export function useAskableChat(options: UseAskableChatOptions = {}): UseAskableChatResult {
-  const { initialMessages = [], systemPrompt, onChunk, onFinish, onError, requestOptions, ...askableOptions } = options;
+  const {
+    initialMessages = [],
+    systemPrompt,
+    onChunk,
+    onFinish,
+    onError,
+    requestOptions,
+    ...askableOptions
+  } = options;
   const { ctxRef } = useAskable(askableOptions);
 
   const messages = useSignal<AskableChatMessage[]>([...initialMessages]);
   const status = useSignal<AskableChatStatus>('idle');
   const error = useSignal<unknown>(null);
   const isStreaming = useSignal(false);
+  const abortControllerRef = useSignal<NoSerialize<AbortController>>();
+  const idCounter = useSignal(0);
 
-  let currentAc: AbortController | null = null;
-  let contentAccum = '';
+  useTask$(({ cleanup }) => {
+    cleanup(() => abortControllerRef.value?.abort());
+  });
 
-  function abort(): void {
-    currentAc?.abort();
-    currentAc = null;
+  const abort = $(() => {
+    abortControllerRef.value?.abort();
+    abortControllerRef.value = undefined;
     isStreaming.value = false;
     status.value = 'idle';
-  }
+  });
 
-  function clearMessages(): void {
+  const clearMessages = $(() => {
+    abortControllerRef.value?.abort();
+    abortControllerRef.value = undefined;
     messages.value = [];
     status.value = 'idle';
     error.value = null;
     isStreaming.value = false;
-  }
+  });
 
-  async function append(content: string, handler: AskableChatStreamHandler): Promise<void> {
-    abort();
-    currentAc = new AbortController();
-
-    const ctx = getAskableContext(ctxRef);
-    const userMsg: AskableChatMessage = { id: nextId(), role: 'user', content, createdAt: Date.now() };
-    messages.value = [...messages.value, userMsg];
-
-    let req = await ctx.toAgentRequest(content, requestOptions);
-
-    if (systemPrompt) {
-      const sys = typeof systemPrompt === 'function' ? systemPrompt(ctx.toPromptContext()) : systemPrompt;
-      req = { ...req, metadata: { ...req.metadata, systemPrompt: sys } };
-    }
-
-    const assistantId = nextId();
-    contentAccum = '';
-    const assistantMsg: AskableChatMessage = { id: assistantId, role: 'assistant', content: '', request: req, createdAt: Date.now() };
-    messages.value = [...messages.value, assistantMsg];
-
+  const append = $(async (
+    content: string,
+    handler: AskableChatStreamHandler,
+  ): Promise<void> => {
+    abortControllerRef.value?.abort();
+    const controller = new AbortController();
+    abortControllerRef.value = noSerialize(controller);
     status.value = 'streaming';
     isStreaming.value = true;
     error.value = null;
 
+    const nextId = () => `msg-${Date.now()}-${++idCounter.value}`;
+    const userMsg: AskableChatMessage = {
+      id: nextId(),
+      role: 'user',
+      content,
+      createdAt: Date.now(),
+    };
+    let req: AskableAgentRequest | undefined;
+    let assistantId: string | undefined;
+    let accumulated = '';
+    const chunkCallbacks: Promise<void>[] = [];
+    const isCurrent = () => (
+      !controller.signal.aborted && abortControllerRef.value === controller
+    );
+
     try {
-      await handler(req, messages.value.slice(0, -1), (chunk) => {
-        contentAccum += chunk;
-        messages.value = messages.value.map((m) =>
-          m.id === assistantId ? { ...m, content: contentAccum } : m,
-        );
-        onChunk?.(chunk);
-      });
-
-      const finished = messages.value.find((m) => m.id === assistantId)!;
-      onFinish?.(finished);
-      status.value = 'idle';
-    } catch (e) {
-      if ((e as Error)?.name !== 'AbortError') {
-        error.value = e;
-        status.value = 'error';
-        onError?.(e);
+      const ctx = getAskableContext(ctxRef);
+      req = await ctx.toAgentRequest(content, requestOptions);
+      if (!isCurrent()) return;
+      if (systemPrompt) {
+        const prompt = typeof systemPrompt === 'string'
+          ? systemPrompt
+          : await systemPrompt(ctx.toPromptContext());
+        if (!isCurrent()) return;
+        req = { ...req, metadata: { ...req.metadata, systemPrompt: prompt } };
       }
-    } finally {
-      isStreaming.value = false;
-      currentAc = null;
-    }
-  }
 
-  return { messages, status, error, isStreaming, append, clearMessages, abort, get ctx() { return ctxRef.value!; } };
+      assistantId = nextId();
+      const assistantMsg: AskableChatMessage = {
+        id: assistantId,
+        role: 'assistant',
+        content: '',
+        request: req,
+        createdAt: Date.now(),
+      };
+      messages.value = [...messages.value, userMsg, assistantMsg];
+
+      await handler(req, messages.value.slice(0, -1), (chunk) => {
+        if (!isCurrent()) return;
+        accumulated += chunk;
+        messages.value = messages.value.map((message) =>
+          message.id === assistantId
+            ? { ...message, content: accumulated }
+            : message,
+        );
+        if (onChunk) chunkCallbacks.push(onChunk(chunk));
+      }, controller.signal);
+      await Promise.all(chunkCallbacks);
+
+      if (!isCurrent()) return;
+      const finished = messages.value.find((message) => message.id === assistantId);
+      if (finished) await onFinish?.(finished);
+      if (!isCurrent()) return;
+      status.value = 'idle';
+    } catch (caught) {
+      if (!isCurrent() || (caught as Error)?.name === 'AbortError') {
+        if (abortControllerRef.value === controller) status.value = 'idle';
+        return;
+      }
+      error.value = caught;
+      status.value = 'error';
+      await onError?.(caught);
+    } finally {
+      if (abortControllerRef.value === controller) {
+        abortControllerRef.value = undefined;
+        isStreaming.value = false;
+      }
+    }
+  });
+
+  return {
+    messages,
+    status,
+    error,
+    isStreaming,
+    append,
+    clearMessages,
+    abort,
+    ctxRef,
+    get ctx() { return ctxRef.value!; },
+  };
 }
