@@ -1,4 +1,85 @@
-# What’s New in v0.16.0
+# What’s New in v0.17.0
+
+askable-ui v0.17.0 adds `@askable-ui/bridge`, a provider-neutral way to move
+Context packets from the page into app chat, browser extensions, iframes, local
+MCP companions, and webhooks. It also keeps the release pipeline clean by
+covering the new package in preview/release publishing and refreshing audit
+dependencies that were blocking CI.
+
+## Highlights
+
+### Provider-neutral context bridge
+
+`@askable-ui/bridge` gives Askable a transport layer between captured UI context
+and the place the user wants to ask a question. It works with the open Context
+packet format and stays independent of any single chatbot SDK.
+
+```ts
+import { createAskableBridge, createFunctionTransport } from '@askable-ui/bridge';
+
+const bridge = createAskableBridge({
+  provider: {
+    getPacket: () => ctx.toContextPacket(),
+    formatPrompt: () => ctx.toPromptContext(),
+  },
+  transports: [
+    createFunctionTransport(async ({ payload }) => {
+      await sendChatMessage({
+        question: payload.question,
+        context: payload.prompt,
+        packet: payload.packet,
+      });
+    }),
+  ],
+});
+
+await bridge.sendPrompt('Explain this selected account.');
+```
+
+The package ships function, browser extension, `postMessage`, and HTTP
+transports. Custom transports can forward the same envelope to side panels,
+workers, native shells, local MCP companions, or provider-specific chat adapters.
+
+See [Bridge Context to Chat](/guide/bridge) and the
+[`@askable-ui/bridge` API reference](/api/bridge) for the full contract.
+
+### Bridge and MCP together
+
+Use `@askable-ui/bridge` to move packets out of the page. Use `@askable-ui/mcp`
+when those packets should be exposed as MCP tools and resources for Claude,
+ChatGPT connectors, Cursor, or local clients.
+
+Most browser-local MCP setups use both:
+
+- the bridge sends the current packet from the page to a trusted extension or
+  local companion;
+- MCP exposes that packet as `get_current_context`,
+  `format_context_for_prompt`, and `askable://current`.
+
+### Release and audit maintenance
+
+This release also:
+
+- includes `@askable-ui/bridge` in preview package publishing;
+- includes `@askable-ui/bridge` in trusted-publisher release publishing;
+- updates MCP transitive dependencies that were failing the production audit;
+- updates the docs lockfile dependency that was failing the docs audit.
+
+## Upgrade
+
+Keep all Askable packages on the same release line:
+
+```bash
+npm install @askable-ui/core@^0.17.0 @askable-ui/react@^0.17.0
+npm install @askable-ui/bridge@^0.17.0
+```
+
+The current docs are published at both:
+
+- `/docs/`
+- `/docs/v0.17.0/`
+
+## Also in v0.16.0
 
 askable-ui v0.16.0 makes Qwik integrations genuinely resumable, expands the MCP
 package into a command-line server with live resources, and publishes the
@@ -6,7 +87,7 @@ Context Packet Protocol as a first-class specification. It also includes a
 broad reliability and security pass across the framework adapters, MCP bridge,
 and browser sources.
 
-## Highlights
+### v0.16.0 highlights
 
 ### Resumable Qwik actions
 
@@ -88,7 +169,7 @@ The React, Vue, Svelte, SolidJS, and Qwik packages also re-export
 `a11yTextExtractor` so accessible text extraction is discoverable without a
 separate core import.
 
-## Reliability and security
+### v0.16.0 reliability and security
 
 This release includes fixes for:
 
@@ -101,7 +182,7 @@ This release includes fixes for:
 - verified issues across create-app, Svelte, React, Vue, MCP, and Context packet
   handling.
 
-## Upgrade
+### v0.16.0 upgrade notes
 
 Keep all Askable packages on the same release line:
 

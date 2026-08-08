@@ -40,7 +40,7 @@ features:
     details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for app chat, browser extensions, MCP clients, and agent runtimes.
 ---
 
-> Current npm release: **v0.16.0**.
+> Current npm release: **v0.17.0**.
 >
 > Need a breaking-release upgrade path? See [Migration Guides](/guide/migrations). Versioned docs are available at `/docs/<version>/`.
 
@@ -59,7 +59,14 @@ features:
   </video>
 </div>
 
-## Latest in v0.16.0
+## Latest in v0.17.0
+
+- **Provider-neutral bridge package** — new `@askable-ui/bridge` sends Context packets to app chat, browser extensions, `postMessage` targets, local MCP companions, and HTTP endpoints without binding Askable to one chatbot SDK
+- **Bridge docs and API reference** — new guide/API pages show function, browser extension, iframe, webhook, and MCP handoff patterns
+- **Release coverage for bridge** — preview and release publishing now include `@askable-ui/bridge` as a first-class public package
+- **Audit fixes** — production MCP transitive dependencies and docs dependencies were refreshed so CI audit gates pass cleanly
+
+## Also in v0.16.0
 
 - **Resumable Qwik actions** — optimizer-safe `QRL` actions, `$()` / `sync$()` callback contracts, race-safe stream/chat ownership, and hardened source cleanup
 - **MCP CLI and live resources** — a stdio command for MCP clients, `askable://current`, `list_context_sources`, and registry-ready metadata
@@ -118,7 +125,7 @@ Every pattern can produce a prompt string with `toPromptContext()` or a structur
 
 Start here:
 
-- [What’s New in v0.16.0](/guide/whats-new)
+- [What’s New in v0.17.0](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [The Context Packet Protocol (spec)](/guide/protocol)
 - [Bridge context to chat](/guide/bridge)
