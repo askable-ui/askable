@@ -60,7 +60,7 @@
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "^1.18.3",
     "@angular/build": "^19.2.27",
-    "@angular/common": "^19.2.0",
+    "@angular/common": "^22.0.8",
     "@angular/compiler-cli": "^19.2.25",
     "@angular/core": "^19.2.0",
     "@angular/platform-browser": "^19.2.0",
