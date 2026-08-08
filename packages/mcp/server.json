@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
   "name": "io.github.askable-ui/askable",
   "description": "Expose live UI context as structured Context Packets to Claude, Cursor, and other MCP clients.",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "status": "active",
   "repository": {
     "url": "https://github.com/askable-ui/askable",
@@ -15,7 +15,7 @@
       "registry_type": "npm",
       "registry_base_url": "https://registry.npmjs.org",
       "identifier": "@askable-ui/mcp",
-      "version": "0.16.0",
+      "version": "0.17.0",
       "runtime_hint": "npx",
       "transport": {
         "type": "stdio"

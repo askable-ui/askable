@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/bridge",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Provider-neutral bridge for sending Askable context to chat surfaces, browser extensions, local MCP bridges, and webhooks",
   "type": "module",
   "main": "./dist/index.js",
@@ -45,7 +45,7 @@
   "homepage": "https://askable-ui.com",
   "license": "MIT",
   "dependencies": {
-    "@askable-ui/context": "^0.16.0"
+    "@askable-ui/context": "^0.17.0"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
