@@ -57,7 +57,7 @@
     "@askable-ui/core": "^0.17.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.4.0",
+    "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
