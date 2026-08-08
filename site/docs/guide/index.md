@@ -32,7 +32,7 @@ The LLM now knows exactly what the user is looking at. The answer goes from *"re
 - **Annotate** — Add `data-askable` to any element. The value can be a JSON object or a plain string.
 - **Observe** — One `ctx.observe(document)` call covers the entire page. A `MutationObserver` automatically picks up dynamically rendered elements.
 - **Capture** — Use clicks, hover, keyboard focus, Ask AI buttons, region selection, circle selection, lasso selection, highlighted text, or app events to decide what context the user means.
-- **Inject** — `ctx.toPromptContext()` returns a string ready for any LLM system prompt. `ctx.toContextPacket()` returns a structured packet for MCP bridges, browser extensions, and agent runtimes.
+- **Inject** — `ctx.toPromptContext()` returns a string ready for any LLM system prompt. `ctx.toContextPacket()` returns a structured packet for app chat, MCP bridges, browser extensions, and agent runtimes.
 
 ## What it is not
 
@@ -71,4 +71,5 @@ All of these feed the same `AskableContext`, so your chat surface can read one c
 - [Getting Started](/guide/getting-started) — install and wire up in 5 minutes
 - [How It Works](/guide/how-it-works) — internals and architecture
 - [Context Packets](/guide/context) — structured packets for agents and MCP
+- [Bridge Context to Chat](/guide/bridge) — send packets to app chat, extensions, local companions, and webhooks
 - [API Reference](/api/core) — full method signatures and options

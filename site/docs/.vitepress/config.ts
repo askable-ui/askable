@@ -81,6 +81,7 @@ export default defineConfig({
             { text: 'Prompt Serialization', link: '/guide/serialization' },
             { text: 'Context Packets', link: '/guide/context' },
             { text: 'The Context Packet Protocol', link: '/guide/protocol' },
+            { text: 'Bridge Context to Chat', link: '/guide/bridge' },
             { text: 'Migration Guides', link: '/guide/migrations' },
             { text: 'SSR Safety', link: '/guide/ssr' },
             { text: 'Browser Support', link: '/guide/browser-support' },
@@ -107,6 +108,7 @@ export default defineConfig({
           items: [
             { text: '@askable-ui/core', link: '/api/core' },
             { text: '@askable-ui/context', link: '/api/context' },
+            { text: '@askable-ui/bridge', link: '/api/bridge' },
             { text: '@askable-ui/mcp', link: '/api/mcp' },
             { text: '@askable-ui/react', link: '/api/react' },
             { text: '@askable-ui/react-native', link: '/api/react-native' },

@@ -4,7 +4,9 @@ MCP bridge for exposing structured Context packets to AI agents.
 
 Host applications provide a context provider. The package registers MCP tools
 that return the current packet, the packet schema, and a prompt-ready text
-rendering.
+rendering. Use `@askable-ui/bridge` when the same Context packets need to move
+through app chat, browser extensions, iframes, or webhooks before they reach an
+MCP companion.
 
 ```ts
 import { createAskableContext } from '@askable-ui/core';

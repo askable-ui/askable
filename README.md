@@ -493,6 +493,7 @@ The format lives in [`@askable-ui/context`](https://www.npmjs.com/package/@askab
 | [Anthropic SDK](https://github.com/anthropic-ai/sdk-python) | Pass `promptContext` to `system` in `messages.create` |
 | [OpenAI SDK](https://github.com/openai/openai-node) | Pass `promptContext` to the system message |
 | [LangChain.js](https://js.langchain.com/) | Inject via `SystemMessage` |
+| Any chat surface, iframe, extension, or webhook | Use `@askable-ui/bridge` to send Context packets through provider-neutral transports |
 | Any MCP client | Use `@askable-ui/mcp` to expose as MCP tools |
 
 **Frameworks**
@@ -755,6 +756,7 @@ Or open [`examples/vanilla-chat/index.html`](./examples/vanilla-chat/index.html)
 |---|---|---|
 | [`@askable-ui/core`](https://www.npmjs.com/package/@askable-ui/core) | [![npm](https://img.shields.io/npm/v/@askable-ui/core?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/core) | Framework-agnostic core. Zero runtime deps. |
 | [`@askable-ui/context`](https://www.npmjs.com/package/@askable-ui/context) | [![npm](https://img.shields.io/npm/v/@askable-ui/context?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/context) | Context packet types, schema, validators |
+| [`@askable-ui/bridge`](https://www.npmjs.com/package/@askable-ui/bridge) | [![npm](https://img.shields.io/npm/v/@askable-ui/bridge?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/bridge) | Provider-neutral transports for app chat, browser extensions, MCP companions, and webhooks |
 | [`@askable-ui/react`](https://www.npmjs.com/package/@askable-ui/react) | [![npm](https://img.shields.io/npm/v/@askable-ui/react?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/react) | React 18+ hooks and components |
 | [`@askable-ui/vue`](https://www.npmjs.com/package/@askable-ui/vue) | [![npm](https://img.shields.io/npm/v/@askable-ui/vue?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/vue) | Vue 3 composables and components |
 | [`@askable-ui/svelte`](https://www.npmjs.com/package/@askable-ui/svelte) | [![npm](https://img.shields.io/npm/v/@askable-ui/svelte?color=4f46e5)](https://www.npmjs.com/package/@askable-ui/svelte) | Svelte 4 & 5 stores and components |

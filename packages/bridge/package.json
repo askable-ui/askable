@@ -1,0 +1,54 @@
+{
+  "name": "@askable-ui/bridge",
+  "version": "0.16.0",
+  "description": "Provider-neutral bridge for sending Askable context to chat surfaces, browser extensions, local MCP bridges, and webhooks",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/askable-ui/askable.git",
+    "directory": "packages/bridge"
+  },
+  "scripts": {
+    "prebuild": "npm run build -w @askable-ui/context",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run --passWithNoTests"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "chatbot",
+    "browser-extension",
+    "mcp",
+    "model-context-protocol",
+    "context",
+    "claude",
+    "chatgpt",
+    "copilot",
+    "web",
+    "selection",
+    "data-askable",
+    "agentic"
+  ],
+  "homepage": "https://askable-ui.com",
+  "license": "MIT",
+  "dependencies": {
+    "@askable-ui/context": "^0.16.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}
