@@ -65,7 +65,7 @@
     "@angular/core": "^19.2.0",
     "@angular/platform-browser": "^19.2.0",
     "@angular/platform-browser-dynamic": "^19.2.25",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "typescript": "^5.8.3",
     "vitest": "^4.1.8",
     "zone.js": "^0.15.0"
