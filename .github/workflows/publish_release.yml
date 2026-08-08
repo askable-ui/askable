@@ -110,6 +110,7 @@ jobs:
 
           publish_package packages/context
           publish_package packages/core
+          publish_package packages/bridge
           publish_package packages/react
           publish_package packages/vue
           publish_package packages/svelte

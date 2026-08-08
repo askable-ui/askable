@@ -36,8 +36,8 @@ features:
     details: Capture implicit focus, explicit Ask AI buttons, highlighted text, rectangular regions, circles, and freehand lasso selections as one structured context model.
 
   - icon: 🔌
-    title: Works with agents and MCP
-    details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for MCP bridges, browser tools, and agent runtimes.
+    title: Bridge to chat and MCP
+    details: toPromptContext() returns a plain string, while toContextPacket() returns structured Context packets for app chat, browser extensions, MCP clients, and agent runtimes.
 ---
 
 > Current npm release: **v0.16.0**.
@@ -121,6 +121,7 @@ Start here:
 - [What’s New in v0.16.0](/guide/whats-new)
 - [Context Packets](/guide/context)
 - [The Context Packet Protocol (spec)](/guide/protocol)
+- [Bridge context to chat](/guide/bridge)
 - [React interaction patterns](/guide/react#region-circle-and-lasso-capture)
 - [Angular guide](/guide/angular)
 - [React Native guide](/guide/react-native)
