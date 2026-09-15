@@ -14,8 +14,8 @@ importers:
   .:
     dependencies:
       '@askable-ui/react':
-        specifier: ^0.17.2
-        version: 0.17.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: ^0.17.3
+        version: 0.17.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.72.1(react@19.2.6))
@@ -195,14 +195,14 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
-  '@askable-ui/context@0.17.2':
-    resolution: {integrity: sha512-urypyAITiEvbnqum9sQrnorVVNUy590m6wxegd8FsvxarjDV9kUNkcTfdOSkSsiuZO1Tw9zw47zIfyna0KBBKA==}
+  '@askable-ui/context@0.17.3':
+    resolution: {integrity: sha512-6pp0qnkd/JiH7ACuQLTB6pXqnCyCpeH5OO0WwT2ykPZzBuu/8hC7dede8sqxJcJIL1kjmHZMr+FL4SYfpWe+YA==}
 
-  '@askable-ui/core@0.17.2':
-    resolution: {integrity: sha512-YC6lg6h7QC7YuNau4ooS+dC9YskmUyK3h6+SSEo0xMIWgzBRjnMa8DPfGz4jNlAzptbKedJvm/n7oLKYzQqjeA==}
+  '@askable-ui/core@0.17.3':
+    resolution: {integrity: sha512-W1FWOXRtN//mHkKeu7IEjDwSXWCJYj5ydCKgMaO5z/sJ+2K66BeIFFee+7XCan+eZxfmJsVzKguB0eqpyd/viQ==}
 
-  '@askable-ui/react@0.17.2':
-    resolution: {integrity: sha512-rVu0ZnonGIclvtklWO3+QZETpWRK+7RZdgSCUJM9AArwGQys0RWBzq4sx1UIj2ccOIC+uKRWxqMQWfFB1zROAw==}
+  '@askable-ui/react@0.17.3':
+    resolution: {integrity: sha512-r9w/ZOAWYXJkVn4ZF2cxcpHk8o8xl85QSA16afqgq06xoBMZXp3MBFEUA8t4lVrPCnZ4D0b9DPmY4aM2zqLrAg==}
     peerDependencies:
       react: '>=17.0.0'
       react-dom: '>=17.0.0'
@@ -1794,15 +1794,15 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@askable-ui/context@0.17.2': {}
+  '@askable-ui/context@0.17.3': {}
 
-  '@askable-ui/core@0.17.2':
+  '@askable-ui/core@0.17.3':
     dependencies:
-      '@askable-ui/context': 0.17.2
+      '@askable-ui/context': 0.17.3
 
-  '@askable-ui/react@0.17.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@askable-ui/react@0.17.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
-      '@askable-ui/core': 0.17.2
+      '@askable-ui/core': 0.17.3
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
