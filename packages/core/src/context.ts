@@ -772,29 +772,44 @@ export class AskableContextImpl implements AskableContext {
     }
 
     const value = Promise.resolve().then(task);
-    if (timeoutMs === undefined) return value;
+    if (timeoutMs === undefined && signal === undefined) return value;
 
     return new Promise<T>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        reject(new Error('Context source timed out.'));
-      }, Math.max(0, timeoutMs));
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let settled = false;
+
+      const cleanup = () => {
+        if (timer !== undefined) {
+          clearTimeout(timer);
+          timer = undefined;
+        }
+        signal?.removeEventListener('abort', abort);
+      };
+
+      const settle = (callback: () => void) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        callback();
+      };
 
       const abort = () => {
-        clearTimeout(timer);
-        reject(new Error('Context source request aborted.'));
+        settle(() => reject(new Error('Context source request aborted.')));
       };
 
       signal?.addEventListener('abort', abort, { once: true });
+      if (timeoutMs !== undefined) {
+        timer = setTimeout(() => {
+          settle(() => reject(new Error('Context source timed out.')));
+        }, Math.max(0, timeoutMs));
+      }
+
       value.then(
         (result) => {
-          clearTimeout(timer);
-          signal?.removeEventListener('abort', abort);
-          resolve(result);
+          settle(() => resolve(result));
         },
         (error) => {
-          clearTimeout(timer);
-          signal?.removeEventListener('abort', abort);
-          reject(error);
+          settle(() => reject(error));
         },
       );
     });
