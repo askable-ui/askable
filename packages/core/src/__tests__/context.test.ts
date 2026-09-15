@@ -1329,6 +1329,37 @@ describe('createAskableContext', () => {
     cleanup(el);
   });
 
+  it('keeps budgeted JSON valid, including escaped text and nested values', () => {
+    const ctx = createAskableContext();
+    ctx.push({ id: 'account-1', description: '\"\\\n'.repeat(200), nested: { rows: [1, 2, 3] } });
+    const output = ctx.toPromptContext({ format: 'json', maxTokens: 30 });
+    const parsed = JSON.parse(output);
+    expect(parsed.truncated).toBe(true);
+    expect(parsed.meta.id).toBe('account-1');
+    expect(output.length).toBeLessThanOrEqual(120);
+    ctx.destroy();
+  });
+
+  it('keeps async JSON with source data valid under a budget', async () => {
+    const ctx = createAskableContext();
+    ctx.push({ id: 'account-1' });
+    ctx.registerSource('records', { resolve: () => ({ text: 'x'.repeat(1000) }) });
+    const output = await ctx.toPromptContextAsync({ format: 'json', sources: ['records'], maxTokens: 60 });
+    expect(JSON.parse(output).focus.meta.id).toBe('account-1');
+    expect(output.length).toBeLessThanOrEqual(240);
+    ctx.destroy();
+  });
+
+  it('does not exceed tiny natural budgets or emit invalid JSON for empty budgets', () => {
+    const ctx = createAskableContext();
+    ctx.push({ description: 'x'.repeat(100) });
+    expect(ctx.toPromptContext({ maxTokens: 0 })).toBe('');
+    expect(ctx.toPromptContext({ maxTokens: 1 }).length).toBeLessThanOrEqual(4);
+    expect(() => ctx.toPromptContext({ format: 'json', maxTokens: 0 })).toThrow(RangeError);
+    expect(() => ctx.toPromptContext({ maxTokens: NaN })).toThrow(RangeError);
+    ctx.destroy();
+  });
+
   it('toHistoryContext() returns no-history string when empty', () => {
     const ctx = createAskableContext();
     ctx.observe(document);
