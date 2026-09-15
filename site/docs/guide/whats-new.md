@@ -1,4 +1,48 @@
-# What’s New in v0.17.1
+# What’s New in v0.17.2
+
+This security and reliability patch closes privacy bypasses and brings the
+published packages up to date with the bridge protections in the documentation.
+
+## Privacy boundaries
+
+- MCP validates complete Context packets before tools, resources, or page
+  responses can return them. `requireRedacted` requires an explicit `true` value.
+- Page callers can no longer override host-owned privacy, provenance, or
+  sanitization options. Configure those options on the app's provider instead.
+- User source summaries now use the same omitted fields and sanitizer as the
+  profile data. React page and user sources use updated callbacks after rerenders.
+- Bridge transports include explicit target origins, envelope validation,
+  consent and redaction gates, and agent-request delivery.
+
+Redaction is still an assertion by the host app, not an automatic content
+filter. Sanitize captured content before marking a packet as redacted.
+
+## Reliability
+
+- Focus sources render safely on the server and clean up pending blur timers.
+- Source cancellation works without requiring a timeout.
+- Budgeted JSON is reduced before serialization, preserving parseable JSON.
+- The browser extension example bundles its content script as a standalone
+  classic script, with unpacked Chromium capture tests.
+- Production dependencies, the React scaffold, and dashboard dependencies have
+  security updates. Release checks exercise isolated installations of npm tarballs.
+
+## Upgrade to v0.17.2
+
+```bash
+npm install @askable-ui/core@^0.17.2 @askable-ui/react@^0.17.2
+npm install @askable-ui/bridge@^0.17.2 @askable-ui/mcp@^0.17.2
+```
+
+When using `createPostMessageTransport`, provide the destination's exact
+`targetOrigin`. In browsers, the default is the sending page's origin. Outside
+a browser, an omitted origin now rejects the send instead of broadcasting. See the
+[bridge API](/api/bridge) and [MCP privacy guidance](/guide/mcp) before upgrading
+an integration that supplies custom packets or page-bridge options.
+
+Current docs are published at `/docs/` and `/docs/v0.17.2/`.
+
+## Also in v0.17.1
 
 askable-ui v0.17.1 completes the bridge package release after npm rejected the first
 new-package trusted-publisher publish. It keeps all Askable packages aligned and
@@ -74,20 +118,6 @@ This release also:
 - includes `@askable-ui/bridge` in trusted-publisher release publishing;
 - updates MCP transitive dependencies that were failing the production audit;
 - updates the docs lockfile dependency that was failing the docs audit.
-
-## Upgrade
-
-Keep all Askable packages on the same release line:
-
-```bash
-npm install @askable-ui/core@^0.17.1 @askable-ui/react@^0.17.1
-npm install @askable-ui/bridge@^0.17.1
-```
-
-The current docs are published at both:
-
-- `/docs/`
-- `/docs/v0.17.1/`
 
 ## Also in v0.16.0
 
@@ -210,7 +240,4 @@ Update Qwik callback options to `$()` or `sync$()` and `await` imperative hook
 actions where ordering matters. No migration is required for the other
 framework packages beyond updating their aligned package versions.
 
-The current docs are published at both:
-
-- `/docs/`
-- `/docs/v0.16.0/`
+See the [current upgrade instructions](#upgrade-to-v0-17-2) for the latest release.

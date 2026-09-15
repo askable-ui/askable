@@ -32,7 +32,7 @@ ctx.observe(document);
 
 const bridge = createAskableMcpPageBridge({
   provider: createAskableMcpContextProvider(ctx),
-  // requireRedacted: true, // refuse to serve packets with privacy.redacted === false
+  // requireRedacted: true, // require schema-valid packets with privacy.redacted === true
 });
 
 // The bridge installs a window message listener that local companions use.
@@ -189,7 +189,7 @@ Your app just needs to expose a `GET` endpoint that returns the latest packet (e
 | `--file <path>` | Serve a static packet file instead of fetching a URL |
 | `--header "K: V"` | Extra request header for `--url` (repeatable) |
 | `--name <name>` | Server name advertised to the client |
-| `--require-redacted` | Refuse to serve packets with `privacy.redacted === false` |
+| `--require-redacted` | Require schema-valid packets with `privacy.redacted === true` |
 
 The same remote provider is available programmatically via `createAskableMcpRemoteProvider({ url, headers })`, which you can pass to `createAskableMcpServer`.
 

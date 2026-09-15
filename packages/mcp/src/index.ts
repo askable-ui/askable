@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
 import { webContextPacketSchema } from '@askable-ui/context';
+import { parseContextPacket } from './packet.js';
 import type { WebContextPacket } from '@askable-ui/context';
 import type {
   HandleRequestOptions,
@@ -38,8 +39,8 @@ export interface AskableMcpServerOptions {
   version?: string;
   provider: AskableMcpContextProvider;
   /**
-   * When `true`, tool calls that return a packet with `privacy.redacted === false`
-   * will fail with an error instead of forwarding potentially-unredacted data to
+   * When `true`, tools and resources require `privacy.redacted === true` and
+   * fail with an error instead of forwarding potentially-unredacted data to
    * the MCP client. Defaults to `false` for backwards compatibility — set to `true`
    * when your app captures user-entered or sensitive content in `data-askable` attributes.
    */
@@ -138,7 +139,10 @@ export interface AskableMcpPageResourceOptions {
   includePacket?: boolean;
 }
 
-export interface AskableMcpPageBridgeRequestOptions extends AskableMcpContextOptions {
+export interface AskableMcpPageBridgeRequestOptions extends Pick<
+  AskableMcpContextOptions,
+  keyof typeof contextOptionsShape
+> {
   resource?: AskableMcpPageResourceOptions;
 }
 
@@ -208,8 +212,8 @@ export interface AskableMcpPageBridgeOptions {
   window?: AskableMcpPageBridgeWindow;
   onError?: (error: unknown, event: MessageEvent) => void;
   /**
-   * When `true`, page-bridge requests that resolve to a packet with
-   * `privacy.redacted === false` respond with an error instead of forwarding
+   * When `true`, page-bridge requests require `privacy.redacted === true`
+   * and respond with an error instead of forwarding
    * potentially-unredacted data — matching {@link AskableMcpServerOptions.requireRedacted}.
    * Defaults to `false` for backwards compatibility. Set to `true` when the page
    * captures user-entered or sensitive content in `data-askable` attributes.
@@ -264,6 +268,8 @@ const contextOptionsShape = {
   ]).optional(),
 };
 
+const contextOptionsSchema = z.object(contextOptionsShape);
+
 export function createAskableMcpContextProvider(
   ctx: AskableMcpSourceContext,
   defaults: CreateAskableMcpContextProviderOptions = {},
@@ -308,7 +314,7 @@ export function createAskableMcpRemoteProvider(
       if (!response.ok) {
         throw new Error(`askable-mcp: context endpoint ${options.url} returned ${response.status}`);
       }
-      return (await response.json()) as WebContextPacket;
+      return parseContextPacket(await response.json());
     },
   };
 }
@@ -347,8 +353,8 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
       mimeType: 'application/json',
     },
     async (uri) => {
-      const packet = await options.provider.getContext();
-      if (options.requireRedacted && packet.privacy?.redacted === false) {
+      const packet = parseContextPacket(await options.provider.getContext());
+      if (options.requireRedacted && packet.privacy.redacted !== true) {
         throw new Error('Context packet has not been redacted. Set requireRedacted: false to allow, or redact the packet before serving.');
       }
       return {
@@ -372,9 +378,9 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
     },
     async (args) => {
       try {
-        const packet = await options.provider.getContext(args);
-        if (options.requireRedacted && packet.privacy?.redacted === false) {
-          console.warn('[askable-mcp] get_current_context blocked: packet has privacy.redacted=false');
+        const packet = parseContextPacket(await options.provider.getContext(args));
+        if (options.requireRedacted && packet.privacy.redacted !== true) {
+          console.warn('[askable-mcp] get_current_context blocked: packet is not explicitly redacted');
           return {
             isError: true,
             content: [{ type: 'text', text: 'Context packet has not been redacted. Configure a sanitizer or set requireRedacted: false.' }],
@@ -408,9 +414,9 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
     },
     async (args) => {
       try {
-        const packet = await options.provider.getContext(args);
-        if (options.requireRedacted && packet.privacy?.redacted === false) {
-          console.warn('[askable-mcp] list_context_sources blocked: packet has privacy.redacted=false');
+        const packet = parseContextPacket(await options.provider.getContext(args));
+        if (options.requireRedacted && packet.privacy.redacted !== true) {
+          console.warn('[askable-mcp] list_context_sources blocked: packet is not explicitly redacted');
           return {
             isError: true,
             content: [{ type: 'text', text: 'Context packet has not been redacted. Configure a sanitizer or set requireRedacted: false.' }],
@@ -463,9 +469,9 @@ export function createAskableMcpServer(options: AskableMcpServerOptions): McpSer
     },
     async (args) => {
       try {
-        const packet = await options.provider.getContext(args);
-        if (options.requireRedacted && packet.privacy?.redacted === false) {
-          console.warn('[askable-mcp] format_context_for_prompt blocked: packet has privacy.redacted=false');
+        const packet = parseContextPacket(await options.provider.getContext(args));
+        if (options.requireRedacted && packet.privacy.redacted !== true) {
+          console.warn('[askable-mcp] format_context_for_prompt blocked: packet is not explicitly redacted');
           return {
             isError: true,
             content: [{ type: 'text', text: 'Context packet has not been redacted. Configure a sanitizer or set requireRedacted: false.' }],
@@ -650,9 +656,9 @@ async function handleAskableMcpPageBridgeMessage(
 
   try {
     const contextOptions = getAskableMcpPageBridgeContextOptions(request.options);
-    const packet = await options.provider.getContext(contextOptions);
+    const packet = parseContextPacket(await options.provider.getContext(contextOptions));
 
-    if (options.requireRedacted && packet.privacy?.redacted === false) {
+    if (options.requireRedacted && packet.privacy.redacted !== true) {
       bridgeWindow.postMessage({
         ...createAskableMcpPageBridgeResponseBase(request),
         type: `${request.type}:error`,
@@ -727,8 +733,9 @@ function getAskableMcpPageBridgeContextOptions(
   options: AskableMcpPageBridgeRequestOptions | undefined,
 ): AskableMcpContextOptions | undefined {
   if (!options) return undefined;
-  const { resource: _resource, ...contextOptions } = options;
-  return contextOptions;
+  // Page messages are untrusted. Only accept the options exposed by MCP tools;
+  // privacy, provenance, source/target overrides, and exclusions belong to the host.
+  return contextOptionsSchema.parse(options);
 }
 
 async function formatAskableMcpContextForPrompt(

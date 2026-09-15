@@ -80,7 +80,7 @@ export function useAskableUserSource(
         },
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [kind, omitFields?.join(',')],
+    [describe, kind, omitFields?.join(','), sanitize],
   );
 
   const result = useAskableSource(id, userSource, { enabled, ctx, name, events });

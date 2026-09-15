@@ -23,7 +23,7 @@
 import { parseArgs } from 'node:util';
 import { readFile } from 'node:fs/promises';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import type { WebContextPacket } from '@askable-ui/context';
+import { parseContextPacket } from './packet.js';
 import {
   createAskableMcpServer,
   createAskableMcpRemoteProvider,
@@ -43,7 +43,7 @@ Context source (one required):
 Options:
   --header "K: V"       Extra request header for --url (repeatable), e.g. "Authorization: Bearer abc"
   --name <name>         Server name advertised to the client (default: askable-context)
-  --require-redacted    Refuse to serve packets with privacy.redacted === false
+  --require-redacted    Require schema-valid packets with privacy.redacted === true
   -h, --help            Show this help
 
 Example (claude_desktop_config.json):
@@ -68,7 +68,7 @@ function createFileProvider(path: string): AskableMcpContextProvider {
   return {
     async getContext() {
       const raw = await readFile(path, 'utf8');
-      return JSON.parse(raw) as WebContextPacket;
+      return parseContextPacket(JSON.parse(raw));
     },
   };
 }

@@ -1,4 +1,5 @@
 import { createWebContextPacket, isWebContextPacket } from '@askable-ui/context';
+import { applyPromptBudget } from './prompt-budget.js';
 import { Emitter } from './emitter.js';
 import { buildFocus, Observer } from './observer.js';
 import type {
@@ -476,7 +477,10 @@ export class AskableContextImpl implements AskableContext {
     const visible = this.filterByScope(this.getVisibleElements(), resolved.scope);
     if (visible.length === 0) return resolved.format === 'json' ? '[]' : 'No annotated UI elements are currently visible.';
     if (resolved.format === 'json') {
-      return JSON.stringify(visible.map((focus) => this.serializeFocusFrom(focus, resolved)));
+      return this.applyTokenBudget(
+        JSON.stringify(visible.map((focus) => this.serializeFocusFrom(focus, resolved))),
+        resolved.maxTokens,
+      );
     }
     const lines = visible.map((focus, i) => `[${i + 1}] ${this.buildPromptString(focus, resolved)}`);
     return this.applyTokenBudget(lines.join('\n'), resolved.maxTokens);
@@ -772,29 +776,44 @@ export class AskableContextImpl implements AskableContext {
     }
 
     const value = Promise.resolve().then(task);
-    if (timeoutMs === undefined) return value;
+    if (timeoutMs === undefined && signal === undefined) return value;
 
     return new Promise<T>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        reject(new Error('Context source timed out.'));
-      }, Math.max(0, timeoutMs));
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let settled = false;
+
+      const cleanup = () => {
+        if (timer !== undefined) {
+          clearTimeout(timer);
+          timer = undefined;
+        }
+        signal?.removeEventListener('abort', abort);
+      };
+
+      const settle = (callback: () => void) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        callback();
+      };
 
       const abort = () => {
-        clearTimeout(timer);
-        reject(new Error('Context source request aborted.'));
+        settle(() => reject(new Error('Context source request aborted.')));
       };
 
       signal?.addEventListener('abort', abort, { once: true });
+      if (timeoutMs !== undefined) {
+        timer = setTimeout(() => {
+          settle(() => reject(new Error('Context source timed out.')));
+        }, Math.max(0, timeoutMs));
+      }
+
       value.then(
         (result) => {
-          clearTimeout(timer);
-          signal?.removeEventListener('abort', abort);
-          resolve(result);
+          settle(() => resolve(result));
         },
         (error) => {
-          clearTimeout(timer);
-          signal?.removeEventListener('abort', abort);
-          reject(error);
+          settle(() => reject(error));
         },
       );
     });
@@ -1254,10 +1273,6 @@ export class AskableContextImpl implements AskableContext {
   }
 
   private applyTokenBudget(output: string, maxTokens?: number): string {
-    if (maxTokens === undefined) return output;
-    const budget = maxTokens * 4;
-    if (output.length <= budget) return output;
-    const marker = '... [truncated]';
-    return output.slice(0, Math.max(0, budget - marker.length)) + marker;
+    return applyPromptBudget(output, maxTokens);
   }
 }

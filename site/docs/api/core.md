@@ -453,7 +453,10 @@ ctx.toPromptContext({ format: 'json' });
 // → '{"meta":{"metric":"revenue","delta":"-12%"},"text":"Revenue","timestamp":1712345678}'
 
 ctx.toPromptContext({ maxTokens: 50 });
-// Truncates to ~200 chars and appends [truncated] if needed
+// Fits within ~200 chars, including the truncation marker
+
+ctx.toPromptContext({ format: 'json', maxTokens: 50 });
+// Reduces fields and strings while preserving valid JSON
 
 ctx.toPromptContext({ excludeKeys: ['_id'], keyOrder: ['metric', 'value'] });
 ctx.toPromptContext({ scope: 'analytics' });
@@ -1015,7 +1018,7 @@ inspector.destroy();
 | `keyOrder` | `string[]` | — | Promote these keys to the front |
 | `prefix` | `string` | `'User is focused on:'` | Prefix in natural format |
 | `textLabel` | `string` | `'value'` | Label for text field in natural format |
-| `maxTokens` | `number` | — | Token budget (4 chars/token). Truncates and appends `[truncated]`. |
+| `maxTokens` | `number` | — | Approximate budget (4 chars/token). Natural text includes a truncation marker within the budget. JSON stays parseable by reducing fields and strings; reduced objects include `truncated: true` when it fits. Invalid budgets or budgets too small for valid JSON throw `RangeError`. |
 
 **Presets:**
 
