@@ -1231,6 +1231,12 @@ The handler receives three arguments:
 - `messages: AskableChatMessage[]` — all previous messages in the thread (excluding the new assistant placeholder)
 - `emit: (chunk: string) => void` — call this for each text chunk
 
+On the main branch, the React handler also receives a fourth `signal: AbortSignal`.
+Forward it to your transport. React's unreleased `appendRequest(request, handler)`
+sends an already-reviewed JSON snapshot without re-resolving context or applying
+`systemPrompt` again. These additions are not available in npm `0.17.3` or the
+other framework adapters. See `site/docs/guide/react.md` for the review workflow.
+
 ### Vue 3
 
 ```vue

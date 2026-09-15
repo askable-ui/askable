@@ -59,6 +59,112 @@ function ChatInput() {
 }
 ```
 
+## Review context before sending (unreleased)
+
+::: warning Availability
+`useAskableChat().appendRequest()` and its handler's fourth `signal` argument
+are unreleased React additions on the main branch. They are not in npm `0.17.3`.
+:::
+
+Use `append(question, handler)` for immediate submission with live context. Use
+`appendRequest(request, handler)` when a user must approve the selected context
+first. The latter does not read the current focus or resolve sources again, and
+does not reapply the hook's `systemPrompt` or `requestOptions`.
+
+### Prepare and review
+
+Build a request from the pinned packet returned by text, region, circle, square,
+or lasso capture. Resolve any additional app-owned data now, apply your prompt
+formatting and sanitization, then detach a JSON snapshot before displaying it:
+
+```tsx
+import { useAskableChat } from '@askable-ui/react';
+import type { AskableAgentRequest } from '@askable-ui/core';
+import type { WebContextPacket } from '@askable-ui/context';
+
+// Inside your chat component:
+const { ctx, appendRequest, abort, status, error } = useAskableChat();
+
+async function prepareReview(question: string, selection: WebContextPacket) {
+  const request = await ctx.toAgentRequest(question, {
+    requestId: crypto.randomUUID(),
+    packet: selection,
+    contextFromPacket: true,
+    selectionFromPacket: true,
+    // Include only sources approved for this flow and registered by your app.
+    sources: [{ id: 'page-data', mode: 'summary' }],
+    sourceErrorMode: 'throw',
+  });
+  return JSON.parse(JSON.stringify(request)) as AskableAgentRequest;
+}
+```
+
+Store the returned request in component state. Show its question, context,
+packet, metadata, and any history your transport includes. A highlighted region
+is only the selection, not necessarily the complete payload. Request `focus`
+can describe the current live focus even when `contextFromPacket` pins the
+prompt to a previous selection; omit that field in your transport if unused.
+
+Keep the reviewed object unchanged. If the user edits the question, removes a
+source, switches selections, or navigates away, invalidate the old review and
+prepare a new one. Ignore late preparation results after dismissal, using a
+generation counter or equivalent lifecycle guard. Catch preparation failures in
+the review UI; this preparation happens before the chat hook is called.
+
+Apply real sanitizers to all transmitted fields before review. A packet's
+`privacy.redacted` flag is an assertion, not a filter. Removing a displayed
+attachment alone does not remove its content from `context`, `focus`, packet
+sources, metadata, or prior messages.
+
+### Send the approved snapshot
+
+```tsx
+async function sendApproved(approved: AskableAgentRequest) {
+  await appendRequest(approved, async (request, messages, emit, signal) => {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      signal,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        request,
+        messages: messages.map(({ role, content }) => ({ role, content })),
+      }),
+    });
+    if (!response.ok) throw new Error(`Chat request failed: ${response.status}`);
+    if (!response.body) throw new Error('Chat response has no body');
+
+    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        emit(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  });
+}
+```
+
+This example expects a plain-text streaming endpoint, not an SSE or AI SDK
+event stream. Use your provider's parser for those formats. Map history to the
+fields needed by the endpoint instead of serializing every message's stored
+request again. Show which prior turns are included in the review as well.
+
+The hook copies the JSON-ready request synchronously at submission, preserving
+its request ID. Later edits to the original object cannot change the send.
+Both send methods report errors through `status`, `error`, and `onError`; they
+do not reject for context or transport failures. Wire a Stop button to `abort()`
+and forward the signal to your transport. Stopping returns to `idle` and keeps
+partial output. It cannot undo a server-side action that already happened.
+
+For another chat surface, pass the same approved request with a packet to
+[`bridge.sendAgentRequest()`](/guide/bridge#sending-an-existing-agent-request).
+Use only the approved transport and inspect every returned ack. Do not describe
+a bridge dispatch as chatbot acknowledgement or automatically retry an unknown
+delivery. This API does not implement deduplication or retry policy.
+
 ## `<Askable>`
 
 Renders a wrapper element with `data-askable` set from the `meta` prop. Defaults to a `div`.
