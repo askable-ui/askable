@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/mcp",
-  "version": "0.17.2",
+  "version": "0.17.3",
   "description": "MCP server and page bridge to expose UI context to Claude Desktop, Cursor, and any MCP client",
   "mcpName": "io.github.askable-ui/askable",
   "type": "module",
@@ -48,8 +48,8 @@
   "homepage": "https://askable-ui.com",
   "license": "MIT",
   "dependencies": {
-    "@askable-ui/context": "^0.17.2",
-    "@askable-ui/core": "^0.17.2",
+    "@askable-ui/context": "^0.17.3",
+    "@askable-ui/core": "^0.17.3",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.3"
   },
