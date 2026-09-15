@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
-import { realpathSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { createWebContextPacket, isWebContextPacket, webContextPacketSchema } from '@askable-ui/context';
 import { createAskableContext, createAskableUserSource } from '@askable-ui/core';
 import {
@@ -30,6 +34,68 @@ const packet = () => createWebContextPacket({
   capture: { mode: 'semantic' },
   target: { text: safe },
   privacy: { redacted: true, consent: 'explicit' },
+});
+
+const cliPath = fileURLToPath(new URL('node_modules/@askable-ui/mcp/dist/cli.js', import.meta.url));
+const cliBin = process.platform === 'win32'
+  ? cliPath
+  : fileURLToPath(new URL('node_modules/.bin/askable-mcp', import.meta.url));
+
+test('installed MCP executable prints help and rejects missing or invalid arguments', () => {
+  for (const [args, status, message] of [
+    [['--help'], 0, /Usage:/],
+    [[], 1, /one of --url or --file is required/],
+    [['--unknown-option'], 1, /Unknown option/],
+  ]) {
+    const result = spawnSync(process.execPath, [cliBin, ...args], { encoding: 'utf8', timeout: 5_000 });
+    assert.ifError(result.error);
+    assert.equal(result.status, status, result.stderr);
+    assert.equal(result.stdout, '', 'stdout must remain reserved for MCP');
+    assert.match(result.stderr, message);
+  }
+});
+
+test('MCP executable resolves symlinks containing spaces and URL characters', {
+  skip: process.platform === 'win32', // Creating symlinks can require administrator privileges on Windows.
+}, () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'askable-cli-'));
+  try {
+    const link = path.join(directory, 'cli shortcut #.js');
+    symlinkSync(cliPath, link);
+    const result = spawnSync(process.execPath, [link, '--help'], { encoding: 'utf8', timeout: 5_000 });
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stderr, /Usage:/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('installed MCP executable serves a packet through a real stdio client', { timeout: 10_000 }, async () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'askable-cli-'));
+  const fixture = path.join(directory, 'packet.json');
+  const expected = packet();
+  writeFileSync(fixture, JSON.stringify(expected));
+  const transport = new StdioClientTransport({
+    command: process.execPath,
+    args: [cliBin, '--file', fixture, '--require-redacted'],
+    stderr: 'pipe',
+  });
+  const client = new Client({ name: 'artifact-check', version: '1.0.0' });
+  try {
+    await client.connect(transport);
+    const { tools } = await client.listTools();
+    assert.ok(tools.some(({ name }) => name === 'get_current_context'));
+    const result = await client.callTool({ name: 'get_current_context', arguments: {} });
+    assert.ok(!result.isError);
+    assert.deepEqual(JSON.parse(result.content[0].text), expected);
+    writeFileSync(fixture, JSON.stringify({ ...expected, privacy: { ...expected.privacy, redacted: false } }));
+    const blocked = await client.callTool({ name: 'get_current_context', arguments: {} });
+    assert.equal(blocked.isError, true);
+  } finally {
+    await transport.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 test('all public imports resolve to installed files, not workspace links', () => {
