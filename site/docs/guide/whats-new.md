@@ -1,4 +1,24 @@
-# What’s New in v0.17.2
+# What’s New in v0.17.3
+
+This patch fixes the MCP command-line server exiting silently when launched by
+`npx` or an installed npm executable. The entry-point check now resolves symlinks
+and handles paths containing spaces or URL characters. Library imports are unchanged.
+
+Release checks now launch the installed executable, verify argument handling, and
+exchange Context packets with a real MCP client over stdio, including redaction enforcement.
+
+## Upgrade to v0.17.3
+
+```bash
+npm install @askable-ui/core@^0.17.3 @askable-ui/react@^0.17.3
+npm install @askable-ui/bridge@^0.17.3 @askable-ui/mcp@^0.17.3
+npx @askable-ui/mcp@0.17.3 --help
+```
+
+Command-based MCP integrations should use `0.17.3` or newer. No API migration is required.
+Current docs are published at `/docs/` and `/docs/v0.17.3/`.
+
+## Also in v0.17.2
 
 This security and reliability patch closes privacy bypasses and brings the
 published packages up to date with the bridge protections in the documentation.
@@ -39,8 +59,6 @@ When using `createPostMessageTransport`, provide the destination's exact
 a browser, an omitted origin now rejects the send instead of broadcasting. See the
 [bridge API](/api/bridge) and [MCP privacy guidance](/guide/mcp) before upgrading
 an integration that supplies custom packets or page-bridge options.
-
-Current docs are published at `/docs/` and `/docs/v0.17.2/`.
 
 ## Also in v0.17.1
 
@@ -240,4 +258,4 @@ Update Qwik callback options to `$()` or `sync$()` and `await` imperative hook
 actions where ordering matters. No migration is required for the other
 framework packages beyond updating their aligned package versions.
 
-See the [current upgrade instructions](#upgrade-to-v0-17-2) for the latest release.
+See the [current upgrade instructions](#upgrade-to-v0-17-3) for the latest release.
