@@ -13,7 +13,7 @@
     "@angular/core": "^19.2.0",
     "@angular/forms": "^19.2.0",
     "@angular/platform-browser": "^19.2.0",
-    "@angular/platform-browser-dynamic": "^19.2.0",
+    "@angular/platform-browser-dynamic": "^22.1.6",
     "@angular/router": "^19.2.0",
     "@askable-ui/angular": "^0.17.3",
     "rxjs": "^7.8.1",
