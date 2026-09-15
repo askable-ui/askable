@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc --noEmit && vite build"
+    "build": "tsc --noEmit && vite build && vite build --config vite.content.config.ts && npm run test:build",
+    "test": "npm run build",
+    "test:build": "node --test tests/build.test.mjs",
+    "test:browser": "playwright test --config playwright.config.mjs"
   },
   "dependencies": {
     "@askable-ui/bridge": "^0.17.1",
