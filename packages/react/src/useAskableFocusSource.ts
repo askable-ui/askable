@@ -37,10 +37,8 @@ export function useAskableFocusSource(
   const { id = 'focus', describe, kind, enabled, ctx, name, events } = options;
 
   const [snapshot, setSnapshot] = useState<AskableFocusSourceSnapshot | null>(() => ({
-    focused: document.activeElement && document.activeElement !== document.body
-      ? elementToFocusSnapshot(document.activeElement)
-      : null,
-    hasFocus: document.activeElement !== null && document.activeElement !== document.body,
+    focused: null,
+    hasFocus: false,
     focusChangeCount: 0,
     lastChangedAt: null,
   }));
@@ -59,41 +57,67 @@ export function useAskableFocusSource(
   notifyRef.current = result.notifyChanged;
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const doc = document;
     let changeCount = snapshotRef.current?.focusChangeCount ?? 0;
+    let blurTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const updateSnapshot = (next: AskableFocusSourceSnapshot) => {
+      snapshotRef.current = next;
+      setSnapshot(next);
+      notifyRef.current();
+    };
+
+    const cancelBlur = () => {
+      if (blurTimer !== undefined) clearTimeout(blurTimer);
+      blurTimer = undefined;
+    };
+
+    const active = doc.activeElement;
+    const focused = active && active !== doc.body ? active : null;
+    updateSnapshot({
+      focused: focused ? elementToFocusSnapshot(focused) : null,
+      hasFocus: focused !== null,
+      focusChangeCount: changeCount,
+      lastChangedAt: snapshotRef.current?.lastChangedAt ?? null,
+    });
 
     const handleFocusIn = (e: FocusEvent) => {
+      cancelBlur();
       const el = e.target as Element | null;
       changeCount += 1;
-      setSnapshot({
+      updateSnapshot({
         focused: el ? elementToFocusSnapshot(el) : null,
         hasFocus: el != null,
         focusChangeCount: changeCount,
         lastChangedAt: new Date().toISOString(),
       });
-      notifyRef.current();
     };
 
     const handleFocusOut = () => {
-      setTimeout(() => {
-        const active = document.activeElement;
-        if (!active || active === document.body) {
-          setSnapshot((prev) => ({
-            ...(prev ?? { focusChangeCount: 0 }),
+      cancelBlur();
+      blurTimer = setTimeout(() => {
+        blurTimer = undefined;
+        const active = doc.activeElement;
+        if (!active || active === doc.body) {
+          updateSnapshot({
+            focusChangeCount: changeCount,
             focused: null,
             hasFocus: false,
             lastChangedAt: new Date().toISOString(),
-          }));
-          notifyRef.current();
+          });
         }
       }, 0);
     };
 
-    document.addEventListener('focusin', handleFocusIn);
-    document.addEventListener('focusout', handleFocusOut);
+    doc.addEventListener('focusin', handleFocusIn);
+    doc.addEventListener('focusout', handleFocusOut);
 
     return () => {
-      document.removeEventListener('focusin', handleFocusIn);
-      document.removeEventListener('focusout', handleFocusOut);
+      cancelBlur();
+      doc.removeEventListener('focusin', handleFocusIn);
+      doc.removeEventListener('focusout', handleFocusOut);
     };
   }, []);
 
