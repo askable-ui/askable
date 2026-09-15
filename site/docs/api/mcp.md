@@ -31,8 +31,9 @@ Adapts an existing `AskableContext` to the MCP provider interface.
 | `ctx` | `Pick<AskableContext, 'toContextPacket' \| 'toContext'>` plus optional async methods | Source context to expose through MCP |
 | `defaults` | `AskableMcpContextOptions` | Default packet and prompt options applied to every tool call |
 
-Defaults and tool-call options are merged. Nested `source`, `privacy`, and
-`provenance` metadata are merged field-by-field.
+Defaults and direct app-owned provider-call options are merged. Nested `source`,
+`privacy`, and `provenance` metadata are merged field-by-field for these trusted
+calls. MCP tools and page messages cannot override those host-owned fields.
 
 When the provided context implements `toContextPacketAsync()` and
 `toContextAsync()`, the built-in provider uses those methods so registered
@@ -68,6 +69,17 @@ Creates an MCP server with tools/resources for reading structured Context packet
 | `provider.formatContextForPrompt` | `(packet, options) => string \| Promise<string>` | Optional custom prompt formatter |
 | `name` | `string` | MCP server name |
 | `version` | `string` | MCP server version |
+| `requireRedacted` | `boolean` | Require `privacy.redacted === true` for every context tool and current-context resource. Defaults to `false` |
+
+All outgoing packets must match the published Context packet schema, including
+nested fields. Missing or malformed privacy metadata is rejected even when
+`requireRedacted` is `false`; that setting only permits schema-valid unredacted
+packets. Schema tools and resources do not read app context and remain available.
+
+`createAskableMcpRemoteProvider({ url, headers })` also validates endpoint JSON
+before returning a packet. The CLI applies the same validation to file input.
+Validation and redaction flags do not sanitize content: the app must sanitize its
+captured data and app-owned sources before declaring a packet redacted.
 
 ## `createAskableMcpWebHandler(options)`
 
@@ -285,6 +297,15 @@ bridge.dispose();
 | `allowedOrigins` | `string[] \| (origin, event) => boolean` | Optional origin gate. Defaults to the current page origin |
 | `window` | `AskableMcpPageBridgeWindow` | Optional window-like object for tests or custom browser surfaces |
 | `onError` | `(error, event) => void` | Optional bridge error reporter |
+| `requireRedacted` | `boolean` | Require a schema-valid packet with `privacy.redacted === true` before any packet, prompt, or resource response. Defaults to `false` |
+
+Page request options are validated using the MCP tool option allowlist. Context
+selection and formatting options such as `intent`, `history`, `sources`, and
+`maxTokens` are accepted, along with page `resource` options. Unknown fields,
+including `privacy`, `provenance`, `source`, `target`, `mode`, `gesture`, and
+`excludeKeys`, are ignored and never forwarded to the provider or formatter.
+Configure those host-owned values through provider defaults or direct app-owned
+provider calls, not through `window.postMessage()`.
 
 Trusted extensions or local companions request context with:
 
