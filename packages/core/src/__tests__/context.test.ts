@@ -2487,16 +2487,98 @@ describe('createAskableContext', () => {
     it('rejects immediately when the source request signal is already aborted', async () => {
       const ctx = createAskableContext();
       const controller = new AbortController();
+      const resolve = vi.fn(() => ({ data: 'ok' }));
       controller.abort();
 
       ctx.registerSource('fast', {
-        resolve: (_req) => ({ data: 'ok' }),
+        resolve,
       });
 
       await expect(
         (ctx as any).resolveSource('fast', { mode: 'summary', signal: controller.signal }),
       ).rejects.toThrow('aborted');
+      expect(resolve).not.toHaveBeenCalled();
 
+      ctx.destroy();
+    });
+
+    it('aborts a pending source when no timeout is configured', async () => {
+      const ctx = createAskableContext();
+      const controller = new AbortController();
+      ctx.registerSource('pending', {
+        resolve: () => new Promise(() => undefined),
+      });
+
+      const result = (ctx as any).resolveSource('pending', {
+        mode: 'summary',
+        signal: controller.signal,
+      });
+      controller.abort();
+
+      await expect(result).rejects.toThrow('Context source request aborted.');
+      ctx.destroy();
+    });
+
+    it('does not schedule a timer when no timeout is configured', async () => {
+      const timerSpy = vi.spyOn(globalThis, 'setTimeout');
+      const ctx = createAskableContext();
+      const controller = new AbortController();
+      ctx.registerSource('fast', {
+        resolve: () => ({ data: 'ok' }),
+      });
+
+      await expect(
+        (ctx as any).resolveSource('fast', {
+          mode: 'summary',
+          signal: controller.signal,
+        }),
+      ).resolves.toMatchObject({ data: { data: 'ok' } });
+      expect(timerSpy).not.toHaveBeenCalled();
+
+      timerSpy.mockRestore();
+      ctx.destroy();
+    });
+
+    it.each([
+      { outcome: 'resolve', timeoutMs: undefined },
+      { outcome: 'reject', timeoutMs: undefined },
+      { outcome: 'timeout', timeoutMs: 10 },
+      { outcome: 'abort', timeoutMs: 100 },
+    ] as const)('removes the abort listener after $outcome', async ({ outcome, timeoutMs }) => {
+      if (timeoutMs !== undefined) vi.useFakeTimers();
+
+      const ctx = createAskableContext();
+      const controller = new AbortController();
+      const addSpy = vi.spyOn(controller.signal, 'addEventListener');
+      const removeSpy = vi.spyOn(controller.signal, 'removeEventListener');
+      ctx.registerSource('source', {
+        resolve: () => {
+          if (outcome === 'resolve') return { data: 'ok' };
+          if (outcome === 'reject') throw new Error('source failed');
+          return new Promise(() => undefined);
+        },
+      });
+
+      const result = (ctx as any).resolveSource('source', {
+        mode: 'summary',
+        signal: controller.signal,
+        ...(timeoutMs !== undefined ? { timeoutMs } : {}),
+      });
+      const resultExpectation = outcome === 'resolve'
+        ? expect(result).resolves.toMatchObject({ data: { data: 'ok' } })
+        : expect(result).rejects.toThrow();
+
+      if (outcome === 'abort') controller.abort();
+      if (outcome === 'timeout') await vi.advanceTimersByTimeAsync(timeoutMs!);
+
+      await resultExpectation;
+
+      const abortListener = addSpy.mock.calls.find(([type]) => type === 'abort')?.[1];
+      expect(abortListener).toBeDefined();
+      expect(removeSpy).toHaveBeenCalledWith('abort', abortListener);
+
+      addSpy.mockRestore();
+      removeSpy.mockRestore();
       ctx.destroy();
     });
   });
