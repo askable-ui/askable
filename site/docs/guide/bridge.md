@@ -29,7 +29,7 @@ const bridge = createAskableBridge({
   },
   transports: [
     createFunctionTransport(async ({ payload }) => {
-      await fetch('/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -38,6 +38,7 @@ const bridge = createAskableBridge({
           packet: payload.packet,
         }),
       });
+      if (!response.ok) throw new Error(`Chat request failed: ${response.status}`);
     }),
   ],
 });
@@ -156,6 +157,17 @@ await bridge.sendAgentRequest(request);
 When the request carries no `packet`, the bridge falls back to the configured
 provider.
 
+For a review-before-send flow, include a packet and detach a JSON snapshot
+**before showing it for approval**. Review the question, prompt, packet,
+metadata, and any conversation history your handler sends, not just the visible
+selection. Do not mutate the approved snapshot or override its payload fields
+in `sendAgentRequest()` options. Without a packet, the provider fallback may
+read different context after approval.
+
+`destination` is envelope metadata, not a transport selector. Every registered
+transport receives each send. Use a bridge with only the user-approved
+transport when building a destination picker.
+
 ## Webhook or backend handoff
 
 ```ts
@@ -193,6 +205,13 @@ for (const ack of acks) {
 that a receiver consumed it. `postMessage`, function, and extension transports
 all report success even when nothing is listening; only the HTTP transport
 observes a real response from the other side.
+
+Label this state **dispatched**, not **acknowledged**. Show acknowledgement only
+after validating an application receipt tied to the request ID and expected
+receiver. HTTP 2xx or an arbitrary function result is not such a receipt.
+Cancelling after dispatch can leave delivery unknown. Retrying the whole bridge
+resends to successful transports too, and a stable request ID does not by itself
+deduplicate requests at the receiver.
 
 Register more than one transport of the same kind by giving each an explicit
 `id` — duplicate ids throw at registration instead of silently replacing the
