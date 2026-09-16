@@ -13,6 +13,30 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # Majors that need coordinated work before they can land. Each was raised
+      # and closed with the blocking reason on the PR; minor and patch updates
+      # still flow normally. Remove an entry when its upgrade is scheduled.
+      #
+      # Angular 19 -> 22 must move as one PR (#396, #397, #400, #403): Angular 22
+      # requires Node ^22.22.3 || ^24.15.0 || >=26.0.0, so it is blocked on
+      # dropping Node 20 from the published support matrix.
+      - dependency-name: "@angular/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@analogjs/vite-plugin-angular"
+        update-types: ["version-update:semver-major"]
+      # jsdom 30 (#402) pulls @asamuzakjp/css-color, which requires Node
+      # ^22.13.0 || >=24.0.0 — same Node 20 blocker as the Angular set.
+      - dependency-name: "jsdom"
+        update-types: ["version-update:semver-major"]
+      # jest-dom 7 (#399) fails component and SSR tests; needs a matcher migration.
+      - dependency-name: "@testing-library/jest-dom"
+        update-types: ["version-update:semver-major"]
+      # TypeScript 7 (#401) is the native port. Builds and tests pass, but it
+      # changes declaration emit, so it needs its own PR rather than arriving
+      # with routine dependency updates.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
     open-pull-requests-limit: 10
