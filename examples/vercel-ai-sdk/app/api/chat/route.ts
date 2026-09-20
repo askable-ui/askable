@@ -1,11 +1,11 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { convertToModelMessages, generateId, streamText, type UIMessage } from 'ai';
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   const { messages, uiContext } = await req.json() as {
-    messages: { role: string; content: string }[];
+    messages: UIMessage[];
     uiContext?: string;
   };
 
@@ -19,10 +19,10 @@ export async function POST(req: Request) {
   ].join('\n');
 
   const result = streamText({
-    model: openai('gpt-4o-mini'),
+    model: openai.chat('gpt-4o-mini'),
     system: systemPrompt,
-    messages: messages as Parameters<typeof streamText>[0]['messages'],
+    messages: await convertToModelMessages(messages),
   });
 
-  return result.toDataStreamResponse();
+  return result.toUIMessageStreamResponse({ originalMessages: messages, generateMessageId: generateId });
 }

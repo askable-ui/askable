@@ -1,0 +1,73 @@
+name: test / AI examples
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "examples/nextjs-app-router/**"
+      - "examples/vercel-ai-sdk/**"
+      - "packages/create-askable-app/**"
+      - ".github/workflows/test_ai_examples.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "examples/nextjs-app-router/**"
+      - "examples/vercel-ai-sdk/**"
+      - "packages/create-askable-app/**"
+      - ".github/workflows/test_ai_examples.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ai-examples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [nextjs-app-router, vercel-ai-sdk, template-nextjs]
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      OPENAI_API_KEY: ""
+      ANTHROPIC_API_KEY: ""
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Select example
+        if: matrix.app != 'template-nextjs'
+        run: echo "APP_DIR=$GITHUB_WORKSPACE/examples/${{ matrix.app }}" >> "$GITHUB_ENV"
+      - name: Scaffold a standalone Next.js app
+        if: matrix.app == 'template-nextjs'
+        working-directory: ${{ runner.temp }}
+        run: |
+          node "$GITHUB_WORKSPACE/packages/create-askable-app/bin/create-askable-app.js" ai-template --template nextjs
+          echo "APP_DIR=$RUNNER_TEMP/ai-template" >> "$GITHUB_ENV"
+      - name: Resolve generated template dependencies
+        if: matrix.app == 'template-nextjs'
+        working-directory: ${{ env.APP_DIR }}
+        run: npm install --package-lock-only --workspaces=false
+      - name: Clean install
+        working-directory: ${{ env.APP_DIR }}
+        run: npm ci --workspaces=false
+      - name: Secrets-free provider and stream regressions
+        working-directory: ${{ env.APP_DIR }}
+        run: npm test
+      - name: Typecheck
+        working-directory: ${{ env.APP_DIR }}
+        run: npm run typecheck
+      - name: Production build (no inference)
+        working-directory: ${{ env.APP_DIR }}
+        run: npm run build
+      - name: Audit all dependencies
+        working-directory: ${{ env.APP_DIR }}
+        run: npm audit --workspaces=false

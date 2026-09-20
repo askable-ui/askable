@@ -9,22 +9,25 @@ The pattern:
 1. Annotate each dashboard widget with `data-askable` metadata
 2. Track active focus with `useAskable` / `useAskable()` / `createAskableStore()`
 3. Add explicit tools for Ask AI buttons, region/circle/lasso capture, and highlighted text when the user needs more precise context than a single widget
-4. Inject `promptContext` into every AI request
+4. Read current context when sending and pass it in the AI request body
 5. Optionally inject `historyContext` or structured Context packets for a conversation-aware assistant
+
+These examples use AI SDK 6 and the shared UI-message streaming route below. Use `ai@^6.0.286` with `@ai-sdk/react@^3.0.289`, `@ai-sdk/vue@^3.0.286`, or `@ai-sdk/svelte@^4.0.286`. The Svelte client requires **Svelte 5.31+**, not Svelte 4. See [AI SDK integration patterns](./ai-sdk) for the package/API details and production validation requirements.
 
 ::: code-group
 
 ```tsx [React]
 // components/Dashboard.tsx
 'use client';
-import { useRef, useState } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import {
   Askable,
   useAskable,
   useAskableRegionCapture,
   useAskableTextSelectionCapture,
 } from '@askable-ui/react';
-import { useChat } from 'ai/react';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 
 const widgets = [
   { id: 'revenue', label: 'Revenue', value: '$2.3M', delta: '+12%', period: 'Q3 2024' },
@@ -33,8 +36,9 @@ const widgets = [
 ];
 
 export function Dashboard() {
-  const { ctx, promptContext } = useAskable();
+  const { ctx } = useAskable();
   const [chatOpen, setChatOpen] = useState(false);
+  const [input, setInput] = useState('');
   const refs = useRef<Record<string, HTMLElement | null>>({});
   const region = useAskableRegionCapture({
     ctx,
@@ -53,13 +57,22 @@ export function Dashboard() {
     },
   });
 
-  // Include last 5 interactions so the AI can answer follow-up questions
-  const historyContext = ctx.toHistoryContext(5);
-
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
-    api: '/api/chat',
-    body: { uiContext: promptContext, historyContext },
+  const { messages, sendMessage, status, error, stop } = useChat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
   });
+  const isLoading = status === 'submitted' || status === 'streaming';
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!input.trim() || isLoading) return;
+    void sendMessage({ text: input.trim() }, {
+      body: {
+        uiContext: ctx.toPromptContext(),
+        historyContext: ctx.toHistoryContext(5),
+      },
+    });
+    setInput('');
+  }
 
   return (
     <div className="dashboard">
@@ -96,19 +109,25 @@ export function Dashboard() {
 
       {chatOpen && (
         <aside className="chat-panel">
-          <button className="close" onClick={() => { setChatOpen(false); ctx.clear(); }}>✕</button>
+          <button className="close" aria-label="Close chat" onClick={() => { void stop(); setChatOpen(false); ctx.clear(); }}>✕</button>
           <div className="messages">
             {messages.map((m) => (
-              <div key={m.id} className={`msg msg-${m.role}`}>{m.content}</div>
+              <div key={m.id} className={`msg msg-${m.role}`}>
+                {m.parts.map((part) => part.type === 'text' ? part.text : null)}
+              </div>
             ))}
+            {isLoading && <p role="status">Receiving response...</p>}
+            {error && <p role="alert">Unable to complete the response. Please try again.</p>}
           </div>
           <form onSubmit={handleSubmit}>
             <input
               value={input}
-              onChange={handleInputChange}
+              onChange={(event) => setInput(event.target.value)}
+              disabled={isLoading}
               placeholder="Ask about this metric…"
             />
-            <button type="submit">Send</button>
+            <button type="submit" disabled={isLoading || !input.trim()}>Send</button>
+            {isLoading && <button type="button" onClick={() => void stop()}>Stop</button>}
           </form>
         </aside>
       )}
@@ -120,9 +139,10 @@ export function Dashboard() {
 ```vue [Vue]
 <!-- components/Dashboard.vue -->
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onBeforeUnmount } from 'vue';
 import { Askable, useAskable } from '@askable-ui/vue';
-import { useChat } from '@ai-sdk/vue';
+import { Chat } from '@ai-sdk/vue';
+import { DefaultChatTransport } from 'ai';
 
 const widgets = [
   { id: 'revenue', label: 'Revenue',   value: '$2.3M', delta: '+12%',    period: 'Q3 2024' },
@@ -130,22 +150,30 @@ const widgets = [
   { id: 'nps',     label: 'NPS',        value: '61',   delta: '+4',       period: 'Q3 2024' },
 ];
 
-const { ctx, promptContext } = useAskable();
+const { ctx } = useAskable();
 const chatOpen = ref(false);
-const cardRefs = ref<Record<string, HTMLElement | null>>({});
-
-const historyContext = computed(() => ctx.toHistoryContext(5));
-
-const { messages, input, handleSubmit } = useChat({
-  api: '/api/chat',
-  body: computed(() => ({
-    uiContext: promptContext.value,
-    historyContext: historyContext.value,
-  })),
+const input = ref('');
+const chat = new Chat({
+  transport: new DefaultChatTransport({ api: '/api/chat' }),
 });
+const isLoading = computed(() => chat.status === 'submitted' || chat.status === 'streaming');
+onBeforeUnmount(() => { void chat.stop(); });
 
-function selectWidget(id: string) {
-  const el = cardRefs.value[id];
+function send() {
+  if (!input.value.trim() || isLoading.value) return;
+  void chat.sendMessage({ text: input.value.trim() }, {
+    body: {
+      uiContext: ctx.toPromptContext(),
+      historyContext: ctx.toHistoryContext(5),
+    },
+  });
+  input.value = '';
+}
+
+function selectWidget(event: MouseEvent) {
+  // Select the annotated DOM element, not the Vue component instance.
+  const button = event.currentTarget as HTMLButtonElement;
+  const el = button.closest<HTMLElement>('[data-askable]');
   if (el) ctx.select(el);
   chatOpen.value = true;
 }
@@ -157,39 +185,45 @@ function selectWidget(id: string) {
       <Askable
         v-for="w in widgets"
         :key="w.id"
-        :ref="(el) => cardRefs[w.id] = el as HTMLElement"
         :meta="{ metric: w.id, value: w.value, delta: w.delta, period: w.period }"
         class="widget-card"
       >
         <h3>{{ w.label }}</h3>
         <p class="value">{{ w.value }}</p>
         <p class="delta">{{ w.delta }}</p>
-        <button class="ask-ai-btn" @click="selectWidget(w.id)">Ask AI ✦</button>
+        <button class="ask-ai-btn" @click="selectWidget">Ask AI ✦</button>
       </Askable>
     </div>
 
     <aside v-if="chatOpen" class="chat-panel">
-      <button class="close" @click="chatOpen = false; ctx.clear()">✕</button>
+      <button class="close" aria-label="Close chat" @click="chat.stop(); chatOpen = false; ctx.clear()">✕</button>
       <div class="messages">
-        <div v-for="m in messages" :key="m.id" :class="`msg msg-${m.role}`">
-          {{ m.content }}
+        <div v-for="m in chat.messages" :key="m.id" :class="`msg msg-${m.role}`">
+          <template v-for="(part, index) in m.parts" :key="index">
+            <span v-if="part.type === 'text'">{{ part.text }}</span>
+          </template>
         </div>
+        <p v-if="isLoading" role="status">Receiving response...</p>
+        <p v-if="chat.error" role="alert">Unable to complete the response. Please try again.</p>
       </div>
-      <form @submit.prevent="handleSubmit">
-        <input v-model="input" placeholder="Ask about this metric…" />
-        <button type="submit">Send</button>
+      <form @submit.prevent="send">
+        <input v-model="input" :disabled="isLoading" placeholder="Ask about this metric…" />
+        <button type="submit" :disabled="isLoading || !input.trim()">Send</button>
+        <button v-if="isLoading" type="button" @click="chat.stop()">Stop</button>
       </form>
     </aside>
   </div>
 </template>
 ```
 
-```svelte [Svelte]
+```svelte [Svelte 5]
 <!-- components/Dashboard.svelte -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { Chat } from '@ai-sdk/svelte';
+  import { DefaultChatTransport } from 'ai';
   import { createAskableStore } from '@askable-ui/svelte';
-  import Askable from '@askable-ui/svelte/Askable.svelte';
+  import Askable from '@askable-ui/svelte/Askable5.svelte';
 
   const widgets = [
     { id: 'revenue', label: 'Revenue',    value: '$2.3M', delta: '+12%',   period: 'Q3 2024' },
@@ -197,39 +231,32 @@ function selectWidget(id: string) {
     { id: 'nps',     label: 'NPS',        value: '61',    delta: '+4',      period: 'Q3 2024' },
   ];
 
-  const { ctx, promptContext, destroy } = createAskableStore();
-  onDestroy(destroy);
+  const { ctx, destroy } = createAskableStore();
+  const chat = new Chat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
+  });
+  let chatOpen = $state(false);
+  let input = $state('');
+  const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
+  onDestroy(() => { void chat.stop(); destroy(); });
 
-  let chatOpen = false;
-  let input = '';
-  let messages: { id: string; role: string; content: string }[] = [];
-  let cardEls: Record<string, HTMLElement> = {};
-
-  $: historyContext = ctx.toHistoryContext(5);
-
-  async function selectWidget(id: string) {
-    ctx.select(cardEls[id]);
+  function selectWidget(event: MouseEvent) {
+    const button = event.currentTarget as HTMLButtonElement;
+    const el = button.closest<HTMLElement>('[data-askable]');
+    if (el) ctx.select(el);
     chatOpen = true;
   }
 
-  async function send() {
-    if (!input.trim()) return;
-    const userMsg = input;
-    input = '';
-    messages = [...messages, { id: crypto.randomUUID(), role: 'user', content: userMsg }];
-
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages,
-        uiContext: $promptContext,
-        historyContext,
-      }),
+  function send(event: SubmitEvent) {
+    event.preventDefault();
+    if (!input.trim() || isLoading) return;
+    void chat.sendMessage({ text: input.trim() }, {
+      body: {
+        uiContext: ctx.toPromptContext(),
+        historyContext: ctx.toHistoryContext(5),
+      },
     });
-
-    const data = await res.json();
-    messages = [...messages, { id: crypto.randomUUID(), role: 'assistant', content: data.text }];
+    input = '';
   }
 </script>
 
@@ -237,29 +264,35 @@ function selectWidget(id: string) {
   <div class="widgets">
     {#each widgets as w (w.id)}
       <Askable
-        bind:el={cardEls[w.id]}
         meta={{ metric: w.id, value: w.value, delta: w.delta, period: w.period }}
         class="widget-card"
       >
         <h3>{w.label}</h3>
         <p class="value">{w.value}</p>
         <p class="delta">{w.delta}</p>
-        <button class="ask-ai-btn" on:click={() => selectWidget(w.id)}>Ask AI ✦</button>
+        <button class="ask-ai-btn" onclick={selectWidget}>Ask AI ✦</button>
       </Askable>
     {/each}
   </div>
 
   {#if chatOpen}
     <aside class="chat-panel">
-      <button class="close" on:click={() => { chatOpen = false; ctx.clear(); }}>✕</button>
+      <button class="close" aria-label="Close chat" onclick={() => { void chat.stop(); chatOpen = false; ctx.clear(); }}>✕</button>
       <div class="messages">
-        {#each messages as m (m.id)}
-          <div class="msg msg-{m.role}">{m.content}</div>
+        {#each chat.messages as m (m.id)}
+          <div class="msg msg-{m.role}">
+            {#each m.parts as part}
+              {#if part.type === 'text'}{part.text}{/if}
+            {/each}
+          </div>
         {/each}
+        {#if isLoading}<p role="status">Receiving response...</p>{/if}
+        {#if chat.error}<p role="alert">Unable to complete the response. Please try again.</p>{/if}
       </div>
-      <form on:submit|preventDefault={send}>
-        <input bind:value={input} placeholder="Ask about this metric…" />
-        <button type="submit">Send</button>
+      <form onsubmit={send}>
+        <input bind:value={input} disabled={isLoading} placeholder="Ask about this metric…" />
+        <button type="submit" disabled={isLoading || !input.trim()}>Send</button>
+        {#if isLoading}<button type="button" onclick={() => chat.stop()}>Stop</button>{/if}
       </form>
     </aside>
   {/if}
@@ -270,15 +303,19 @@ function selectWidget(id: string) {
 
 ## API route
 
-All three examples above POST to `/api/chat` with `uiContext` and `historyContext`. Here's a Next.js App Router handler using the Vercel AI SDK:
+All three examples above POST SDK `UIMessage[]` to `/api/chat` with current `uiContext` and `historyContext`. The transport decodes the UI-message SSE response and updates `messages`, `status`, and `error`; do not parse it with `res.json()` or concatenate the raw response bytes as assistant text. Here's a Next.js App Router handler using `@ai-sdk/openai@^3.0.114` (set `OPENAI_API_KEY` on the server):
 
 ```ts
 // app/api/chat/route.ts
 import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { convertToModelMessages, generateId, streamText, type UIMessage } from 'ai';
 
 export async function POST(req: Request) {
-  const { messages, uiContext, historyContext } = await req.json();
+  const { messages, uiContext, historyContext } = await req.json() as {
+    messages: UIMessage[];
+    uiContext?: string;
+    historyContext?: string;
+  };
 
   const systemParts = [
     'You are a helpful analytics assistant. Answer questions about the metrics the user is asking about.',
@@ -288,18 +325,23 @@ export async function POST(req: Request) {
   if (historyContext) systemParts.push(`\nRecent interactions:\n${historyContext}`);
 
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: openai.chat('gpt-4o-mini'),
     system: systemParts.join('\n'),
-    messages,
+    messages: await convertToModelMessages(messages),
   });
 
-  return result.toDataStreamResponse();
+  return result.toUIMessageStreamResponse({
+    originalMessages: messages,
+    generateMessageId: generateId,
+  });
 }
 ```
 
+The type assertion is not runtime validation. Authenticate requests, validate and limit messages/context, and apply rate limits before deployment. Context is untrusted data, not an authorization decision. These clients render text parts only.
+
 ## Passive hover tracking
 
-If you prefer not to add "Ask AI" buttons, enable passive hover tracking instead. The AI always receives context for whatever the user is currently hovering over:
+If you prefer not to add "Ask AI" buttons, enable passive hover tracking instead. Each new request reads context for the most recently tracked element:
 
 ```ts
 // One-time setup — usually at app root
@@ -309,4 +351,4 @@ ctx.observe(document, {
 });
 ```
 
-With this setup, `promptContext` / `ctx.toPromptContext()` always reflects the last interacted element — no explicit button click needed.
+With this setup, `promptContext` / `ctx.toPromptContext()` reflects the last tracked element after the hover debounce; no explicit button click is needed. Moving the pointer while an answer streams does not change the context already sent to the active model call. See [streaming updates during generation](./ai-sdk#streaming-updates-during-generation) for an application-owned multi-step update pattern.

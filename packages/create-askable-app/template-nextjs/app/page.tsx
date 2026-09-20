@@ -1,6 +1,8 @@
 'use client';
 
-import { useChat } from 'ai/react';
+import { useState } from 'react';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { useAskable, Askable } from '@askable-ui/react';
 
 const ITEMS = [
@@ -11,10 +13,19 @@ const ITEMS = [
 
 export default function Page() {
   const { promptContext } = useAskable();
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
-    api: '/api/chat',
-    body: { uiContext: promptContext },
+  const [input, setInput] = useState('');
+  const { messages, sendMessage, status, error } = useChat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
   });
+  const isLoading = status === 'submitted' || status === 'streaming';
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!input.trim() || isLoading) return;
+    // Request-level options capture the current focus, not the initial render.
+    void sendMessage({ text: input.trim() }, { body: { uiContext: promptContext } });
+    setInput('');
+  }
 
   return (
     <div style={{ display: 'flex', gap: '2rem', padding: '2rem', maxWidth: 1200, margin: '0 auto' }}>
@@ -40,18 +51,22 @@ export default function Page() {
           <div style={{ padding: '1rem', minHeight: 200, maxHeight: 400, overflowY: 'auto' }}>
             {messages.map((m) => (
               <p key={m.id} style={{ marginBottom: '0.5rem' }}>
-                <strong>{m.role === 'user' ? 'You' : 'AI'}: </strong>{m.content}
+                <strong>{m.role === 'user' ? 'You' : 'AI'}: </strong>
+                {m.parts.map((part) => part.type === 'text' ? part.text : null)}
               </p>
             ))}
+            {isLoading && <p>Thinking...</p>}
+            {error && <p role="alert">Unable to complete the response. Please try again.</p>}
           </div>
           <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem', padding: '1rem', borderTop: '1px solid #e5e7eb' }}>
             <input
               value={input}
-              onChange={handleInputChange}
+              onChange={(event) => setInput(event.target.value)}
+              disabled={isLoading}
               placeholder="Ask about what you see..."
               style={{ flex: 1, padding: '0.5rem', border: '1px solid #e5e7eb', borderRadius: 6 }}
             />
-            <button type="submit" style={{ padding: '0.5rem 1rem', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+            <button type="submit" disabled={isLoading || !input.trim()} style={{ padding: '0.5rem 1rem', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
               Send
             </button>
           </form>

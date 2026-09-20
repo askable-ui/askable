@@ -1,6 +1,6 @@
 # askable-ui + Vercel AI SDK
 
-A minimal Next.js 15 app showing how **askable-ui** and the **Vercel AI SDK** work together.
+A minimal Next.js 15 app showing how **askable-ui** and **Vercel AI SDK 6** work together.
 
 Click any metric card or deal row. The AI panel knows exactly what you're looking at — no screenshots, no form input, no extra wiring.
 
@@ -40,29 +40,46 @@ const { promptContext } = useAskable();
 // → "User is focused on: {"id":"revenue","value":"$2.34M","delta":"+12%"}"
 ```
 
-**3. Send it with every AI request** via Vercel AI SDK's `body` option:
+**3. Send it with every AI request** using request-level options so the current context is captured at submission time:
 
 ```tsx
-const { messages, input, handleSubmit } = useChat({
-  api: '/api/chat',
-  body: { uiContext: promptContext },   // ← live UI context rides along
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { useState } from 'react';
+
+const [input, setInput] = useState('');
+const { messages, sendMessage, status } = useChat({
+  transport: new DefaultChatTransport({ api: '/api/chat' }),
 });
+
+// In the form submit handler:
+sendMessage({ text: input }, { body: { uiContext: promptContext } });
+setInput('');
+// Render text from message.parts, and use status for loading state.
 ```
 
 **4. Use it in your system prompt** on the server:
 
 ```ts
 // app/api/chat/route.ts
+import { convertToModelMessages, generateId, streamText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+
 const { messages, uiContext } = await req.json();
 
 const result = streamText({
-  model: openai('gpt-4o-mini'),
+  model: openai.chat('gpt-4o-mini'),
   system: `You are a dashboard assistant.\n\n${uiContext ?? 'Nothing focused.'}`,
-  messages,
+  messages: await convertToModelMessages(messages),
 });
+
+return result.toUIMessageStreamResponse({ originalMessages: messages, generateMessageId: generateId });
 ```
 
 That's the entire integration — four steps, no SDK-specific adapters needed.
+
+See [the security migration notes](./SECURITY-MIGRATION.md) for dependency
+selection, compatibility details, and secrets-free validation commands.
 
 ## Quickstart
 
