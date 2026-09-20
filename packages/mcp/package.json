@@ -51,10 +51,10 @@
     "@askable-ui/context": "^0.17.3",
     "@askable-ui/core": "^0.17.3",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^4.4.3"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.5.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
   }
