@@ -1,4 +1,4 @@
-import { streamText } from 'ai';
+import { convertToModelMessages, generateId, streamText, type UIMessage } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 
 export const runtime = 'edge';
@@ -7,7 +7,7 @@ const anthropic = createAnthropic();
 
 export async function POST(req: Request) {
   const { messages, uiContext } = await req.json() as {
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+    messages: UIMessage[];
     uiContext?: string;
   };
 
@@ -17,8 +17,8 @@ export async function POST(req: Request) {
       'You are a helpful assistant embedded in a web app.',
       uiContext ? `\n## Current UI context\n${uiContext}` : '',
     ].join('\n'),
-    messages,
+    messages: await convertToModelMessages(messages),
   });
 
-  return result.toDataStreamResponse();
+  return result.toUIMessageStreamResponse({ originalMessages: messages, generateMessageId: generateId });
 }
