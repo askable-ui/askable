@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { AskableAgentRequest, AskableAgentRequestOptions, AskableContext } from '@askable-ui/core';
 import { useAskable, type UseAskableOptions } from './useAskable.js';
 
@@ -18,12 +18,13 @@ export type AskableChatStreamHandler = (
   request: AskableAgentRequest,
   messages: AskableChatMessage[],
   emit: (chunk: string) => void,
+  signal: AbortSignal,
 ) => Promise<void>;
 
 export interface UseAskableChatOptions extends Omit<UseAskableOptions, 'inspector'> {
   /** Initial messages to pre-populate the chat */
   initialMessages?: AskableChatMessage[];
-  /** System prompt or a function that returns it. Context is appended automatically. */
+  /** System prompt for append(). Context is appended automatically; appendRequest() sends the reviewed context unchanged. */
   systemPrompt?: string | ((context: string) => string);
   /** Called with each chunk as it streams */
   onChunk?: (chunk: string) => void;
@@ -31,7 +32,7 @@ export interface UseAskableChatOptions extends Omit<UseAskableOptions, 'inspecto
   onFinish?: (message: AskableChatMessage) => void;
   /** Called on error */
   onError?: (error: unknown) => void;
-  /** Options forwarded to ctx.toAgentRequest() */
+  /** Options forwarded to ctx.toAgentRequest() by append(), not appendRequest(). */
   requestOptions?: AskableAgentRequestOptions;
   ctx?: AskableContext;
 }
@@ -41,6 +42,8 @@ export interface UseAskableChatResult {
   messages: AskableChatMessage[];
   /** Send a user message and stream the assistant reply */
   append: (content: string, handler: AskableChatStreamHandler) => Promise<void>;
+  /** Send a JSON-ready request as reviewed, without resolving context or applying systemPrompt again. */
+  appendRequest: (request: AskableAgentRequest, handler: AskableChatStreamHandler) => Promise<void>;
   /** Replace the last assistant message incrementally (useful for non-streaming) */
   setAssistantMessage: (content: string) => void;
   /** Reset the conversation to initial state */
@@ -48,6 +51,7 @@ export interface UseAskableChatResult {
   status: AskableChatStatus;
   error: unknown;
   isStreaming: boolean;
+  /** Cancel preparation/streaming and return to idle. Forward the handler signal to cancel network work. */
   abort: () => void;
   ctx: AskableContext;
 }
@@ -66,10 +70,14 @@ function nextId() {
  * });
  *
  * // In the submit handler:
- * await append(userInput, async (req, msgs, emit) => {
+ * await append(userInput, async (req, msgs, emit, signal) => {
  *   const res = await fetch('/api/chat', {
  *     method: 'POST',
- *     body: JSON.stringify({ messages: msgs, context: req.context }),
+ *     signal,
+ *     body: JSON.stringify({
+ *       messages: msgs.map(({ role, content }) => ({ role, content })),
+ *       context: req.context,
+ *     }),
  *   });
  *   const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
  *   while (true) {
@@ -98,113 +106,114 @@ export function useAskableChat(options: UseAskableChatOptions = {}): UseAskableC
   const [error, setError] = useState<unknown>(null);
 
   const abortRef = useRef<AbortController | null>(null);
-  const contentRef = useRef('');
+  const messagesRef = useRef(messages);
   const assistantIdRef = useRef('');
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      abortRef.current?.abort();
+      abortRef.current = null;
+    };
+  }, []);
+
+  const updateMessages = useCallback((update: (previous: AskableChatMessage[]) => AskableChatMessage[]) => {
+    messagesRef.current = update(messagesRef.current);
+    setMessages(messagesRef.current);
+  }, []);
 
   const abort = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
+    if (mountedRef.current) setStatus('idle');
   }, []);
 
   const clearMessages = useCallback(() => {
+    if (!mountedRef.current) return;
     abort();
-    setMessages(initialMessages);
+    assistantIdRef.current = '';
+    updateMessages(() => initialMessages);
     setStatus('idle');
     setError(null);
-  }, [abort, initialMessages]);
+  }, [abort, initialMessages, updateMessages]);
 
   const setAssistantMessage = useCallback((content: string) => {
+    if (!mountedRef.current) return;
     const id = assistantIdRef.current || nextId();
     assistantIdRef.current = id;
-    setMessages((prev) => {
+    updateMessages((prev) => {
       const last = prev[prev.length - 1];
       if (last?.id === id) {
         return [...prev.slice(0, -1), { ...last, content }];
       }
       return [...prev, { id, role: 'assistant', content, createdAt: Date.now() }];
     });
-  }, []);
+  }, [updateMessages]);
 
-  const append = useCallback(
-    async (content: string, handler: AskableChatStreamHandler): Promise<void> => {
+  const run = useCallback(
+    async (prepare: () => AskableAgentRequest | Promise<AskableAgentRequest>, handler: AskableChatStreamHandler): Promise<void> => {
+      if (!mountedRef.current) return;
       abort();
       const ac = new AbortController();
       abortRef.current = ac;
+      const isCurrent = () => mountedRef.current && !ac.signal.aborted && abortRef.current === ac;
 
       setError(null);
       setStatus('streaming');
 
-      const userMessage: AskableChatMessage = {
-        id: nextId(),
-        role: 'user',
-        content,
-        createdAt: Date.now(),
-      };
-
-      let request = await ctx.toAgentRequest(content, requestOptions);
-
-      if (systemPrompt) {
-        const sysContent =
-          typeof systemPrompt === 'function'
-            ? systemPrompt(request.context)
-            : `${systemPrompt}\n\n${request.context}`;
-        request = { ...request, context: sysContent };
-      }
-
-      userMessage.request = request;
-
-      const assistantId = nextId();
-      assistantIdRef.current = assistantId;
-      contentRef.current = '';
-
-      const assistantMessage: AskableChatMessage = {
-        id: assistantId,
-        role: 'assistant',
-        content: '',
-        createdAt: Date.now(),
-      };
-
-      setMessages((prev) => [...prev, userMessage, assistantMessage]);
-
-      const allMessages = [...messages, userMessage];
-
-      const emit = (chunk: string) => {
-        if (ac.signal.aborted) return;
-        contentRef.current += chunk;
-        const acc = contentRef.current;
-        setMessages((prev) => {
-          const last = prev[prev.length - 1];
-          if (last?.id === assistantId) {
-            return [...prev.slice(0, -1), { ...last, content: acc }];
-          }
-          return prev;
-        });
-        onChunk?.(chunk);
-      };
-
       try {
-        await handler(request, allMessages, emit);
+        const request = await prepare();
+        if (!isCurrent()) return;
 
-        if (!ac.signal.aborted) {
+        const userMessage: AskableChatMessage = {
+          id: nextId(),
+          role: 'user',
+          content: request.question,
+          request,
+          createdAt: Date.now(),
+        };
+        const assistantId = nextId();
+        assistantIdRef.current = assistantId;
+        let content = '';
+        const assistantMessage: AskableChatMessage = {
+          id: assistantId,
+          role: 'assistant',
+          content,
+          createdAt: Date.now(),
+        };
+
+        const allMessages = [...messagesRef.current, userMessage];
+        updateMessages(() => [...allMessages, assistantMessage]);
+
+        const emit = (chunk: string) => {
+          if (!isCurrent()) return;
+          content += chunk;
+          updateMessages((prev) => prev.map((message) =>
+            message.id === assistantId ? { ...message, content } : message,
+          ));
+          onChunk?.(chunk);
+        };
+
+        await handler(request, allMessages, emit, ac.signal);
+
+        if (isCurrent()) {
           const finalMessage: AskableChatMessage = {
             id: assistantId,
             role: 'assistant',
-            content: contentRef.current,
+            content,
             request,
             createdAt: assistantMessage.createdAt,
           };
-          setMessages((prev) => {
-            const last = prev[prev.length - 1];
-            if (last?.id === assistantId) {
-              return [...prev.slice(0, -1), finalMessage];
-            }
-            return prev;
-          });
+          updateMessages((prev) => prev.map((message) =>
+            message.id === assistantId ? finalMessage : message,
+          ));
           setStatus('idle');
           onFinish?.(finalMessage);
         }
       } catch (err) {
-        if (!ac.signal.aborted) {
+        if (isCurrent()) {
           setError(err);
           setStatus('error');
           onError?.(err);
@@ -213,12 +222,36 @@ export function useAskableChat(options: UseAskableChatOptions = {}): UseAskableC
         if (abortRef.current === ac) abortRef.current = null;
       }
     },
-    [ctx, messages, requestOptions, systemPrompt, onChunk, onFinish, onError, abort],
+    [onChunk, onFinish, onError, abort, updateMessages],
+  );
+
+  const append = useCallback(
+    (content: string, handler: AskableChatStreamHandler): Promise<void> => run(async () => {
+      const request = await ctx.toAgentRequest(content, requestOptions);
+      if (!systemPrompt) return request;
+      return {
+        ...request,
+        context: typeof systemPrompt === 'function'
+          ? systemPrompt(request.context)
+          : `${systemPrompt}\n\n${request.context}`,
+      };
+    }, handler),
+    [ctx, requestOptions, systemPrompt, run],
+  );
+
+  const appendRequest = useCallback(
+    (request: AskableAgentRequest, handler: AskableChatStreamHandler): Promise<void> => run(
+      // Copy synchronously before the first await so later edits cannot change this send.
+      () => JSON.parse(JSON.stringify(request)) as AskableAgentRequest,
+      handler,
+    ),
+    [run],
   );
 
   return {
     messages,
     append,
+    appendRequest,
     setAssistantMessage,
     clearMessages,
     status,

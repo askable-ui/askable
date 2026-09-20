@@ -81,6 +81,18 @@ const available = ctx.listSources(); // → [{ id, kind, modes, registeredAt, up
 
 `subscribeAsync()` re-runs your callback whenever focus or a source changes — handy for live context panels.
 
+## Consistent agent requests (unreleased)
+
+Use `ctx.toAgentRequest(question, { sources: ['cart'], packet: true })` when the
+same source-backed context needs both a prompt and a packet. On the main branch,
+matching source requests share one sanitized result, so a changing cart or
+document is not read twice for the two outputs. The fix is not in npm `0.17.3`.
+
+Different queries remain independent, previously captured packets are not
+refreshed, and later agent requests always resolve again. See
+[agent request consistency](/api/core#toagentrequest-question-options) for exact
+matching rules, error policies, and packet-derived selections.
+
 ## Prebuilt sources
 
 You rarely write a source by hand. `@askable-ui/core` ships factories for the common cases, each wrapped as a framework hook (`useAskableCartSource`, `useAskableTableSource`, …):

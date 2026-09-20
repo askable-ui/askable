@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Askable Browser Companion",
+  "description": "Capture selected, focused, or full-page context and send it through an Askable bridge envelope.",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Askable"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": ["http://*/*", "https://*/*"]
+}

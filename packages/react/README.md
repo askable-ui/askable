@@ -399,6 +399,24 @@ code.
 Use `onSelectionChange(state)` to keep chat input state aligned with the pinned
 text selection.
 
+### Reviewed chat requests (unreleased)
+
+`useAskableChat()` now exposes `appendRequest(request, handler)` alongside
+`append(question, handler)`. Use it after displaying an owned JSON snapshot of
+`ctx.toAgentRequest()` for review. It sends that question, context, packet, and
+metadata without re-resolving sources or applying `systemPrompt` or
+`requestOptions` again. It copies the JSON-ready payload at invocation so later
+edits cannot change an in-flight request.
+
+Both chat methods pass `(request, messages, emit, signal)` to the handler.
+Forward `signal` to `fetch` to stop network work when `abort()`, `clearMessages()`,
+a newer send, or unmount cancels the turn. Cancellation returns to `idle` and
+ignores late results; it cannot undo a request already received by a server.
+
+These additions are not published in `0.17.3`. See the
+[React review guide](../../site/docs/guide/react.md#review-context-before-sending-unreleased)
+for preparation, approval, and transport examples.
+
 ## License
 
 MIT

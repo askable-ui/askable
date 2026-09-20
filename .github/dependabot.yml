@@ -41,6 +41,16 @@ updates:
       - "dependencies"
     open-pull-requests-limit: 10
 
+  - package-ecosystem: "npm"
+    directories:
+      - "/examples/*"
+      - "/site/docs"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 10
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

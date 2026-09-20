@@ -1,0 +1,54 @@
+name: test / browser extension
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "examples/browser-extension/**"
+      - ".github/workflows/test_browser_extension.yml"
+      - "package.json"
+      - "package-lock.json"
+  pull_request:
+    branches: [main]
+    paths:
+      - "examples/browser-extension/**"
+      - ".github/workflows/test_browser_extension.yml"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-extension:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            examples/browser-extension/package-lock.json
+      - name: Install existing Playwright tooling
+        run: npm ci --ignore-scripts
+      - name: Install published example dependencies
+        working-directory: examples/browser-extension
+        run: npm ci
+      - name: Build and check classic content script
+        working-directory: examples/browser-extension
+        run: npm test
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test unpacked extension capture
+        working-directory: examples/browser-extension
+        run: npm run test:browser

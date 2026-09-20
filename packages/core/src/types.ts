@@ -137,7 +137,9 @@ export interface AskablePromptContextOptions {
   /**
    * Approximate token budget for the output string.
    * Uses a 4 chars/token estimate. If the serialized output exceeds the budget
-   * it is truncated and a `[truncated]` marker is appended.
+   * natural output is truncated with a `[truncated]` marker. JSON values are
+   * reduced before serialization to preserve valid JSON; reduced objects carry
+   * `truncated: true` when it fits. A budget too small for JSON throws RangeError.
    * No limit by default.
    */
   maxTokens?: number;

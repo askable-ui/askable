@@ -526,6 +526,15 @@ ctx.registerSource('accounts', {
 });
 ```
 
+**Unreleased source-consistency fix:** `toAgentRequest(question, { packet: true })` shares
+matching source resolutions between prompt and packet, including sanitization.
+Live focus/history are captured before async work. Queries with different modes,
+selections, limits, timeouts, or signals remain separate, and results are not
+cached across calls. Explicit packet options remain independent; supplied
+capture packets are unchanged. This fix is not in npm `0.17.3` yet. See the
+[agent request reference](../../site/docs/api/core.md#toagentrequestquestion-options)
+for query matching and selection behavior.
+
 #### `subscribeAsync(callback, options?): () => void`
 
 Subscribe to source-backed context updates. The callback receives

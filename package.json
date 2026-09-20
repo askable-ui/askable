@@ -1,6 +1,6 @@
 {
   "name": "askable",
-  "version": "0.17.1",
+  "version": "0.17.3",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -14,9 +14,9 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@vue/server-renderer": "^3.5.41",
-    "esbuild": "0.28.1",
-    "vite": "^8.2.0",
-    "vitest": "^4.1.10",
+    "esbuild": "0.28.2",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11",
     "vue": "^3.5.41"
   }
 }

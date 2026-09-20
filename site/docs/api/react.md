@@ -193,6 +193,54 @@ const { focus: panelFocus } = useAskable({ ctx: myCtx });
 
 ---
 
+## `useAskableChat(options?)`
+
+Manages a conversation and streams replies through your handler. `append()`
+resolves current context and applies `requestOptions` and `systemPrompt`.
+
+::: warning Unreleased additions
+`appendRequest()` and the handler's fourth `signal` argument are available on
+the repository's main branch, not in npm `0.17.3`. They are currently React-only.
+:::
+
+```ts
+type AskableChatStreamHandler = (
+  request: AskableAgentRequest,
+  messages: AskableChatMessage[],
+  emit: (chunk: string) => void,
+  signal: AbortSignal,
+) => Promise<void>;
+```
+
+| Return value | Behavior |
+|---|---|
+| `append(question, handler)` | Resolves live context, adds the user message, then streams the reply |
+| `appendRequest(request, handler)` | Copies a JSON-ready, already-reviewed request; uses its question and does not resolve context or reapply `systemPrompt` or `requestOptions` |
+| `messages` | Conversation messages; submitted requests are attached to user messages and completed assistant messages |
+| `status` | `idle`, `streaming` (including context preparation), or `error` |
+| `error` | Last preparation or handler error; cleared on a new send or `clearMessages()` |
+| `abort()` | Cancels the active turn and returns to `idle`; existing messages and partial output remain |
+| `clearMessages()` | Cancels the active turn and restores `initialMessages` |
+| `setAssistantMessage(content)` | Replaces the latest assistant content or adds an assistant message |
+
+The handler receives previous messages plus the current user message, excluding
+the new assistant placeholder. Three-argument handlers still work. Forward the
+fourth argument to your transport to cancel network work; ignoring it suppresses
+late hook updates but does not stop the transport. A newer send or unmount also
+cancels the active turn. Async source resolution itself is not aborted, but its
+late result will not be dispatched.
+
+Both send methods resolve `Promise<void>`; inspect `status`/`error` or use
+`onFinish`/`onError` for the outcome. `idle` alone is not a delivery receipt.
+There is no automatic retry or server-side deduplication.
+
+See [Review context before sending](/guide/react#review-context-before-sending-unreleased)
+for a snapshot workflow. Sanitize before review, include all fields your
+transport will send, and avoid serializing entire history message objects when
+only their role and content are needed.
+
+---
+
 ## `useAskableSource(id, source, options?)`
 
 Lifecycle-managed registration for app-owned context sources. Use this when the

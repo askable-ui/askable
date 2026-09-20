@@ -76,6 +76,41 @@ describe('createAskableUserSource', () => {
     ctx.destroy();
   });
 
+  it('omits private fields from every serialized representation', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('user', createAskableUserSource({
+      getUser: () => USER,
+      omitFields: ['name', 'role', 'plan', 'email', 'organization'],
+    }));
+
+    const source = await ctx.resolveSource('user');
+    expect(source.state).toEqual({ authenticated: true });
+    const prompt = await ctx.toContextAsync({ sources: ['user'] });
+    const packet = JSON.stringify(await ctx.toContextPacketAsync({ sources: ['user'] }));
+    for (const value of Object.values(USER)) {
+      expect(prompt).not.toContain(value);
+      expect(packet).not.toContain(value);
+    }
+    ctx.destroy();
+  });
+
+  it('uses sanitized profile values in state as well as data', async () => {
+    const ctx = createAskableContext();
+    ctx.registerSource('user', createAskableUserSource({
+      getUser: async () => USER,
+      sanitize: () => ({ name: '[redacted]' }),
+    }));
+
+    const source = await ctx.resolveSource('user');
+    expect(source.state).toEqual({ authenticated: true, name: '[redacted]' });
+    expect(source.data).toEqual({ name: '[redacted]' });
+    const prompt = await ctx.toContextAsync({ sources: ['user'] });
+    expect(prompt).not.toContain(USER.name);
+    expect(prompt).not.toContain(USER.role);
+    expect(prompt).not.toContain(USER.plan);
+    ctx.destroy();
+  });
+
   it('returns authenticated: false when user is null', async () => {
     const source = createAskableUserSource({ getUser: () => null });
     const state = await Promise.resolve(source.getState?.()) as { authenticated: boolean };

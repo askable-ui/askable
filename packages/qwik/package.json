@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/qwik",
-  "version": "0.17.1",
+  "version": "0.17.3",
   "description": "Qwik hooks and components to give AI assistants real-time context about what users see and select",
   "type": "module",
   "main": "./dist/index.js",
@@ -46,12 +46,12 @@
     "@builder.io/qwik": ">=1.6.0"
   },
   "dependencies": {
-    "@askable-ui/core": "^0.17.1"
+    "@askable-ui/core": "^0.17.3"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.14.1",
     "jsdom": "^29.1.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }

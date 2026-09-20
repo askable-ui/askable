@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/solid",
-  "version": "0.17.1",
+  "version": "0.17.3",
   "description": "SolidJS primitives to give AI assistants real-time context about what users see and interact with",
   "type": "module",
   "main": "./dist/index.js",
@@ -57,14 +57,14 @@
     "solid-js": ">=1.0.0"
   },
   "dependencies": {
-    "@askable-ui/core": "^0.17.1"
+    "@askable-ui/core": "^0.17.3"
   },
   "devDependencies": {
     "@solidjs/testing-library": "^0.8.10",
     "jsdom": "^29.1.1",
-    "solid-js": "^1.9.14",
+    "solid-js": "^1.9.15",
     "typescript": "^6.0.3",
     "vite-plugin-solid": "^2.11.14",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }

@@ -56,8 +56,8 @@ export function useAskablePageSource(
         textExtractor,
         sanitizeText,
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [kind, root, includeLinks, maxLinks, maxHeadings, maxTextLength],
+    // useAskableSource keeps registration stable through its ref-backed proxy.
+    [describe, kind, root, includeLinks, maxLinks, maxHeadings, maxTextLength, textExtractor, sanitizeText],
   );
 
   return useAskableSource(id, pageSource, { enabled, ctx, name, events });

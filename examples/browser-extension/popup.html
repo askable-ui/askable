@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Askable Browser Companion</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <span class="mark">✦</span>
+        <div>
+          <h1>Askable</h1>
+          <p>Send page context to any chat surface.</p>
+        </div>
+      </header>
+
+      <label class="question">
+        <span>Question</span>
+        <textarea id="question" rows="3" placeholder="What should I ask about this page?"></textarea>
+      </label>
+
+      <section class="actions" aria-label="Capture mode">
+        <button data-mode="selected" type="button">Selected text</button>
+        <button data-mode="focus" type="button">Focused element</button>
+        <button data-mode="page" type="button">Full page</button>
+      </section>
+
+      <section class="result">
+        <div class="result-head">
+          <strong id="status">Ready</strong>
+          <button id="copy" type="button" disabled>Copy prompt</button>
+        </div>
+        <textarea id="prompt" rows="8" readonly placeholder="Captured prompt context appears here."></textarea>
+        <details>
+          <summary>Bridge envelope</summary>
+          <pre id="packet">{}</pre>
+        </details>
+      </section>
+    </main>
+    <script type="module" src="/src/popup.ts"></script>
+  </body>
+</html>

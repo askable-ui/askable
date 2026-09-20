@@ -21,9 +21,11 @@
  * to stderr.
  */
 import { parseArgs } from 'node:util';
+import { realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import type { WebContextPacket } from '@askable-ui/context';
+import { parseContextPacket } from './packet.js';
 import {
   createAskableMcpServer,
   createAskableMcpRemoteProvider,
@@ -43,7 +45,7 @@ Context source (one required):
 Options:
   --header "K: V"       Extra request header for --url (repeatable), e.g. "Authorization: Bearer abc"
   --name <name>         Server name advertised to the client (default: askable-context)
-  --require-redacted    Refuse to serve packets with privacy.redacted === false
+  --require-redacted    Require schema-valid packets with privacy.redacted === true
   -h, --help            Show this help
 
 Example (claude_desktop_config.json):
@@ -68,7 +70,7 @@ function createFileProvider(path: string): AskableMcpContextProvider {
   return {
     async getContext() {
       const raw = await readFile(path, 'utf8');
-      return JSON.parse(raw) as WebContextPacket;
+      return parseContextPacket(JSON.parse(raw));
     },
   };
 }
@@ -116,8 +118,18 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
   process.stderr.write(`askable-mcp: serving context from ${sourceLabel} over stdio.\n`);
 }
 
+function isEntrypoint(): boolean {
+  if (!process.argv[1]) return false;
+  try {
+    // npm/npx invoke a .bin symlink; compare canonical paths, not URL strings.
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
 // Run only when invoked directly (not when imported by tests).
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isEntrypoint()) {
   main().catch((error) => {
     process.stderr.write(`askable-mcp: ${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 1;

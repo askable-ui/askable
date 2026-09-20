@@ -133,6 +133,7 @@ export default defineConfig({
             { text: 'AI SDK Integration', link: '/examples/ai-sdk' },
             { text: 'CopilotKit', link: '/examples/copilotkit' },
             { text: 'Ask AI Button', link: '/examples/ask-ai-button' },
+            { text: 'Browser Extension Companion', link: '/examples/browser-extension' },
           ],
         },
       ],

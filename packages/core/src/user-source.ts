@@ -27,7 +27,7 @@ export interface AskableCreateUserSourceOptions {
   getUser: () => AskableUserProfile | null | undefined | Promise<AskableUserProfile | null | undefined>;
   /**
    * Fields to omit from the resolved profile for privacy.
-   * Defaults to omitting "email" in summary mode.
+   * State omits email; data includes it unless listed here or sanitized.
    */
   omitFields?: string[];
   /**
@@ -69,7 +69,7 @@ export function createAskableUserSource(
     kind: options.kind ?? 'user',
     describe: options.describe ?? 'Logged-in user',
     state: async () => {
-      const user = await Promise.resolve(options.getUser());
+      const user = await resolveProfile();
       if (!user) return { authenticated: false };
       return {
         authenticated: true,

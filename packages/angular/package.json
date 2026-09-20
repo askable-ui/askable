@@ -1,6 +1,6 @@
 {
   "name": "@askable-ui/angular",
-  "version": "0.17.1",
+  "version": "0.17.3",
   "description": "Angular service and directive to give AI assistants real-time context about what users see and select",
   "type": "module",
   "main": "./dist/index.js",
@@ -55,7 +55,7 @@
     "@angular/core": ">=16.0.0"
   },
   "dependencies": {
-    "@askable-ui/core": "^0.17.1"
+    "@askable-ui/core": "^0.17.3"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "^1.18.3",
@@ -67,7 +67,7 @@
     "@angular/platform-browser-dynamic": "^19.2.25",
     "jsdom": "^29.1.1",
     "typescript": "^5.8.3",
-    "vitest": "^4.1.10",
+    "vitest": "^4.1.11",
     "zone.js": "^0.16.2"
   }
 }

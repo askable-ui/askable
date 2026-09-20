@@ -1,0 +1,156 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111317;
+  background: #f6f7f9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 390px;
+  margin: 0;
+  background: #f6f7f9;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+.shell {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgba(17, 19, 23, 0.08);
+  border-radius: 10px;
+  color: #4f46e5;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(17, 19, 23, 0.08);
+  font-size: 18px;
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+p,
+.question span,
+summary {
+  color: #5b6472;
+  font-size: 12px;
+}
+
+.question {
+  display: grid;
+  gap: 6px;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid rgba(17, 19, 23, 0.12);
+  border-radius: 10px;
+  padding: 10px;
+  color: #111317;
+  background: #fff;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: rgba(79, 70, 229, 0.55);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+button {
+  min-height: 34px;
+  border: 1px solid rgba(17, 19, 23, 0.1);
+  border-radius: 9px;
+  color: #111317;
+  background: #fff;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: rgba(79, 70, 229, 0.34);
+  color: #4f46e5;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.result {
+  display: grid;
+  gap: 8px;
+}
+
+.result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#status {
+  min-width: 0;
+  color: #111317;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+#copy {
+  flex: 0 0 auto;
+  padding-inline: 10px;
+}
+
+details {
+  border: 1px solid rgba(17, 19, 23, 0.1);
+  border-radius: 10px;
+  background: #fff;
+}
+
+summary {
+  cursor: pointer;
+  padding: 9px 10px;
+}
+
+pre {
+  max-height: 220px;
+  margin: 0;
+  overflow: auto;
+  border-top: 1px solid rgba(17, 19, 23, 0.08);
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
