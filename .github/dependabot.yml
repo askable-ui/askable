@@ -73,6 +73,9 @@ updates:
         versions: [">=22"]
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+      # Match the examples' validated Node runtime before changing type majors.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
     open-pull-requests-limit: 10
