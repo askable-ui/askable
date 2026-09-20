@@ -58,16 +58,17 @@
     "@askable-ui/core": "^0.17.3"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "^1.18.3",
-    "@angular/build": "^19.2.27",
-    "@angular/common": "^19.2.0",
-    "@angular/compiler-cli": "^19.2.25",
-    "@angular/core": "^19.2.0",
-    "@angular/platform-browser": "^19.2.0",
-    "@angular/platform-browser-dynamic": "^19.2.25",
+    "@analogjs/vite-plugin-angular": "^2.7.2",
+    "@angular/build": "^21.2.24",
+    "@angular/common": "21.2.23",
+    "@angular/compiler": "21.2.23",
+    "@angular/compiler-cli": "21.2.23",
+    "@angular/core": "21.2.23",
+    "@angular/platform-browser": "21.2.23",
+    "@angular/platform-browser-dynamic": "21.2.23",
     "jsdom": "^29.1.1",
-    "typescript": "^5.8.3",
+    "typescript": "~5.9.3",
     "vitest": "^4.1.11",
-    "zone.js": "^0.16.2"
+    "zone.js": "~0.16.3"
   }
 }
