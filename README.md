@@ -389,7 +389,10 @@ function ChatPanel() {
         append(userInput, async (req, msgs, emit) => {
           const res = await fetch('/api/chat', {
             method: 'POST',
-            body: JSON.stringify({ messages: msgs, system: req.context }),
+            body: JSON.stringify({
+              messages: msgs.map(({ role, content }) => ({ role, content })),
+              system: req.context,
+            }),
           });
           for await (const chunk of res.body!.pipeThrough(new TextDecoderStream())) {
             emit(chunk);
@@ -402,6 +405,18 @@ function ChatPanel() {
   );
 }
 ```
+
+**Unreleased, React:** `useAskableChat().appendRequest(request, handler)` sends an
+already-reviewed `AskableAgentRequest` without reading live context again. The
+handler also receives an `AbortSignal` as its fourth argument. See the
+[review-before-send guide](site/docs/guide/react.md#review-context-before-sending-unreleased)
+for snapshot, privacy, and cancellation details. These additions are not in npm
+`0.17.3` yet.
+
+**Unreleased, core:** `toAgentRequest()` now shares matching source reads between
+the prompt and a generated packet, avoiding inconsistent app-data revisions.
+See the [agent request reference](site/docs/api/core.md#toagentrequestquestion-options).
+This fix is not in npm `0.17.3` yet.
 
 ### Streaming responses
 
