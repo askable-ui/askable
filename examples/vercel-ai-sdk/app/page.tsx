@@ -1,6 +1,7 @@
 'use client';
 
-import { useChat } from 'ai/react';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import {
   Askable,
   useAskable,
@@ -8,7 +9,7 @@ import {
   useAskableViewport,
   useAskableCompose,
 } from '@askable-ui/react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 // --- sample data -----------------------------------------------------------
 
@@ -44,11 +45,19 @@ export default function Dashboard() {
     ],
   });
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: '/api/chat',
-    // send the composed context with every request
-    body: { uiContext: promptContext },
+  const [input, setInput] = useState('');
+  const { messages, sendMessage, status, error } = useChat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
   });
+  const isLoading = status === 'submitted' || status === 'streaming';
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!input.trim() || isLoading) return;
+    // Request-level options capture the current focus, not the initial render.
+    void sendMessage({ text: input.trim() }, { body: { uiContext: promptContext } });
+    setInput('');
+  }
 
   return (
     <div style={styles.shell}>
@@ -125,17 +134,18 @@ export default function Dashboard() {
           {messages.map((m) => (
             <div key={m.id} style={m.role === 'user' ? styles.userMsg : styles.aiMsg}>
               <span style={styles.msgLabel}>{m.role === 'user' ? 'You' : 'AI'}</span>
-              <p style={{ margin: 0 }}>{m.content}</p>
+              <p style={{ margin: 0 }}>{m.parts.map((part) => part.type === 'text' ? part.text : null)}</p>
             </div>
           ))}
           {isLoading && <span style={{ opacity: 0.4, fontSize: 13 }}>thinking…</span>}
+          {error && <p role="alert">Unable to complete the response. Please try again.</p>}
         </div>
 
         <form onSubmit={handleSubmit} style={styles.chatForm}>
           <input
             ref={inputRef}
             value={input}
-            onChange={handleInputChange}
+            onChange={(event) => setInput(event.target.value)}
             placeholder="Ask about what you're looking at…"
             style={styles.chatInput}
             disabled={isLoading}
