@@ -67,7 +67,7 @@
     "@angular/platform-browser-dynamic": "^19.2.25",
     "jsdom": "^29.1.1",
     "typescript": "^5.8.3",
-    "vitest": "^4.1.11",
+    "vitest": "^5.0.1",
     "zone.js": "^0.16.3"
   }
 }
