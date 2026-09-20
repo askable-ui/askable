@@ -4,53 +4,82 @@ Askable works with any LLM SDK. Here are drop-in patterns for the most common on
 
 ## Vercel AI SDK
 
+These examples target AI SDK 6: `ai@^6.0.286`, `@ai-sdk/openai@^3.0.114`, and the client package for your framework: `@ai-sdk/react@^3.0.289`, `@ai-sdk/vue@^3.0.286`, or `@ai-sdk/svelte@^4.0.286`. Keep provider credentials on the server.
+
+All three clients use `DefaultChatTransport` and the same `/api/chat` endpoint. The endpoint accepts `UIMessage[]`, awaits `convertToModelMessages`, and returns a UI-message SSE stream, not plain text or a JSON response. Vue uses the SDK's `Chat` class, not `useChat`. The Svelte example requires **Svelte 5.31+**; it is not a Svelte 4 example. See the SDK's [Vue client source](https://github.com/vercel/ai/blob/ai%406.0.286/packages/vue/src/chat.vue.ts) and [Svelte client source](https://github.com/vercel/ai/blob/ai%406.0.286/packages/svelte/src/chat.svelte.ts).
+
+Read context inside the send handler and pass it in `sendMessage`'s second argument. That captures the current focus and history for each request, including immediately after `ctx.select()` or `ctx.push()`.
+
 ::: code-group
 
 ```ts [API route]
 // app/api/chat/route.ts
 import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { convertToModelMessages, generateId, streamText, type UIMessage } from 'ai';
 
 export async function POST(req: Request) {
-  const { messages, uiContext, historyContext } = await req.json();
+  const { messages, uiContext, historyContext } = await req.json() as {
+    messages: UIMessage[];
+    uiContext?: string;
+    historyContext?: string;
+  };
 
   const systemParts = ['You are a helpful UI assistant.'];
   if (uiContext) systemParts.push(`Current UI context:\n${uiContext}`);
   if (historyContext) systemParts.push(`Recent interactions:\n${historyContext}`);
 
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: openai.chat('gpt-4o-mini'),
     system: systemParts.join('\n\n'),
-    messages,
+    messages: await convertToModelMessages(messages),
   });
 
-  return result.toDataStreamResponse();
+  return result.toUIMessageStreamResponse({
+    originalMessages: messages,
+    generateMessageId: generateId,
+  });
 }
 ```
 
 ```tsx [React client]
 'use client';
-import { useChat } from 'ai/react';
+import { useState, type FormEvent } from 'react';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { useAskable } from '@askable-ui/react';
 
 export function Chat() {
-  const { ctx, promptContext } = useAskable();
-
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
-    api: '/api/chat',
-    body: {
-      uiContext: promptContext,
-      historyContext: ctx.toHistoryContext(5),
-    },
+  const { ctx } = useAskable();
+  const [input, setInput] = useState('');
+  const { messages, sendMessage, status, error, stop } = useChat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
   });
+  const isLoading = status === 'submitted' || status === 'streaming';
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!input.trim() || isLoading) return;
+    void sendMessage({ text: input.trim() }, {
+      body: {
+        uiContext: ctx.toPromptContext(),
+        historyContext: ctx.toHistoryContext(5),
+      },
+    });
+    setInput('');
+  }
 
   return (
     <form onSubmit={handleSubmit}>
       {messages.map((m) => (
-        <div key={m.id} className={`msg-${m.role}`}>{m.content}</div>
+        <div key={m.id} className={`msg-${m.role}`}>
+          {m.parts.map((part) => part.type === 'text' ? part.text : null)}
+        </div>
       ))}
-      <input value={input} onChange={handleInputChange} placeholder="Ask…" />
-      <button type="submit">Send</button>
+      {isLoading && <p role="status">Receiving response...</p>}
+      {error && <p role="alert">Unable to complete the response. Please try again.</p>}
+      <input value={input} onChange={(event) => setInput(event.target.value)} disabled={isLoading} placeholder="Ask..." />
+      <button type="submit" disabled={isLoading || !input.trim()}>Send</button>
+      {isLoading && <button type="button" onClick={() => void stop()}>Stop</button>}
     </form>
   );
 }
@@ -58,139 +87,202 @@ export function Chat() {
 
 ```vue [Vue client]
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useChat } from '@ai-sdk/vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
+import { Chat } from '@ai-sdk/vue';
+import { DefaultChatTransport } from 'ai';
 import { useAskable } from '@askable-ui/vue';
 
-const { ctx, promptContext } = useAskable();
-
-const { messages, input, handleSubmit } = useChat({
-  api: '/api/chat',
-  body: computed(() => ({
-    uiContext: promptContext.value,
-    historyContext: ctx.toHistoryContext(5),
-  })),
+const { ctx } = useAskable();
+const input = ref('');
+const chat = new Chat({
+  transport: new DefaultChatTransport({ api: '/api/chat' }),
 });
+const isLoading = computed(() => chat.status === 'submitted' || chat.status === 'streaming');
+onBeforeUnmount(() => { void chat.stop(); });
+
+function send() {
+  if (!input.value.trim() || isLoading.value) return;
+  void chat.sendMessage({ text: input.value.trim() }, {
+    body: {
+      uiContext: ctx.toPromptContext(),
+      historyContext: ctx.toHistoryContext(5),
+    },
+  });
+  input.value = '';
+}
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit">
-    <div v-for="m in messages" :key="m.id" :class="`msg-${m.role}`">{{ m.content }}</div>
-    <input v-model="input" placeholder="Ask…" />
-    <button type="submit">Send</button>
+  <form @submit.prevent="send">
+    <div v-for="m in chat.messages" :key="m.id" :class="`msg-${m.role}`">
+      <template v-for="(part, index) in m.parts" :key="index">
+        <span v-if="part.type === 'text'">{{ part.text }}</span>
+      </template>
+    </div>
+    <p v-if="isLoading" role="status">Receiving response...</p>
+    <p v-if="chat.error" role="alert">Unable to complete the response. Please try again.</p>
+    <input v-model="input" :disabled="isLoading" placeholder="Ask..." />
+    <button type="submit" :disabled="isLoading || !input.trim()">Send</button>
+    <button v-if="isLoading" type="button" @click="chat.stop()">Stop</button>
   </form>
 </template>
 ```
 
-```svelte [Svelte client]
+```svelte [Svelte 5 client]
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { Chat } from '@ai-sdk/svelte';
+  import { DefaultChatTransport } from 'ai';
   import { createAskableStore } from '@askable-ui/svelte';
 
-  const { ctx, promptContext, destroy } = createAskableStore();
-  onDestroy(destroy);
+  const { ctx, destroy } = createAskableStore();
+  const chat = new Chat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
+  });
+  let input = $state('');
+  const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
+  onDestroy(() => { void chat.stop(); destroy(); });
 
-  let messages: { id: string; role: string; content: string }[] = [];
-  let input = '';
-
-  async function send() {
-    if (!input.trim()) return;
-    const userMsg = input;
-    input = '';
-    messages = [...messages, { id: crypto.randomUUID(), role: 'user', content: userMsg }];
-
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages,
-        uiContext: $promptContext,
+  function send(event: SubmitEvent) {
+    event.preventDefault();
+    if (!input.trim() || isLoading) return;
+    void chat.sendMessage({ text: input.trim() }, {
+      body: {
+        uiContext: ctx.toPromptContext(),
         historyContext: ctx.toHistoryContext(5),
-      }),
+      },
     });
-
-    const reader = res.body!.getReader();
-    const decoder = new TextDecoder();
-    let reply = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      reply += decoder.decode(value);
-    }
-    messages = [...messages, { id: crypto.randomUUID(), role: 'assistant', content: reply }];
+    input = '';
   }
 </script>
 
-<form on:submit|preventDefault={send}>
-  {#each messages as m (m.id)}
-    <div class="msg-{m.role}">{m.content}</div>
+<form onsubmit={send}>
+  {#each chat.messages as m (m.id)}
+    <div class="msg-{m.role}">
+      {#each m.parts as part}
+        {#if part.type === 'text'}{part.text}{/if}
+      {/each}
+    </div>
   {/each}
-  <input bind:value={input} placeholder="Ask…" />
-  <button type="submit">Send</button>
+  {#if isLoading}<p role="status">Receiving response...</p>{/if}
+  {#if chat.error}<p role="alert">Unable to complete the response. Please try again.</p>{/if}
+  <input bind:value={input} disabled={isLoading} placeholder="Ask..." />
+  <button type="submit" disabled={isLoading || !input.trim()}>Send</button>
+  {#if isLoading}<button type="button" onclick={() => chat.stop()}>Stop</button>{/if}
 </form>
 ```
 
 :::
 
+The snippets render text parts only; add renderers before using tools, files, or other message parts. The server's type assertion documents the payload, but does not validate untrusted JSON. Add authentication, runtime message/context validation, request-size limits, and rate limits before deployment. Treat UI context as untrusted data, not instructions or authorization.
+
 ### Streaming updates during generation
 
-When a response is already streaming, you can keep the server-side session fresh by subscribing to Askable context changes and posting debounced updates tied to the active chat request.
+The ordinary route above takes one context snapshot per request. Changing focus does **not** retroactively change the model call already generating tokens. For a custom multi-step agent, you can post debounced context updates for later model/tool steps. This requires an application-owned `/api/chat/context` endpoint and server-side session storage; neither is supplied by the route above or by Askable.
+
+This complete client assigns a request ID in the send handler, before dispatch. It subscribes only while streaming, checks update responses, and cleans up pending updates on completion, failure, cancellation, or unmount. There is no SDK 6 `onResponse` callback involved.
 
 ```tsx
 'use client';
-import { useEffect, useMemo, useRef } from 'react';
-import { useChat } from 'ai/react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { useAskable } from '@askable-ui/react';
 
 export function StreamingChat() {
-  const { ctx, promptContext } = useAskable();
+  const { ctx } = useAskable();
+  const [input, setInput] = useState('');
+  const [contextError, setContextError] = useState(false);
   const requestIdRef = useRef<string | null>(null);
 
-  const chatBody = useMemo(() => ({
-    requestId: crypto.randomUUID(),
-    uiContext: promptContext,
-    historyContext: ctx.toHistoryContext(5),
-  }), [ctx, promptContext]);
-
-  const { status, ...chat } = useChat({
-    api: '/api/chat',
-    body: chatBody,
-    onResponse() {
-      requestIdRef.current = chatBody.requestId;
-    },
+  const { messages, sendMessage, status, error, stop } = useChat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
     onFinish() {
       requestIdRef.current = null;
     },
+    onError() {
+      requestIdRef.current = null;
+    },
   });
+  const isLoading = status === 'submitted' || status === 'streaming';
 
-  useEffect(() => {
-    if (status !== 'streaming') return;
-
-    return ctx.subscribeAsync(async (context) => {
-      if (!requestIdRef.current) return;
-      await fetch('/api/chat/context', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requestId: requestIdRef.current,
-          context,
-        }),
-      });
-    }, {
-      history: 5,
-      sources: [{ id: 'accounts', mode: 'summary', timeoutMs: 750 }],
-      debounce: 100,
-      onError(error) {
-        console.error(error);
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!input.trim() || isLoading || requestIdRef.current) return;
+    const requestId = crypto.randomUUID();
+    requestIdRef.current = requestId;
+    setContextError(false);
+    void sendMessage({ text: input.trim() }, {
+      body: {
+        requestId,
+        uiContext: ctx.toPromptContext(),
+        historyContext: ctx.toHistoryContext(5),
       },
     });
+    setInput('');
+  }
+
+  useEffect(() => () => {
+    requestIdRef.current = null;
+    void stop();
+  }, [stop]);
+
+  useEffect(() => {
+    const requestId = requestIdRef.current;
+    if (status !== 'streaming' || !requestId) return;
+    const controller = new AbortController();
+    let sequence = 0;
+
+    const unsubscribe = ctx.subscribeAsync(async (context) => {
+      if (requestIdRef.current !== requestId) return;
+      const response = await fetch('/api/chat/context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({ requestId, sequence: ++sequence, context }),
+      });
+      if (!response.ok) throw new Error(`Context update failed: ${response.status}`);
+    }, {
+      history: 5,
+      debounce: 100,
+      emitInitial: true,
+      onError() {
+        if (!controller.signal.aborted && requestIdRef.current === requestId) {
+          setContextError(true);
+        }
+      },
+    });
+
+    return () => {
+      unsubscribe();
+      controller.abort();
+    };
   }, [ctx, status]);
 
-  return <ChatUI {...chat} />;
+  return (
+    <form onSubmit={handleSubmit}>
+      {messages.map((m) => (
+        <div key={m.id} className={`msg-${m.role}`}>
+          {m.parts.map((part) => part.type === 'text' ? part.text : null)}
+        </div>
+      ))}
+      {isLoading && <p role="status">Receiving response...</p>}
+      {error && <p role="alert">Unable to complete the response. Please try again.</p>}
+      {contextError && <p role="alert">Live context updates failed; later steps may use older context.</p>}
+      <input value={input} onChange={(event) => setInput(event.target.value)} disabled={isLoading} placeholder="Ask..." />
+      <button type="submit" disabled={isLoading || !input.trim()}>Send</button>
+      {isLoading && <button type="button" onClick={() => {
+        requestIdRef.current = null;
+        void stop();
+      }}>Stop</button>}
+    </form>
+  );
 }
 ```
 
-On the server, store these incremental updates by `requestId` and let your streaming route read the latest Askable context between model/tool steps.
+The custom chat route must register the request before streaming. Authenticate both endpoints, bind `requestId` to the authenticated user, validate and bound `context`, accept only increasing `sequence` values, and reject updates for finished/expired requests. Store updates in shared storage if routes run in separate serverless instances. Do not treat a client-supplied request ID as authorization.
+
+For an SDK multi-step tool loop, read the latest stored context in [`prepareStep`](https://github.com/vercel/ai/blob/ai%406.0.286/packages/ai/src/generate-text/prepare-step.ts) and return a new `system` value for the **next** step. Configure tools and stopping conditions separately. A single-step `streamText` call cannot consume later updates; stop and start a new request if the current answer must use new context. Aborting the client does not undo an update the server has already accepted.
 
 ## Anthropic SDK
 
@@ -296,39 +388,32 @@ export async function POST(req: Request) {
 }
 ```
 
-```ts
-// In your client component
-const { promptContext, ctx } = useAskable();
+Using the React client's `ctx` and `sendMessage` above, read both values at the point of sending:
 
-async function ask(question: string) {
-  await fetch('/api/chat', {
-    method: 'POST',
-    body: JSON.stringify({
-      messages: [...],
-      uiContext: promptContext,
+```ts
+function ask(question: string) {
+  return sendMessage({ text: question }, {
+    body: {
+      uiContext: ctx.toPromptContext(),
       historyContext: ctx.toHistoryContext(5),
-    }),
+    },
   });
 }
 ```
 
 ## Structured context with JSON format
 
-When your backend needs to parse or log the context, use `{ format: 'json' }`:
+When your backend needs to parse context, use `{ format: 'json' }`. Keep the serialized value in `uiContext` to use the same chat endpoint:
 
 ```ts
-const { ctx } = useAskable();
-
-// Returns '{"meta":{"metric":"revenue"},"text":"Revenue","timestamp":...}'
-const structuredContext = ctx.toPromptContext({ format: 'json' });
-
-await fetch('/api/chat', {
-  method: 'POST',
-  body: JSON.stringify({
-    messages: [...],
-    context: JSON.parse(structuredContext),  // parsed object
-  }),
-});
+function askWithStructuredContext(question: string) {
+  return sendMessage({ text: question }, {
+    body: {
+      uiContext: ctx.toPromptContext({ format: 'json' }),
+      historyContext: ctx.toHistoryContext(5),
+    },
+  });
+}
 ```
 
 ## Token budget
