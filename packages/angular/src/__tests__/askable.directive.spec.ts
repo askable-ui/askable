@@ -49,6 +49,7 @@ describe('AskableDirective', () => {
     const fixture = TestBed.createComponent(TestHostComponent);
     fixture.detectChanges();
     fixture.componentInstance.meta = { metric: 'revenue', value: '$2.0M' };
+    fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
     const btn = fixture.debugElement.query(By.css('button')).nativeElement as HTMLElement;
     expect(btn.dataset['askable']).toBe(JSON.stringify({ metric: 'revenue', value: '$2.0M' }));

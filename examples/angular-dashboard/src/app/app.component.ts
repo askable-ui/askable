@@ -9,7 +9,7 @@ import {
   asMeta,
 } from '@askable-ui/angular';
 
-interface KpiMeta { metric: string; value: string; delta: string; trend: string }
+type KpiMeta = { metric: string; value: string; delta: string; trend: string };
 interface DealMeta { company: string; stage: string; value: string }
 
 const KPIS = [
@@ -133,7 +133,7 @@ export class AppComponent implements OnInit {
     { label: 'Visible elements', value: this.viewport.promptContext() },
   ]);
 
-  readonly { promptContext } = useAskableCompose(this.sections);
+  readonly promptContext = useAskableCompose(this.sections).promptContext;
 
   readonly typedFocus = computed(() => {
     const f = this.askable.focus();
