@@ -5,14 +5,34 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      # Only bundle non-breaking dev-dependency updates. Major bumps come as
-      # individual PRs so a breaking upgrade (e.g. an Angular major) can't be
-      # silently merged inside a routine group.
+      # Angular packages have matching peers and must be reviewed together.
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "@analogjs/vite-plugin-angular"
+          - "zone.js"
       dev-dependencies:
         dependency-type: "development"
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # Keep Node 20-compatible lines until the test/runtime baseline changes.
+      # Compatible security and maintenance releases still flow normally.
+      - dependency-name: "@angular/*"
+        versions: [">=22"]
+      - dependency-name: "@angular-devkit/*"
+        versions: [">=22"]
+      - dependency-name: "@analogjs/vite-plugin-angular"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jsdom"
+        versions: [">=30"]
+      - dependency-name: "@testing-library/jest-dom"
+        versions: [">=7"]
+      # Compiler majors need a separate declaration/consumer compatibility review.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
     open-pull-requests-limit: 10
@@ -23,6 +43,19 @@ updates:
       - "/site/docs"
     schedule:
       interval: "weekly"
+    groups:
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "zone.js"
+    ignore:
+      - dependency-name: "@angular/*"
+        versions: [">=22"]
+      - dependency-name: "@angular-devkit/*"
+        versions: [">=22"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
     open-pull-requests-limit: 10
