@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@askable-ui/react": "^0.17.3",
-    "ai": "^4.3.16",
+    "ai": "^7.0.105",
     "@ai-sdk/openai": "^1.3.22",
     "next": "^15.3.3",
     "react": "^19.1.0",
