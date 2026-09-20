@@ -34,9 +34,19 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: examples/analytics-dashboard-react/package-lock.json
+      - name: Install shared browser test tooling
+        working-directory: .
+        run: npm ci --ignore-scripts
       - run: npm ci
       - run: npm audit --audit-level=high
+      - name: Typecheck dashboard and regression fixtures
+        run: npx tsc --noEmit --incremental false
       - run: npm run build
+      - name: Install Chromium
+        working-directory: .
+        run: npx playwright install --with-deps chromium
+      - name: Test dashboard dependency behavior
+        run: npm run test:dependencies
       - name: Validate pnpm lockfile and dependencies
         run: |
           npx --yes pnpm@10 install --lockfile-only --frozen-lockfile --ignore-scripts
