@@ -14,7 +14,7 @@
     "@askable-ui/core": "^0.17.3"
   },
   "devDependencies": {
-    "@types/chrome": "^0.1.8",
+    "@types/chrome": "^0.3.0",
     "@types/node": "^22.10.2",
     "typescript": "^6.0.3",
     "vite": "^8.2.2"
