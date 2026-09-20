@@ -115,6 +115,33 @@ test('context exports its packet factory, schema and privacy guard', () => {
   }
 });
 
+test('core agent requests share one sanitized source revision across prompt and packet', async () => {
+  const ctx = createAskableContext();
+  let revision = 0;
+  let sanitized = 0;
+  ctx.registerSource('records', {
+    resolve: () => ({ revision: ++revision, secret: raw }),
+    sanitize: (source) => {
+      sanitized += 1;
+      return { ...source, data: { revision: source.data.revision } };
+    },
+  });
+  try {
+    for (const contextFromPacket of [false, true]) {
+      const request = await ctx.toAgentRequest('Explain', {
+        sources: ['records'], packet: true, contextFromPacket, format: 'json',
+      });
+      const promptSource = JSON.parse(request.context).sources[0];
+      assert.deepEqual(request.packet.surrounding.sources[0].metadata.data, promptSource.data);
+      assert.equal(revision, contextFromPacket ? 2 : 1);
+      assert.equal(sanitized, revision);
+      assert.ok(!JSON.stringify(request).includes(raw));
+    }
+  } finally {
+    ctx.destroy();
+  }
+});
+
 test('bridge requires targetOrigin when no sending-page origin is available', async () => {
   assert.equal(typeof globalThis.window, 'undefined');
   const posted = [];
