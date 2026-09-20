@@ -52,8 +52,8 @@ jobs:
       - name: Check MCP Registry manifest
         run: node scripts/check-mcp-server-manifest.mjs
 
-      - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+      - name: Audit all workspace dependencies
+        run: npm audit --audit-level=high
 
       - name: Audit docs dependencies
         run: npm --prefix site/docs audit --package-lock-only --audit-level=high

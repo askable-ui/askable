@@ -12,8 +12,17 @@ updates:
           - "@angular-devkit/*"
           - "@analogjs/vite-plugin-angular"
           - "zone.js"
+      angular-security:
+        applies-to: security-updates
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "@analogjs/vite-plugin-angular"
+          - "zone.js"
       dev-dependencies:
         dependency-type: "development"
+        exclude-patterns:
+          - "typescript"
         update-types:
           - "minor"
           - "patch"
@@ -30,6 +39,8 @@ updates:
         versions: [">=30"]
       - dependency-name: "@testing-library/jest-dom"
         versions: [">=7"]
+      - dependency-name: "vitest"
+        versions: [">=5"]
       # Compiler majors need a separate declaration/consumer compatibility review.
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
@@ -49,12 +60,21 @@ updates:
           - "@angular/*"
           - "@angular-devkit/*"
           - "zone.js"
+      angular-security:
+        applies-to: security-updates
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "zone.js"
     ignore:
       - dependency-name: "@angular/*"
         versions: [">=22"]
       - dependency-name: "@angular-devkit/*"
         versions: [">=22"]
       - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # Match the examples' validated Node runtime before changing type majors.
+      - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
