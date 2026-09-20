@@ -39,6 +39,8 @@ jobs:
         run: npm ci --ignore-scripts
       - run: npm ci
       - run: npm audit --audit-level=high
+      - name: Typecheck dashboard and regression fixtures
+        run: npx tsc --noEmit --incremental false
       - run: npm run build
       - name: Install Chromium
         working-directory: .
