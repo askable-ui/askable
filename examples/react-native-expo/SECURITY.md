@@ -17,8 +17,8 @@ Full `npm audit --json` results, including development dependencies:
 | Total vulnerable packages | 20 | 0 |
 
 These are npm's vulnerable-package counts, including affected parent packages,
-not counts of unique advisories. The fresh baseline was 20, not the previously
-reported approximate 38. No audit findings are suppressed or omitted.
+not counts of unique advisories. GitHub can report several dependency alerts
+for one package. No audit findings are suppressed or omitted.
 
 ## Compatible stack
 
@@ -66,7 +66,8 @@ maintenance risks, not findings in this audit snapshot. Inflight has no fixed
 1.x release; replacing these transitive APIs belongs upstream, rather than in
 untested blanket major-version overrides.
 
-No native compilation, simulator, emulator, device, or interactive browser tests
-were run. JavaScript export and Expo Doctor do not prove native runtime behavior.
-The workflow commands were tested locally; a hosted CI run is still required.
+A browser smoke check confirmed web rendering and revenue-card context capture.
+No native compilation, simulator, emulator, or device tests were run.
+JavaScript export and Expo Doctor do not prove native runtime behavior.
+The workflow enforces the same checks on pull requests and pushes to main.
 Audit results are time-specific and should be checked again before release.
