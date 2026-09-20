@@ -61,6 +61,11 @@ type AskableContextSourceEntry = {
   updatedAt: number;
 };
 
+type SourceResolver = (
+  id: string,
+  request: Omit<AskableContextSourceRequest, 'id'>,
+) => Promise<AskableResolvedContextSource>;
+
 export class AskableContextImpl implements AskableContext {
   private emitter = new Emitter();
   private observer: Observer;
@@ -402,13 +407,14 @@ export class AskableContextImpl implements AskableContext {
 
     const mode = request?.mode ?? 'summary';
     const signal = request?.signal;
+    const focus = this.currentFocus;
     const [description, state, data] = await Promise.all([
       this.runSourceTask(() => this.resolveSourceDescription(source), request?.timeoutMs, signal),
       source.getState ? this.runSourceTask(() => source.getState!(), request?.timeoutMs, signal) : undefined,
       source.resolve ? this.runSourceTask(() => source.resolve!({
           sourceId,
           mode,
-          focus: this.currentFocus,
+          focus,
           selection: request?.selection,
           maxItems: request?.maxItems,
           maxTokens: request?.maxTokens,
@@ -592,28 +598,77 @@ export class AskableContextImpl implements AskableContext {
       ...contextOptions
     } = options ?? {};
     const sourceContextOptions = this.agentRequestSourceOptions(contextOptions, selectionFromPacket);
+    const focus = this.serializeFocus(sourceContextOptions);
     let packet: WebContextPacket | undefined;
+    let packetSourceOptions: AskableAsyncContextOutputOptions | undefined;
     if (packetOption) {
       if (packetOption === true) {
-        packet = await this.toContextPacketAsync(this.agentRequestOptionsToPacketOptions(sourceContextOptions));
+        packet = this.toContextPacket(this.agentRequestOptionsToPacketOptions(sourceContextOptions));
+        packetSourceOptions = sourceContextOptions;
       } else if (isWebContextPacket(packetOption)) {
         packet = packetOption;
       } else {
-        packet = await this.toContextPacketAsync(packetOption);
+        packet = this.toContextPacket(packetOption);
+        packetSourceOptions = packetOption;
       }
     }
     const defaultSourceSelection = selectionFromPacket && packet
       ? this.packetToSourceSelection(packet)
       : undefined;
+
+    // Capture live focus/history before resolvers can await or change the page.
+    const { maxTokens, sourceLabel, ...baseOptions } = sourceContextOptions;
+    const base = contextFromPacket && packet ? '' : this.toContext(baseOptions);
+    const pinnedPacketBase = contextFromPacket && packet && !packetSourceOptions
+      ? this.buildPacketContextBase(packet, sourceContextOptions)
+      : undefined;
+    const resolvedOptions = this.resolveOptions(sourceContextOptions);
+    const resolutions = new Map<string, Array<{
+      request: Omit<AskableContextSourceRequest, 'id'>;
+      result: Promise<AskableResolvedContextSource>;
+    }>>();
+    const resolveSource: SourceResolver = (id, request) => {
+      const sourceId = id.trim();
+      const entries = resolutions.get(sourceId) ?? [];
+      const cached = entries.find((entry) =>
+        entry.request.mode === request.mode &&
+        Object.is(entry.request.selection, request.selection) &&
+        entry.request.maxItems === request.maxItems &&
+        entry.request.maxTokens === request.maxTokens &&
+        entry.request.timeoutMs === request.timeoutMs &&
+        entry.request.signal === request.signal);
+      if (cached) return cached.result;
+      const result = this.resolveSource(sourceId, request);
+      entries.push({ request, result });
+      resolutions.set(sourceId, entries);
+      return result;
+    };
+
+    // Share raw resolutions, not error-policy results, only within this request.
+    const [packetSources, contextSources] = await Promise.all([
+      this.resolveIncludedSources(packetSourceOptions, defaultSourceSelection, resolveSource),
+      this.resolveIncludedSources(sourceContextOptions, defaultSourceSelection, resolveSource),
+    ]);
+    if (packet && packetSources.length > 0) {
+      packet = {
+        ...packet,
+        surrounding: {
+          ...packet.surrounding,
+          sources: packetSources.map((source) => this.sourceToTarget(source)),
+        },
+      };
+    }
     const context = contextFromPacket && packet
-      ? await this.toPacketContextAsync(packet, sourceContextOptions, defaultSourceSelection)
-      : await this.toContextAsyncWithSourceSelection(sourceContextOptions, defaultSourceSelection);
+      ? this.toPacketContext(packet, sourceContextOptions, contextSources, pinnedPacketBase)
+      : this.applyTokenBudget(contextSources.length > 0
+        ? this.appendSourcesToOutput(base, contextSources, resolvedOptions, sourceLabel)
+        : base, maxTokens);
 
     return {
       ...(requestId ? { requestId } : {}),
       question,
       context,
-      focus: this.serializeFocus(sourceContextOptions),
+      focus,
       ...(packet ? { packet } : {}),
       ...(metadata ? { metadata } : {}),
       timestamp: Date.now(),
@@ -862,7 +917,8 @@ export class AskableContextImpl implements AskableContext {
 
   private async resolveIncludedSources(
     options?: AskableAsyncPromptContextOptions | AskableAsyncContextOutputOptions,
-    defaultSelection?: unknown
+    defaultSelection?: unknown,
+    resolveSource: SourceResolver = (id, request) => this.resolveSource(id, request),
   ): Promise<AskableResolvedContextSource[]> {
     const includes = options?.sources;
     if (!includes) return [];
@@ -877,7 +933,7 @@ export class AskableContextImpl implements AskableContext {
 
     const errorMode = options.sourceErrorMode ?? 'include';
     const resolved = await Promise.all(requests.map(({ id, ...request }) => (
-      this.resolveSource(id, request).catch((error) => {
+      resolveSource(id, request).catch((error) => {
         if (errorMode === 'throw') throw error;
         if (errorMode === 'omit') return null;
         return this.buildSourceError(id, request.mode ?? defaultMode);
@@ -1059,19 +1115,25 @@ export class AskableContextImpl implements AskableContext {
     return { ...options, sourceMode: 'selected' };
   }
 
-  private async toPacketContextAsync(
+  private buildPacketContextBase(
     packet: WebContextPacket,
     options: AskableAsyncContextOutputOptions,
-    defaultSourceSelection?: unknown
-  ): Promise<string> {
+  ): string {
+    const resolved = this.resolveOptions(options);
+    const packetContext = this.buildPacketPromptString(packet, resolved);
+    return (resolved.format ?? 'natural') === 'json'
+      ? packetContext
+      : `${options.currentLabel ?? 'Current'}: ${packetContext}`;
+  }
+
+  private toPacketContext(
+    packet: WebContextPacket,
+    options: AskableAsyncContextOutputOptions,
+    sources: AskableResolvedContextSource[],
+    base = this.buildPacketContextBase(packet, options),
+  ): string {
     const resolved = this.resolveOptions(options);
     const { sourceLabel, maxTokens } = options ?? {};
-    const currentLabel = options.currentLabel ?? 'Current';
-    const packetContext = this.buildPacketPromptString(packet, resolved);
-    const base = (resolved.format ?? 'natural') === 'json'
-      ? packetContext
-      : `${currentLabel}: ${packetContext}`;
-    const sources = await this.resolveIncludedSources(options, defaultSourceSelection);
     const output = sources.length === 0
       ? base
       : this.appendSourcesToOutput(base, sources, resolved, sourceLabel, 'packet');
