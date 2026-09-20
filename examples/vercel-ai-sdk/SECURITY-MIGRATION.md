@@ -6,8 +6,8 @@ was changed.
 
 ## Version decision
 
-The current stable AI SDK is 7, but this migration deliberately uses the
-smallest audited-safe major from the requested 5-or-6 choices.
+This migration uses the maintained AI SDK 6 line to address dependency
+findings without also adopting the latest SDK 7 major.
 
 - Vercel still publishes an `ai-v5` line: `ai@5.0.261` was released on
   September 18. However, a clean install with its matching v2 providers brought
@@ -113,7 +113,8 @@ no stored checkout credentials, no provider secrets, and no inference step.
 
 ## Limitations
 
-- No live model calls, credentials, remote CI run, or deployment was used.
+- Local validation uses mocked model responses, not live inference credentials.
+  The workflow repeats the install, test, build, and audit checks in hosted CI.
 - The npm audit result is a point-in-time dependency check, not a guarantee that
   the application has no security issues. Other repository dependencies and
   remote Dependabot alert states are outside this change.
@@ -122,33 +123,3 @@ no stored checkout credentials, no provider secrets, and no inference step.
 - Next.js emits a harmless multiple-lockfile root inference warning for the
   in-repository examples and an Edge static-generation warning where applicable.
   Node emits a module-type detection warning when directly testing route files.
-- Root manifests/lockfiles, release versions, and other agents' files are
-  untouched. No remote push, PR, merge, or alert dismissal is part of this work.
-
-## Changed files
-
-Paths below are relative to the repository root:
-
-```text
-.github/workflows/test_ai_examples.yml
-examples/nextjs-app-router/.gitignore
-examples/nextjs-app-router/app/api/chat/route.ts
-examples/nextjs-app-router/package-lock.json
-examples/nextjs-app-router/package.json
-examples/nextjs-app-router/test/chat.test.mjs
-examples/nextjs-app-router/tsconfig.json
-examples/vercel-ai-sdk/.gitignore
-examples/vercel-ai-sdk/README.md
-examples/vercel-ai-sdk/SECURITY-MIGRATION.md
-examples/vercel-ai-sdk/app/api/chat/route.ts
-examples/vercel-ai-sdk/app/page.tsx
-examples/vercel-ai-sdk/package-lock.json
-examples/vercel-ai-sdk/package.json
-examples/vercel-ai-sdk/test/chat.test.mjs
-packages/create-askable-app/template-nextjs/_gitignore
-packages/create-askable-app/template-nextjs/app/api/chat/route.ts
-packages/create-askable-app/template-nextjs/app/page.tsx
-packages/create-askable-app/template-nextjs/package.json
-packages/create-askable-app/template-nextjs/test/chat.test.mjs
-packages/create-askable-app/template-nextjs/tsconfig.json
-```
