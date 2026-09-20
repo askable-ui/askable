@@ -10,6 +10,6 @@
   },
   "dependencies": {
     "@askable-ui/mcp": "^0.17.3",
-    "express": "^4.21.0"
+    "express": "^5.2.1"
   }
 }
