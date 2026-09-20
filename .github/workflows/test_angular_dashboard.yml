@@ -1,0 +1,83 @@
+name: test / angular dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "examples/angular-dashboard/**"
+      - "packages/angular/**"
+      - "packages/core/**"
+      - "packages/context/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/test_angular_dashboard.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "examples/angular-dashboard/**"
+      - "packages/angular/**"
+      - "packages/core/**"
+      - "packages/context/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/test_angular_dashboard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dashboard:
+    name: "angular-node-${{ matrix.node-version }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20.x, 22.x]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            examples/angular-dashboard/package-lock.json
+      - name: Install workspace dependencies
+        run: npm ci
+      - name: Build local adapter and its dependencies
+        run: npm run build -w @askable-ui/angular
+      - name: Run Angular unit tests
+        run: npm test -w @askable-ui/angular
+      - name: Install standalone example dependencies
+        working-directory: examples/angular-dashboard
+        run: npm ci
+      - name: Audit standalone dependency lock
+        working-directory: examples/angular-dashboard
+        run: npm audit --audit-level=low
+      - name: Build against published packages
+        working-directory: examples/angular-dashboard
+        run: npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Smoke-test published packages
+        working-directory: examples/angular-dashboard
+        run: node smoke.mjs
+      - name: Pack local workspace packages
+        run: npm pack -w @askable-ui/angular -w @askable-ui/core -w @askable-ui/context --pack-destination "$RUNNER_TEMP" --quiet
+      - name: Install local packages without changing the standalone lock
+        working-directory: examples/angular-dashboard
+        run: npm install --no-save --package-lock=false "$RUNNER_TEMP"/askable-ui-angular-*.tgz "$RUNNER_TEMP"/askable-ui-core-*.tgz "$RUNNER_TEMP"/askable-ui-context-*.tgz
+      - name: Build against local packages
+        working-directory: examples/angular-dashboard
+        run: npm run build
+      - name: Smoke-test local packages
+        working-directory: examples/angular-dashboard
+        run: node smoke.mjs
