@@ -1356,6 +1356,12 @@ await fetch('/api/agent', {
 });
 ```
 
+On the main branch, matching source queries in `toAgentRequest()` share a single
+sanitized resolution between prompt and generated packet. Different query
+options stay separate, and existing capture packets are never refreshed or
+mutated. Focus/history are captured before async work. This fix is unreleased
+and not present in npm `0.17.3`; see `site/docs/api/core.md` for the full contract.
+
 Pass an existing `WebContextPacket` (from a region capture, etc.) instead of `packet: true`:
 
 ```ts

@@ -413,6 +413,11 @@ handler also receives an `AbortSignal` as its fourth argument. See the
 for snapshot, privacy, and cancellation details. These additions are not in npm
 `0.17.3` yet.
 
+**Unreleased, core:** `toAgentRequest()` now shares matching source reads between
+the prompt and a generated packet, avoiding inconsistent app-data revisions.
+See the [agent request reference](site/docs/api/core.md#toagentrequestquestion-options).
+This fix is not in npm `0.17.3` yet.
+
 ### Streaming responses
 
 `useAskableStream` accumulates text chunks reactively:
