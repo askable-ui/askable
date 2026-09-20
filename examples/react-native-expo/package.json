@@ -8,27 +8,31 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:dependencies": "node --test tests/dependencies.test.cjs"
   },
   "dependencies": {
     "@askable-ui/core": "^0.17.3",
     "@askable-ui/react-native": "^0.17.3",
     "@react-navigation/native": "^7.2.5",
     "@react-navigation/native-stack": "^7.16.0",
-    "expo": "^55.0.26",
-    "expo-status-bar": "~3.0.9",
-    "react": "19.1.1",
-    "react-native": "0.82.1",
-    "react-native-safe-area-context": "^5.8.0",
-    "react-native-screens": "^4.25.2"
+    "expo": "~55.0.31",
+    "expo-status-bar": "~55.0.6",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native": "0.83.10",
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-screens": "~4.23.0",
+    "react-native-web": "~0.21.0"
   },
   "devDependencies": {
-    "@types/react": "^19.1.1",
+    "@types/react": "~19.2.2",
+    "babel-preset-expo": "~55.0.25",
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "@xmldom/xmldom": "^0.8.13",
-    "shell-quote": "1.8.4",
-    "uuid": "^11.1.1"
+    "xcode@3.0.1": {
+      "uuid": "11.1.1"
+    }
   }
 }

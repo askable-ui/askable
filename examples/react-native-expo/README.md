@@ -13,13 +13,46 @@ A runnable Expo app that demonstrates how `@askable-ui/react-native` captures mo
 
 ## Running locally
 
+Use Node.js 22 LTS. This example stays on [Expo SDK 55](https://expo.dev/changelog/sdk-55)
+with React 19.2 and React Native 0.83. Its native dependencies match the SDK 55
+bundled versions, not the latest versions from other SDKs.
+
 ```bash
 cd examples/react-native-expo
-npm install
+npm ci --strict-peer-deps
 npm run start
 ```
 
-Then open the project in Expo Go, an iOS simulator, or an Android emulator.
+Use an SDK 55-compatible Expo Go client on Android or an iOS simulator, or create
+a development build with `npm run android` / `npm run ios`. The current store
+version of Expo Go may not support SDK 55; see
+[Expo's version guidance](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/).
+For the browser version, run `npm run web`.
+
+The example uses the published `@askable-ui/*` packages declared in its manifest
+for both typechecking and bundling. It does not require installing or building
+the repository's root workspace, and does not alias imports to workspace source.
+
+## Validation
+
+From this directory, using Node.js 22 LTS:
+
+```bash
+export CI=1
+npm ci --strict-peer-deps
+npm audit --audit-level=low
+npm ls --all
+npx expo install --check
+npx --yes expo-doctor@1.20.4 --verbose
+npm run test:dependencies
+npm run typecheck
+npx expo export --platform all --output-dir dist/export --max-workers 2
+```
+
+The Expo workflow runs these same commands. Export validates JavaScript and
+asset bundling for Android, iOS, and web; it does not build or run a native app.
+See [dependency security notes](SECURITY.md) for the audit baseline, the scoped
+override, and remaining upstream maintenance risks.
 
 ## Example flow
 
