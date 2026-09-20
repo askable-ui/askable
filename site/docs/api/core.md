@@ -571,6 +571,36 @@ pass an existing `WebContextPacket` from a region, circle, lasso, or text
 selection capture. Existing packets are attached as-is, which is useful for
 "select first, then ask a question" chat composers.
 
+::: info Unreleased: consistent source reads
+On the main branch, `toAgentRequest()` shares each matching source resolution
+between the prompt and a newly generated packet. This fix is not in npm
+`0.17.3` yet. With `packet: true`, both outputs use the same sanitized result
+instead of reading changing app data twice.
+
+Queries match by normalized source ID, effective mode, selection, item/token
+limits, timeout, and abort signal. Object selections and signals must be the
+same object; selections are not JSON-stringified or deep-compared. Source and
+context sanitizers run once for each shared resolution. Each output still
+applies its own `sourceErrorMode` policy. Results are never cached across agent
+requests.
+
+Explicit packet options keep their own source list and defaults. A different
+mode, selection, limit, timeout, or signal causes a separate read. An existing
+capture packet stays untouched; its older source data is not substituted for
+fresh prompt sources.
+
+Live prompt/history and serialized focus are captured before async resolution;
+resolvers also receive the starting raw focus. With `selectionFromPacket`, a
+generated packet's target is available to both source paths before they run.
+Explicit per-source selections, including `null`, still override that fallback.
+The `selected` mode default applies to top-level source requests and therefore
+to `packet: true`; explicit packet options keep their own mode default.
+
+This is not a database transaction or a deep freeze of app-owned objects. Source
+implementations must return coherent data, and a review UI should still detach
+its approved JSON payload before sending.
+:::
+
 Set `contextFromPacket: true` when that pinned packet should also become the
 prompt-ready `context` string. This keeps the user question grounded to the
 selected area or highlighted text even if hover/click focus changes while the
