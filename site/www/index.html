@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>askable-ui — Your LLM doesn't know what the user is looking at. Fix that.</title>
-  <meta name="description" content="One HTML attribute. Your AI knows exactly what the user sees — no screenshots, no prompt engineering. Works with Claude Desktop, Cursor, CopilotKit, Vercel AI SDK, and any LLM. React, Vue, Svelte, Vanilla JS." />
+  <title>askable-ui — UI context for AI assistants</title>
+  <meta name="description" content="Connect selected text, elements, regions, and app-owned data to your AI assistant. Framework adapters, Bridge transports, and MCP integrations." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://askable-ui.com/" />
-  <meta property="og:title" content="askable-ui — Your LLM doesn't know what the user is looking at. Fix that." />
-  <meta property="og:description" content="One HTML attribute. Your AI knows exactly what the user sees — no screenshots, no prompt engineering. Works with Claude Desktop, Cursor, CopilotKit, Vercel AI SDK, and any LLM." />
+  <meta property="og:title" content="askable-ui — UI context for AI assistants" />
+  <meta property="og:description" content="Connect selected text, elements, regions, and app-owned data to your AI assistant." />
   <meta property="og:image" content="https://askable-ui.com/social.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="askable-ui — Your LLM doesn't know what the user is looking at. Fix that." />
-  <meta name="twitter:description" content="One HTML attribute gives your AI real-time UI context. Works with Claude Desktop, Cursor, CopilotKit, and any LLM. No screenshots. No prompt engineering." />
+  <meta name="twitter:title" content="askable-ui — UI context for AI assistants" />
+  <meta name="twitter:description" content="Connect selected text, elements, regions, and app-owned data to your AI assistant." />
   <meta name="twitter:image" content="https://askable-ui.com/social.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,7 +25,7 @@
       --bg: #ffffff;
       --ink: #111317;
       --ink-2: #45474d;
-      --ink-3: #8a8f98;
+      --ink-3: #626872;
       --line: rgba(0,0,0,0.08);
       --line-strong: rgba(0,0,0,0.14);
       --accent: #4f46e5;
@@ -33,28 +33,23 @@
       --red: #dc2626;
       --yellow: #d97706;
       --radius-pill: 9999px;
-      --radius-card: 24px;
-      --radius-lg: 32px;
+      --radius-card: 8px;
+      --radius-lg: 8px;
       --font: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
 
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    [hidden] { display: none !important; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
     body {
       font-family: var(--font);
       background: var(--bg);
       color: var(--ink);
       line-height: 1.6;
       min-height: 100vh;
-      overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
-    }
-
-    #field-canvas {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: -1;
     }
 
     /* NAV */
@@ -91,7 +86,7 @@
       font-weight: 800;
       color: var(--ink);
       text-decoration: none;
-      letter-spacing: -.035em;
+      letter-spacing: 0;
       white-space: nowrap;
     }
     .nav-mark {
@@ -129,6 +124,12 @@
       transition: color .16s, background .16s, transform .16s;
     }
     .nav-link:hover { color: var(--ink); background: rgba(0,0,0,0.045); transform: translateY(-1px); }
+    .nav-menu { display: none; position: relative; }
+    .nav-menu summary { cursor: pointer; list-style: none; padding: .5rem .75rem; font-size: .85rem; font-weight: 600; }
+    .nav-menu summary::-webkit-details-marker { display: none; }
+    .nav-menu-panel { position: absolute; right: 0; top: calc(100% + .75rem); width: 13rem; padding: .5rem; background: #fff; border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: 0 8px 24px rgba(17,19,23,.1); }
+    .nav-menu-panel a { display: block; padding: .65rem .75rem; color: var(--ink); text-decoration: none; border-radius: 4px; }
+    .nav-menu-panel a:hover { background: #f4f4f5; }
     .nav-gh {
       display: inline-flex;
       align-items: center;
@@ -166,7 +167,7 @@
       cursor: pointer;
       text-decoration: none;
       transition: transform .15s, opacity .15s, box-shadow .15s;
-      letter-spacing: -.01em;
+      letter-spacing: 0;
     }
     .btn:hover { transform: translateY(-1px); }
     .btn-primary { background: var(--ink); color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
@@ -185,49 +186,11 @@
     /* LAYOUT */
     .page-shell { max-width: 1280px; margin: 0 auto; padding: 0 2rem 8rem; }
 
-    /* HERO */
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr);
-      gap: 3rem;
-      align-items: center;
-      padding: 7rem 0 5rem;
-    }
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: .5rem;
-      padding: .35rem .85rem;
-      border-radius: var(--radius-pill);
-      border: 1px solid rgba(0,0,0,0.08);
-      background: rgba(0,0,0,0.03);
-      color: var(--ink-3);
-      font-size: .72rem;
-      font-weight: 700;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      margin-bottom: 1.35rem;
-      width: fit-content;
-    }
-    .eyebrow .spark { color: var(--accent); font-style: normal; }
-    .hero-copy h1 {
-      font-size: clamp(3rem, 7.5vw, 5.75rem);
-      line-height: 1.06;
-      letter-spacing: -.025em;
-      font-weight: 750;
-      margin-bottom: 1.35rem;
-      max-width: 11.4ch;
-      text-wrap: balance;
-    }
-    .hero-copy h1 em { font-style: normal; color: var(--accent); }
-    .hero-copy > p {
-      max-width: 36rem;
-      font-size: 1.05rem;
-      line-height: 1.68;
-      color: var(--ink-2);
-      margin-bottom: 2rem;
-    }
-    .hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-bottom: 1.5rem; }
+    /* INTRO */
+    .hero { padding: 7rem 0 2.5rem; }
+    .hero-copy h1 { font-size: 3.5rem; line-height: 1.08; font-weight: 750; margin-bottom: 1rem; }
+    .hero-copy > p { max-width: 40rem; font-size: 1.15rem; line-height: 1.6; color: var(--ink-2); margin-bottom: 1.5rem; text-wrap: pretty; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
     .install-cmd {
       display: inline-flex;
       align-items: center;
@@ -246,134 +209,32 @@
     }
     .install-cmd:hover { border-color: rgba(0,0,0,0.18); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.07); }
     .copy-icon { color: var(--ink-3); font-size: .75rem; }
-    .hero-meta { display: flex; flex-wrap: wrap; gap: 1.25rem; font-size: .82rem; color: var(--ink-3); }
-    .hero-patterns { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.25rem; }
-    .hero-pattern-pill {
-      display: inline-flex; align-items: center; gap: .35rem;
-      border: 1px solid rgba(79,70,229,0.15); background: rgba(79,70,229,0.06);
-      color: #3730a3; border-radius: var(--radius-pill); padding: .36rem .7rem;
-      font-size: .75rem; font-weight: 700;
-    }
-
-    /* HERO CARD */
-    .hero-stage { position: relative; perspective: 1200px; }
-    .hero-card {
-      position: sticky;
-      top: 4.25rem;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      background: #fff;
-      border: 1px solid rgba(0,0,0,0.09);
-      box-shadow: 0 32px 80px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.04);
-      transform-style: preserve-3d;
-      transition: transform .15s ease;
-    }
-    .hero-card-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: .9rem 1rem .78rem;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
-    }
-    .hero-window-dots { display: flex; gap: .38rem; }
-    .hero-window-dots span { width: .62rem; height: .62rem; border-radius: 50%; background: #e4e7ec; }
-    .hero-chip {
-      border: 1px solid rgba(0,0,0,0.07);
-      background: rgba(0,0,0,0.03);
-      color: var(--ink-3);
-      border-radius: var(--radius-pill);
-      padding: .28rem .65rem;
-      font-size: .68rem;
-      font-weight: 700;
-      letter-spacing: .02em;
-      max-width: 13rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .hero-card-body { padding: 1rem; }
-    .lens-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: .85rem; align-items: stretch; }
-
-    .mini-board, .mini-chat, .mini-code {
-      border-radius: 18px;
-      border: 1px solid rgba(0,0,0,0.07);
-      background: #f9fafb;
-    }
-    .mini-board { padding: .85rem; display: grid; gap: .72rem; min-width: 0; }
-    .mini-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; min-width: 0; }
-    .mini-stat {
-      border-radius: 12px; padding: .82rem; background: #fff;
-      border: 1px solid rgba(0,0,0,0.07);
-      transition: transform .18s, border-color .18s, box-shadow .18s;
-      min-width: 0; overflow: hidden; cursor: pointer;
-    }
-    .mini-stat.highlight { transform: translateY(-2px); border-color: rgba(79,70,229,0.22); box-shadow: 0 8px 22px rgba(79,70,229,0.09); }
-    .mini-label { color: var(--ink-3); font-size: .66rem; text-transform: uppercase; letter-spacing: .07em; overflow-wrap: anywhere; }
-    .mini-value { font-size: clamp(.92rem, 1.3vw, 1.2rem); font-weight: 800; letter-spacing: -.03em; margin: .18rem 0; line-height: 1.1; overflow-wrap: anywhere; word-break: break-word; }
-    .mini-sub { font-size: .7rem; color: var(--ink-2); overflow-wrap: anywhere; word-break: break-word; }
-    .mini-table { border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); overflow: hidden; }
-    .mini-table-row {
-      display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,.8fr) minmax(0,.8fr);
-      gap: .4rem; padding: .58rem .78rem; font-size: .72rem;
-      border-bottom: 1px solid rgba(0,0,0,0.05); align-items: center;
-    }
-    .mini-table-row > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .mini-table-row:last-child { border-bottom: none; }
-    .mini-table-row.is-active { background: rgba(79,70,229,0.05); box-shadow: inset 3px 0 0 var(--accent); }
-    .mini-chat { padding: .85rem; display: flex; flex-direction: column; justify-content: space-between; gap: .75rem; min-width: 0; }
-    .mini-chat-bubble {
-      border-radius: 12px; padding: .68rem .82rem; font-size: .74rem; line-height: 1.52;
-      border: 1px solid rgba(0,0,0,0.07); background: #fff; color: var(--ink);
-      overflow-wrap: anywhere; word-break: break-word;
-    }
-    .mini-chat-bubble.user { background: var(--ink); border-color: transparent; color: #fff; align-self: flex-end; max-width: 90%; }
-    .mini-code {
-      margin-top: .85rem; padding: .85rem; font-family: var(--mono); font-size: .67rem;
-      line-height: 1.55; color: var(--ink-2); min-height: 80px;
-      white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;
-    }
-
     /* SECTIONS */
-    .section { padding-top: 6.5rem; }
-    .section-label { text-align: center; color: var(--ink-3); text-transform: uppercase; letter-spacing: .14em; font-size: .68rem; font-weight: 700; margin-bottom: .8rem; }
-    .section-title { text-align: center; font-size: clamp(2rem, 4vw, 2.8rem); line-height: 1.05; letter-spacing: -.055em; font-weight: 800; margin-bottom: .65rem; }
+    .section { padding-top: 5rem; }
+    #demo { padding-top: 1rem; }
+    #demo .section-title { font-size: 1.5rem; text-align: left; margin-bottom: 1rem; }
+    .section > *, .steps > *, .pkg-grid > * { min-width: 0; }
+    pre { max-width: 100%; }
+    h2, h3, h4, .pkg-name { overflow-wrap: anywhere; }
+    .section-label { text-align: center; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0; font-size: .68rem; font-weight: 700; margin-bottom: .8rem; }
+    .section-title { text-align: center; font-size: 2.25rem; line-height: 1.05; letter-spacing: 0; font-weight: 800; margin-bottom: .65rem; }
     .section-sub { text-align: center; max-width: 42rem; margin: 0 auto 2.5rem; color: var(--ink-2); font-size: .98rem; line-height: 1.62; }
 
-    /* INSIGHTS */
-    .insight-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
-    .insight-card {
-      padding: 1.5rem; border-radius: var(--radius-card); border: 1px solid var(--line); background: #fff;
-      transition: transform .18s, border-color .18s, box-shadow .18s;
-    }
-    .insight-card:hover { transform: translateY(-3px); border-color: var(--line-strong); box-shadow: 0 12px 36px rgba(0,0,0,0.06); }
-    .insight-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: .6rem; }
-    .insight-card h3 { font-size: 1.04rem; line-height: 1.22; letter-spacing: -.03em; font-weight: 700; margin-bottom: .45rem; }
-    .insight-card p { color: var(--ink-2); font-size: .87rem; line-height: 1.62; }
-
-    /* PATTERNS */
-    .pattern-shell {
-      display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
-      gap: 1rem; align-items: stretch; margin-top: 2.2rem;
-    }
-    .pattern-copy {
-      border-radius: var(--radius-lg); border: 1px solid var(--line); background: #fff;
-      padding: 1.7rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem;
-    }
-    .pattern-copy h3 { font-size: 1.65rem; line-height: 1.08; letter-spacing: -.045em; }
-    .pattern-copy p { color: var(--ink-2); font-size: .92rem; line-height: 1.65; }
-    .pattern-stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
-    .pattern-card {
-      border-radius: 18px; border: 1px solid var(--line); background: #fff;
-      padding: 1rem; transition: transform .16s, border-color .16s, box-shadow .16s;
-    }
-    .pattern-card:hover { transform: translateY(-2px); border-color: rgba(79,70,229,0.18); box-shadow: 0 12px 30px rgba(0,0,0,0.055); }
-    .pattern-icon {
-      width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 12px; background: rgba(79,70,229,0.08); color: var(--accent);
-      font-weight: 850; margin-bottom: .7rem;
-    }
-    .pattern-card h4 { font-size: .96rem; letter-spacing: -.025em; margin-bottom: .35rem; }
-    .pattern-card p { color: var(--ink-2); font-size: .8rem; line-height: 1.55; }
+    /* PRODUCT CAPABILITIES */
+    .capability-list, .integration-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
+    .capability-list article, .integration-list article { min-width: 0; }
+    .capability-list article { padding-top: 1.25rem; border-top: 1px solid var(--line-strong); }
+    .capability-list h3, .integration-list h3 { font-size: 1.1rem; line-height: 1.35; margin-bottom: .65rem; }
+    .capability-list p, .integration-list p { color: var(--ink-2); font-size: .9rem; margin-bottom: 1rem; }
+    .text-link { color: var(--accent); font-size: .88rem; font-weight: 600; text-underline-offset: .2em; }
+    .capability-list .release-note { font-size: .8rem; color: var(--ink-3); }
+    .recording { margin-top: 2rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+    .recording summary { cursor: pointer; font-weight: 600; }
+    .recording video { display: block; width: 100%; aspect-ratio: 16 / 9; margin-top: 1rem; border-radius: 8px; background: #f5f5f5; }
+    .integration-note { margin-top: 2rem; max-width: 65ch; color: var(--ink-2); font-size: .9rem; }
 
     /* DEMO DECK */
-    .deck { padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--line); background: #f9fafb; }
+    .deck { padding: 0; border-top: 1px solid var(--line-strong); }
     .demo-controls { display: grid; gap: .8rem; margin-bottom: 1.35rem; }
     .demo-controls-row { display: flex; justify-content: center; align-items: center; gap: .6rem; flex-wrap: wrap; }
     .toggle-label { color: var(--ink-3); font-size: .82rem; }
@@ -382,27 +243,26 @@
     .toggle-btn.active { color: var(--ink); background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
 
     .pattern-dock {
-      border: 1px solid var(--line); background: #fff; border-radius: 20px; padding: .72rem;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.045);
+      background: #fff; padding: 1rem 0; border-bottom: 1px solid var(--line);
     }
     .pattern-dock-header {
       display: flex; align-items: center; justify-content: space-between; gap: .8rem;
       padding: .08rem .18rem .62rem;
     }
-    .pattern-dock-header span { color: var(--ink-3); font-size: .72rem; font-weight: 750; text-transform: uppercase; letter-spacing: .06em; }
-    .pattern-dock-header strong { font-size: .88rem; letter-spacing: -.02em; }
+    .pattern-dock-header span { color: var(--ink-3); font-size: .72rem; font-weight: 750; text-transform: uppercase; letter-spacing: 0; }
+    .pattern-dock-header strong { font-size: .88rem; letter-spacing: 0; }
     .pattern-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: .36rem; }
     .pattern-option {
       display: grid; grid-template-columns: 1.45rem minmax(0, 1fr); align-items: center; gap: .48rem;
       border: 1px solid transparent; background: #f8fafc; color: var(--ink-2);
-      border-radius: 14px; padding: .55rem .62rem; cursor: pointer; text-align: left;
+      border-radius: 6px; padding: .65rem .5rem; cursor: pointer; text-align: left;
       transition: transform .14s, box-shadow .14s, border-color .14s, background .14s;
       min-width: 0;
     }
     .pattern-option:hover { transform: translateY(-1px); border-color: rgba(79,70,229,0.16); background: #fff; }
     .pattern-option.active {
       background: #fff; color: var(--ink); border-color: rgba(79,70,229,0.26);
-      box-shadow: 0 7px 18px rgba(79,70,229,0.1);
+      box-shadow: inset 0 -2px 0 var(--accent);
     }
     .pattern-glyph {
       width: 1.45rem; height: 1.45rem; display: inline-flex; align-items: center; justify-content: center;
@@ -410,12 +270,16 @@
       font-size: .82rem; font-weight: 850;
     }
     .pattern-copy-mini { min-width: 0; display: grid; gap: .08rem; }
-    .pattern-copy-mini b { display: block; font-size: .78rem; line-height: 1.08; letter-spacing: -.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pattern-copy-mini b { display: block; font-size: .78rem; line-height: 1.08; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pattern-copy-mini small { display: block; color: var(--ink-3); font-size: .62rem; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pattern-status {
-      display: flex; align-items: center; gap: .55rem; margin-top: .58rem; padding: .5rem .58rem;
-      border: 1px solid rgba(0,0,0,0.06); background: #fbfcfe; border-radius: 14px;
-    }
+    .pattern-status { display: flex; align-items: center; gap: .55rem; margin-top: .75rem; }
+    .pattern-payload, .tool-hint { display: none !important; }
+    .developer-panel { margin-top: 1.5rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+    .developer-panel > summary { width: fit-content; cursor: pointer; font-size: .9rem; font-weight: 600; }
+    .developer-panel .output-controls { margin-top: 1rem; justify-content: flex-start; }
+    .context-review { flex: 1; min-width: 0; }
+    .context-review summary { cursor: pointer; font-size: .8rem; font-weight: 600; }
+    .context-review pre { white-space: pre-wrap; overflow-wrap: anywhere; font: .72rem/1.6 var(--mono); max-height: 8rem; overflow-y: auto; padding-top: .5rem; }
     .pattern-payload {
       flex: 0 0 auto; max-width: 45%; border-radius: var(--radius-pill); padding: .22rem .5rem;
       background: rgba(79,70,229,0.08); color: #3730a3; font-size: .68rem; font-weight: 800;
@@ -493,7 +357,7 @@
       padding: .28rem .52rem; border-radius: var(--radius-pill);
       border: 1px solid rgba(124,58,237,0.18); background: rgba(255,255,255,0.94);
       color: #5b21b6; font-size: .66rem; font-weight: 850;
-      letter-spacing: .05em; text-transform: uppercase;
+      letter-spacing: 0; text-transform: uppercase;
       box-shadow: 0 10px 24px rgba(15,23,42,0.1); white-space: nowrap;
     }
     .selected-region-label::before {
@@ -562,11 +426,11 @@
     .kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
 
     .panel { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; min-width: 0; }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; padding: .88rem 1.1rem; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: .87rem; font-weight: 700; letter-spacing: -.01em; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; padding: .88rem 1.1rem; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: .87rem; font-weight: 700; letter-spacing: 0; }
     .panel-header span { color: var(--ink-3); font-size: .72rem; font-weight: 500; }
 
     table { width: 100%; border-collapse: collapse; font-size: .87rem; }
-    th { text-align: left; padding: .62rem 1.1rem; font-size: .68rem; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid rgba(0,0,0,0.05); }
+    th { text-align: left; padding: .62rem 1.1rem; font-size: .68rem; letter-spacing: 0; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid rgba(0,0,0,0.05); }
     td { padding: .84rem 1.1rem; border-bottom: 1px solid rgba(0,0,0,0.04); }
     tbody tr[data-askable] { outline: none; cursor: pointer; transition: background .15s; }
     tbody tr[data-askable]:hover, tbody tr[data-askable]:focus { background: rgba(0,0,0,0.02); }
@@ -583,8 +447,8 @@
       overflow: hidden; transition: transform .2s, border-color .2s, box-shadow .2s;
     }
     .kpi-card:hover, .kpi-card:focus, .kpi-card.active { transform: translateY(-3px); border-color: rgba(79,70,229,0.2); box-shadow: 0 14px 36px rgba(0,0,0,0.07); }
-    .kpi-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-3); margin-bottom: .5rem; }
-    .kpi-value { font-size: 1.9rem; font-weight: 800; letter-spacing: -.05em; margin-bottom: .18rem; }
+    .kpi-label { font-size: .68rem; text-transform: uppercase; letter-spacing: 0; color: var(--ink-3); margin-bottom: .5rem; }
+    .kpi-value { font-size: 1.9rem; font-weight: 800; letter-spacing: 0; margin-bottom: .18rem; }
     .kpi-change { font-size: .81rem; font-weight: 600; }
     .up { color: var(--green); } .down { color: var(--red); }
 
@@ -606,10 +470,10 @@
       min-width: 0; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-card);
     }
     .chat-header { display: flex; align-items: center; gap: .55rem; padding: .88rem 1rem; border-bottom: 1px solid rgba(0,0,0,0.05); }
-    .chat-dot { width: .62rem; height: .62rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 5px rgba(22,163,74,0.1); animation: pulse 1.8s ease-in-out infinite; }
+    .chat-dot { display: none; }
     @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(.85);opacity:.7} }
-    .chat-title { font-size: .87rem; font-weight: 700; letter-spacing: -.02em; }
-    .chat-sim-badge { font-size: .6rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); background: rgba(0,0,0,0.05); padding: .18rem .5rem; border-radius: var(--radius-pill); }
+    .chat-title { font-size: .87rem; font-weight: 700; letter-spacing: 0; }
+    .chat-sim-badge { font-size: .6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0; color: var(--ink-3); background: rgba(0,0,0,0.05); padding: .18rem .5rem; border-radius: var(--radius-pill); }
     .chat-sub { margin-left: auto; font-size: .68rem; color: var(--ink-3); }
     .chat-messages { flex: 1 1 0; min-height: 0; padding: .88rem; overflow-y: auto; display: flex; flex-direction: column; gap: .6rem; overscroll-behavior: contain; }
     .chat-messages::-webkit-scrollbar { width: 4px; }
@@ -625,7 +489,7 @@
       background: linear-gradient(180deg, rgba(124,58,237,0.08), rgba(79,70,229,0.04));
       color: var(--ink); padding: .64rem .72rem; border-radius: 14px;
     }
-    .msg-context-kicker { display: block; margin-bottom: .28rem; color: #6d28d9; font-size: .62rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .msg-context-kicker { display: block; margin-bottom: .28rem; color: #6d28d9; font-size: .62rem; font-weight: 800; letter-spacing: 0; text-transform: uppercase; }
     .msg-context-quote { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; color: var(--ink-2); font-size: .76rem; line-height: 1.48; }
     .msg-label { font-size: .65rem; color: var(--ink-3); padding: 0 .2rem; }
     .msg.user .msg-label { align-self: flex-end; }
@@ -635,10 +499,10 @@
     @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-4px)} }
     .chat-context-bar { display: flex; gap: .45rem; align-items: center; padding: .62rem .9rem; background: rgba(79,70,229,0.05); border-top: 1px solid rgba(79,70,229,0.12); }
     .chat-context-bar.text-context { background: rgba(124,58,237,0.07); border-top-color: rgba(124,58,237,0.18); }
-    .context-bar-label { font-size: .68rem; font-weight: 600; color: var(--accent); letter-spacing: .04em; text-transform: uppercase; flex-shrink: 0; }
+    .context-bar-label { font-size: .68rem; font-weight: 600; color: var(--accent); letter-spacing: 0; text-transform: uppercase; flex-shrink: 0; }
     .chat-context-bar.text-context .context-bar-label { color: #6d28d9; }
     .context-chip { flex: 1; font-family: var(--mono); font-size: .69rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .context-dismiss { border: none; background: none; color: var(--ink-3); cursor: pointer; font-size: .95rem; }
+    .context-dismiss { flex: 0 0 32px; width: 32px; height: 32px; border: none; background: none; color: var(--ink-3); cursor: pointer; font-size: .95rem; }
     .selected-text-card {
       margin: .72rem .78rem 0; padding: .72rem .78rem; border-radius: 14px;
       border: 1px solid rgba(124,58,237,0.18);
@@ -650,7 +514,7 @@
       background: linear-gradient(180deg, rgba(79,70,229,0.075), rgba(255,255,255,0.9));
     }
     .selected-text-card-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .44rem; }
-    .selected-text-card-title { display: flex; align-items: center; gap: .42rem; color: #5b21b6; font-size: .7rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+    .selected-text-card-title { display: flex; align-items: center; gap: .42rem; color: #5b21b6; font-size: .7rem; font-weight: 850; letter-spacing: 0; text-transform: uppercase; }
     .selected-text-card-title::before { content: '“'; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 999px; background: #6d28d9; color: #fff; font-size: .9rem; line-height: 1; }
     .selected-text-card-state { color: var(--ink-3); font-size: .64rem; font-weight: 700; }
     .selected-text-quote { margin: 0; color: var(--ink); font-size: .78rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
@@ -677,9 +541,9 @@
     .question-chip:hover { background: rgba(124,58,237,0.1); border-color: rgba(124,58,237,0.24); transform: translateY(-1px); }
     .chat-input-row { display: flex; gap: .5rem; padding: .78rem; border-top: 1px solid rgba(0,0,0,0.06); }
     .composer-suggestions + .chat-input-row { border-top: none; }
-    .chat-input { flex: 1; border-radius: var(--radius-pill); padding: .72rem 1rem; border: 1px solid rgba(0,0,0,0.1); background: #fff; font-size: .81rem; color: var(--ink); outline: none; font-family: var(--font); transition: border-color .15s, box-shadow .15s; }
+    .chat-input { min-width: 0; flex: 1; border-radius: var(--radius-pill); padding: .72rem 1rem; border: 1px solid rgba(0,0,0,0.1); background: #fff; font-size: .81rem; color: var(--ink); outline: none; font-family: var(--font); transition: border-color .15s, box-shadow .15s; }
     .chat-input:focus { border-color: rgba(79,70,229,0.28); box-shadow: 0 0 0 4px rgba(79,70,229,0.07); }
-    .chat-send { width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--ink); color: #fff; cursor: pointer; font-size: .9rem; transition: opacity .15s; }
+    .chat-send { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--ink); color: #fff; cursor: pointer; font-size: .9rem; transition: opacity .15s; }
     .chat-send:hover { opacity: .82; }
 
     /* CODE PANEL */
@@ -692,10 +556,9 @@
 
     /* STEPS */
     .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2.5rem; }
-    .step { padding: 1.5rem; border-radius: var(--radius-card); border: 1px solid var(--line); background: #fff; transition: transform .18s, border-color .18s, box-shadow .18s; }
-    .step:hover { transform: translateY(-3px); border-color: var(--line-strong); box-shadow: 0 12px 36px rgba(0,0,0,0.06); }
+    .step { padding: 1rem 0; min-width: 0; }
     .step-num { width: 1.9rem; height: 1.9rem; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-pill); background: var(--ink); color: #fff; font-weight: 800; font-size: .78rem; margin-bottom: 1rem; }
-    .step h3 { margin-bottom: .44rem; font-size: 1rem; font-weight: 700; letter-spacing: -.025em; }
+    .step h3 { margin-bottom: .44rem; font-size: 1rem; font-weight: 700; letter-spacing: 0; }
     .step p { color: var(--ink-2); font-size: .87rem; line-height: 1.62; }
     .step-code { margin-top: .85rem; padding: .75rem .9rem; border-radius: 12px; background: #f6f7f9; border: 1px solid rgba(0,0,0,0.06); font-family: var(--mono); font-size: .72rem; line-height: 1.6; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
 
@@ -703,45 +566,18 @@
     .pkg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2.5rem; }
     .pkg-card { display: block; text-decoration: none; color: inherit; padding: 1.4rem; border-radius: var(--radius-card); border: 1px solid var(--line); background: #fff; transition: transform .18s, border-color .18s, box-shadow .18s; }
     .pkg-card:hover { transform: translateY(-3px); border-color: var(--line-strong); box-shadow: 0 12px 36px rgba(0,0,0,0.07); }
-    .pkg-badge { font-size: .64rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); margin-bottom: .6rem; }
-    .pkg-name { font-family: var(--mono); color: var(--ink); font-size: .85rem; font-weight: 700; margin-bottom: .38rem; letter-spacing: -.01em; }
+    .pkg-badge { font-size: .64rem; font-weight: 700; letter-spacing: 0; text-transform: uppercase; color: var(--ink-3); margin-bottom: .6rem; }
+    .pkg-name { font-family: var(--mono); color: var(--ink); font-size: .85rem; font-weight: 700; margin-bottom: .38rem; letter-spacing: 0; }
     .pkg-desc { color: var(--ink-2); font-size: .83rem; line-height: 1.56; }
     .pkg-tag { display: inline-flex; align-items: center; gap: .3rem; margin-top: .78rem; padding: .22rem .52rem; border-radius: var(--radius-pill); border: 1px solid rgba(0,0,0,0.08); color: var(--ink-3); font-size: .66rem; font-weight: 600; }
 
-    .mcp-panel { margin-top: 2.5rem; border-radius: var(--radius-lg); border: 1px solid var(--line); background: #fff; overflow: hidden; }
-    .mcp-panel-head { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: 1.5rem; padding: 1.6rem; border-bottom: 1px solid rgba(0,0,0,0.06); }
-    .mcp-panel h3 { font-size: clamp(1.35rem, 2.4vw, 2rem); line-height: 1.05; letter-spacing: -.045em; margin-bottom: .6rem; }
-    .mcp-panel p { color: var(--ink-2); font-size: .9rem; line-height: 1.62; }
-    .mcp-endpoint { display: flex; align-items: center; gap: .5rem; align-self: start; padding: .8rem .95rem; border: 1px solid rgba(79,70,229,0.16); border-radius: 16px; background: rgba(79,70,229,0.05); font-family: var(--mono); color: var(--accent); font-size: .78rem; word-break: break-all; }
-    .mcp-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .mcp-card { padding: 1.25rem; border-right: 1px solid rgba(0,0,0,0.06); }
-    .mcp-card:last-child { border-right: 0; }
-    .mcp-card h4 { font-size: .92rem; letter-spacing: -.02em; margin-bottom: .42rem; }
-    .mcp-card pre { margin-top: .82rem; padding: .8rem; border-radius: 12px; background: #f6f7f9; border: 1px solid rgba(0,0,0,0.06); font-family: var(--mono); font-size: .68rem; line-height: 1.58; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
-
-    /* COMPARE */
-    .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
-    .compare-card { background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--line); padding: 1.5rem; }
-    .compare-bad { border-color: rgba(239,68,68,0.18); background: #fff9f9; }
-    .compare-good { border-color: rgba(79,70,229,0.28); background: var(--accent-faint); }
-    .compare-icon { font-size: 1.5rem; margin-bottom: .75rem; width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #fee2e2; }
-    .compare-card h3 { font-size: 1rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .75rem; }
-    .compare-card ul { list-style: none; display: flex; flex-direction: column; gap: .45rem; }
-    .compare-bad ul li::before { content: '✗  '; color: #ef4444; font-weight: 700; }
-    .compare-good ul li::before { content: '✓  '; color: var(--accent); font-weight: 700; }
-    .compare-card li { font-size: .85rem; color: var(--ink-2); line-height: 1.45; }
-
-    /* DARK CTA */
-    .cta-section { margin-top: 7rem; }
-    .cta-card { border-radius: var(--radius-lg); background: var(--ink); padding: 5rem 4rem; text-align: center; position: relative; overflow: hidden; }
-    .cta-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 25% 60%,rgba(79,70,229,0.35),transparent 55%), radial-gradient(ellipse at 80% 30%,rgba(124,58,237,0.25),transparent 50%); pointer-events: none; }
-    .cta-card h2 { font-size: clamp(2rem, 4vw, 3.25rem); letter-spacing: -.055em; font-weight: 850; color: #fff; margin-bottom: .85rem; position: relative; }
-    .cta-card p { color: rgba(255,255,255,0.55); font-size: .98rem; line-height: 1.65; margin-bottom: 2.25rem; max-width: 36rem; margin-left: auto; margin-right: auto; position: relative; }
-    .cta-actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; position: relative; }
-    .btn-inverse { background: #fff; color: var(--ink); }
-    .btn-inverse:hover { opacity: .9; }
-    .btn-ghost-white { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.13); }
-    .btn-ghost-white:hover { background: rgba(255,255,255,0.16); }
+    .cta-section { margin-top: 5rem; padding-top: 3rem; border-top: 1px solid var(--line-strong); }
+    .cta-card { text-align: center; }
+    .cta-card h2 { font-size: 2rem; line-height: 1.2; margin-bottom: 1rem; }
+    .cta-card p { color: var(--ink-2); max-width: 36rem; margin: 0 auto 1.5rem; }
+    .cta-actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .btn-inverse { background: var(--ink); color: #fff; }
+    .btn-ghost-white { background: #f4f4f5; color: var(--ink); }
 
     code { font-family: var(--mono); font-size: .9em; padding: .1em .38em; border-radius: .42em; color: var(--accent); background: rgba(79,70,229,0.08); }
 
@@ -751,19 +587,15 @@
 
     /* REDUCED MOTION */
     @media (prefers-reduced-motion: reduce) {
-      #field-canvas { display: none; }
+      html { scroll-behavior: auto; }
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
 
     /* RESPONSIVE */
     @media (max-width: 1040px) {
-      .hero { grid-template-columns: 1fr; }
-      .hero-stage { min-height: 0; }
-      .hero-card { position: relative; top: auto; }
       .demo-layout { grid-template-columns: 1fr; }
       .chat-sidebar { position: relative; top: auto; height: 480px; max-height: none; }
-      .insight-grid, .steps, .pattern-stack { grid-template-columns: 1fr 1fr; }
-      .pattern-shell { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .pkg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
     }
     @media (max-width: 720px) {
@@ -779,22 +611,27 @@
       .nav-links { min-height: 2.55rem; padding: .22rem; }
       .nav-gh { width: 2.08rem; height: 2.08rem; margin-left: 0; }
       .nav-link { display: none; }
+      .nav-menu { display: block; }
       .page-shell { padding: 0 1rem 4rem; }
-      .hero { padding-top: 3.5rem; }
-      .lens-grid, .code-panel, .kpi-grid { grid-template-columns: 1fr; }
-      .insight-grid, .steps, .pattern-stack { grid-template-columns: 1fr; }
+      .hero { padding: 6rem 0 1.5rem; }
+      .hero-copy h1 { font-size: 2.5rem; }
+      .hero-copy > p { font-size: 1rem; }
+      .section-title { font-size: 1.75rem; }
+      .hero-actions { gap: .65rem; }
+      .install-cmd { max-width: 100%; font-size: .72rem; gap: .4rem; padding-inline: .75rem; }
+      .capability-list, .integration-list { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+      .code-panel, .kpi-grid, .steps { grid-template-columns: minmax(0, 1fr); }
       .pkg-grid { grid-template-columns: 1fr !important; }
-      .deck { padding: 1rem; border-radius: 24px; }
+      .deck { padding: 0; }
       .demo-controls-row { align-items: stretch; flex-wrap: wrap; }
-      .pattern-dock { padding: .62rem; border-radius: 18px; }
-      .pattern-dock-header { align-items: flex-start; flex-direction: column; gap: .2rem; }
-      .pattern-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .pattern-option { grid-template-columns: 1.35rem minmax(0, 1fr); padding: .52rem; }
+      .pattern-dock { padding: .75rem 0; }
+      .pattern-dock-header { gap: .5rem; }
+      .pattern-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .pattern-copy-mini small, .pattern-glyph { display: none; }
+      .pattern-copy-mini b { font-size: .72rem; white-space: normal; overflow: visible; }
+      .pattern-option { display: flex; justify-content: center; min-height: 44px; padding: .5rem .2rem; }
       .pattern-status { align-items: flex-start; flex-direction: column; }
       .pattern-payload { max-width: 100%; }
-      .mcp-panel-head, .mcp-grid, .compare-grid { grid-template-columns: 1fr; }
-      .mcp-card { border-right: 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
-      .mcp-card:last-child { border-bottom: 0; }
       .tool-hint { min-width: 0; }
       .toggle-group { justify-content: stretch; }
       .toggle-btn { flex: 1 1 0; padding-inline: .65rem; }
@@ -827,7 +664,7 @@
         content: attr(data-label);
         color: var(--ink-3);
         font-size: .66rem;
-        letter-spacing: .08em;
+        letter-spacing: 0;
         text-transform: uppercase;
         font-weight: 700;
       }
@@ -838,18 +675,28 @@
       }
       td:last-child::before { display: none; }
       .ask-btn-row { font-size: .68rem; padding: .38rem .72rem; }
-      .cta-card { padding: 3rem 1.5rem; }
+      .cta-card { padding: 0; }
+      .chat-sub { display: none; }
+      .code-block-header { flex-wrap: wrap; }
       .section { padding-top: 4rem; }
       footer { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
 <body>
-  <canvas id="field-canvas" aria-hidden="true"></canvas>
-
   <nav aria-label="Primary navigation">
     <a href="#" class="nav-logo"><span class="nav-mark"><span class="spark">✦</span></span> askable-ui</a>
     <div class="nav-links">
+      <details class="nav-menu" id="nav-menu">
+        <summary>Menu</summary>
+        <div class="nav-menu-panel">
+          <a href="#demo">Demo</a>
+          <a href="#patterns">Patterns</a>
+          <a href="#mcp">MCP</a>
+          <a href="#packages">Packages</a>
+          <a href="https://askable-ui.com/docs/">Docs</a>
+        </div>
+      </details>
       <a href="#demo" class="nav-link">Demo</a>
       <a href="#patterns" class="nav-link">Patterns</a>
       <a href="#mcp" class="nav-link">MCP</a>
@@ -864,185 +711,23 @@
   </nav>
 
   <main class="page-shell">
-    <section class="hero">
+    <section class="hero" aria-labelledby="page-title">
       <div class="hero-copy">
-        <div class="eyebrow"><span class="spark">✦</span> Claude Desktop · Cursor · CopilotKit · any LLM</div>
-        <h1>Your model knows what <em>the user means.</em></h1>
-        <p>
-          Your AI copilot can't tell which metric the user is looking at, which row triggered the question,
-          or what they highlighted. askable-ui fixes that with one attribute — no screenshots, no stale system
-          prompts, no guessing. The AI gets the exact data the user sees, updated on every interaction.
-        </p>
-        <div class="hero-patterns" aria-label="Supported interaction patterns">
-          <span class="hero-pattern-pill">Click</span>
-          <span class="hero-pattern-pill">Ask AI button</span>
-          <span class="hero-pattern-pill">Region</span>
-          <span class="hero-pattern-pill">Square</span>
-          <span class="hero-pattern-pill">Circle</span>
-          <span class="hero-pattern-pill">Lasso</span>
-          <span class="hero-pattern-pill">Selected text</span>
-        </div>
+        <h1 id="page-title">askable-ui</h1>
+        <p>Give your AI the context behind the question. Selected text, a chart, an account, or your app's own data.</p>
         <div class="hero-actions">
-          <button class="install-cmd" id="install-copy" title="Click to copy" type="button">
+          <a href="#demo" class="btn btn-primary">Try the demo</a>
+          <a href="https://askable-ui.com/docs/" class="btn btn-secondary">Read the docs</a>
+          <button class="install-cmd" id="install-copy" title="Copy install command" type="button" aria-label="Copy npm install @askable-ui/react">
             <span>npm install @askable-ui/react</span>
-            <span class="copy-icon" id="copy-icon">⎘ copy</span>
+            <span class="copy-icon" id="copy-icon" aria-live="polite">Copy</span>
           </button>
-          <a href="#demo" class="btn btn-primary">See it live</a>
-          <a href="https://askable-ui.com/docs/" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Documentation</a>
-          <a href="https://github.com/askable-ui/askable" class="btn btn-secondary btn-icon" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository" title="GitHub repository">
-            <svg class="github-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.49 0-.24-.01-1.05-.01-1.9-2.51.47-3.16-.63-3.36-1.21-.11-.3-.6-1.21-1.03-1.46-.35-.19-.85-.66-.01-.67.79-.01 1.35.74 1.54 1.05.9 1.55 2.34 1.11 2.91.85.09-.67.35-1.11.64-1.37-2.22-.26-4.55-1.14-4.55-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.71 0 0 .84-.28 2.75 1.05A9.28 9.28 0 0 1 12 6.98c.85 0 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.06.36.32.68.93.68 1.89 0 1.36-.01 2.46-.01 2.8 0 .27.18.59.69.49A10.12 10.12 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"/>
-            </svg>
-          </a>
         </div>
-        <div class="hero-meta">
-          <span>Element + visual context</span>
-          <span>Zero framework lock-in</span>
-          <span>MCP-ready packets</span>
-          <span>React · Vue · Svelte · Vanilla JS</span>
-        </div>
-      </div>
-
-      <div class="hero-stage">
-        <div class="hero-card" id="hero-card">
-          <div class="hero-card-top">
-            <div class="hero-window-dots"><span></span><span></span><span></span></div>
-            <div class="hero-chip">live focus lens</div>
-          </div>
-          <div class="hero-card-body">
-            <div class="lens-grid">
-              <div class="mini-board">
-                <div class="mini-grid">
-                  <div class="mini-stat highlight" data-mini="revenue">
-                    <div class="mini-label">MRR</div>
-                    <div class="mini-value">$128,400</div>
-                    <div class="mini-sub">+12.4% this month</div>
-                  </div>
-                  <div class="mini-stat" data-mini="churn">
-                    <div class="mini-label">Churn</div>
-                    <div class="mini-value">3.2%</div>
-                    <div class="mini-sub">improving</div>
-                  </div>
-                  <div class="mini-stat" data-mini="nps">
-                    <div class="mini-label">NPS</div>
-                    <div class="mini-value">67</div>
-                    <div class="mini-sub">industry avg 44</div>
-                  </div>
-                  <div class="mini-stat" data-mini="upsell">
-                    <div class="mini-label">Upsell</div>
-                    <div class="mini-value">Umbrella</div>
-                    <div class="mini-sub">starter → business</div>
-                  </div>
-                </div>
-                <div class="mini-table">
-                  <div class="mini-table-row"><strong>Acme</strong><span>$8.4k</span><span>healthy</span></div>
-                  <div class="mini-table-row is-active"><strong>Globex</strong><span>$5.2k</span><span>at risk</span></div>
-                  <div class="mini-table-row"><strong>Umbrella</strong><span>$2.1k</span><span>expanding</span></div>
-                </div>
-              </div>
-              <div class="mini-chat">
-                <div class="mini-chat-bubble">The assistant can read the element, area, or text the user explicitly selected.</div>
-                <div class="mini-chat-bubble user">What should I do about this circled account?</div>
-                <div class="mini-chat-bubble">Globex is at risk. No login in 14 days, $5.2k MRR exposed.</div>
-              </div>
-            </div>
-            <div class="mini-code" id="mini-code">&lt;tr data-askable='{"company":"Globex Inc","status":"at_risk","last_login":"14 days ago"}'&gt;
-  ...
-&lt;/tr&gt;
-
-User is focused on: company: Globex Inc, status: at_risk, last_login: 14 days ago</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" style="padding-top:4rem">
-      <video
-        autoplay loop muted playsinline
-        style="width:100%;border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(15,23,42,0.12);"
-      >
-        <source src="askable-ui-code.mp4" type="video/mp4" />
-      </video>
-    </section>
-
-    <section id="patterns" class="section">
-      <p class="section-label">Interaction patterns</p>
-      <h2 class="section-title">Not every question starts with a click.</h2>
-      <p class="section-sub">Askable gives users more ways to say “this is what I mean” without sending the entire page to the model.</p>
-      <div class="pattern-shell">
-        <article class="pattern-copy">
-          <div>
-            <h3>Context becomes an intentional user action.</h3>
-            <p>Use DOM focus for the common path, then add explicit tools for visual ambiguity: draw over a chart, square off a fixed area, circle an outlier, lasso an irregular area, or send the text the user highlighted.</p>
-          </div>
-          <pre class="step-code">region.start({ shape: 'lasso' });
-text.captureNow();
-ctx.push(meta, text);</pre>
-        </article>
-        <div class="pattern-stack">
-          <article class="pattern-card">
-            <div class="pattern-icon">↖</div>
-            <h4>Element focus</h4>
-            <p>Click, hover, keyboard focus, and Ask AI buttons bind context to existing widgets.</p>
-          </article>
-          <article class="pattern-card">
-            <div class="pattern-icon">□</div>
-            <h4>Region capture</h4>
-            <p>Drag a rectangular page area when the answer depends on a visible section.</p>
-          </article>
-          <article class="pattern-card">
-            <div class="pattern-icon">▣</div>
-            <h4>Square capture</h4>
-            <p>Constrain the selected area when the target should keep an equal width and height.</p>
-          </article>
-          <article class="pattern-card">
-            <div class="pattern-icon">○</div>
-            <h4>Circle capture</h4>
-            <p>Circle an anomaly, data point, product defect, chart spike, or object on screen.</p>
-          </article>
-          <article class="pattern-card">
-            <div class="pattern-icon">⌁</div>
-            <h4>Lasso capture</h4>
-            <p>Freehand select irregular content that does not fit cleanly into a box.</p>
-          </article>
-          <article class="pattern-card">
-            <div class="pattern-icon">T</div>
-            <h4>Selected text</h4>
-            <p>Send highlighted copy without asking the model to infer which words matter.</p>
-          </article>
-          <article class="pattern-card">
-            <div class="pattern-icon">◇</div>
-            <h4>Context packets</h4>
-            <p>Move structured context through MCP bridges, browser surfaces, and agent runtimes.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="insight-grid">
-        <article class="insight-card">
-          <div class="insight-eyebrow">No page scraping</div>
-          <h3>Context follows intent, not the whole DOM</h3>
-          <p>Other approaches serialize the entire page or guess what matters. askable captures exactly what the user marked: an element, area, shape, or text selection.</p>
-        </article>
-        <article class="insight-card">
-          <div class="insight-eyebrow">App-owned sources</div>
-          <h3>Use real state, not just visible DOM</h3>
-          <p>Register redacted, timeout-safe resolvers for paginated tables, documents, maps, charts, calendars, or custom state so selected context resolves the right backing data.</p>
-        </article>
-        <article class="insight-card">
-          <div class="insight-eyebrow">Any stack</div>
-          <h3>Dashboards, forms, tables, support tools</h3>
-          <p>Works anywhere a user points, clicks, draws, circles, lassos, highlights, or hovers. React, Vue, Svelte, or plain HTML.</p>
-        </article>
       </div>
     </section>
 
     <section id="demo" class="section">
-      <p class="section-label">Live demo</p>
-      <h2 class="section-title">Select the UI. Watch the prompt tighten.</h2>
-      <p class="section-sub">Click a KPI, draw a region, circle a row, lasso a panel, or highlight text. The context panel updates in real time.</p>
+      <h2 class="section-title">Analytics workspace</h2>
 
       <div class="deck">
         <div class="demo-controls">
@@ -1051,7 +736,7 @@ ctx.push(meta, text);</pre>
               <span>Interaction pattern</span>
               <strong id="active-pattern-name">Click</strong>
             </div>
-            <div class="pattern-grid">
+            <div class="pattern-grid" role="group" aria-label="Selection tools">
               <button class="pattern-option active" data-mode="click" data-pattern-title="Click" data-pattern-payload="Element metadata + text">
                 <span class="pattern-glyph">↖</span>
                 <span class="pattern-copy-mini"><b>Click</b><small>element focus</small></span>
@@ -1091,18 +776,7 @@ ctx.push(meta, text);</pre>
               <button class="tool-btn" id="cancel-tool" type="button" style="display:none">Cancel</button>
             </div>
           </div>
-          <div class="demo-controls-row output-controls">
-            <span class="toggle-label">Format:</span>
-            <div class="toggle-group">
-              <button class="toggle-btn active" data-format="natural">Natural</button>
-              <button class="toggle-btn" data-format="json">JSON</button>
-            </div>
-            <span class="toggle-label" style="margin-left:.5rem">Prompt text:</span>
-            <div class="toggle-group">
-              <button class="toggle-btn active" data-text="on" title="Include the selected UI text in the prompt context">Text + meta</button>
-              <button class="toggle-btn" data-text="off" title="Only include structured metadata, without visible UI text">Meta only</button>
-            </div>
-          </div>
+
         </div>
 
         <div class="demo-layout">
@@ -1133,16 +807,19 @@ ctx.push(meta, text);</pre>
               <span class="chat-sim-badge">simulated</span>
               <span class="chat-sub">powered by askable</span>
             </div>
-            <div class="chat-messages" id="chat-messages">
+            <div class="chat-messages" id="chat-messages" role="log" aria-label="Demo conversation" aria-live="polite">
               <div class="msg ai">
-                <div class="msg-bubble">Click a KPI, draw a region, circle or lasso an area, or send highlighted text — I'll load that context into the input.</div>
+                <div class="msg-bubble">No context attached yet.</div>
                 <span class="msg-label">Assistant</span>
               </div>
             </div>
             <div class="chat-context-bar" id="chat-context-bar" style="display:none">
               <span class="context-bar-label" id="context-bar-label">Context:</span>
-              <span class="context-chip" id="context-chip"></span>
-              <button class="context-dismiss" id="context-dismiss">&times;</button>
+              <details class="context-review">
+                <summary>Review context</summary>
+                <pre id="context-chip"></pre>
+              </details>
+              <button class="context-dismiss" id="context-dismiss" type="button" aria-label="Remove selected context" title="Remove selected context">&times;</button>
             </div>
             <div class="selected-text-card" id="selected-text-card" style="display:none">
               <div class="selected-text-card-head">
@@ -1160,12 +837,27 @@ ctx.push(meta, text);</pre>
             </div>
             <div class="composer-suggestions" id="composer-suggestions" style="display:none"></div>
             <div class="chat-input-row">
+              <label class="sr-only" for="chat-input">Question about selected context</label>
               <input class="chat-input" id="chat-input" type="text" placeholder="Select context above, then ask anything…" />
-              <button class="chat-send" id="chat-send">↑</button>
+              <button class="chat-send" id="chat-send" type="button" aria-label="Send question" title="Send question">↑</button>
             </div>
           </aside>
         </div>
 
+        <details class="developer-panel">
+          <summary>Developer view</summary>
+          <div class="demo-controls-row output-controls">
+            <span class="toggle-label">Format:</span>
+            <div class="toggle-group" role="group" aria-label="Context format">
+              <button class="toggle-btn active" data-format="natural" aria-pressed="true">Natural</button>
+              <button class="toggle-btn" data-format="json" aria-pressed="false">JSON</button>
+            </div>
+            <span class="toggle-label" style="margin-left:.5rem">Prompt text:</span>
+            <div class="toggle-group" role="group" aria-label="Context content">
+              <button class="toggle-btn active" data-text="on" aria-pressed="true" title="Include the selected UI text in the prompt context">Text + meta</button>
+              <button class="toggle-btn" data-text="off" aria-pressed="false" title="Only include structured metadata, without visible UI text">Meta only</button>
+            </div>
+          </div>
         <div class="code-panel">
           <div class="code-block">
             <div class="code-block-header">
@@ -1182,6 +874,30 @@ ctx.push(meta, text);</pre>
             <pre id="code-ctx" class="empty">waiting for focus…</pre>
           </div>
         </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="patterns" class="section">
+      <h2 class="section-title">Keep the context with the question.</h2>
+      <p class="section-sub">From a single selection to the data behind your app.</p>
+      <div class="capability-list">
+        <article id="sources">
+          <h3>Beyond the visible rows</h3>
+          <p>Connect app-owned sources for paginated tables, documents, carts, or charts. Include the backing data you choose, not just the rendered page.</p>
+          <a class="text-link" href="https://askable-ui.com/docs/guide/sources">Connect your data</a>
+        </article>
+        <article>
+          <h3>Bring your own chat</h3>
+          <p>Bridge selected context to your chat panel, browser extension, iframe, or server. Choose the destination and handle delivery explicitly.</p>
+          <a class="text-link" href="https://askable-ui.com/docs/guide/bridge">Explore Bridge</a>
+        </article>
+        <article>
+          <h3>Review before sending</h3>
+          <p>Let users inspect a prepared request, then send that snapshot without replacing it with their latest selection.</p>
+          <p class="release-note">The reviewed-request React API is on main, not yet released to npm.</p>
+          <a class="text-link" href="https://askable-ui.com/docs/guide/react#review-context-before-sending-unreleased">Review the React guide</a>
+        </article>
       </div>
     </section>
 
@@ -1221,6 +937,13 @@ ctx.push(meta, text);</pre>
       </div>
     </section>
 
+    <details class="recording">
+      <summary>Watch the integration walkthrough</summary>
+      <video controls muted playsinline preload="none" aria-label="Askable integration walkthrough">
+        <source src="askable-ui-code.mp4" type="video/mp4" />
+      </video>
+    </details>
+
     <section id="packages" class="section">
       <p class="section-label">Packages</p>
       <h2 class="section-title">Pick your stack. Keep the idea.</h2>
@@ -1235,31 +958,31 @@ ctx.push(meta, text);</pre>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/react" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · React</div>
           <div class="pkg-name">@askable-ui/react</div>
-          <div class="pkg-desc">45+ hooks — <code>useAskableCartSource()</code>, <code>useAskableMultistepSource()</code>, <code>useAskableFormSource()</code>, <code>useAskableTableSource()</code>, <code>useAskableTimeSource()</code>, <code>useAskableThemeSource()</code> and more. <code>&lt;Askable&gt;</code> for React 17+.</div>
+          <div class="pkg-desc">Components and hooks for selection, app data, and chat. React 17+.</div>
           <span class="pkg-tag">npm</span>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/vue" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · Vue</div>
           <div class="pkg-name">@askable-ui/vue</div>
-          <div class="pkg-desc">45+ composables — <code>useAskableCartSource()</code>, <code>useAskableMultistepSource()</code>, <code>useAskableFormSource()</code>, <code>useAskableThemeSource()</code>, <code>useAskableLocaleSource()</code> and more. <code>&lt;Askable&gt;</code> for Vue 3.</div>
+          <div class="pkg-desc">Reactive context and app-owned sources for Vue 3.</div>
           <span class="pkg-tag">npm</span>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/svelte" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · Svelte</div>
           <div class="pkg-name">@askable-ui/svelte</div>
-          <div class="pkg-desc">Svelte 4 stores and Svelte 5 runes — 45+ sources including <code>useAskableCartSource()</code>, <code>useAskableMultistepSource()</code>, <code>useAskableScrollSource()</code>, <code>useAskableWindowSource()</code> and more.</div>
+          <div class="pkg-desc">Svelte 4 stores and Svelte 5 runes for reactive UI context.</div>
           <span class="pkg-tag">npm</span>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/solid" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · SolidJS</div>
           <div class="pkg-name">@askable-ui/solid</div>
-          <div class="pkg-desc">45+ reactive primitives for SolidJS — <code>useAskableCartSource()</code>, <code>useAskableMultistepSource()</code>, <code>useAskableNetworkSource()</code>, <code>useAskableFocusSource()</code> and more. <code>&lt;Askable&gt;</code> for SolidJS.</div>
+          <div class="pkg-desc">Fine-grained reactive context and source primitives for SolidJS.</div>
           <span class="pkg-tag">npm</span>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/angular" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">TS · Angular</div>
           <div class="pkg-name">@askable-ui/angular</div>
-          <div class="pkg-desc">Injectable services for Angular 16+ — <code>AskableCartSourceService</code>, <code>AskableMultistepSourceService</code>, <code>AskableFormSourceService</code>, <code>AskableTableSourceService</code>, <code>AskableTimeSourceService</code> and more.</div>
+          <div class="pkg-desc">Injectable services and directives for Angular 16+.</div>
           <span class="pkg-tag">npm</span>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/qwik" target="_blank" rel="noopener noreferrer">
@@ -1274,239 +997,42 @@ ctx.push(meta, text);</pre>
           <div class="pkg-desc"><code>&lt;askable-context&gt;</code> custom element — zero build step, works in HTMX, Ember, or plain HTML via CDN.</div>
           <span class="pkg-tag">npm</span>
         </a>
-        <div class="pkg-card" style="cursor:default;border-style:dashed;background:#fafafa;">
-          <div class="pkg-badge">More coming</div>
-          <div class="pkg-name">Your framework?</div>
-          <div class="pkg-desc">The core is framework-agnostic. Writing an adapter is ~30 lines. PRs welcome.</div>
-          <span class="pkg-tag">coming soon</span>
-        </div>
-      </div>
-    </section>
-
-    <section id="integrations" class="section">
-      <p class="section-label">Integrations</p>
-      <h2 class="section-title">Plugs into your AI layer.</h2>
-      <p class="section-sub"><code>toPromptContext()</code> returns a plain string. Pass it to any LLM framework or API — no adapter needed.</p>
-      <div class="pkg-grid" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">MCP client</div>
-          <div class="pkg-name">Claude Desktop</div>
-          <div class="pkg-desc">Claude sees exactly what the user sees. Ask about the focused element without screenshots.</div>
-        </div>
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">MCP client</div>
-          <div class="pkg-name">Cursor</div>
-          <div class="pkg-desc">Your IDE agent reads live UI context via the askable MCP server. Accurate, no manual description.</div>
-        </div>
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">Framework</div>
-          <div class="pkg-name">CopilotKit</div>
-          <div class="pkg-desc">Pass context via <code>useCopilotReadable()</code>. The LLM sees what the user selected.</div>
-        </div>
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">Framework</div>
-          <div class="pkg-name">Vercel AI SDK</div>
-          <div class="pkg-desc">Inject into the system message or tool context for streaming chat UIs.</div>
-        </div>
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">Any LLM API</div>
-          <div class="pkg-name">OpenAI · Anthropic</div>
-          <div class="pkg-desc">Append the string to your system or user message. Works with any provider.</div>
-        </div>
-      </div>
-
-      <div class="mcp-panel">
-        <div class="mcp-panel-head">
-          <div>
-            <p class="section-label" style="margin-bottom:.55rem">WebMCP + hosted MCP</p>
-            <h3>Put Askable context on the page, then let MCP clients read it.</h3>
-            <p>WebMCP is the browser-local path: a page widget connects to a local MCP server and exposes approved page tools, prompts, and resources. Hosted MCP is the separate HTTPS endpoint path for remote MCP clients.</p>
-          </div>
-          <div class="mcp-endpoint">page widget ↔ local MCP client</div>
-        </div>
-        <div class="mcp-grid">
-          <article class="mcp-card">
-            <h4>WebMCP page</h4>
-            <p>Add a page-side bridge that exposes the current Askable packet, prompt text, and approved app sources as page-owned context.</p>
-            <pre>createAskableMcpPageBridge({
-  provider,
-  allowedOrigins: [
-    window.location.origin
-  ]
-});</pre>
-          </article>
-          <article class="mcp-card">
-            <h4>Local client</h4>
-            <p>The user runs a local WebMCP MCP server in their client, creates a token, then connects the page widget with that token.</p>
-            <pre>{
-  "mcpServers": {
-    "webmcp": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@jason.today/webmcp@latest",
-        "--mcp"
-      ]
-    }
-  }
-}</pre>
-          </article>
-          <article class="mcp-card">
-            <h4>Page resources</h4>
-            <p>Askable can provide the selected element, lassoed region, highlighted text, viewport, or app-owned source as an <code>askable://current</code> page resource.</p>
-            <pre>window.postMessage({
-  type: "read_current_resource",
-  options: {
-    resource: { uri: "askable://current" }
-  }
-});</pre>
-          </article>
-          <article class="mcp-card">
-            <h4>Hosted MCP</h4>
-            <p>For server-side use, expose the same provider through a secure HTTPS MCP route with auth, CORS, request limits, and tenancy checks.</p>
-            <pre>createAskableMcpWebHandler({
-  authorize,
-  provider,
-  maxRequestBodyBytes: 256 * 1024
-});</pre>
-          </article>
-        </div>
+        <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/bridge" target="_blank" rel="noopener noreferrer">
+          <div class="pkg-badge">Transport</div>
+          <div class="pkg-name">@askable-ui/bridge</div>
+          <div class="pkg-desc">Deliver context to a chat UI, extension, iframe, or HTTP endpoint.</div>
+          <span class="pkg-tag">npm</span>
+        </a>
       </div>
     </section>
 
     <section id="mcp" class="section">
-      <p class="section-label">MCP — Model Context Protocol</p>
-      <h2 class="section-title">Give Claude Desktop eyes into your app.</h2>
-      <p class="section-sub">Expose your app's live UI context as an MCP server. Claude, Cursor, and any MCP client can call <code>get_current_context</code> to see exactly what the user is looking at — no screenshots, no description needed.</p>
-      <div class="pattern-shell">
-        <article class="pattern-copy">
-          <div>
-            <h3>Three lines to an MCP server.</h3>
-            <p>Any page annotated with <code>data-askable</code> instantly becomes queryable by AI agents. The MCP bridge translates live DOM state into structured Context packets that agents can read and reason about.</p>
-          </div>
-          <pre class="step-code" style="font-size:.78rem;line-height:1.65;background:#f4f6fa;border:1px solid rgba(0,0,0,0.07);border-radius:12px;padding:1rem;overflow-x:auto;white-space:pre">import { createAskableMcpServer } from '@askable-ui/mcp';
-
-const server = createAskableMcpServer({ provider });
-server.connect(transport); // stdio, SSE, or WebSocket</pre>
+      <h2 class="section-title">Connect the assistant you already use.</h2>
+      <p class="section-sub">Choose how selected context reaches your assistant. Each connection needs its own setup and permissions.</p>
+      <div class="integration-list" id="integrations">
+        <article>
+          <h3>In-app chat</h3>
+          <p>Pass prompt context to your model or use Bridge to deliver a packet to your existing chat UI.</p>
+          <a class="text-link" href="https://askable-ui.com/docs/examples/ai-sdk">AI SDK examples</a>
         </article>
-        <div class="pattern-stack">
-          <article class="pattern-card">
-            <div class="pattern-icon">↗</div>
-            <h4>get_current_context</h4>
-            <p>Returns the focused element's structured metadata, surrounding context, and interaction history as a typed JSON packet.</p>
-          </article>
-          <article class="pattern-card">
-            <div class="pattern-icon">T</div>
-            <h4>format_context_for_prompt</h4>
-            <p>Returns a prompt-ready text rendering of the current context — drop it directly into any system message.</p>
-          </article>
-          <article class="pattern-card">
-            <div class="pattern-icon">🔒</div>
-            <h4>Privacy gate built in</h4>
-            <p>Set <code>requireRedacted: true</code> to block unredacted packets from leaving the page. PII stays in your app.</p>
-          </article>
-          <article class="pattern-card">
-            <div class="pattern-icon">◇</div>
-            <h4>Schema resource</h4>
-            <p>The MCP server exposes the full Context packet JSON Schema so agents can self-document and validate responses.</p>
-          </article>
-        </div>
-      </div>
-      <div style="margin-top:1.5rem;background:#f9fafb;border:1px solid rgba(0,0,0,0.07);border-radius:16px;padding:1.25rem 1.5rem;">
-        <p style="font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.75rem;">claude_desktop_config.json</p>
-        <pre style="font-size:.8rem;line-height:1.65;color:#374151;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;overflow-x:auto;white-space:pre">{
-  "mcpServers": {
-    "my-app": {
-      "command": "node",
-      "args": ["./mcp-server.js"]
-    }
-  }
-}</pre>
-        <p style="margin-top:.85rem;font-size:.84rem;color:var(--ink-2)">→ <a href="https://askable-ui.com/docs/api/mcp" style="color:var(--accent);text-decoration:none;font-weight:600">Full MCP integration guide</a></p>
-      </div>
-    </section>
-
-    <section class="section" id="why">
-      <p class="section-label">Why askable-ui</p>
-      <h2 class="section-title">Screenshots don't scale. Descriptions go stale.</h2>
-      <p class="section-sub">Every other approach to giving AI context about your UI breaks down under real conditions.</p>
-      <div class="compare-grid">
-        <article class="compare-card compare-bad">
-          <div class="compare-icon">📸</div>
-          <h3>Vision / screenshots</h3>
-          <ul>
-            <li>Expensive per token, slow to generate</li>
-            <li>Fails on dense data tables and charts</li>
-            <li>Leaks PII to the model if not scrubbed</li>
-            <li>Can't read dynamic or lazy-loaded data</li>
-          </ul>
+        <article>
+          <h3>Browser companion</h3>
+          <p>Capture page context through the extension example, or connect a page-side bridge to a local MCP companion.</p>
+          <a class="text-link" href="https://askable-ui.com/docs/examples/browser-extension">Browser extension example</a>
         </article>
-        <article class="compare-card compare-bad">
-          <div class="compare-icon">📝</div>
-          <h3>Hardcoded system prompts</h3>
-          <ul>
-            <li>Describe the page, not the user's current state</li>
-            <li>Go stale the moment the data changes</li>
-            <li>Burn context window on irrelevant sections</li>
-            <li>No awareness of what the user selected or clicked</li>
-          </ul>
-        </article>
-        <article class="compare-card compare-good">
-          <div class="compare-icon" style="background:var(--accent-light);color:var(--accent)">✦</div>
-          <h3>askable-ui</h3>
-          <ul>
-            <li>Structured JSON — no vision model needed</li>
-            <li>Updates on every click, focus, or scroll event</li>
-            <li>Privacy-gated before leaving the page</li>
-            <li>Works with any LLM, framework, or MCP client</li>
-          </ul>
+        <article>
+          <h3>MCP clients</h3>
+          <p>Expose approved context through an MCP server for clients such as Claude Desktop or Cursor. Configure the provider, transport, and authorization.</p>
+          <a class="text-link" href="https://askable-ui.com/docs/api/mcp">MCP integration guide</a>
         </article>
       </div>
-    </section>
-
-    <section class="section" id="sources">
-      <p class="section-label">Context Sources — v0.15.0</p>
-      <h2 class="section-title">Every layer of your app. Zero prompt engineering.</h2>
-      <p class="section-sub">45+ built-in sources cover UI state, user session, environment, and device — automatically composed into a single context string the AI can reason about.</p>
-      <div class="pkg-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;">
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">New in v0.15.0</div>
-          <div class="pkg-name">Cart source</div>
-          <div class="pkg-desc"><code>useAskableCartSource()</code> — items, quantities, subtotal, tax, shipping, coupon. Mutate with <code>addItem</code>, <code>setTotals</code>, <code>clearCart</code>. Works in React, Vue, Svelte, SolidJS, and Angular.</div>
-        </div>
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">New in v0.15.0</div>
-          <div class="pkg-name">Multistep source</div>
-          <div class="pkg-desc"><code>useAskableMultistepSource()</code> — step name, index, progress %, <code>isComplete</code>. Navigate with <code>next</code>, <code>prev</code>, <code>goTo</code>. Works in all frameworks.</div>
-        </div>
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">UI & content</div>
-          <div class="pkg-name">Forms, tables, search</div>
-          <div class="pkg-desc"><code>useAskableFormSource()</code>, <code>useAskableTableSource()</code>, <code>useAskableSearchSource()</code>, <code>useAskableTabSource()</code>, <code>useAskableMediaSource()</code>.</div>
-        </div>
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">Environment</div>
-          <div class="pkg-name">Device & browser state</div>
-          <div class="pkg-desc"><code>useAskableThemeSource()</code>, <code>useAskableWindowSource()</code>, <code>useAskableLocaleSource()</code>, <code>useAskableNetworkSource()</code>, <code>useAskablePermissionSource()</code>, <code>useAskableConnectionSource()</code>.</div>
-        </div>
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">Sensors & time</div>
-          <div class="pkg-name">Time, location, battery</div>
-          <div class="pkg-desc"><code>useAskableTimeSource()</code> with business hours config, <code>useAskableGeolocationSource()</code>, <code>useAskableBatterySource()</code>, <code>useAskablePerformanceSource()</code> with Core Web Vitals.</div>
-        </div>
-        <div class="pkg-card" style="cursor:default;">
-          <div class="pkg-badge">User behaviour</div>
-          <div class="pkg-name">Session intelligence</div>
-          <div class="pkg-desc"><code>useAskableAnalyticsSource()</code>, <code>useAskableAbTestSource()</code>, <code>useAskableFeatureFlagSource()</code>, <code>useAskableIdleSource()</code>, <code>useAskableFocusSource()</code>, <code>useAskableScrollSource()</code>.</div>
-        </div>
-      </div>
-      <p style="margin-top:1.5rem;text-align:center;font-size:.9rem;color:var(--ink-2)">All sources are composable — <a href="https://askable-ui.com/docs/api/core" style="color:var(--accent);text-decoration:none;font-weight:600">read the full API reference →</a></p>
+      <p class="integration-note">You control what leaves your app. Sanitize sensitive data before sharing it. The redaction gate checks the packet's redaction flag; it does not detect personal information for you.</p>
     </section>
 
     <div class="cta-section">
       <div class="cta-card">
         <h2>Your AI. Your UI. Finally connected.</h2>
-        <p>Drop <code style="color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.1)">data-askable</code> on your most important element. Working context in under five minutes — or scaffold a full copilot app in one command.</p>
+        <p>Drop <code>data-askable</code> on your most important element. Working context in under five minutes — or scaffold a full copilot app in one command.</p>
         <div class="cta-actions">
           <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer" class="btn btn-inverse">Read the docs</a>
           <a href="https://askable-mu.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white">Live demo ↗</a>
@@ -1739,8 +1265,10 @@ server.connect(transport); // stdio, SSE, or WebSocket</pre>
     document.querySelectorAll('[data-format]').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        document.querySelectorAll('[data-format]').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
+        document.querySelectorAll('[data-format]').forEach(function(b) {
+          b.classList.toggle('active', b === btn);
+          b.setAttribute('aria-pressed', String(b === btn));
+        });
         promptOpts.format = btn.getAttribute('data-format');
         refreshCtxDisplay();
       });
@@ -1748,8 +1276,10 @@ server.connect(transport); // stdio, SSE, or WebSocket</pre>
     document.querySelectorAll('[data-text]').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        document.querySelectorAll('[data-text]').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
+        document.querySelectorAll('[data-text]').forEach(function(b) {
+          b.classList.toggle('active', b === btn);
+          b.setAttribute('aria-pressed', String(b === btn));
+        });
         promptOpts.includeText = btn.getAttribute('data-text') === 'on';
         refreshCtxDisplay();
       });
@@ -1760,10 +1290,14 @@ server.connect(transport); // stdio, SSE, or WebSocket</pre>
     }
     function setPatternState(btn, hint) {
       if (!btn) return;
+      document.querySelectorAll('.pattern-option').forEach(function(option) {
+        option.setAttribute('aria-pressed', String(option === btn));
+      });
       if (activePatternName) activePatternName.textContent = btn.getAttribute('data-pattern-title') || btn.textContent.trim();
       if (patternPayload) patternPayload.textContent = btn.getAttribute('data-pattern-payload') || 'Context packet';
       if (hint) setToolHint(hint);
     }
+    setPatternState(document.querySelector('.pattern-option.active'));
     function resizeAiTrail() {
       if (!aiCursorCanvas || !selectionLayer || !aiCursorCtx) return;
       var rect = selectionLayer.getBoundingClientRect();
@@ -2531,9 +2065,9 @@ server.connect(transport); // stdio, SSE, or WebSocket</pre>
     if (installCopy) {
       installCopy.addEventListener('click', function() {
         var el = document.getElementById('copy-icon');
-        function flash(label) { if (!el) return; el.textContent = label; setTimeout(function() { el.textContent = '⎘ copy'; }, 1800); }
+        function flash(label) { if (!el) return; el.textContent = label; setTimeout(function() { el.textContent = 'Copy'; }, 1800); }
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText('npm install @askable-ui/react').then(function() { flash('✓ copied'); }).catch(function() { flash('copy manually'); });
+          navigator.clipboard.writeText('npm install @askable-ui/react').then(function() { flash('Copied'); }).catch(function() { flash('copy manually'); });
         } else { flash('copy manually'); }
       });
     }
@@ -2542,70 +2076,27 @@ server.connect(transport); // stdio, SSE, or WebSocket</pre>
 
   <script>
   (function() {
-    var canvas = document.getElementById('field-canvas');
-    if (!canvas || !canvas.getContext) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    var dots = [];
-    var mouse = { x: window.innerWidth * 0.72, y: 220 };
-    var spacing = 30; var influence = 235; var ease = 0.078;
-    function resize() {
-      canvas.width = window.innerWidth; canvas.height = window.innerHeight; dots = [];
-      for (var y = spacing / 2; y < canvas.height; y += spacing)
-        for (var x = spacing / 2; x < canvas.width; x += spacing)
-          dots.push({ ox: x, oy: y, x: x, y: y });
-    }
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (var i = 0; i < dots.length; i++) {
-        var d = dots[i];
-        var dx = mouse.x - d.ox; var dy = mouse.y - d.oy;
-        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        var force = Math.max(0, 1 - dist / influence);
-        var pull = force * 30;
-        d.x += ((d.ox + dx / dist * pull) - d.x) * ease;
-        d.y += ((d.oy + dy / dist * pull) - d.y) * ease;
-        var alpha = force > 0.04 ? 0.1 + force * 0.32 : 0.06;
-        var size = force > 0.02 ? 2.8 + force * 1.8 : 1.3;
-        ctx.fillStyle = force > 0.04 ? 'rgba(79,70,229,' + alpha + ')' : 'rgba(0,0,0,' + alpha + ')';
-        ctx.beginPath(); ctx.arc(d.x, d.y, size, 0, Math.PI * 2); ctx.fill();
-      }
-      requestAnimationFrame(draw);
-    }
-    window.addEventListener('mousemove', function(e) { mouse.x = e.clientX; mouse.y = e.clientY; });
-    window.addEventListener('mouseleave', function() { mouse.x = window.innerWidth * 0.72; mouse.y = 220; });
-    window.addEventListener('resize', resize);
-    resize(); draw();
-  })();
-  </script>
-
-  <script>
-  (function() {
-    var card = document.getElementById('hero-card');
-    var miniCode = document.getElementById('mini-code');
-    if (!card || !miniCode) return;
-    var stats = Array.prototype.slice.call(document.querySelectorAll('.mini-stat'));
-    var snippets = {
-      revenue: 'User is focused on: widget: revenue, metric: Monthly Recurring Revenue, value: $128,400, change: +12.4%\n→ Revenue growth is healthy and likely durable.',
-      churn: 'User is focused on: widget: churn, metric: Churn Rate, value: 3.2%, trend: improving\n→ Retention is strengthening.',
-      nps: 'User is focused on: widget: nps, metric: Net Promoter Score, value: 67, benchmark: industry avg 44\n→ Satisfaction is materially above benchmark.',
-      upsell: 'User is focused on: company: Umbrella Ltd, plan: Starter, growth: expanding\n→ Strongest upsell candidate in view.'
-    };
-    function setActive(key) {
-      stats.forEach(function(el) { el.classList.toggle('highlight', el.getAttribute('data-mini') === key); });
-      miniCode.textContent = snippets[key] || snippets.revenue;
-    }
-    stats.forEach(function(stat) { stat.addEventListener('mouseenter', function() { setActive(stat.getAttribute('data-mini')); }); });
-    setActive('revenue');
-    card.addEventListener('mousemove', function(e) {
-      var rect = card.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      var px = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      var py = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
-      card.style.transform = 'rotateX(' + ((0.5 - py) * 6).toFixed(2) + 'deg) rotateY(' + ((px - 0.5) * 7).toFixed(2) + 'deg)';
+    var menu = document.getElementById('nav-menu');
+    var summary = menu.querySelector('summary');
+    menu.addEventListener('click', function(event) {
+      if (event.target.closest('a')) menu.open = false;
     });
-    card.addEventListener('mouseleave', function() { card.style.transform = 'rotateX(0deg) rotateY(0deg)'; });
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && menu.open) {
+        menu.open = false;
+        summary.focus();
+      }
+    });
+    document.addEventListener('click', function(event) {
+      if (!menu.contains(event.target)) menu.open = false;
+    });
+    window.matchMedia('(min-width: 721px)').addEventListener('change', function(event) {
+      if (event.matches) menu.open = false;
+    });
+    var recording = document.querySelector('.recording');
+    recording.addEventListener('toggle', function() {
+      if (!recording.open) recording.querySelector('video').pause();
+    });
   })();
   </script>
 </body>

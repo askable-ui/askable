@@ -1,0 +1,49 @@
+name: test / website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/www/**'
+      - 'site/tests/**'
+      - '.github/workflows/test_website.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'site/www/**'
+      - 'site/tests/**'
+      - '.github/workflows/test_website.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  website:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright test --config site/tests/playwright.config.ts
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: website-browser-report
+          path: |
+            playwright-report/website
+            test-results
+          retention-days: 14
