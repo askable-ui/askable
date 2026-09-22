@@ -14,9 +14,11 @@ for (const width of [320, 390, 768, 1280, 1440]) {
     await expect(page.locator('.developer-panel')).not.toHaveAttribute('open');
     await expect(page.locator('video')).not.toHaveAttribute('autoplay');
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    await page.screenshot({ path: test.info().outputPath(`homepage-${width}.png`) });
     await page.getByText('Developer view', { exact: true }).click();
     await expect(page.getByRole('button', { name: 'JSON', exact: true })).toBeVisible();
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: test.info().outputPath(`website-${width}.png`), fullPage: true });
   });
 }
@@ -86,7 +88,8 @@ for (const shape of ['region', 'square', 'circle', 'lasso']) {
       await page.mouse.move(x + box.width - 16, y + box.height - 16, { steps: 10 });
     }
     await page.mouse.up();
-    await expect(page.locator('#selected-region-preview')).toContainText('Monthly Revenue');
+    await expect(page.locator('#selected-region-preview')).toContainText('Monthly Recurring Revenue');
+    await expect(page.locator('#context-chip')).toContainText('$128,400');
     await expect(page.locator('#context-chip')).not.toContainText('Ask AI');
     await expect(tool).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -106,9 +109,26 @@ test('text mode ignores plain clicks and retains captured text', async ({ page }
     selection?.addRange(range);
     element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
   });
-  await expect(page.locator('#selected-text-preview')).toHaveText('Monthly Revenue');
+  await expect(page.locator('#selected-text-preview')).toHaveText(/^Monthly Revenue$/i);
   await page.getByLabel('Question about selected context').focus();
   await expect(page.locator('.text-capture-mark').first()).toBeVisible();
+});
+
+test('homepage and selected context screenshots use the website font', async ({ page }) => {
+  await page.unroute('https://fonts.googleapis.com/**');
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.reload();
+  await page.evaluate(() => document.fonts.ready);
+  await expect.poll(() => page.evaluate(() => document.fonts.check('400 16px Inter'))).toBe(true);
+  await page.screenshot({ path: test.info().outputPath('homepage-desktop.png') });
+  await page.locator('.kpi-card').first().click();
+  await page.getByText('Review context', { exact: true }).click();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: test.info().outputPath('homepage-context.png') });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: test.info().outputPath('homepage-mobile.png') });
 });
 
 test('current capabilities and release boundaries are explicit', async ({ page }) => {
