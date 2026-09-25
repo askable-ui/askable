@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.route('https://fonts.googleapis.com/**', route => route.abort());
   await page.goto('/');
+  await page.evaluate(() => document.fonts.ready);
 });
 
 for (const width of [320, 390, 768, 1280, 1440]) {
@@ -115,7 +115,6 @@ test('text mode ignores plain clicks and retains captured text', async ({ page }
 });
 
 test('homepage and selected context screenshots use the website font', async ({ page }) => {
-  await page.unroute('https://fonts.googleapis.com/**');
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.reload();
   await page.evaluate(() => document.fonts.ready);
@@ -129,6 +128,27 @@ test('homepage and selected context screenshots use the website font', async ({ 
   await page.reload();
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: test.info().outputPath('homepage-mobile.png') });
+});
+
+test('integration tabs support mouse and keyboard navigation', async ({ page }) => {
+  const tabs = page.getByRole('tablist', { name: 'Integration steps' });
+  await tabs.getByRole('tab', { name: 'Observe', exact: true }).click();
+  await expect(page.getByRole('tabpanel')).toContainText('createAskableContext');
+  await page.getByRole('tab', { name: 'Observe', exact: true }).press('ArrowRight');
+  await expect(page.getByRole('tab', { name: 'Send', exact: true })).toBeFocused();
+  await expect(page.getByRole('tabpanel')).toContainText('toAgentRequest');
+  await page.getByRole('tab', { name: 'Send', exact: true }).press('Home');
+  await expect(page.getByRole('tab', { name: 'Annotate', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel')).toContainText('data-askable');
+});
+
+test('font and toolbar icons load from local assets', async ({ page }) => {
+  await expect.poll(() => page.evaluate(() => document.fonts.check('400 16px Inter'))).toBe(true);
+  await expect(page.locator('.pattern-option .icon')).toHaveCount(8);
+  const asset = await page.request.get('/assets/icons.svg');
+  expect(asset.ok()).toBe(true);
+  expect(await asset.text()).toContain('id="lasso"');
+  await expect(page.locator('link[href*="fonts.googleapis.com"]')).toHaveCount(0);
 });
 
 test('current capabilities and release boundaries are explicit', async ({ page }) => {

@@ -3,692 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>askable-ui — UI context for AI assistants</title>
+  <title>askable-ui: UI context for AI assistants</title>
   <meta name="description" content="Connect selected text, elements, regions, and app-owned data to your AI assistant. Framework adapters, Bridge transports, and MCP integrations." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://askable-ui.com/" />
-  <meta property="og:title" content="askable-ui — UI context for AI assistants" />
+  <meta property="og:title" content="askable-ui: UI context for AI assistants" />
   <meta property="og:description" content="Connect selected text, elements, regions, and app-owned data to your AI assistant." />
   <meta property="og:image" content="https://askable-ui.com/social.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="askable-ui — UI context for AI assistants" />
+  <meta name="twitter:title" content="askable-ui: UI context for AI assistants" />
   <meta name="twitter:description" content="Connect selected text, elements, regions, and app-owned data to your AI assistant." />
   <meta name="twitter:image" content="https://askable-ui.com/social.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="preload" href="assets/inter-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="site.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23111317'/><text x='16' y='22' font-family='system-ui,sans-serif' font-size='18' font-weight='900' fill='white' text-anchor='middle'>✦</text></svg>" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #ffffff;
-      --ink: #111317;
-      --ink-2: #45474d;
-      --ink-3: #626872;
-      --line: rgba(0,0,0,0.08);
-      --line-strong: rgba(0,0,0,0.14);
-      --accent: #4f46e5;
-      --green: #16a34a;
-      --red: #dc2626;
-      --yellow: #d97706;
-      --radius-pill: 9999px;
-      --radius-card: 8px;
-      --radius-lg: 8px;
-      --font: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-
-    html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
-    :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-    [hidden] { display: none !important; }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--ink);
-      line-height: 1.6;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* NAV */
-    nav {
-      position: fixed;
-      top: 1.25rem;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 40;
-      width: min(calc(100% - 2.5rem), 1280px);
-      height: auto;
-      min-height: 2.8rem;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1.25rem;
-      padding: 0;
-      background: transparent;
-      border: 0;
-    }
-    .nav-logo {
-      display: inline-flex;
-      align-items: center;
-      gap: .58rem;
-      min-height: 2.65rem;
-      padding: .22rem .75rem .22rem .28rem;
-      border: 1px solid rgba(0,0,0,0.07);
-      border-radius: var(--radius-pill);
-      background: rgba(255,255,255,0.86);
-      box-shadow: 0 8px 24px rgba(17,19,23,0.12);
-      backdrop-filter: blur(18px) saturate(1.18);
-      font-size: .96rem;
-      font-weight: 800;
-      color: var(--ink);
-      text-decoration: none;
-      letter-spacing: 0;
-      white-space: nowrap;
-    }
-    .nav-mark {
-      display: inline-grid;
-      place-items: center;
-      width: 2.08rem;
-      height: 2.08rem;
-      border-radius: 12px;
-      background: #111317;
-      color: #fff;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
-      font-size: .98rem;
-      line-height: 1;
-    }
-    .nav-logo .spark { color: inherit; }
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: .28rem;
-      min-height: 2.8rem;
-      padding: .26rem .3rem .26rem .72rem;
-      border: 1px solid rgba(0,0,0,0.07);
-      border-radius: var(--radius-pill);
-      background: rgba(255,255,255,0.88);
-      box-shadow: 0 8px 24px rgba(17,19,23,0.12);
-      backdrop-filter: blur(18px) saturate(1.18);
-    }
-    .nav-link {
-      text-decoration: none;
-      color: #2f333a;
-      font-size: .82rem;
-      font-weight: 600;
-      padding: .47rem .72rem;
-      border-radius: var(--radius-pill);
-      transition: color .16s, background .16s, transform .16s;
-    }
-    .nav-link:hover { color: var(--ink); background: rgba(0,0,0,0.045); transform: translateY(-1px); }
-    .nav-menu { display: none; position: relative; }
-    .nav-menu summary { cursor: pointer; list-style: none; padding: .5rem .75rem; font-size: .85rem; font-weight: 600; }
-    .nav-menu summary::-webkit-details-marker { display: none; }
-    .nav-menu-panel { position: absolute; right: 0; top: calc(100% + .75rem); width: 13rem; padding: .5rem; background: #fff; border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: 0 8px 24px rgba(17,19,23,.1); }
-    .nav-menu-panel a { display: block; padding: .65rem .75rem; color: var(--ink); text-decoration: none; border-radius: 4px; }
-    .nav-menu-panel a:hover { background: #f4f4f5; }
-    .nav-gh {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 2.25rem;
-      height: 2.25rem;
-      padding: 0;
-      border-radius: var(--radius-pill);
-      background: var(--ink);
-      color: #fff;
-      text-decoration: none;
-      margin-left: .22rem;
-      box-shadow: 0 4px 12px rgba(17,19,23,0.2);
-      transition: opacity .15s, transform .15s;
-    }
-    .nav-gh:hover { opacity: .86; transform: translateY(-1px); }
-    .github-icon {
-      width: 1.05rem;
-      height: 1.05rem;
-      display: block;
-      fill: currentColor;
-      flex: none;
-    }
-
-    /* BUTTONS */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: .45rem;
-      border: none;
-      border-radius: var(--radius-pill);
-      padding: .78rem 1.5rem;
-      font-size: .88rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: transform .15s, opacity .15s, box-shadow .15s;
-      letter-spacing: 0;
-    }
-    .btn:hover { transform: translateY(-1px); }
-    .btn-primary { background: var(--ink); color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
-    .btn-primary:hover { box-shadow: 0 6px 22px rgba(0,0,0,0.2); }
-    .btn-secondary { background: rgba(0,0,0,0.04); color: var(--ink); border: 1px solid rgba(0,0,0,0.09); }
-    .btn-secondary:hover { background: rgba(0,0,0,0.07); }
-    .btn-icon {
-      justify-content: center;
-      width: 2.95rem;
-      min-width: 2.95rem;
-      height: 2.95rem;
-      padding: 0;
-    }
-    .btn-icon .github-icon { width: 1.15rem; height: 1.15rem; }
-
-    /* LAYOUT */
-    .page-shell { max-width: 1280px; margin: 0 auto; padding: 0 2rem 8rem; }
-
-    /* INTRO */
-    .hero { padding: 7rem 0 2.5rem; }
-    .hero-copy h1 { font-size: 3.5rem; line-height: 1.08; font-weight: 750; margin-bottom: 1rem; }
-    .hero-copy > p { max-width: 40rem; font-size: 1.15rem; line-height: 1.6; color: var(--ink-2); margin-bottom: 1.5rem; text-wrap: pretty; }
-    .hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
-    .install-cmd {
-      display: inline-flex;
-      align-items: center;
-      gap: .75rem;
-      border-radius: var(--radius-pill);
-      padding: .78rem 1.1rem;
-      background: #fff;
-      border: 1px solid rgba(0,0,0,0.1);
-      font-family: var(--mono);
-      font-size: .79rem;
-      color: var(--ink-2);
-      cursor: pointer;
-      user-select: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      transition: border-color .15s, transform .15s, box-shadow .15s;
-    }
-    .install-cmd:hover { border-color: rgba(0,0,0,0.18); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.07); }
-    .copy-icon { color: var(--ink-3); font-size: .75rem; }
-    /* SECTIONS */
-    .section { padding-top: 5rem; }
-    #demo { padding-top: 1rem; }
-    #demo .section-title { font-size: 1.5rem; text-align: left; margin-bottom: 1rem; }
-    .section > *, .steps > *, .pkg-grid > * { min-width: 0; }
-    pre { max-width: 100%; }
-    h2, h3, h4, .pkg-name { overflow-wrap: anywhere; }
-    .section-label { text-align: center; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0; font-size: .68rem; font-weight: 700; margin-bottom: .8rem; }
-    .section-title { text-align: center; font-size: 2.25rem; line-height: 1.05; letter-spacing: 0; font-weight: 800; margin-bottom: .65rem; }
-    .section-sub { text-align: center; max-width: 42rem; margin: 0 auto 2.5rem; color: var(--ink-2); font-size: .98rem; line-height: 1.62; }
-
-    /* PRODUCT CAPABILITIES */
-    .capability-list, .integration-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
-    .capability-list article, .integration-list article { min-width: 0; }
-    .capability-list article { padding-top: 1.25rem; border-top: 1px solid var(--line-strong); }
-    .capability-list h3, .integration-list h3 { font-size: 1.1rem; line-height: 1.35; margin-bottom: .65rem; }
-    .capability-list p, .integration-list p { color: var(--ink-2); font-size: .9rem; margin-bottom: 1rem; }
-    .text-link { color: var(--accent); font-size: .88rem; font-weight: 600; text-underline-offset: .2em; }
-    .capability-list .release-note { font-size: .8rem; color: var(--ink-3); }
-    .recording { margin-top: 2rem; border-top: 1px solid var(--line); padding-top: 1rem; }
-    .recording summary { cursor: pointer; font-weight: 600; }
-    .recording video { display: block; width: 100%; aspect-ratio: 16 / 9; margin-top: 1rem; border-radius: 8px; background: #f5f5f5; }
-    .integration-note { margin-top: 2rem; max-width: 65ch; color: var(--ink-2); font-size: .9rem; }
-
-    /* DEMO DECK */
-    .deck { padding: 0; border-top: 1px solid var(--line-strong); }
-    .demo-controls { display: grid; gap: .8rem; margin-bottom: 1.35rem; }
-    .demo-controls-row { display: flex; justify-content: center; align-items: center; gap: .6rem; flex-wrap: wrap; }
-    .toggle-label { color: var(--ink-3); font-size: .82rem; }
-    .toggle-group { display: inline-flex; gap: .22rem; padding: .22rem; border-radius: var(--radius-pill); background: #fff; border: 1px solid var(--line); box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-    .toggle-btn { border: none; background: transparent; color: var(--ink-3); padding: .45rem .9rem; border-radius: var(--radius-pill); font-size: .82rem; font-weight: 600; cursor: pointer; transition: background .14s, color .14s; }
-    .toggle-btn.active { color: var(--ink); background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
-
-    .pattern-dock {
-      background: #fff; padding: 1rem 0; border-bottom: 1px solid var(--line);
-    }
-    .pattern-dock-header {
-      display: flex; align-items: center; justify-content: space-between; gap: .8rem;
-      padding: .08rem .18rem .62rem;
-    }
-    .pattern-dock-header span { color: var(--ink-3); font-size: .72rem; font-weight: 750; text-transform: uppercase; letter-spacing: 0; }
-    .pattern-dock-header strong { font-size: .88rem; letter-spacing: 0; }
-    .pattern-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: .36rem; }
-    .pattern-option {
-      display: grid; grid-template-columns: 1.45rem minmax(0, 1fr); align-items: center; gap: .48rem;
-      border: 1px solid transparent; background: #f8fafc; color: var(--ink-2);
-      border-radius: 6px; padding: .65rem .5rem; cursor: pointer; text-align: left;
-      transition: transform .14s, box-shadow .14s, border-color .14s, background .14s;
-      min-width: 0;
-    }
-    .pattern-option:hover { transform: translateY(-1px); border-color: rgba(79,70,229,0.16); background: #fff; }
-    .pattern-option.active {
-      background: #fff; color: var(--ink); border-color: rgba(79,70,229,0.26);
-      box-shadow: inset 0 -2px 0 var(--accent);
-    }
-    .pattern-glyph {
-      width: 1.45rem; height: 1.45rem; display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 10px; background: rgba(79,70,229,0.08); color: var(--accent);
-      font-size: .82rem; font-weight: 850;
-    }
-    .pattern-copy-mini { min-width: 0; display: grid; gap: .08rem; }
-    .pattern-copy-mini b { display: block; font-size: .78rem; line-height: 1.08; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pattern-copy-mini small { display: block; color: var(--ink-3); font-size: .62rem; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pattern-status { display: flex; align-items: center; gap: .55rem; margin-top: .75rem; }
-    .pattern-payload, .tool-hint { display: none !important; }
-    .developer-panel { margin-top: 1.5rem; border-top: 1px solid var(--line); padding-top: 1rem; }
-    .developer-panel > summary { width: fit-content; cursor: pointer; font-size: .9rem; font-weight: 600; }
-    .developer-panel .output-controls { margin-top: 1rem; justify-content: flex-start; }
-    .context-review { flex: 1; min-width: 0; }
-    .context-review summary { cursor: pointer; font-size: .8rem; font-weight: 600; }
-    .context-review pre { white-space: pre-wrap; overflow-wrap: anywhere; font: .72rem/1.6 var(--mono); max-height: 8rem; overflow-y: auto; padding-top: .5rem; }
-    .pattern-payload {
-      flex: 0 0 auto; max-width: 45%; border-radius: var(--radius-pill); padding: .22rem .5rem;
-      background: rgba(79,70,229,0.08); color: #3730a3; font-size: .68rem; font-weight: 800;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .output-controls { justify-content: flex-end; }
-    .context-tools { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .45rem; padding-top: .2rem; }
-    .tool-btn {
-      display: inline-flex; align-items: center; gap: .35rem;
-      border: 1px solid rgba(0,0,0,0.1); color: var(--ink-2); background: #fff;
-      border-radius: var(--radius-pill); font-size: .76rem; font-weight: 700;
-      padding: .48rem .82rem; cursor: pointer; transition: transform .13s, box-shadow .13s, border-color .13s;
-    }
-    .tool-btn:hover, .tool-btn.active { transform: translateY(-1px); border-color: rgba(79,70,229,0.24); box-shadow: 0 4px 12px rgba(79,70,229,0.09); color: var(--ink); }
-    .tool-hint { flex: 1 1 auto; min-width: 11rem; color: var(--ink-3); font-size: .75rem; line-height: 1.35; }
-
-    .demo-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 336px); gap: 1.15rem; align-items: start; }
-    .dashboard { position: relative; display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
-    .selection-layer { position: absolute; inset: -.65rem; z-index: 9; pointer-events: none; border-radius: 28px; overflow: visible; }
-    .dashboard.selecting .selection-layer { pointer-events: auto; cursor: crosshair; }
-    .dashboard.selecting.lasso-active .selection-layer { cursor: none; }
-    .selection-layer::before {
-      content: ''; position: absolute; inset: 0; border-radius: inherit;
-      border: 1px dashed rgba(79,70,229,0.22); background: rgba(79,70,229,0.03);
-      opacity: 0; transition: opacity .12s;
-    }
-    .dashboard.selecting .selection-layer::before { opacity: 1; }
-    .dashboard.selecting.lasso-active .selection-layer::before {
-      opacity: 0;
-    }
-    .selection-drawing {
-      position: absolute; border: 2px solid var(--accent); background: rgba(79,70,229,0.09);
-      box-shadow: 0 10px 28px rgba(79,70,229,0.12); pointer-events: none; z-index: 11;
-    }
-    .selection-drawing.circle { border-radius: 999px; }
-    .selection-drawing.lasso { background: transparent; border: none; box-shadow: none; inset: 0; filter: drop-shadow(0 0 10px rgba(79,70,229,0.32)); }
-    .selection-drawing svg { position: absolute; inset: 0; overflow: visible; }
-    .selection-drawing path { fill: rgba(79,70,229,0.08); stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
-    .selection-drawing.lasso path {
-      fill: none;
-      stroke: url(#lasso-gradient);
-      stroke-width: 3.2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-    .selection-drawing.lasso .lasso-aura {
-      fill: none;
-      stroke: rgba(124,58,237,0.16);
-      stroke-width: 8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      filter: blur(1px);
-    }
-    .selected-region {
-      position: absolute; z-index: 12; pointer-events: none;
-      border: 2px solid rgba(124,58,237,0.78);
-      background: rgba(124,58,237,0.08);
-      box-shadow: 0 12px 34px rgba(91,33,182,0.16), 0 0 0 4px rgba(124,58,237,0.05);
-      animation: selectedRegionIn .18s ease-out;
-    }
-    .selected-region.circle { border-radius: 999px; }
-    .selected-region.lasso { inset: 0; border: none; background: transparent; box-shadow: none; }
-    .selected-region svg { position: absolute; inset: 0; overflow: visible; }
-    .selected-region path {
-      fill: none;
-      stroke: rgba(124,58,237,0.9);
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      filter: drop-shadow(0 0 7px rgba(124,58,237,0.24));
-    }
-    .selected-region-label {
-      position: absolute; left: 0; bottom: calc(100% + 7px);
-      display: inline-flex; align-items: center; gap: .35rem;
-      padding: .28rem .52rem; border-radius: var(--radius-pill);
-      border: 1px solid rgba(124,58,237,0.18); background: rgba(255,255,255,0.94);
-      color: #5b21b6; font-size: .66rem; font-weight: 850;
-      letter-spacing: 0; text-transform: uppercase;
-      box-shadow: 0 10px 24px rgba(15,23,42,0.1); white-space: nowrap;
-    }
-    .selected-region-label::before {
-      content: ''; width: .42rem; height: .42rem; border-radius: 999px;
-      background: #7c3aed; box-shadow: 0 0 0 4px rgba(124,58,237,0.1);
-    }
-    .selection-inline-prompt {
-      position: absolute; left: 0; top: calc(100% + 9px); z-index: 13;
-      display: flex; align-items: center; gap: .42rem;
-      width: min(310px, calc(100vw - 3rem)); padding: .38rem;
-      border: 1px solid rgba(124,58,237,0.18); border-radius: var(--radius-pill);
-      background: rgba(255,255,255,0.96); box-shadow: 0 16px 42px rgba(15,23,42,0.15);
-      pointer-events: auto;
-    }
-    .selection-inline-prompt.above { top: auto; bottom: calc(100% + 9px); }
-    .selection-inline-prompt input {
-      min-width: 0; flex: 1; border: none; outline: none; background: transparent;
-      color: var(--ink); font: 500 .78rem/1.2 var(--font); padding: .26rem .32rem;
-    }
-    .selection-inline-prompt button {
-      flex: 0 0 auto; border: none; border-radius: var(--radius-pill);
-      background: var(--ink); color: #fff; padding: .36rem .62rem;
-      font-size: .7rem; font-weight: 800; cursor: pointer;
-    }
-    .text-selection-inline-prompt {
-      z-index: 14;
-      box-shadow: 0 16px 42px rgba(91,33,182,0.16);
-    }
-    @keyframes selectedRegionIn {
-      from { opacity: 0; transform: scale(.985); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    .ai-cursor-canvas {
-      position: absolute; inset: 0; z-index: 10;
-      width: 100%; height: 100%;
-      pointer-events: none; opacity: 0;
-      transition: opacity .12s ease;
-    }
-    .dashboard.lasso-active .ai-cursor-canvas { opacity: 1; }
-    .ai-cursor {
-      position: absolute; left: 0; top: 0; z-index: 12;
-      display: none; width: 1.95rem; height: 1.95rem;
-      transform: translate3d(0,0,0); pointer-events: none;
-      filter:
-        drop-shadow(0 2px 4px rgba(15,23,42,0.18))
-        drop-shadow(0 0 7px rgba(124,58,237,0.34));
-    }
-    .dashboard.lasso-active .ai-cursor { display: block; }
-    .ai-cursor-icon {
-      position: absolute; left: 50%; top: 50%;
-      display: block; width: 1.95rem; height: 1.95rem;
-      overflow: visible; transform: translate(-45%, -45%);
-    }
-    .ai-cursor-outline {
-      fill: none;
-      stroke: #a78bfa;
-      stroke-linejoin: round;
-      stroke-width: 4.6;
-    }
-    .ai-cursor-fill {
-      fill: #fff;
-      stroke: #7c3aed;
-      stroke-linejoin: round;
-      stroke-width: 1.2;
-    }
-    .kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
-
-    .panel { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; min-width: 0; }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; padding: .88rem 1.1rem; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: .87rem; font-weight: 700; letter-spacing: 0; }
-    .panel-header span { color: var(--ink-3); font-size: .72rem; font-weight: 500; }
-
-    table { width: 100%; border-collapse: collapse; font-size: .87rem; }
-    th { text-align: left; padding: .62rem 1.1rem; font-size: .68rem; letter-spacing: 0; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid rgba(0,0,0,0.05); }
-    td { padding: .84rem 1.1rem; border-bottom: 1px solid rgba(0,0,0,0.04); }
-    tbody tr[data-askable] { outline: none; cursor: pointer; transition: background .15s; }
-    tbody tr[data-askable]:hover, tbody tr[data-askable]:focus { background: rgba(0,0,0,0.02); }
-    tbody tr[data-askable].active { background: rgba(79,70,229,0.05); box-shadow: inset 3px 0 0 var(--accent); }
-
-    .badge { display: inline-flex; align-items: center; border-radius: var(--radius-pill); padding: .24rem .55rem; font-size: .69rem; font-weight: 700; }
-    .badge-green { background: rgba(22,163,74,0.1); color: var(--green); }
-    .badge-yellow { background: rgba(217,119,6,0.12); color: var(--yellow); }
-    .badge-red { background: rgba(220,38,38,0.1); color: var(--red); }
-
-    .kpi-card {
-      position: relative; border-radius: var(--radius-card); padding: 1.25rem;
-      background: #fff; border: 1px solid var(--line); cursor: pointer; outline: none;
-      overflow: hidden; transition: transform .2s, border-color .2s, box-shadow .2s;
-    }
-    .kpi-card:hover, .kpi-card:focus, .kpi-card.active { transform: translateY(-3px); border-color: rgba(79,70,229,0.2); box-shadow: 0 14px 36px rgba(0,0,0,0.07); }
-    .kpi-label { font-size: .68rem; text-transform: uppercase; letter-spacing: 0; color: var(--ink-3); margin-bottom: .5rem; }
-    .kpi-value { font-size: 1.9rem; font-weight: 800; letter-spacing: 0; margin-bottom: .18rem; }
-    .kpi-change { font-size: .81rem; font-weight: 600; }
-    .up { color: var(--green); } .down { color: var(--red); }
-
-    .ask-btn, .ask-btn-row {
-      display: none; align-items: center; gap: .3rem;
-      border: 1px solid rgba(0,0,0,0.1); color: var(--ink-2); background: #fff;
-      border-radius: var(--radius-pill); font-size: .64rem; font-weight: 700;
-      padding: .3rem .58rem; cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07); transition: transform .13s, box-shadow .13s;
-    }
-    .ask-btn:hover, .ask-btn-row:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .ask-btn { position: absolute; top: .78rem; right: .78rem; }
-    .button-mode .ask-btn, .button-mode .ask-btn-row { display: inline-flex; }
-
-    /* CHAT */
-    .chat-sidebar {
-      position: sticky; top: 4.25rem; display: flex; flex-direction: column;
-      height: clamp(460px, 72vh, 540px); min-height: 460px; max-height: calc(100vh - 5.5rem);
-      min-width: 0; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-card);
-    }
-    .chat-header { display: flex; align-items: center; gap: .55rem; padding: .88rem 1rem; border-bottom: 1px solid rgba(0,0,0,0.05); }
-    .chat-dot { display: none; }
-    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(.85);opacity:.7} }
-    .chat-title { font-size: .87rem; font-weight: 700; letter-spacing: 0; }
-    .chat-sim-badge { font-size: .6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0; color: var(--ink-3); background: rgba(0,0,0,0.05); padding: .18rem .5rem; border-radius: var(--radius-pill); }
-    .chat-sub { margin-left: auto; font-size: .68rem; color: var(--ink-3); }
-    .chat-messages { flex: 1 1 0; min-height: 0; padding: .88rem; overflow-y: auto; display: flex; flex-direction: column; gap: .6rem; overscroll-behavior: contain; }
-    .chat-messages::-webkit-scrollbar { width: 4px; }
-    .chat-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 999px; }
-    .msg { display: flex; flex-direction: column; gap: .24rem; animation: fadeUp .2s ease; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
-    .msg-bubble { width: fit-content; max-width: 100%; border-radius: 16px; padding: .62rem .85rem; font-size: .81rem; line-height: 1.55; border: 1px solid rgba(0,0,0,0.07); background: #fff; }
-    .msg.user .msg-bubble { align-self: flex-end; background: var(--ink); color: #fff; border-color: transparent; }
-    .msg.ai .msg-bubble { color: var(--ink); }
-    .msg.ctx .msg-bubble { font-family: var(--mono); font-size: .69rem; background: transparent; border: none; padding: .1rem 0; color: var(--ink-3); }
-    .msg.ctx.text-context .msg-bubble {
-      font-family: var(--font); border: 1px solid rgba(124,58,237,0.16);
-      background: linear-gradient(180deg, rgba(124,58,237,0.08), rgba(79,70,229,0.04));
-      color: var(--ink); padding: .64rem .72rem; border-radius: 14px;
-    }
-    .msg-context-kicker { display: block; margin-bottom: .28rem; color: #6d28d9; font-size: .62rem; font-weight: 800; letter-spacing: 0; text-transform: uppercase; }
-    .msg-context-quote { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; color: var(--ink-2); font-size: .76rem; line-height: 1.48; }
-    .msg-label { font-size: .65rem; color: var(--ink-3); padding: 0 .2rem; }
-    .msg.user .msg-label { align-self: flex-end; }
-    .typing { display: inline-flex; gap: 4px; align-items: center; width: fit-content; padding: .62rem .78rem; border-radius: 14px; background: #f4f4f5; border: 1px solid rgba(0,0,0,0.07); }
-    .typing span { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,0.28); animation: bounce 1.1s infinite; }
-    .typing span:nth-child(2) { animation-delay: .15s; } .typing span:nth-child(3) { animation-delay: .3s; }
-    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-4px)} }
-    .chat-context-bar { display: flex; gap: .45rem; align-items: center; padding: .62rem .9rem; background: rgba(79,70,229,0.05); border-top: 1px solid rgba(79,70,229,0.12); }
-    .chat-context-bar.text-context { background: rgba(124,58,237,0.07); border-top-color: rgba(124,58,237,0.18); }
-    .context-bar-label { font-size: .68rem; font-weight: 600; color: var(--accent); letter-spacing: 0; text-transform: uppercase; flex-shrink: 0; }
-    .chat-context-bar.text-context .context-bar-label { color: #6d28d9; }
-    .context-chip { flex: 1; font-family: var(--mono); font-size: .69rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .context-dismiss { flex: 0 0 32px; width: 32px; height: 32px; border: none; background: none; color: var(--ink-3); cursor: pointer; font-size: .95rem; }
-    .selected-text-card {
-      margin: .72rem .78rem 0; padding: .72rem .78rem; border-radius: 14px;
-      border: 1px solid rgba(124,58,237,0.18);
-      background: linear-gradient(180deg, rgba(124,58,237,0.08), rgba(255,255,255,0.88));
-    }
-    .selected-region-card {
-      margin: .72rem .78rem 0; padding: .72rem .78rem; border-radius: 14px;
-      border: 1px solid rgba(79,70,229,0.16);
-      background: linear-gradient(180deg, rgba(79,70,229,0.075), rgba(255,255,255,0.9));
-    }
-    .selected-text-card-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .44rem; }
-    .selected-text-card-title { display: flex; align-items: center; gap: .42rem; color: #5b21b6; font-size: .7rem; font-weight: 850; letter-spacing: 0; text-transform: uppercase; }
-    .selected-text-card-title::before { content: '“'; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 999px; background: #6d28d9; color: #fff; font-size: .9rem; line-height: 1; }
-    .selected-text-card-state { color: var(--ink-3); font-size: .64rem; font-weight: 700; }
-    .selected-text-quote { margin: 0; color: var(--ink); font-size: .78rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-    .selected-region-card .selected-text-card-title { color: #3730a3; }
-    .selected-region-card .selected-text-card-title::before { content: ''; background: #4f46e5; box-shadow: inset 0 0 0 5px rgba(255,255,255,0.25); }
-    .selected-region-list { margin: 0; color: var(--ink-2); font-size: .76rem; line-height: 1.48; display: grid; gap: .22rem; }
-    .selected-region-list span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .dashboard ::selection { background: rgba(124,58,237,0.24); color: var(--ink); }
-    .text-capture-mark {
-      position: absolute; pointer-events: none; z-index: 6; border-radius: 7px;
-      background: rgba(124,58,237,0.13); outline: 1px solid rgba(124,58,237,0.25);
-      box-shadow: 0 0 0 3px rgba(124,58,237,0.06), 0 8px 22px rgba(91,33,182,0.10);
-    }
-    .composer-suggestions {
-      display: flex; gap: .42rem; padding: .62rem .78rem 0; flex-wrap: wrap;
-      border-top: 1px solid rgba(0,0,0,0.06);
-    }
-    .question-chip {
-      border: 1px solid rgba(124,58,237,0.16); background: rgba(124,58,237,0.06);
-      color: #4c1d95; border-radius: var(--radius-pill);
-      padding: .34rem .58rem; font-size: .7rem; font-weight: 750;
-      cursor: pointer; transition: background .15s, border-color .15s, transform .15s;
-    }
-    .question-chip:hover { background: rgba(124,58,237,0.1); border-color: rgba(124,58,237,0.24); transform: translateY(-1px); }
-    .chat-input-row { display: flex; gap: .5rem; padding: .78rem; border-top: 1px solid rgba(0,0,0,0.06); }
-    .composer-suggestions + .chat-input-row { border-top: none; }
-    .chat-input { min-width: 0; flex: 1; border-radius: var(--radius-pill); padding: .72rem 1rem; border: 1px solid rgba(0,0,0,0.1); background: #fff; font-size: .81rem; color: var(--ink); outline: none; font-family: var(--font); transition: border-color .15s, box-shadow .15s; }
-    .chat-input:focus { border-color: rgba(79,70,229,0.28); box-shadow: 0 0 0 4px rgba(79,70,229,0.07); }
-    .chat-send { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--ink); color: #fff; cursor: pointer; font-size: .9rem; transition: opacity .15s; }
-    .chat-send:hover { opacity: .82; }
-
-    /* CODE PANEL */
-    .code-panel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
-    .code-block { overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-card); }
-    .code-block-header { display: flex; justify-content: space-between; gap: .5rem; align-items: center; padding: .78rem 1rem; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: .69rem; color: var(--ink-3); }
-    .code-block-label { font-family: var(--mono); color: var(--accent); font-weight: 700; }
-    .code-block pre { min-height: 70px; padding: .88rem 1rem; font-family: var(--mono); font-size: .72rem; line-height: 1.68; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
-    .code-block pre.empty { color: var(--ink-3); font-style: italic; }
-
-    /* STEPS */
-    .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2.5rem; }
-    .step { padding: 1rem 0; min-width: 0; }
-    .step-num { width: 1.9rem; height: 1.9rem; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-pill); background: var(--ink); color: #fff; font-weight: 800; font-size: .78rem; margin-bottom: 1rem; }
-    .step h3 { margin-bottom: .44rem; font-size: 1rem; font-weight: 700; letter-spacing: 0; }
-    .step p { color: var(--ink-2); font-size: .87rem; line-height: 1.62; }
-    .step-code { margin-top: .85rem; padding: .75rem .9rem; border-radius: 12px; background: #f6f7f9; border: 1px solid rgba(0,0,0,0.06); font-family: var(--mono); font-size: .72rem; line-height: 1.6; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
-
-    /* PACKAGES */
-    .pkg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2.5rem; }
-    .pkg-card { display: block; text-decoration: none; color: inherit; padding: 1.4rem; border-radius: var(--radius-card); border: 1px solid var(--line); background: #fff; transition: transform .18s, border-color .18s, box-shadow .18s; }
-    .pkg-card:hover { transform: translateY(-3px); border-color: var(--line-strong); box-shadow: 0 12px 36px rgba(0,0,0,0.07); }
-    .pkg-badge { font-size: .64rem; font-weight: 700; letter-spacing: 0; text-transform: uppercase; color: var(--ink-3); margin-bottom: .6rem; }
-    .pkg-name { font-family: var(--mono); color: var(--ink); font-size: .85rem; font-weight: 700; margin-bottom: .38rem; letter-spacing: 0; }
-    .pkg-desc { color: var(--ink-2); font-size: .83rem; line-height: 1.56; }
-    .pkg-tag { display: inline-flex; align-items: center; gap: .3rem; margin-top: .78rem; padding: .22rem .52rem; border-radius: var(--radius-pill); border: 1px solid rgba(0,0,0,0.08); color: var(--ink-3); font-size: .66rem; font-weight: 600; }
-
-    .cta-section { margin-top: 5rem; padding-top: 3rem; border-top: 1px solid var(--line-strong); }
-    .cta-card { text-align: center; }
-    .cta-card h2 { font-size: 2rem; line-height: 1.2; margin-bottom: 1rem; }
-    .cta-card p { color: var(--ink-2); max-width: 36rem; margin: 0 auto 1.5rem; }
-    .cta-actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
-    .btn-inverse { background: var(--ink); color: #fff; }
-    .btn-ghost-white { background: #f4f4f5; color: var(--ink); }
-
-    code { font-family: var(--mono); font-size: .9em; padding: .1em .38em; border-radius: .42em; color: var(--accent); background: rgba(79,70,229,0.08); }
-
-    footer { margin-top: 3.5rem; padding: 2rem 0 0; border-top: 1px solid rgba(0,0,0,0.07); display: flex; justify-content: space-between; align-items: center; gap: 1rem; color: var(--ink-3); font-size: .83rem; }
-    footer a { color: inherit; text-decoration: none; transition: color .15s; }
-    footer a:hover { color: var(--ink); }
-
-    /* REDUCED MOTION */
-    @media (prefers-reduced-motion: reduce) {
-      html { scroll-behavior: auto; }
-      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 1040px) {
-      .demo-layout { grid-template-columns: 1fr; }
-      .chat-sidebar { position: relative; top: auto; height: 480px; max-height: none; }
-      .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .pkg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-    }
-    @media (max-width: 720px) {
-      nav {
-        top: .75rem;
-        width: min(calc(100% - 1.25rem), 1280px);
-        min-height: 2.7rem;
-        padding: 0;
-        gap: .65rem;
-      }
-      .nav-logo { min-height: 2.55rem; padding: .2rem .68rem .2rem .26rem; }
-      .nav-mark { width: 2rem; height: 2rem; border-radius: 11px; }
-      .nav-links { min-height: 2.55rem; padding: .22rem; }
-      .nav-gh { width: 2.08rem; height: 2.08rem; margin-left: 0; }
-      .nav-link { display: none; }
-      .nav-menu { display: block; }
-      .page-shell { padding: 0 1rem 4rem; }
-      .hero { padding: 6rem 0 1.5rem; }
-      .hero-copy h1 { font-size: 2.5rem; }
-      .hero-copy > p { font-size: 1rem; }
-      .section-title { font-size: 1.75rem; }
-      .hero-actions { gap: .65rem; }
-      .install-cmd { max-width: 100%; font-size: .72rem; gap: .4rem; padding-inline: .75rem; }
-      .capability-list, .integration-list { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
-      .code-panel, .kpi-grid, .steps { grid-template-columns: minmax(0, 1fr); }
-      .pkg-grid { grid-template-columns: 1fr !important; }
-      .deck { padding: 0; }
-      .demo-controls-row { align-items: stretch; flex-wrap: wrap; }
-      .pattern-dock { padding: .75rem 0; }
-      .pattern-dock-header { gap: .5rem; }
-      .pattern-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .pattern-copy-mini small, .pattern-glyph { display: none; }
-      .pattern-copy-mini b { font-size: .72rem; white-space: normal; overflow: visible; }
-      .pattern-option { display: flex; justify-content: center; min-height: 44px; padding: .5rem .2rem; }
-      .pattern-status { align-items: flex-start; flex-direction: column; }
-      .pattern-payload { max-width: 100%; }
-      .tool-hint { min-width: 0; }
-      .toggle-group { justify-content: stretch; }
-      .toggle-btn { flex: 1 1 0; padding-inline: .65rem; }
-      .panel { overflow: visible; }
-      .panel-header { flex-direction: column; align-items: flex-start; gap: .2rem; }
-      .chat-sidebar { height: 430px; min-height: 430px; }
-      .chat-header, .chat-input-row, .chat-context-bar { padding-inline: .78rem; }
-      table, thead, tbody, tr, th, td { display: block; }
-      thead { display: none; }
-      tbody { display: grid; gap: .75rem; padding: .9rem; }
-      tbody tr[data-askable] {
-        display: grid;
-        gap: .55rem;
-        padding: .9rem;
-        border: 1px solid rgba(0,0,0,0.06);
-        border-radius: 18px;
-        background: #fff;
-      }
-      tbody tr[data-askable].active { box-shadow: inset 3px 0 0 var(--accent); }
-      td {
-        display: grid;
-        grid-template-columns: minmax(0, 92px) minmax(0, 1fr);
-        gap: .75rem;
-        align-items: center;
-        padding: 0;
-        border: none;
-        min-width: 0;
-      }
-      td::before {
-        content: attr(data-label);
-        color: var(--ink-3);
-        font-size: .66rem;
-        letter-spacing: 0;
-        text-transform: uppercase;
-        font-weight: 700;
-      }
-      td:last-child {
-        grid-template-columns: 1fr;
-        justify-items: start;
-        padding-top: .15rem;
-      }
-      td:last-child::before { display: none; }
-      .ask-btn-row { font-size: .68rem; padding: .38rem .72rem; }
-      .cta-card { padding: 0; }
-      .chat-sub { display: none; }
-      .code-block-header { flex-wrap: wrap; }
-      .section { padding-top: 4rem; }
-      footer { flex-direction: column; align-items: flex-start; }
-    }
-  </style>
 </head>
 <body>
+  <header class="site-header">
   <nav aria-label="Primary navigation">
     <a href="#" class="nav-logo"><span class="nav-mark"><span class="spark">✦</span></span> askable-ui</a>
     <div class="nav-links">
       <details class="nav-menu" id="nav-menu">
-        <summary>Menu</summary>
+        <summary>Menu <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#menu"></use></svg></summary>
         <div class="nav-menu-panel">
           <a href="#demo">Demo</a>
           <a href="#patterns">Patterns</a>
@@ -709,27 +45,29 @@
       </a>
     </div>
   </nav>
+  </header>
 
   <main class="page-shell">
     <section class="hero" aria-labelledby="page-title">
       <div class="hero-copy">
-        <h1 id="page-title">askable-ui</h1>
-        <p>Give your AI the context behind the question. Selected text, a chart, an account, or your app's own data.</p>
+        <h1 id="page-title">UI context for AI.</h1>
+        <p>Let people select what matters. Give their assistant the context to understand it.</p>
         <div class="hero-actions">
-          <a href="#demo" class="btn btn-primary">Try the demo</a>
-          <a href="https://askable-ui.com/docs/" class="btn btn-secondary">Read the docs</a>
+          <a href="https://askable-ui.com/docs/" class="btn btn-primary">Get started <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg></a>
           <button class="install-cmd" id="install-copy" title="Copy install command" type="button" aria-label="Copy npm install @askable-ui/react">
             <span>npm install @askable-ui/react</span>
-            <span class="copy-icon" id="copy-icon" aria-live="polite">Copy</span>
+            <span class="copy-icon" id="copy-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#copy"></use></svg></span><span class="sr-only" id="copy-status" role="status"></span>
           </button>
         </div>
       </div>
     </section>
 
     <section id="demo" class="section">
-      <h2 class="section-title">Analytics workspace</h2>
-
       <div class="deck">
+        <div class="workspace-header">
+          <div class="workspace-title"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#panels-top-left"></use></svg><h2 class="section-title">Analytics workspace</h2></div>
+          <span class="workspace-meta">Sample data</span>
+        </div>
         <div class="demo-controls">
           <div class="pattern-dock" aria-label="Interaction patterns">
             <div class="pattern-dock-header">
@@ -737,36 +75,36 @@
               <strong id="active-pattern-name">Click</strong>
             </div>
             <div class="pattern-grid" role="group" aria-label="Selection tools">
-              <button class="pattern-option active" data-mode="click" data-pattern-title="Click" data-pattern-payload="Element metadata + text">
-                <span class="pattern-glyph">↖</span>
+              <button class="pattern-option active" data-mode="click" title="Click to select" data-pattern-title="Click" data-pattern-payload="Element metadata + text">
+                <span class="pattern-glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#mouse-pointer-2"></use></svg></span>
                 <span class="pattern-copy-mini"><b>Click</b><small>element focus</small></span>
               </button>
-              <button class="pattern-option" data-mode="hover" data-pattern-title="Hover" data-pattern-payload="Hover focus">
-                <span class="pattern-glyph">•</span>
+              <button class="pattern-option" data-mode="hover" title="Hover to select" data-pattern-title="Hover" data-pattern-payload="Hover focus">
+                <span class="pattern-glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#hand"></use></svg></span>
                 <span class="pattern-copy-mini"><b>Hover</b><small>ambient focus</small></span>
               </button>
-              <button class="pattern-option" data-mode="button" data-pattern-title="Ask button" data-pattern-payload="Explicit widget context">
-                <span class="pattern-glyph">✦</span>
+              <button class="pattern-option" data-mode="button" title="Select with an Ask AI button" data-pattern-title="Ask button" data-pattern-payload="Explicit widget context">
+                <span class="pattern-glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#message-circle"></use></svg></span>
                 <span class="pattern-copy-mini"><b>Ask button</b><small>chosen widget</small></span>
               </button>
-              <button class="pattern-option" data-tool="region" type="button" data-pattern-title="Region" data-pattern-payload="Bounds + selected items">
-                <span class="pattern-glyph">□</span>
+              <button class="pattern-option" data-tool="region" title="Drag a rectangular region" type="button" data-pattern-title="Region" data-pattern-payload="Bounds + selected items">
+                <span class="pattern-glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#rectangle-horizontal"></use></svg></span>
                 <span class="pattern-copy-mini"><b>Region</b><small>boxed area</small></span>
               </button>
-              <button class="pattern-option" data-tool="square" type="button" data-pattern-title="Square" data-pattern-payload="Equal bounds + selected items">
-                <span class="pattern-glyph">▣</span>
+              <button class="pattern-option" data-tool="square" title="Drag a square" type="button" data-pattern-title="Square" data-pattern-payload="Equal bounds + selected items">
+                <span class="pattern-glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#square"></use></svg></span>
                 <span class="pattern-copy-mini"><b>Square</b><small>fixed ratio</small></span>
               </button>
-              <button class="pattern-option" data-tool="circle" type="button" data-pattern-title="Circle" data-pattern-payload="Radius + selected items">
-                <span class="pattern-glyph">○</span>
+              <button class="pattern-option" data-tool="circle" title="Draw a circle" type="button" data-pattern-title="Circle" data-pattern-payload="Radius + selected items">
+                <span class="pattern-glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#circle"></use></svg></span>
                 <span class="pattern-copy-mini"><b>Circle</b><small>visual target</small></span>
               </button>
-              <button class="pattern-option" data-tool="lasso" type="button" data-pattern-title="Lasso" data-pattern-payload="Freehand path + selected items">
-                <span class="pattern-glyph">⌁</span>
+              <button class="pattern-option" data-tool="lasso" title="Draw a freehand lasso" type="button" data-pattern-title="Lasso" data-pattern-payload="Freehand path + selected items">
+                <span class="pattern-glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#lasso"></use></svg></span>
                 <span class="pattern-copy-mini"><b>Lasso</b><small>AI pointer</small></span>
               </button>
-              <button class="pattern-option" id="send-selection" type="button" data-pattern-title="Text selection" data-pattern-payload="Highlighted text">
-                <span class="pattern-glyph">T</span>
+              <button class="pattern-option" id="send-selection" title="Highlight text" type="button" data-pattern-title="Text selection" data-pattern-payload="Highlighted text">
+                <span class="pattern-glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#text-cursor"></use></svg></span>
                 <span class="pattern-copy-mini"><b>Text</b><small>highlighted copy</small></span>
               </button>
             </div>
@@ -792,7 +130,7 @@
             </div>
             <div class="kpi-grid" id="kpi-grid"></div>
             <div class="panel">
-              <div class="panel-header">Top Accounts <span>same data drives UI + AI context</span></div>
+              <div class="panel-header">Accounts <span>Monthly recurring revenue</span></div>
               <table>
                 <thead><tr><th>Company</th><th>MRR</th><th>Plan</th><th>Status</th><th></th></tr></thead>
                 <tbody id="accounts-tbody"></tbody>
@@ -802,16 +140,13 @@
 
           <aside class="chat-sidebar">
             <div class="chat-header">
-              <div class="chat-dot"></div>
-              <span class="chat-title">AI Assistant</span>
-              <span class="chat-sim-badge">simulated</span>
+              <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#sparkles"></use></svg>
+              <span class="chat-title">Assistant</span>
+              <span class="chat-sim-badge">Simulated</span>
               <span class="chat-sub">powered by askable</span>
             </div>
             <div class="chat-messages" id="chat-messages" role="log" aria-label="Demo conversation" aria-live="polite">
-              <div class="msg ai">
-                <div class="msg-bubble">No context attached yet.</div>
-                <span class="msg-label">Assistant</span>
-              </div>
+              <div class="chat-empty" id="chat-empty"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#messages-square"></use></svg><p>Ready for a question</p></div>
             </div>
             <div class="chat-context-bar" id="chat-context-bar" style="display:none">
               <span class="context-bar-label" id="context-bar-label">Context:</span>
@@ -819,7 +154,7 @@
                 <summary>Review context</summary>
                 <pre id="context-chip"></pre>
               </details>
-              <button class="context-dismiss" id="context-dismiss" type="button" aria-label="Remove selected context" title="Remove selected context">&times;</button>
+              <button class="context-dismiss" id="context-dismiss" type="button" aria-label="Remove selected context" title="Remove selected context"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#x"></use></svg></button>
             </div>
             <div class="selected-text-card" id="selected-text-card" style="display:none">
               <div class="selected-text-card-head">
@@ -838,8 +173,8 @@
             <div class="composer-suggestions" id="composer-suggestions" style="display:none"></div>
             <div class="chat-input-row">
               <label class="sr-only" for="chat-input">Question about selected context</label>
-              <input class="chat-input" id="chat-input" type="text" placeholder="Select context above, then ask anything…" />
-              <button class="chat-send" id="chat-send" type="button" aria-label="Send question" title="Send question">↑</button>
+              <input class="chat-input" id="chat-input" type="text" placeholder="Ask a question..." />
+              <button class="chat-send" id="chat-send" type="button" aria-label="Send question" title="Send question"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up"></use></svg></button>
             </div>
           </aside>
         </div>
@@ -879,22 +214,25 @@
     </section>
 
     <section id="patterns" class="section">
-      <h2 class="section-title">Keep the context with the question.</h2>
-      <p class="section-sub">From a single selection to the data behind your app.</p>
+      <h2 class="section-title">More than what meets the eye.</h2>
+      <p class="section-sub">A selection is the start. Connect the data behind it and choose where it goes.</p>
       <div class="capability-list">
         <article id="sources">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#database"></use></svg>
           <h3>Beyond the visible rows</h3>
-          <p>Connect app-owned sources for paginated tables, documents, carts, or charts. Include the backing data you choose, not just the rendered page.</p>
+          <p>Include full datasets, documents, and app state. You choose the backing data, even when it is not on screen.</p>
           <a class="text-link" href="https://askable-ui.com/docs/guide/sources">Connect your data</a>
         </article>
         <article>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#messages-square"></use></svg>
           <h3>Bring your own chat</h3>
-          <p>Bridge selected context to your chat panel, browser extension, iframe, or server. Choose the destination and handle delivery explicitly.</p>
+          <p>Deliver selected context to your chat, browser extension, iframe, or server through Bridge.</p>
           <a class="text-link" href="https://askable-ui.com/docs/guide/bridge">Explore Bridge</a>
         </article>
         <article>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#shield-check"></use></svg>
           <h3>Review before sending</h3>
-          <p>Let users inspect a prepared request, then send that snapshot without replacing it with their latest selection.</p>
+          <p>Send the exact snapshot someone reviewed, even if their selection changes before delivery.</p>
           <p class="release-note">The reviewed-request React API is on main, not yet released to npm.</p>
           <a class="text-link" href="https://askable-ui.com/docs/guide/react#review-context-before-sending-unreleased">Review the React guide</a>
         </article>
@@ -902,38 +240,53 @@
     </section>
 
     <section id="how" class="section">
-      <p class="section-label">How it works</p>
-      <h2 class="section-title">Three simple steps.</h2>
-      <p class="section-sub">No giant framework. No invasive serialization. Let the model borrow the user's explicit context.</p>
-      <div class="steps">
-        <article class="step">
-          <div class="step-num">1</div>
-          <h3>Annotate or capture</h3>
-          <p>Add <code>data-askable</code> wherever your UI already has meaning, then add tools for regions, circles, lasso selections, and highlighted text.</p>
-          <pre class="step-code">&lt;div data-askable='{"metric":"MRR","value":"$128K"}'&gt;
-  ...
+      <div class="implementation-intro">
+        <h2 class="section-title">A small addition.<br />A shared understanding.</h2>
+        <p class="section-sub">Keep your components, your data, and your model. Add context where your UI already has meaning.</p>
+        <a class="text-link" href="https://askable-ui.com/docs/guide/getting-started">Explore the integration <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg></a>
+      </div>
+      <div class="implementation-code">
+        <div class="example-tabs" role="tablist" aria-label="Integration steps">
+          <button class="example-tab" id="example-annotate" role="tab" aria-selected="true" aria-controls="panel-annotate" data-example="annotate">Annotate</button>
+          <button class="example-tab" id="example-observe" role="tab" aria-selected="false" aria-controls="panel-observe" tabindex="-1" data-example="observe">Observe</button>
+          <button class="example-tab" id="example-send" role="tab" aria-selected="false" aria-controls="panel-send" tabindex="-1" data-example="send">Send</button>
+        </div>
+        <div class="example-panel" id="panel-annotate" role="tabpanel" aria-labelledby="example-annotate" tabindex="0">
+          <p>Structured data, attached to the element it describes.</p>
+          <pre>&lt;div
+  data-askable='{
+    "metric": "Monthly revenue",
+    "value": 128400,
+    "change": "+12.4%"
+  }'
+&gt;
+  $128,400
 &lt;/div&gt;</pre>
-        </article>
-        <article class="step">
-          <div class="step-num">2</div>
-          <h3>Observe intent</h3>
-          <p>Call <code>askable.observe(document)</code> once. askable tracks click, hover, focus, explicit selection, and semantic app events.</p>
-          <pre class="step-code">askable.observe(document, {
+        </div>
+        <div class="example-panel" id="panel-observe" role="tabpanel" aria-labelledby="example-observe" tabindex="0" hidden>
+          <p>User intent becomes prompt-ready context.</p>
+          <pre>import {
+  createAskableContext
+} from '@askable-ui/core';
+
+const askable = createAskableContext();
+
+askable.observe(document, {
   events: ['click']
 });</pre>
-        </article>
-        <article class="step">
-          <div class="step-num">3</div>
-          <h3>Inject</h3>
-          <p>At the AI boundary, package the user's question with prompt context, the selected packet, and app-owned sources. The assistant now knows what the user actually meant.</p>
-          <pre class="step-code">const request = await askable.toAgentRequest(question, {
-  packet: selectedPacket,
-  contextFromPacket: true,
-  selectionFromPacket: true,
-  sources: ['accounts']
-});
-// → { question, context, packet, focus, timestamp }</pre>
-        </article>
+        </div>
+        <div class="example-panel" id="panel-send" role="tabpanel" aria-labelledby="example-send" tabindex="0" hidden>
+          <p>The question, selection, and app-owned sources in one request.</p>
+          <pre>const request = await askable.toAgentRequest(
+  question,
+  {
+    packet: selectedPacket,
+    contextFromPacket: true,
+    selectionFromPacket: true,
+    sources: ['accounts']
+  }
+);</pre>
+        </div>
       </div>
     </section>
 
@@ -945,63 +298,62 @@
     </details>
 
     <section id="packages" class="section">
-      <p class="section-label">Packages</p>
-      <h2 class="section-title">Pick your stack. Keep the idea.</h2>
-      <p class="section-sub">One core library. Thin adapters for every framework. Same mental model everywhere.</p>
+      <h2 class="section-title">At home in your stack.</h2>
+      <p class="section-sub">One core, with adapters for the way you build.</p>
       <div class="pkg-grid">
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/core" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · Core</div>
           <div class="pkg-name">@askable-ui/core</div>
           <div class="pkg-desc">Framework-agnostic observer and context builder. Zero dependencies.</div>
-          <span class="pkg-tag">npm</span>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/react" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · React</div>
           <div class="pkg-name">@askable-ui/react</div>
           <div class="pkg-desc">Components and hooks for selection, app data, and chat. React 17+.</div>
-          <span class="pkg-tag">npm</span>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/vue" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · Vue</div>
           <div class="pkg-name">@askable-ui/vue</div>
           <div class="pkg-desc">Reactive context and app-owned sources for Vue 3.</div>
-          <span class="pkg-tag">npm</span>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/svelte" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · Svelte</div>
           <div class="pkg-name">@askable-ui/svelte</div>
           <div class="pkg-desc">Svelte 4 stores and Svelte 5 runes for reactive UI context.</div>
-          <span class="pkg-tag">npm</span>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/solid" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">JS · SolidJS</div>
           <div class="pkg-name">@askable-ui/solid</div>
           <div class="pkg-desc">Fine-grained reactive context and source primitives for SolidJS.</div>
-          <span class="pkg-tag">npm</span>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/angular" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">TS · Angular</div>
           <div class="pkg-name">@askable-ui/angular</div>
           <div class="pkg-desc">Injectable services and directives for Angular 16+.</div>
-          <span class="pkg-tag">npm</span>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/qwik" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">TS · Qwik</div>
           <div class="pkg-name">@askable-ui/qwik</div>
-          <div class="pkg-desc"><code>useAskable()</code> and <code>&lt;Askable&gt;</code> for Qwik City apps — resumable, zero-JS-by-default.</div>
-          <span class="pkg-tag">npm</span>
+          <div class="pkg-desc"><code>useAskable()</code> and <code>&lt;Askable&gt;</code> for Qwik City apps: resumable, zero-JS-by-default.</div>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/web-component" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">HTML · Any framework</div>
           <div class="pkg-name">@askable-ui/web-component</div>
-          <div class="pkg-desc"><code>&lt;askable-context&gt;</code> custom element — zero build step, works in HTMX, Ember, or plain HTML via CDN.</div>
-          <span class="pkg-tag">npm</span>
+          <div class="pkg-desc"><code>&lt;askable-context&gt;</code> custom element: zero build step, works in HTMX, Ember, or plain HTML via CDN.</div>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg>
         </a>
         <a class="pkg-card" href="https://www.npmjs.com/package/@askable-ui/bridge" target="_blank" rel="noopener noreferrer">
           <div class="pkg-badge">Transport</div>
           <div class="pkg-name">@askable-ui/bridge</div>
           <div class="pkg-desc">Deliver context to a chat UI, extension, iframe, or HTTP endpoint.</div>
-          <span class="pkg-tag">npm</span>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#arrow-up-right"></use></svg>
         </a>
       </div>
     </section>
@@ -1031,8 +383,8 @@
 
     <div class="cta-section">
       <div class="cta-card">
-        <h2>Your AI. Your UI. Finally connected.</h2>
-        <p>Drop <code>data-askable</code> on your most important element. Working context in under five minutes — or scaffold a full copilot app in one command.</p>
+        <h2>Start with one element.</h2>
+        <p>Add meaningful context to the interface you already have.</p>
         <div class="cta-actions">
           <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer" class="btn btn-inverse">Read the docs</a>
           <a href="https://askable-mu.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-white">Live demo ↗</a>
@@ -1046,7 +398,7 @@
     </div>
 
     <footer>
-      <span>askable-ui — context that feels native to the UI</span>
+      <span>askable-ui · Open source. MIT licensed.</span>
       <div style="display:flex;gap:1rem;flex-wrap:wrap">
         <a href="https://askable-ui.com/docs/" target="_blank" rel="noopener noreferrer">Docs</a>
         <a href="https://askable-ui.com/docs/api/mcp" target="_blank" rel="noopener noreferrer">MCP guide</a>
@@ -1165,7 +517,7 @@
       var p = ['User is focused on:'];
       if (ms) p.push(ms);
       if (inclText && f.text) p.push('value "' + f.text + '"');
-      return p.join(' — ');
+      return p.join(': ');
     };
     var kpiData = [
       { widget: 'revenue', metric: 'Monthly Recurring Revenue', value: '$128,400', change: '+12.4%', period: 'last 30 days', label: 'Monthly Revenue', changeDir: 'up', changeText: '+12.4% vs last month' },
@@ -1189,7 +541,7 @@
       var card = document.createElement('div');
       card.className = 'kpi-card'; card.tabIndex = 0;
       card.setAttribute('data-askable', JSON.stringify(meta));
-      card.innerHTML = '<button class="ask-btn"><span>✦</span> Ask AI</button>' +
+      card.innerHTML = '<button class="ask-btn"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#sparkles"></use></svg> Ask AI</button>' +
         '<div class="kpi-label">' + d.label + '</div>' +
         '<div class="kpi-value">' + d.value + '</div>' +
         '<div class="kpi-change ' + d.changeDir + '">' + d.changeText + '</div>';
@@ -1205,7 +557,7 @@
       tr.setAttribute('data-askable', JSON.stringify(meta));
       tr.innerHTML = '<td data-label="Company">' + d.company + '</td><td data-label="MRR">' + d.mrr + '</td><td data-label="Plan">' + d.plan + '</td>' +
         '<td data-label="Status"><span class="badge ' + statusBadge[d.status] + '">' + statusLabel[d.status] + '</span></td>' +
-        '<td data-label="Ask" style="width:1px"><button class="ask-btn-row">✦ Ask AI</button></td>';
+        '<td data-label="Ask" style="width:1px"><button class="ask-btn-row" aria-label="Ask AI about this account"><svg class="icon" aria-hidden="true" focusable="false"><use href="assets/icons.svg#sparkles"></use></svg> Ask AI</button></td>';
       tbody.appendChild(tr);
     });
     var askable = new Ctx();
@@ -1789,6 +1141,8 @@
     };
     function scrollBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
     function addMsg(type, text) {
+      var empty = document.getElementById('chat-empty');
+      if (empty) empty.remove();
       var wrap = document.createElement('div'); wrap.className = 'msg ' + type;
       var bubble = document.createElement('div'); bubble.className = 'msg-bubble'; bubble.textContent = text;
       wrap.appendChild(bubble);
@@ -1960,7 +1314,7 @@
       }
       codeAttr.classList.remove('empty');
       codeCtx.textContent = prompt; codeCtx.classList.remove('empty');
-      // Show context bar — let user see what's loaded before sending
+      // Show context bar: let user see what's loaded before sending
       contextBar.style.display = 'flex';
       contextChip.textContent = prompt;
       if (meta && meta.capture === 'text-selection') {
@@ -2025,8 +1379,8 @@
             reply = 'I will answer from the selected text you attached. In a real chat request this text is sent as explicit context beside your question, so the model does not need to infer which copy on the page matters.';
           } else if (w === 'revenue') {
             if (lower.indexOf('trend') !== -1 || lower.indexOf('why') !== -1 || lower.indexOf('driv') !== -1)
-              reply = 'MRR grew 12.4% — likely a mix of new expansion + retention improving. Check if seat upgrades or plan changes account for the delta.';
-            else reply = 'MRR is $128,400 — up 12.4%. Momentum looks healthy with expansion and retention both moving in the right direction.';
+              reply = 'MRR grew 12.4%: likely a mix of new expansion + retention improving. Check if seat upgrades or plan changes account for the delta.';
+            else reply = 'MRR is $128,400: up 12.4%. Momentum looks healthy with expansion and retention both moving in the right direction.';
           } else if (w === 'churn') {
             if (lower.indexOf('driv') !== -1 || lower.indexOf('why') !== -1)
               reply = 'Churn dropped 0.8 points to 3.2%. Most likely driven by improved onboarding or a cohort maturing past the risky first 90 days.';
@@ -2034,27 +1388,27 @@
           } else if (w === 'arpu') {
             if (lower.indexOf('improv') !== -1 || lower.indexOf('how') !== -1)
               reply = 'To lift ARPU: audit discount depth, push expansion offers to Starter/Business users, and check if new signups are landing on lower tiers than expected.';
-            else reply = 'ARPU slipped 2.1% to $42.10. Watch plan mix — topline growth can mask dilution from discounting.';
+            else reply = 'ARPU slipped 2.1% to $42.10. Watch plan mix: topline growth can mask dilution from discounting.';
           } else if (w === 'nps') {
             if (lower.indexOf('do') !== -1 || lower.indexOf('action') !== -1 || lower.indexOf('next') !== -1)
               reply = 'With NPS at 67, focus on converting promoters into case studies or referrals, and identify passives who might become promoters with one targeted win.';
-            else reply = 'NPS is 67, well above the 44 benchmark. Customer sentiment is strong — good leverage for expansion.';
+            else reply = 'NPS is 67, well above the 44 benchmark. Customer sentiment is strong: good leverage for expansion.';
           } else if (w === 'account_row') {
             var r = responses.account_row(meta);
             if (lower.indexOf('action') !== -1 || lower.indexOf('next') !== -1 || lower.indexOf('do') !== -1)
               reply = meta.status === 'at_risk' ? 'Book an EBR this week for ' + meta.company + '. Lead with ROI data and offer a success manager touchpoint.' :
                 meta.status === 'churned' ? 'Run a win-back sequence for ' + meta.company + '. 60-day window is still live. Offer a credit or a new POC.' :
-                meta.company + ' is growing — queue an upsell conversation for Business plan. Expansion signal is already showing.';
+                meta.company + ' is growing: queue an upsell conversation for Business plan. Expansion signal is already showing.';
             else reply = r;
           } else reply = 'I can see this context. Ask about trends, risk, or recommended actions.';
         } else if (lower.indexOf('risk') !== -1) {
-          reply = 'Globex Inc is the top risk — no login for 14 days, $5.2k MRR at stake. Select their row for the full picture.';
+          reply = 'Globex Inc is the top risk: no login for 14 days, $5.2k MRR at stake. Select their row for the full picture.';
         } else if (lower.indexOf('summar') !== -1 || lower.indexOf('overview') !== -1) {
           reply = 'MRR is growing, churn is improving, NPS is strong. Globex is the obvious retention priority. Select any card for detail.';
         } else if (lower.indexOf('upsell') !== -1) {
-          reply = 'Umbrella Ltd is the cleanest upsell candidate — healthy status, expansion signal, Starter plan. Select their row for specifics.';
+          reply = 'Umbrella Ltd is the cleanest upsell candidate: healthy status, expansion signal, Starter plan. Select their row for specifics.';
         } else {
-          reply = 'Select a KPI, account row, region, lasso, circle, or highlighted text first — I\'ll load its context and give you a grounded answer.';
+          reply = 'Select a KPI, account row, region, lasso, circle, or highlighted text first: I\'ll load its context and give you a grounded answer.';
         }
         addMsg('ai', reply);
       }, 900);
@@ -2065,7 +1419,14 @@
     if (installCopy) {
       installCopy.addEventListener('click', function() {
         var el = document.getElementById('copy-icon');
-        function flash(label) { if (!el) return; el.textContent = label; setTimeout(function() { el.textContent = 'Copy'; }, 1800); }
+        var status = document.getElementById('copy-status');
+        var copyMarkup = el ? el.innerHTML : '';
+        function flash(label) {
+          if (status) status.textContent = label;
+          if (!el) return;
+          el.textContent = label === 'Copied' ? 'Done' : 'Retry';
+          setTimeout(function() { el.innerHTML = copyMarkup; }, 1800);
+        }
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText('npm install @askable-ui/react').then(function() { flash('Copied'); }).catch(function() { flash('copy manually'); });
         } else { flash('copy manually'); }
@@ -2092,6 +1453,29 @@
     });
     window.matchMedia('(min-width: 721px)').addEventListener('change', function(event) {
       if (event.matches) menu.open = false;
+    });
+    var exampleTabs = Array.from(document.querySelectorAll('[data-example]'));
+    function selectExample(tab) {
+      exampleTabs.forEach(function(item) {
+        var active = item === tab;
+        item.setAttribute('aria-selected', String(active));
+        item.tabIndex = active ? 0 : -1;
+        document.getElementById(item.getAttribute('aria-controls')).hidden = !active;
+      });
+    }
+    exampleTabs.forEach(function(tab, index) {
+      tab.addEventListener('click', function() { selectExample(tab); });
+      tab.addEventListener('keydown', function(event) {
+        var next;
+        if (event.key === 'ArrowRight') next = (index + 1) % exampleTabs.length;
+        if (event.key === 'ArrowLeft') next = (index + exampleTabs.length - 1) % exampleTabs.length;
+        if (event.key === 'Home') next = 0;
+        if (event.key === 'End') next = exampleTabs.length - 1;
+        if (next === undefined) return;
+        event.preventDefault();
+        selectExample(exampleTabs[next]);
+        exampleTabs[next].focus();
+      });
     });
     var recording = document.querySelector('.recording');
     recording.addEventListener('toggle', function() {

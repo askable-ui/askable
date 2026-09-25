@@ -1,9 +1,12 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 
-// Serve only the two assets used by the website tests, never the checkout.
+// Serve only website assets used by the tests, never the checkout.
 const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
+  ['/site.css', ['site.css', 'text/css; charset=utf-8']],
+  ['/assets/icons.svg', ['assets/icons.svg', 'image/svg+xml']],
+  ['/assets/inter-latin-variable.woff2', ['assets/inter-latin-variable.woff2', 'font/woff2']],
   ['/askable-ui-code.mp4', ['askable-ui-code.mp4', 'video/mp4']],
 ]);
 
