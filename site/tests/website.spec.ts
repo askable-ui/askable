@@ -1,13 +1,22 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function settleRendering(page: Page) {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    // Let font metrics and inherited colors reach the compositor after a resize or reload.
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  });
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await page.evaluate(() => document.fonts.ready);
+  await settleRendering(page);
 });
 
 for (const width of [320, 390, 768, 1280, 1440]) {
   test(`layout fits ${width}px and keeps the first action visible`, async ({ page }) => {
     await page.setViewportSize({ width, height: width < 768 ? 844 : 720 });
+    await settleRendering(page);
     await expect(page.locator('#kpi-grid .kpi-card')).toHaveCount(4);
     await expect(page.locator('#install-copy')).toBeInViewport();
     await expect(page.getByRole('heading', { name: 'Analytics workspace' })).toBeInViewport();
@@ -117,7 +126,7 @@ test('text mode ignores plain clicks and retains captured text', async ({ page }
 test('homepage and selected context screenshots use the website font', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.reload();
-  await page.evaluate(() => document.fonts.ready);
+  await settleRendering(page);
   await expect.poll(() => page.evaluate(() => document.fonts.check('400 16px Inter'))).toBe(true);
   await page.screenshot({ path: test.info().outputPath('homepage-desktop.png') });
   await page.locator('.kpi-card').first().click();
@@ -126,7 +135,7 @@ test('homepage and selected context screenshots use the website font', async ({ 
   await page.screenshot({ path: test.info().outputPath('homepage-context.png') });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
-  await page.evaluate(() => document.fonts.ready);
+  await settleRendering(page);
   await page.screenshot({ path: test.info().outputPath('homepage-mobile.png') });
 });
 
@@ -155,6 +164,7 @@ test('font is local and inline icons retain accessible colors', async ({ page })
 test('selection mode controls do not resize the workspace', async ({ page }) => {
   for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: 900 });
+    await settleRendering(page);
     const before = await page.locator('.demo-controls').boundingBox();
     await page.locator('[data-tool="lasso"]').click();
     const after = await page.locator('.demo-controls').boundingBox();
@@ -163,6 +173,7 @@ test('selection mode controls do not resize the workspace', async ({ page }) => 
     expect(after.height).toBeCloseTo(before.height, 2);
     await expect(page.locator('#cancel-tool')).toBeVisible();
     await expect(page.locator('.workspace-meta')).toBeHidden();
+    await settleRendering(page);
     await page.screenshot({ path: test.info().outputPath(`lasso-controls-${width}.png`) });
     await page.locator('#cancel-tool').click();
     await expect(page.locator('.workspace-meta')).toBeVisible();
