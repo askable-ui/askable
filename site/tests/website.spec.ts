@@ -142,13 +142,28 @@ test('integration tabs support mouse and keyboard navigation', async ({ page }) 
   await expect(page.getByRole('tabpanel')).toContainText('data-askable');
 });
 
-test('font and toolbar icons load from local assets', async ({ page }) => {
+test('font is local and inline icons retain accessible colors', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => document.fonts.check('400 16px Inter'))).toBe(true);
   await expect(page.locator('.pattern-option .icon')).toHaveCount(8);
-  const asset = await page.request.get('/assets/icons.svg');
-  expect(asset.ok()).toBe(true);
-  expect(await asset.text()).toContain('id="lasso"');
+  await expect(page.locator('.icon use')).toHaveCount(0);
+  expect(await page.locator('.pattern-option .icon path').count()).toBeGreaterThan(0);
+  await expect(page.locator('#chat-send .icon')).toHaveCSS('stroke', 'rgb(255, 255, 255)');
+  await expect(page.locator('[data-mode="click"]')).toHaveCSS('color', 'rgb(102, 80, 204)');
   await expect(page.locator('link[href*="fonts.googleapis.com"]')).toHaveCount(0);
+});
+
+test('selection mode controls do not resize the workspace', async ({ page }) => {
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const before = await page.locator('.demo-controls').boundingBox();
+    await page.locator('[data-tool="lasso"]').click();
+    const after = await page.locator('.demo-controls').boundingBox();
+    expect(after?.height).toBe(before?.height);
+    await expect(page.locator('#cancel-tool')).toBeVisible();
+    await expect(page.locator('.workspace-meta')).toBeHidden();
+    await page.locator('#cancel-tool').click();
+    await expect(page.locator('.workspace-meta')).toBeVisible();
+  }
 });
 
 test('current capabilities and release boundaries are explicit', async ({ page }) => {

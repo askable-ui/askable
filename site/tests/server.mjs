@@ -5,7 +5,6 @@ import { readFile } from 'node:fs/promises';
 const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/site.css', ['site.css', 'text/css; charset=utf-8']],
-  ['/assets/icons.svg', ['assets/icons.svg', 'image/svg+xml']],
   ['/assets/inter-latin-variable.woff2', ['assets/inter-latin-variable.woff2', 'font/woff2']],
   ['/askable-ui-code.mp4', ['askable-ui-code.mp4', 'video/mp4']],
 ]);

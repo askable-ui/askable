@@ -20,12 +20,12 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
 body { color: var(--ink); background: var(--bg); font: 400 15px/1.65 var(--font); -webkit-font-smoothing: antialiased; }
 button, input, summary { font: inherit; }
 button, a, summary { -webkit-tap-highlight-color: transparent; }
-button { cursor: pointer; }
+button { cursor: pointer; appearance: none; -webkit-appearance: none; }
 a { color: inherit; text-decoration: none; }
 button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 [hidden] { display: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.icon { width: 18px; height: 18px; color: inherit; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .github-icon { width: 20px; height: 20px; fill: currentColor; }
 .page-shell { max-width: 1168px; padding: 0 32px; margin: 0 auto; }
 
@@ -90,7 +90,8 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
 .pattern-option.active { color: var(--accent); background: var(--accent-light); border-color: #e1d9f8; }
 .pattern-glyph { display: inline-flex; }
 .pattern-copy-mini b { font-size: 12px; font-weight: 500; white-space: nowrap; }
-.pattern-status { position: absolute; right: 12px; top: 8px; }
+.pattern-status { position: absolute; right: 12px; top: -46px; }
+.deck:has(.pattern-option.active:not([data-mode])) .workspace-meta { visibility: hidden; }
 .tool-btn { min-height: 40px; padding: 8px 10px; border: 0; color: var(--ink-2); background: #fff; border-radius: 5px; font-size: 12px; }
 .tool-btn:hover { background: var(--surface); }
 .demo-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; }
@@ -351,8 +352,6 @@ footer a:hover { color: var(--ink); }
   .demo-layout { grid-template-columns: minmax(0, 1fr) 300px; }
   .dashboard { padding: 16px; }
   .pattern-option { padding-inline: 8px; gap: 5px; }
-  .pattern-status { position: static; }
-  .pattern-status:has(#cancel-tool[style*="inline"]) { padding-top: 6px; }
   .kpi-value { font-size: 24px; }
   .panel-header span { display: none; }
   .demo-layout th:nth-child(3), .demo-layout td:nth-child(3) { display: none; }
@@ -381,6 +380,7 @@ footer a:hover { color: var(--ink); }
   .pattern-option .icon { width: 17px; height: 17px; }
   .pattern-copy-mini b { font-size: 10px; }
   .tool-btn { min-height: 36px; }
+  .pattern-status { top: -40px; right: 8px; }
   .demo-layout { grid-template-columns: minmax(0, 1fr); }
   .dashboard { padding: 14px; }
   .kpi-grid { margin-bottom: 24px; }
@@ -429,4 +429,3 @@ footer a:hover { color: var(--ink); }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
-
