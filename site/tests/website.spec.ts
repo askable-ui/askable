@@ -158,9 +158,12 @@ test('selection mode controls do not resize the workspace', async ({ page }) => 
     const before = await page.locator('.demo-controls').boundingBox();
     await page.locator('[data-tool="lasso"]').click();
     const after = await page.locator('.demo-controls').boundingBox();
-    expect(after?.height).toBe(before?.height);
+    if (!before || !after) throw new Error('Missing toolbar bounds');
+    // Firefox can round bounding boxes differently after the automatic scroll.
+    expect(after.height).toBeCloseTo(before.height, 2);
     await expect(page.locator('#cancel-tool')).toBeVisible();
     await expect(page.locator('.workspace-meta')).toBeHidden();
+    await page.screenshot({ path: test.info().outputPath(`lasso-controls-${width}.png`) });
     await page.locator('#cancel-tool').click();
     await expect(page.locator('.workspace-meta')).toBeVisible();
   }

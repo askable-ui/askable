@@ -85,11 +85,12 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
 .pattern-dock { position: relative; padding: 8px 12px; }
 .pattern-dock-header, .pattern-copy-mini small, .pattern-payload, .tool-hint { display: none; }
 .pattern-grid { display: flex; flex-wrap: wrap; gap: 4px; }
-.pattern-option { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 11px; min-height: 40px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--ink-2); transition: background .15s, color .15s; }
+.pattern-option { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 11px; height: 40px; min-height: 40px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--ink-2); transition: background .15s, color .15s; }
 .pattern-option:hover { background: var(--surface); }
 .pattern-option.active { color: var(--accent); background: var(--accent-light); border-color: #e1d9f8; }
 .pattern-glyph { display: inline-flex; }
-.pattern-copy-mini b { font-size: 12px; font-weight: 500; white-space: nowrap; }
+.pattern-copy-mini { display: flex; align-items: center; }
+.pattern-copy-mini b { font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; }
 .pattern-status { position: absolute; right: 12px; top: -46px; }
 .deck:has(.pattern-option.active:not([data-mode])) .workspace-meta { visibility: hidden; }
 .tool-btn { min-height: 40px; padding: 8px 10px; border: 0; color: var(--ink-2); background: #fff; border-radius: 5px; font-size: 12px; }
@@ -376,9 +377,9 @@ footer a:hover { color: var(--ink); }
   .workspace-meta { font-size: 10px; }
   .pattern-dock { padding: 6px; }
   .pattern-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; }
-  .pattern-option { min-height: 46px; padding: 6px 2px; gap: 4px; flex-direction: column; }
+  .pattern-option { height: 56px; min-height: 56px; padding: 6px 2px; gap: 4px; flex-direction: column; }
   .pattern-option .icon { width: 17px; height: 17px; }
-  .pattern-copy-mini b { font-size: 10px; }
+  .pattern-copy-mini b { font-size: 10px; line-height: 14px; }
   .tool-btn { min-height: 36px; }
   .pattern-status { top: -40px; right: 8px; }
   .demo-layout { grid-template-columns: minmax(0, 1fr); }
