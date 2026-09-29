@@ -50,7 +50,7 @@
   "dependencies": {
     "@askable-ui/context": "^0.17.3",
     "@askable-ui/core": "^0.17.3",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
