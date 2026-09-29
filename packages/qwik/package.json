@@ -49,7 +49,7 @@
     "@askable-ui/core": "^0.17.3"
   },
   "devDependencies": {
-    "@builder.io/qwik": "^1.14.1",
+    "@builder.io/qwik": "^1.20.1",
     "jsdom": "^29.1.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
