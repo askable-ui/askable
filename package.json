@@ -12,11 +12,11 @@
     "build:e2e-bundle": "esbuild packages/core/src/index.ts --bundle --format=iife --global-name=AskableCore --outfile=e2e/.bundle/askable-core.js"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
-    "@vue/server-renderer": "^3.5.43",
+    "@playwright/test": "^1.64.1",
+    "@vue/server-renderer": "^3.5.44",
     "esbuild": "0.28.2",
-    "vite": "^8.3.0",
-    "vitest": "^4.1.11",
-    "vue": "^3.5.43"
+    "vite": "^8.3.4",
+    "vitest": "^4.1.12",
+    "vue": "^3.5.44"
   }
 }
