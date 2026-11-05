@@ -59,25 +59,21 @@ jobs:
       - name: Install standalone example dependencies
         working-directory: examples/angular-dashboard
         run: npm ci
-      - name: Audit standalone dependency lock
-        working-directory: examples/angular-dashboard
-        run: npm audit --audit-level=low
-      - name: Build against published packages
-        working-directory: examples/angular-dashboard
-        run: npm run build
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Smoke-test published packages
-        working-directory: examples/angular-dashboard
-        run: node smoke.mjs
       - name: Pack local workspace packages
         run: npm pack -w @askable-ui/angular -w @askable-ui/core -w @askable-ui/context --pack-destination "$RUNNER_TEMP" --quiet
       - name: Install local packages without changing the standalone lock
         working-directory: examples/angular-dashboard
         run: npm install --no-save --package-lock=false "$RUNNER_TEMP"/askable-ui-angular-*.tgz "$RUNNER_TEMP"/askable-ui-core-*.tgz "$RUNNER_TEMP"/askable-ui-context-*.tgz
-      - name: Build against local packages
+      - name: AOT-build standalone and NgModule consumers against packed packages
         working-directory: examples/angular-dashboard
-        run: npm run build
+        run: |
+          npm run build
+          npx --no-install ngc -p tsconfig.app.json
       - name: Smoke-test local packages
         working-directory: examples/angular-dashboard
         run: node smoke.mjs
+      - name: Audit standalone dependency lock
+        working-directory: examples/angular-dashboard
+        run: npm audit --audit-level=low
