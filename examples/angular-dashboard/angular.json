@@ -16,7 +16,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "aot": false,
+            "aot": true,
             "browser": "src/main.ts",
             "index": "src/index.html",
             "tsConfig": "tsconfig.app.json",

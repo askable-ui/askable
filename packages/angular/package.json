@@ -7,16 +7,16 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./core": {
-      "import": "./dist/core.js",
-      "types": "./dist/core.d.ts"
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js"
     },
     "./extended": {
-      "import": "./dist/extended.js",
-      "types": "./dist/extended.d.ts"
+      "types": "./dist/extended.d.ts",
+      "import": "./dist/extended.js"
     }
   },
   "files": [
@@ -30,8 +30,8 @@
   },
   "scripts": {
     "prebuild": "npm run build -w @askable-ui/core",
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "ngc -p tsconfig.json",
+    "dev": "ngc -p tsconfig.json --watch",
     "test": "vitest run"
   },
   "keywords": [
